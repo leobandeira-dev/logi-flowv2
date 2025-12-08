@@ -232,15 +232,12 @@ export default function Precificacao() {
 
     setCarregandoCNPJ(true);
     try {
-      const { consultarCNPJ: consultarCNPJFunc } = await import("@/functions/consultarCNPJ");
-      const response = await consultarCNPJFunc({ cnpj });
-      const dados = response.data;
-      
-      setDadosCNPJ(dados);
+      const response = await base44.functions.invoke('consultarCNPJ', { cnpj });
+      setDadosCNPJ(response.data);
       toast.success("Dados do CNPJ carregados com sucesso!");
     } catch (error) {
       console.error("Erro ao consultar CNPJ:", error);
-      toast.error("Erro ao consultar CNPJ. Verifique o número e tente novamente.");
+      toast.error(error.response?.data?.error || "Erro ao consultar CNPJ. Verifique o número e tente novamente.");
     } finally {
       setCarregandoCNPJ(false);
     }
