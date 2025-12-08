@@ -1,46 +1,35 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Users,
   Search,
   LayoutList,
   LayoutGrid,
-  Plus,
   Calculator,
   AlertCircle,
-  TrendingUp,
   Mail,
   Phone,
   Building2,
-  Calendar,
   DollarSign,
-  Eye,
-  Edit2
+  Edit2,
+  Plus,
+  Trash2,
+  Settings,
+  X,
+  Save,
+  Calendar,
+  MessageSquare
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
-
-const STATUS_CONFIG = {
-  lead: { label: "Lead", color: "bg-gray-500", textColor: "text-gray-700" },
-  contato_inicial: { label: "Contato Inicial", color: "bg-blue-500", textColor: "text-blue-700" },
-  proposta_enviada: { label: "Proposta Enviada", color: "bg-purple-500", textColor: "text-purple-700" },
-  negociacao: { label: "Em Negociação", color: "bg-yellow-500", textColor: "text-yellow-700" },
-  fechado_ganho: { label: "Ganho ✓", color: "bg-green-500", textColor: "text-green-700" },
-  fechado_perdido: { label: "Perdido", color: "bg-red-500", textColor: "text-red-700" }
-};
-
-const ORIGEM_CONFIG = {
-  landing_page: { label: "Landing Page", icon: "🌐" },
-  indicacao: { label: "Indicação", icon: "👥" },
-  manual: { label: "Manual", icon: "✍️" },
-  cold_call: { label: "Cold Call", icon: "📞" }
-};
+import { format } from "date-fns";
 
 export default function CRM() {
   const [user, setUser] = useState(null);
@@ -49,6 +38,8 @@ export default function CRM() {
   const [viewMode, setViewMode] = useState("kanban");
   const [searchTerm, setSearchTerm] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("todos");
+  const [showConfigEtapas, setShowConfigEtapas] = useState(false);
+  const [leadDetalhes, setLeadDetalhes] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -63,6 +54,7 @@ export default function CRM() {
 
   useEffect(() => {
     loadUser();
+    inicializarEtapasPadrao();
   }, []);
 
   const loadUser = async () => {
@@ -77,9 +69,37 @@ export default function CRM() {
     }
   };
 
+  const inicializarEtapasPadrao = async () => {
+    try {
+      const etapasExistentes = await base44.entities.EtapaFunil.list();
+      
+      if (etapasExistentes.length === 0) {
+        const etapasPadrao = [
+          { nome: "Contato Inicial", cor: "#3b82f6", ordem: 1, editavel: true },
+          { nome: "Proposta Enviada", cor: "#8b5cf6", ordem: 2, editavel: true },
+          { nome: "Em Negociação", cor: "#eab308", ordem: 3, editavel: true },
+          { nome: "Ganho ✓", cor: "#22c55e", ordem: 4, editavel: true },
+          { nome: "Perdido", cor: "#ef4444", ordem: 5, editavel: true }
+        ];
+
+        for (const etapa of etapasPadrao) {
+          await base44.entities.EtapaFunil.create(etapa);
+        }
+      }
+    } catch (error) {
+      console.log("Erro ao inicializar etapas (pode ser normal):", error.message);
+    }
+  };
+
   const { data: leads = [], isLoading: loadingLeads } = useQuery({
     queryKey: ['leads'],
     queryFn: () => base44.entities.Lead.list("-created_date"),
+    initialData: [],
+  });
+
+  const { data: etapas = [] } = useQuery({
+    queryKey: ['etapas-funil'],
+    queryFn: () => base44.entities.EtapaFunil.filter({ ativo: true }, "ordem"),
     initialData: [],
   });
 
@@ -93,7 +113,8 @@ export default function CRM() {
     try {
       const updateData = { status_funil: novoStatus };
       
-      if (novoStatus === "fechado_ganho" || novoStatus === "fechado_perdido") {
+      const etapa = etapas.find(e => e.id === novoStatus);
+      if (etapa?.nome.toLowerCase().includes("ganho") || etapa?.nome.toLowerCase().includes("perdido")) {
         updateData.data_fechamento = new Date().toISOString();
       }
 
@@ -123,20 +144,27 @@ export default function CRM() {
     return matchSearch && matchStatus;
   });
 
-  const leadsPorStatus = {
-    lead: leadsFiltrados.filter(l => l.status_funil === "lead"),
-    contato_inicial: leadsFiltrados.filter(l => l.status_funil === "contato_inicial"),
-    proposta_enviada: leadsFiltrados.filter(l => l.status_funil === "proposta_enviada"),
-    negociacao: leadsFiltrados.filter(l => l.status_funil === "negociacao"),
-    fechado_ganho: leadsFiltrados.filter(l => l.status_funil === "fechado_ganho"),
-    fechado_perdido: leadsFiltrados.filter(l => l.status_funil === "fechado_perdido")
-  };
+  const todasEtapas = [
+    { id: "lead", nome: "Lead", cor: "#6b7280", editavel: false, ordem: 0 },
+    ...etapas
+  ];
+
+  const leadsPorStatus = {};
+  todasEtapas.forEach(etapa => {
+    leadsPorStatus[etapa.id] = leadsFiltrados.filter(l => l.status_funil === etapa.id);
+  });
 
   const calcularMetricas = () => {
     const total = leads.length;
-    const ganhos = leads.filter(l => l.status_funil === "fechado_ganho").length;
-    const perdidos = leads.filter(l => l.status_funil === "fechado_perdido").length;
-    const emNegociacao = leads.filter(l => ["contato_inicial", "proposta_enviada", "negociacao"].includes(l.status_funil)).length;
+    const ganhos = leads.filter(l => {
+      const etapa = etapas.find(e => e.id === l.status_funil);
+      return etapa?.nome.toLowerCase().includes("ganho");
+    }).length;
+    const perdidos = leads.filter(l => {
+      const etapa = etapas.find(e => e.id === l.status_funil);
+      return etapa?.nome.toLowerCase().includes("perdido");
+    }).length;
+    const emNegociacao = leads.filter(l => l.status_funil !== "lead" && !etapas.find(e => e.id === l.status_funil)?.nome.toLowerCase().includes("ganho") && !etapas.find(e => e.id === l.status_funil)?.nome.toLowerCase().includes("perdido")).length;
     const valorTotalPropostas = leads
       .filter(l => l.valor_total_proposta)
       .reduce((sum, l) => sum + l.valor_total_proposta, 0);
@@ -198,13 +226,23 @@ export default function CRM() {
                 Gerencie leads e propostas comerciais
               </p>
             </div>
-            <Button
-              onClick={() => window.location.href = createPageUrl("Precificacao")}
-              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-            >
-              <Calculator className="w-4 h-4" />
-              Nova Proposta
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setShowConfigEtapas(true)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Settings className="w-4 h-4" />
+                Configurar Etapas
+              </Button>
+              <Button
+                onClick={() => window.location.href = createPageUrl("Precificacao")}
+                className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+              >
+                <Calculator className="w-4 h-4" />
+                Nova Proposta
+              </Button>
+            </div>
           </div>
 
           {/* Métricas */}
@@ -235,7 +273,7 @@ export default function CRM() {
             </Card>
             <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
               <CardContent className="p-4 text-center">
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-xl font-bold text-blue-600">
                   R$ {metricas.valorTotalPropostas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
                 <p className="text-xs mt-1" style={{ color: theme.textMuted }}>Valor Propostas</p>
@@ -263,8 +301,9 @@ export default function CRM() {
                 style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
               >
                 <option value="todos">Todos Status</option>
-                {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                  <option key={key} value={key}>{config.label}</option>
+                <option value="lead">Lead</option>
+                {etapas.map(etapa => (
+                  <option key={etapa.id} value={etapa.id}>{etapa.nome}</option>
                 ))}
               </select>
               <Button
@@ -289,8 +328,10 @@ export default function CRM() {
         {viewMode === "kanban" ? (
           <KanbanView
             leadsPorStatus={leadsPorStatus}
+            todasEtapas={todasEtapas}
             onMudarStatus={handleMudarStatus}
             onGerarProposta={handleGerarProposta}
+            onVerDetalhes={setLeadDetalhes}
             theme={theme}
             isDark={isDark}
             usuarios={usuarios}
@@ -298,11 +339,44 @@ export default function CRM() {
         ) : (
           <ListView
             leads={leadsFiltrados}
+            todasEtapas={todasEtapas}
             onMudarStatus={handleMudarStatus}
             onGerarProposta={handleGerarProposta}
+            onVerDetalhes={setLeadDetalhes}
             theme={theme}
             isDark={isDark}
             usuarios={usuarios}
+          />
+        )}
+
+        {/* Modal Configurar Etapas */}
+        {showConfigEtapas && (
+          <ConfigurarEtapasModal
+            open={showConfigEtapas}
+            onClose={() => {
+              setShowConfigEtapas(false);
+              queryClient.invalidateQueries({ queryKey: ['etapas-funil'] });
+            }}
+            etapas={etapas}
+            theme={theme}
+            isDark={isDark}
+          />
+        )}
+
+        {/* Modal Detalhes Lead */}
+        {leadDetalhes && (
+          <DetalhesLeadModal
+            open={!!leadDetalhes}
+            onClose={() => setLeadDetalhes(null)}
+            lead={leadDetalhes}
+            todasEtapas={todasEtapas}
+            onAtualizar={() => {
+              queryClient.invalidateQueries({ queryKey: ['leads'] });
+              setLeadDetalhes(null);
+            }}
+            theme={theme}
+            isDark={isDark}
+            user={user}
           />
         )}
       </div>
@@ -310,21 +384,21 @@ export default function CRM() {
   );
 }
 
-function KanbanView({ leadsPorStatus, onMudarStatus, onGerarProposta, theme, isDark, usuarios }) {
+function KanbanView({ leadsPorStatus, todasEtapas, onMudarStatus, onGerarProposta, onVerDetalhes, theme, isDark, usuarios }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-      {Object.entries(STATUS_CONFIG).map(([status, config]) => {
-        const leadsNaColuna = leadsPorStatus[status] || [];
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 overflow-x-auto">
+      {todasEtapas.map((etapa) => {
+        const leadsNaColuna = leadsPorStatus[etapa.id] || [];
         
         return (
-          <div key={status}>
+          <div key={etapa.id} className="min-w-[280px]">
             <div className="mb-3">
               <div className="flex items-center gap-2 mb-2">
-                <Badge className={`${config.color} text-white`}>
+                <Badge style={{ backgroundColor: etapa.cor }} className="text-white">
                   {leadsNaColuna.length}
                 </Badge>
                 <h3 className="font-bold text-sm" style={{ color: theme.text }}>
-                  {config.label}
+                  {etapa.nome}
                 </h3>
               </div>
             </div>
@@ -334,8 +408,10 @@ function KanbanView({ leadsPorStatus, onMudarStatus, onGerarProposta, theme, isD
                 <LeadCard
                   key={lead.id}
                   lead={lead}
+                  todasEtapas={todasEtapas}
                   onMudarStatus={onMudarStatus}
                   onGerarProposta={onGerarProposta}
+                  onVerDetalhes={onVerDetalhes}
                   theme={theme}
                   isDark={isDark}
                   usuarios={usuarios}
@@ -350,7 +426,7 @@ function KanbanView({ leadsPorStatus, onMudarStatus, onGerarProposta, theme, isD
   );
 }
 
-function ListView({ leads, onMudarStatus, onGerarProposta, theme, isDark, usuarios }) {
+function ListView({ leads, todasEtapas, onMudarStatus, onGerarProposta, onVerDetalhes, theme, isDark, usuarios }) {
   return (
     <div className="space-y-3">
       {leads.length === 0 ? (
@@ -365,8 +441,10 @@ function ListView({ leads, onMudarStatus, onGerarProposta, theme, isDark, usuari
           <LeadCard
             key={lead.id}
             lead={lead}
+            todasEtapas={todasEtapas}
             onMudarStatus={onMudarStatus}
             onGerarProposta={onGerarProposta}
+            onVerDetalhes={onVerDetalhes}
             theme={theme}
             isDark={isDark}
             usuarios={usuarios}
@@ -378,18 +456,27 @@ function ListView({ leads, onMudarStatus, onGerarProposta, theme, isDark, usuari
   );
 }
 
-function LeadCard({ lead, onMudarStatus, onGerarProposta, theme, isDark, usuarios, isKanban }) {
-  const config = STATUS_CONFIG[lead.status_funil] || STATUS_CONFIG.lead;
-  const origemConfig = ORIGEM_CONFIG[lead.origem] || ORIGEM_CONFIG.manual;
+function LeadCard({ lead, todasEtapas, onMudarStatus, onGerarProposta, onVerDetalhes, theme, isDark, usuarios, isKanban }) {
+  const etapaAtual = todasEtapas.find(e => e.id === lead.status_funil) || todasEtapas[0];
   const vendedor = usuarios.find(u => u.id === lead.vendedor_id);
 
   const addons = lead.addons_selecionados ? JSON.parse(lead.addons_selecionados) : [];
 
+  const ORIGEM_CONFIG = {
+    landing_page: { label: "Landing Page", icon: "🌐" },
+    indicacao: { label: "Indicação", icon: "👥" },
+    manual: { label: "Manual", icon: "✍️" },
+    cold_call: { label: "Cold Call", icon: "📞" }
+  };
+
+  const origemConfig = ORIGEM_CONFIG[lead.origem] || ORIGEM_CONFIG.manual;
+
   return (
     <Card 
       style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
-      className={`hover:shadow-lg transition-all ${isKanban ? '' : 'border-l-4'}`}
-      {...(!isKanban && { style: { ...{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }, borderLeftColor: config.color.replace('bg-', '#') } })}
+      className={`hover:shadow-lg transition-all cursor-pointer ${isKanban ? '' : 'border-l-4'}`}
+      {...(!isKanban && { style: { ...{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }, borderLeftColor: etapaAtual.cor } })}
+      onClick={() => onVerDetalhes(lead)}
     >
       <CardContent className="p-4">
         <div className={`flex ${isKanban ? 'flex-col' : 'items-start justify-between'} gap-3`}>
@@ -435,8 +522,8 @@ function LeadCard({ lead, onMudarStatus, onGerarProposta, theme, isDark, usuario
             </div>
 
             <div className="flex flex-wrap gap-2 mb-3">
-              <Badge className={`${config.color} text-white text-xs`}>
-                {config.label}
+              <Badge style={{ backgroundColor: etapaAtual.cor }} className="text-white text-xs">
+                {etapaAtual.nome}
               </Badge>
               <Badge variant="outline" className="text-xs">
                 {origemConfig.icon} {origemConfig.label}
@@ -468,19 +555,23 @@ function LeadCard({ lead, onMudarStatus, onGerarProposta, theme, isDark, usuario
             )}
           </div>
 
-          <div className={`flex ${isKanban ? 'flex-col' : 'flex-row'} gap-2`}>
+          <div className={`flex ${isKanban ? 'flex-col' : 'flex-row'} gap-2`} onClick={(e) => e.stopPropagation()}>
             <select
               value={lead.status_funil}
               onChange={(e) => onMudarStatus(lead.id, e.target.value)}
               className="text-xs px-2 py-1 rounded border"
               style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
             >
-              {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                <option key={key} value={key}>{config.label}</option>
+              <option value="lead">Lead</option>
+              {todasEtapas.filter(e => e.id !== "lead").map((etapa) => (
+                <option key={etapa.id} value={etapa.id}>{etapa.nome}</option>
               ))}
             </select>
             <Button
-              onClick={() => onGerarProposta(lead)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onGerarProposta(lead);
+              }}
               size="sm"
               variant="outline"
               className="flex items-center gap-1"
@@ -492,5 +583,421 @@ function LeadCard({ lead, onMudarStatus, onGerarProposta, theme, isDark, usuario
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function ConfigurarEtapasModal({ open, onClose, etapas, theme, isDark }) {
+  const [etapasEditadas, setEtapasEditadas] = useState([...etapas]);
+  const queryClient = useQueryClient();
+
+  const handleAddEtapa = () => {
+    const novaOrdem = Math.max(...etapasEditadas.map(e => e.ordem), 0) + 1;
+    setEtapasEditadas([
+      ...etapasEditadas,
+      { id: `nova_${Date.now()}`, nome: "Nova Etapa", cor: "#3b82f6", ordem: novaOrdem, editavel: true, isNova: true }
+    ]);
+  };
+
+  const handleRemoverEtapa = (etapaId) => {
+    setEtapasEditadas(etapasEditadas.filter(e => e.id !== etapaId));
+  };
+
+  const handleEditarEtapa = (etapaId, campo, valor) => {
+    setEtapasEditadas(etapasEditadas.map(e => 
+      e.id === etapaId ? { ...e, [campo]: valor } : e
+    ));
+  };
+
+  const handleSalvar = async () => {
+    try {
+      for (const etapa of etapasEditadas) {
+        if (etapa.isNova) {
+          const { isNova, id, ...etapaData } = etapa;
+          await base44.entities.EtapaFunil.create(etapaData);
+        } else {
+          const { isNova, ...etapaData } = etapa;
+          await base44.entities.EtapaFunil.update(etapa.id, etapaData);
+        }
+      }
+
+      const etapasParaRemover = etapas.filter(e => !etapasEditadas.find(ee => ee.id === e.id));
+      for (const etapa of etapasParaRemover) {
+        await base44.entities.EtapaFunil.delete(etapa.id);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['etapas-funil'] });
+      toast.success("Etapas atualizadas com sucesso!");
+      onClose();
+    } catch (error) {
+      console.error("Erro ao salvar etapas:", error);
+      toast.error("Erro ao salvar etapas");
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div 
+        className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-lg shadow-xl"
+        style={{ backgroundColor: theme.cardBg }}
+      >
+        <div className="sticky top-0 z-10 p-6 border-b flex items-center justify-between" 
+          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <h2 className="text-2xl font-bold" style={{ color: theme.text }}>
+            Configurar Etapas do Funil
+          </h2>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <Alert>
+            <AlertCircle className="w-4 h-4" />
+            <AlertDescription>
+              A etapa "Lead" é fixa e não pode ser editada. Configure as demais etapas do funil conforme seu processo comercial.
+            </AlertDescription>
+          </Alert>
+
+          {etapasEditadas.map((etapa, index) => (
+            <Card key={etapa.id} style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block" style={{ color: theme.text }}>
+                        Nome da Etapa
+                      </label>
+                      <Input
+                        value={etapa.nome}
+                        onChange={(e) => handleEditarEtapa(etapa.id, 'nome', e.target.value)}
+                        style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: theme.text }}>
+                          Cor
+                        </label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="color"
+                            value={etapa.cor}
+                            onChange={(e) => handleEditarEtapa(etapa.id, 'cor', e.target.value)}
+                            className="w-16 h-9 p-1"
+                          />
+                          <Input
+                            value={etapa.cor}
+                            onChange={(e) => handleEditarEtapa(etapa.id, 'cor', e.target.value)}
+                            placeholder="#3b82f6"
+                            style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1 block" style={{ color: theme.text }}>
+                          Ordem
+                        </label>
+                        <Input
+                          type="number"
+                          value={etapa.ordem}
+                          onChange={(e) => handleEditarEtapa(etapa.id, 'ordem', parseInt(e.target.value))}
+                          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemoverEtapa(etapa.id)}
+                    className="text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+
+          <Button
+            onClick={handleAddEtapa}
+            variant="outline"
+            className="w-full flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Adicionar Etapa
+          </Button>
+        </div>
+
+        <div className="sticky bottom-0 p-6 border-t flex items-center justify-end gap-3"
+          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSalvar}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Salvar Alterações
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DetalhesLeadModal({ open, onClose, lead, todasEtapas, onAtualizar, theme, isDark, user }) {
+  const [observacoesInternas, setObservacoesInternas] = useState(lead.observacoes_internas || "");
+  const [novaInteracao, setNovaInteracao] = useState({ tipo: "email", descricao: "" });
+  const [salvando, setSalvando] = useState(false);
+
+  const { data: interacoes = [] } = useQuery({
+    queryKey: ['interacoes', lead.id],
+    queryFn: () => base44.entities.InteracaoLead.filter({ lead_id: lead.id }, "-data_interacao"),
+    initialData: [],
+  });
+
+  const handleSalvarObservacoes = async () => {
+    setSalvando(true);
+    try {
+      await base44.entities.Lead.update(lead.id, { observacoes_internas: observacoesInternas });
+      toast.success("Observações salvas!");
+      onAtualizar();
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao salvar observações");
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const handleAdicionarInteracao = async () => {
+    if (!novaInteracao.descricao) {
+      toast.error("Preencha a descrição");
+      return;
+    }
+
+    try {
+      await base44.entities.InteracaoLead.create({
+        lead_id: lead.id,
+        tipo: novaInteracao.tipo,
+        descricao: novaInteracao.descricao,
+        data_interacao: new Date().toISOString(),
+        usuario_id: user.id
+      });
+
+      await base44.entities.Lead.update(lead.id, {
+        data_ultimo_contato: new Date().toISOString()
+      });
+
+      setNovaInteracao({ tipo: "email", descricao: "" });
+      queryClient.invalidateQueries({ queryKey: ['interacoes', lead.id] });
+      toast.success("Interação registrada!");
+    } catch (error) {
+      console.error("Erro ao adicionar interação:", error);
+      toast.error("Erro ao registrar interação");
+    }
+  };
+
+  const queryClient = useQueryClient();
+  const etapaAtual = todasEtapas.find(e => e.id === lead.status_funil) || todasEtapas[0];
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div 
+        className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg shadow-xl"
+        style={{ backgroundColor: theme.cardBg }}
+      >
+        <div className="sticky top-0 z-10 p-6 border-b flex items-center justify-between" 
+          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: etapaAtual.cor }}>
+              <Building2 className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold" style={{ color: theme.text }}>
+                {lead.razao_social}
+              </h2>
+              <Badge style={{ backgroundColor: etapaAtual.cor }} className="text-white text-xs mt-1">
+                {etapaAtual.nome}
+              </Badge>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Informações Básicas */}
+          <div>
+            <h3 className="font-bold text-lg mb-3" style={{ color: theme.text }}>Informações</h3>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              {lead.cnpj && (
+                <div>
+                  <p className="font-semibold mb-1" style={{ color: theme.textMuted }}>CNPJ</p>
+                  <p style={{ color: theme.text }}>{lead.cnpj}</p>
+                </div>
+              )}
+              {lead.cidade && (
+                <div>
+                  <p className="font-semibold mb-1" style={{ color: theme.textMuted }}>Cidade/UF</p>
+                  <p style={{ color: theme.text }}>{lead.cidade}/{lead.uf}</p>
+                </div>
+              )}
+              {lead.responsavel_nome && (
+                <div>
+                  <p className="font-semibold mb-1" style={{ color: theme.textMuted }}>Responsável</p>
+                  <p style={{ color: theme.text }}>{lead.responsavel_nome}</p>
+                </div>
+              )}
+              {lead.responsavel_cargo && (
+                <div>
+                  <p className="font-semibold mb-1" style={{ color: theme.textMuted }}>Cargo</p>
+                  <p style={{ color: theme.text }}>{lead.responsavel_cargo}</p>
+                </div>
+              )}
+              {lead.responsavel_email && (
+                <div>
+                  <p className="font-semibold mb-1" style={{ color: theme.textMuted }}>Email</p>
+                  <p style={{ color: theme.text }}>{lead.responsavel_email}</p>
+                </div>
+              )}
+              {lead.responsavel_telefone && (
+                <div>
+                  <p className="font-semibold mb-1" style={{ color: theme.textMuted }}>Telefone</p>
+                  <p style={{ color: theme.text }}>{lead.responsavel_telefone}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Proposta */}
+          {lead.valor_total_proposta && (
+            <div>
+              <h3 className="font-bold text-lg mb-3" style={{ color: theme.text }}>Proposta Comercial</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
+                  <CardContent className="p-4">
+                    <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Valor Total Mensal</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      R$ {lead.valor_total_proposta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                  </CardContent>
+                </Card>
+                {lead.data_proposta && (
+                  <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
+                    <CardContent className="p-4">
+                      <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Data Proposta</p>
+                      <p className="text-sm font-semibold" style={{ color: theme.text }}>
+                        {format(new Date(lead.data_proposta), "dd/MM/yyyy HH:mm")}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Observações Internas */}
+          <div>
+            <h3 className="font-bold text-lg mb-3" style={{ color: theme.text }}>Observações Internas</h3>
+            <Textarea
+              value={observacoesInternas}
+              onChange={(e) => setObservacoesInternas(e.target.value)}
+              placeholder="Anotações internas sobre o lead, negociação, próximos passos..."
+              rows={4}
+              style={{ backgroundColor: isDark ? '#0f172a' : '#ffffff', borderColor: theme.cardBorder, color: theme.text }}
+            />
+            <Button
+              onClick={handleSalvarObservacoes}
+              disabled={salvando}
+              className="mt-2 bg-blue-600 hover:bg-blue-700"
+              size="sm"
+            >
+              <Save className="w-3 h-3 mr-2" />
+              Salvar Observações
+            </Button>
+          </div>
+
+          {/* Histórico de Interações */}
+          <div>
+            <h3 className="font-bold text-lg mb-3" style={{ color: theme.text }}>Histórico de Interações</h3>
+            
+            {/* Nova Interação */}
+            <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }} className="mb-4">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex gap-3">
+                  <select
+                    value={novaInteracao.tipo}
+                    onChange={(e) => setNovaInteracao({ ...novaInteracao, tipo: e.target.value })}
+                    className="px-3 py-2 rounded-lg border text-sm"
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  >
+                    <option value="email">📧 Email</option>
+                    <option value="telefone">📞 Telefone</option>
+                    <option value="reuniao">👥 Reunião</option>
+                    <option value="proposta">📄 Proposta</option>
+                    <option value="followup">🔄 Follow-up</option>
+                    <option value="outro">💬 Outro</option>
+                  </select>
+                  <Input
+                    value={novaInteracao.descricao}
+                    onChange={(e) => setNovaInteracao({ ...novaInteracao, descricao: e.target.value })}
+                    placeholder="Descreva a interação..."
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                  <Button onClick={handleAdicionarInteracao} size="sm" className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Lista de Interações */}
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {interacoes.length === 0 ? (
+                <p className="text-sm text-center py-8" style={{ color: theme.textMuted }}>
+                  Nenhuma interação registrada
+                </p>
+              ) : (
+                interacoes.map((interacao) => (
+                  <Card key={interacao.id} style={{ backgroundColor: isDark ? '#0f172a' : '#ffffff', borderColor: theme.cardBorder }}>
+                    <CardContent className="p-3">
+                      <div className="flex items-start gap-3">
+                        <MessageSquare className="w-4 h-4 flex-shrink-0 mt-1 text-blue-600" />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant="outline" className="text-xs">
+                              {interacao.tipo}
+                            </Badge>
+                            <span className="text-xs" style={{ color: theme.textMuted }}>
+                              {format(new Date(interacao.data_interacao), "dd/MM/yyyy HH:mm")}
+                            </span>
+                          </div>
+                          <p className="text-sm" style={{ color: theme.text }}>{interacao.descricao}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="sticky bottom-0 p-6 border-t flex items-center justify-end gap-3"
+          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <Button variant="outline" onClick={onClose}>
+            Fechar
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
