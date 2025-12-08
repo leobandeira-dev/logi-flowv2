@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import {
   Truck,
+  MapPin,
   Workflow,
   BarChart3,
   CheckCircle2,
@@ -31,12 +32,14 @@ import {
   Target,
   Award,
   PlayCircle,
+  AlertCircle,
   Package,
   Navigation,
   Settings,
   Eye,
   Filter,
-  XCircle
+  XCircle,
+  Camera
 } from "lucide-react";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
@@ -241,6 +244,17 @@ export default function LandingPage() {
     setEnviando(true);
 
     try {
+      // Criar lead no banco de dados
+      await base44.entities.Lead.create({
+        razao_social: formData.empresa || formData.nome,
+        responsavel_nome: formData.nome,
+        responsavel_email: formData.email,
+        responsavel_telefone: formData.telefone,
+        status_funil: "lead",
+        origem: "landing_page",
+        observacoes: `Plano de interesse: ${formData.plano || "Não especificado"}\n\nMensagem: ${formData.mensagem || "Não informado"}`
+      });
+
       const emailBody = `
 Nova Solicitação de Interesse - Log Flow
 
@@ -255,6 +269,7 @@ ${formData.mensagem || "Não informado"}
 
 ---
 Enviado via Landing Page - ${new Date().toLocaleString('pt-BR')}
+Lead criado automaticamente no CRM
       `;
 
       await base44.integrations.Core.SendEmail({

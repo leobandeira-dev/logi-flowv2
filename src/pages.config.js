@@ -33,6 +33,7 @@ import Unitizacao from './pages/Unitizacao';
 import ChamadosAdmin from './pages/ChamadosAdmin';
 import Parceiros from './pages/Parceiros';
 import Precificacao from './pages/Precificacao';
+import CRM from './pages/CRM';
 import __Layout from './Layout.jsx';
 
 
@@ -72,6 +73,7 @@ export const PAGES = {
     "ChamadosAdmin": ChamadosAdmin,
     "Parceiros": Parceiros,
     "Precificacao": Precificacao,
+    "CRM": CRM,
 }
 
 export const pagesConfig = {

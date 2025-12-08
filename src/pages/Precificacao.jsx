@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Package,
   Users,
+  FileText,
   CheckCircle2,
   Calculator,
   TrendingUp,
@@ -18,8 +19,12 @@ import {
   MessageCircle,
   Edit2,
   Save,
-  X
+  X,
+  Clock
 } from "lucide-react";
+import { toast } from "sonner";
+import { createPageUrl } from "@/utils";
+import { Label } from "@/components/ui/label";
 
 const PACOTE_BASE = {
   nome: "Pacote Base",
@@ -108,6 +113,10 @@ export default function Precificacao() {
   const [volumeNotasFiscais, setVolumeNotasFiscais] = useState(0);
   const [editandoPrecos, setEditandoPrecos] = useState(false);
   const [precosCustomizados, setPrecosCustomizados] = useState(null);
+  const [cnpj, setCnpj] = useState("");
+  const [dadosCNPJ, setDadosCNPJ] = useState(null);
+  const [carregandoCNPJ, setCarregandoCNPJ] = useState(false);
+  const [leadSelecionado, setLeadSelecionado] = useState(null);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -167,6 +176,83 @@ export default function Precificacao() {
       console.error("Erro ao carregar usuário:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const consultarCNPJ = async () => {
+    if (!cnpj) {
+      toast.error("Digite um CNPJ");
+      return;
+    }
+
+    setCarregandoCNPJ(true);
+    try {
+      const { consultarCNPJ: consultarCNPJFunc } = await import("@/functions/consultarCNPJ");
+      const response = await consultarCNPJFunc({ cnpj });
+      const dados = response.data;
+      
+      setDadosCNPJ(dados);
+      toast.success("Dados do CNPJ carregados com sucesso!");
+    } catch (error) {
+      console.error("Erro ao consultar CNPJ:", error);
+      toast.error("Erro ao consultar CNPJ. Verifique o número e tente novamente.");
+    } finally {
+      setCarregandoCNPJ(false);
+    }
+  };
+
+  const salvarProposta = async () => {
+    if (!dadosCNPJ) {
+      toast.error("Consulte um CNPJ primeiro");
+      return;
+    }
+
+    try {
+      const totais = calcularTotais();
+      
+      const leadData = {
+        cnpj: dadosCNPJ.cnpj,
+        razao_social: dadosCNPJ.razao_social,
+        nome_fantasia: dadosCNPJ.nome_fantasia,
+        telefone: dadosCNPJ.telefone,
+        email: dadosCNPJ.email,
+        endereco_completo: dadosCNPJ.endereco_completo,
+        cidade: dadosCNPJ.cidade,
+        uf: dadosCNPJ.uf,
+        cep: dadosCNPJ.cep,
+        status_funil: leadSelecionado ? leadSelecionado.status_funil : "proposta_enviada",
+        pacote_base_preco: totais.pacoteBase,
+        addons_selecionados: JSON.stringify(totais.addons.map(a => ({ id: a.id, nome: a.nome, preco: a.preco }))),
+        volume_coletas: volumeColetas,
+        volume_carregamentos: volumeCarregamentos,
+        volume_entregas: volumeEntregas,
+        volume_notas_fiscais: volumeNotasFiscais,
+        valor_total_proposta: totais.totalMensal,
+        data_proposta: new Date().toISOString(),
+        origem: leadSelecionado ? leadSelecionado.origem : "manual",
+        vendedor_id: user.id
+      };
+
+      if (leadSelecionado) {
+        await base44.entities.Lead.update(leadSelecionado.id, leadData);
+        toast.success("Proposta atualizada com sucesso!");
+      } else {
+        await base44.entities.Lead.create(leadData);
+        toast.success("Proposta criada com sucesso!");
+      }
+
+      // Limpar formulário
+      setCnpj("");
+      setDadosCNPJ(null);
+      setLeadSelecionado(null);
+      setAddonsSelecionados([]);
+      setVolumeColetas(0);
+      setVolumeCarregamentos(0);
+      setVolumeEntregas(0);
+      setVolumeNotasFiscais(0);
+    } catch (error) {
+      console.error("Erro ao salvar proposta:", error);
+      toast.error("Erro ao salvar proposta");
     }
   };
 
@@ -279,16 +365,77 @@ export default function Precificacao() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Calculator className="w-8 h-8 text-blue-600" />
-            <h1 className="text-3xl font-bold" style={{ color: theme.text }}>
-              Montar Plano
-            </h1>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <Calculator className="w-8 h-8 text-blue-600" />
+                <h1 className="text-3xl font-bold" style={{ color: theme.text }}>
+                  Montar Plano
+                </h1>
+              </div>
+              <p style={{ color: theme.textMuted }}>
+                Monte sua configuração customizada com pacote base e add-ons
+              </p>
+            </div>
+            <Button
+              onClick={() => window.location.href = createPageUrl("CRM")}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Users className="w-4 h-4" />
+              Ver CRM
+            </Button>
           </div>
-          <p style={{ color: theme.textMuted }}>
-            Monte sua configuração customizada com pacote base e add-ons
-          </p>
         </div>
+
+        {/* Busca CNPJ */}
+        <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }} className="mb-8">
+          <CardContent className="p-6">
+            <div className="flex gap-3 items-end">
+              <div className="flex-1">
+                <Label style={{ color: theme.text }}>CNPJ do Cliente</Label>
+                <Input
+                  value={cnpj}
+                  onChange={(e) => setCnpj(e.target.value)}
+                  placeholder="00.000.000/0000-00"
+                  className="mt-1"
+                  style={{ backgroundColor: isDark ? '#0f172a' : '#ffffff', borderColor: theme.cardBorder, color: theme.text }}
+                />
+              </div>
+              <Button
+                onClick={consultarCNPJ}
+                disabled={carregandoCNPJ}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {carregandoCNPJ ? (
+                  <>
+                    <Clock className="w-4 h-4 mr-2 animate-spin" />
+                    Consultando...
+                  </>
+                ) : (
+                  "Buscar Dados"
+                )}
+              </Button>
+            </div>
+
+            {dadosCNPJ && (
+              <div className="mt-4 p-4 rounded-lg border" style={{ 
+                backgroundColor: isDark ? 'rgba(34, 197, 94, 0.1)' : '#dcfce7',
+                borderColor: isDark ? '#22c55e' : '#86efac'
+              }}>
+                <p className="font-bold mb-2" style={{ color: theme.text }}>
+                  {dadosCNPJ.razao_social}
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-sm" style={{ color: theme.textMuted }}>
+                  <p>CNPJ: {dadosCNPJ.cnpj}</p>
+                  <p>Cidade: {dadosCNPJ.cidade}/{dadosCNPJ.uf}</p>
+                  {dadosCNPJ.telefone && <p>Telefone: {dadosCNPJ.telefone}</p>}
+                  {dadosCNPJ.email && <p>Email: {dadosCNPJ.email}</p>}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Botão Editar Preços */}
         <div className="flex justify-end mb-8">
@@ -599,8 +746,12 @@ export default function Precificacao() {
                   </div>
                 </div>
 
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                  Solicitar Proposta Comercial
+                <Button 
+                  onClick={salvarProposta}
+                  disabled={!dadosCNPJ}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {leadSelecionado ? "Atualizar Proposta" : "Salvar Proposta"}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
 
