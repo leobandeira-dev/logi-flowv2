@@ -131,7 +131,52 @@ export default function Precificacao() {
   useEffect(() => {
     loadUser();
     carregarPrecosCustomizados();
+    carregarLeadDaURL();
   }, []);
+
+  const carregarLeadDaURL = async () => {
+    const params = new URLSearchParams(window.location.search);
+    const leadId = params.get('lead_id');
+    
+    if (leadId) {
+      try {
+        const leads = await base44.entities.Lead.filter({ id: leadId });
+        if (leads.length > 0) {
+          const lead = leads[0];
+          setLeadSelecionado(lead);
+          
+          if (lead.cnpj) {
+            setCnpj(lead.cnpj);
+            setDadosCNPJ({
+              cnpj: lead.cnpj,
+              razao_social: lead.razao_social,
+              nome_fantasia: lead.nome_fantasia,
+              telefone: lead.telefone,
+              email: lead.email,
+              endereco_completo: lead.endereco_completo,
+              cidade: lead.cidade,
+              uf: lead.uf,
+              cep: lead.cep
+            });
+          }
+          
+          if (lead.addons_selecionados) {
+            const addons = JSON.parse(lead.addons_selecionados);
+            setAddonsSelecionados(addons.map(a => a.id));
+          }
+          
+          setVolumeColetas(lead.volume_coletas || 0);
+          setVolumeCarregamentos(lead.volume_carregamentos || 0);
+          setVolumeEntregas(lead.volume_entregas || 0);
+          setVolumeNotasFiscais(lead.volume_notas_fiscais || 0);
+          
+          toast.success("Lead carregado com sucesso!");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar lead:", error);
+      }
+    }
+  };
 
   const carregarPrecosCustomizados = () => {
     const saved = localStorage.getItem('precos_customizados');
