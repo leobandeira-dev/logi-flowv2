@@ -101,7 +101,7 @@ export default function FichaMotorista({ open, onClose, motorista, veiculos }) {
         </DialogContent>
       </Dialog>
 
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{__html: `
         @media print {
           body * {
             visibility: hidden;
@@ -121,7 +121,7 @@ export default function FichaMotorista({ open, onClose, motorista, veiculos }) {
             margin: 1cm;
           }
         }
-      `}</style>
+      `}} />
     </>
   );
 }

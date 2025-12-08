@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Dialog,
@@ -7,7 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Printer } from "lucide-react";
+import { Printer, Download } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -65,7 +64,7 @@ export default function ImpressaoOrdem({ open, onClose, ordem, motorista, veicul
         </DialogContent>
       </Dialog>
 
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{__html: `
         @media print {
           body * {
             visibility: hidden;
@@ -84,7 +83,7 @@ export default function ImpressaoOrdem({ open, onClose, ordem, motorista, veicul
             margin: 1cm;
           }
         }
-      `}</style>
+      `}} />
     </>
   );
 }
