@@ -1,0 +1,849 @@
+import React, { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Search, Filter, ChevronDown, FileText, Package, FileSpreadsheet } from "lucide-react";
+import { toast } from 'react-hot-toast';
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import OrdensTableEditable from "../components/ordens/OrdensTableEditable";
+import OrdemUnificadaForm from "../components/ordens/OrdemUnificadaForm";
+import OrdemDetails from "../components/ordens/OrdemDetails";
+import OfertaCargaForm from "../components/ordens/OfertaCargaForm";
+import OfertaCargaLote from "../components/ordens/OfertaCargaLote";
+import TipoOrdemModal from "../components/ordens/TipoOrdemModal";
+import ExportarOfertasPDF from "../components/ordens/ExportarOfertasPDF";
+import FiltrosPredefinidos from "../components/filtros/FiltrosPredefinidos";
+import PaginacaoControles from "../components/filtros/PaginacaoControles";
+
+export default function OrdensCarregamento() {
+  const [ordens, setOrdens] = useState([]);
+  const [motoristas, setMotoristas] = useState([]);
+  const [veiculos, setVeiculos] = useState([]);
+  const [operacoes, setOperacoes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [selectedOrdem, setSelectedOrdem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [editingOrdem, setEditingOrdem] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showTipoModal, setShowTipoModal] = useState(false);
+  const [showOfertaForm, setShowOfertaForm] = useState(false);
+  const [showOfertaLote, setShowOfertaLote] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    operacoesIds: [],
+    status: "",
+    tiposRegistro: [],
+    origem: "",
+    destino: "",
+    dataInicio: "",
+    dataFim: "",
+    tipoRegistro: ""
+  });
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [limite, setLimite] = useState(50);
+  const [graficoExpandido, setGraficoExpandido] = useState(false);
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    };
+    checkDarkMode();
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    loadCurrentUser();
+    loadData();
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const ordemId = urlParams.get('id');
+    if (ordemId) {
+      loadOrdemForEdit(ordemId);
+    }
+  }, []);
+
+  const loadCurrentUser = async () => {
+    try {
+      const user = await base44.auth.me();
+      setCurrentUser(user);
+    } catch (error) {
+      console.error("Erro ao carregar usuário:", error);
+    }
+  };
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const user = await base44.auth.me();
+      
+      const [ordensData, motoristasData, veiculosData, operacoesData] = await Promise.all([
+        base44.entities.OrdemDeCarregamento.list("-data_solicitacao"),
+        base44.entities.Motorista.list(),
+        base44.entities.Veiculo.list(),
+        base44.entities.Operacao.list()
+      ]);
+      
+      let ordensFiltradas = ordensData;
+      
+      // Filtrar baseado no tipo de perfil do usuário
+      if (user.tipo_perfil === "fornecedor") {
+        // Fornecedor vê apenas ordens onde seu CNPJ é o remetente
+        ordensFiltradas = ordensData.filter(o => o.cliente_cnpj === user.cnpj_associado);
+      } else if (user.tipo_perfil === "cliente") {
+        // Cliente vê apenas ordens onde seu CNPJ é o destinatário
+        ordensFiltradas = ordensData.filter(o => o.destinatario_cnpj === user.cnpj_associado);
+      } else if (user.tipo_perfil === "operador") {
+        // Operador vê todas as ordens da empresa do operador logístico
+        ordensFiltradas = user.empresa_id && user.role !== "admin"
+          ? ordensData.filter(o => o.empresa_id === user.empresa_id || !o.empresa_id)
+          : ordensData;
+      } else if (user.role === "admin") {
+        // Admin vê tudo
+        ordensFiltradas = ordensData;
+      }
+      
+      setOrdens(ordensFiltradas);
+      setMotoristas(motoristasData);
+      setVeiculos(veiculosData);
+      setOperacoes(operacoesData.filter(op => op.ativo));
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadOrdemForEdit = async (id) => {
+    try {
+      const ordemData = await base44.entities.OrdemDeCarregamento.list();
+      const ordem = ordemData.find(o => o.id === id);
+      if (ordem) {
+        setEditingOrdem(ordem);
+        setShowForm(true);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar ordem para edição:", error);
+    }
+  };
+
+  const loadOrdemDetails = async (id) => {
+    try {
+      const ordemData = await base44.entities.OrdemDeCarregamento.list();
+      const ordem = ordemData.find(o => o.id === id);
+      if (ordem) {
+        setSelectedOrdem(ordem);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar ordem:", error);
+    }
+  };
+
+  const generateNumeroCarga = (offset = 0) => {
+    const year = new Date().getFullYear();
+    const sequence = (ordens.length + 1 + offset).toString().padStart(4, '0');
+    return `${year}-${sequence}`;
+  };
+
+  const handleSubmit = async (data, notasFiscaisData = []) => {
+    try {
+      const user = await base44.auth.me();
+
+      let valorTotal = 0;
+      if (data.peso && data.valor_tonelada) {
+        valorTotal = (data.peso / 1000) * data.valor_tonelada;
+      } else if (data.frete_viagem) {
+        valorTotal = data.frete_viagem;
+      }
+
+      let clienteFinalNome = data.cliente_final_nome;
+      let clienteFinalCnpj = data.cliente_final_cnpj;
+      
+      if (!clienteFinalNome || !clienteFinalCnpj) {
+        if (data.tipo_operacao === "CIF") {
+          clienteFinalNome = data.cliente;
+          clienteFinalCnpj = data.cliente_cnpj;
+        } else if (data.tipo_operacao === "FOB") {
+          clienteFinalNome = data.destinatario || data.destino;
+          clienteFinalCnpj = data.destinatario_cnpj;
+        }
+      }
+
+      // Calcular tipo_registro e tipo_negociacao baseado nos dados atuais
+      const temMotorista = data.motorista_id || data.motorista_nome_temp;
+      const temVeiculo = data.cavalo_id;
+      
+      let tipoRegistro = data.tipo_registro || "ordem_completa";
+      let tipoNegociacao = data.tipo_negociacao;
+      
+      if (data.tipo_ordem !== "coleta") {
+        if (temMotorista && temVeiculo) {
+          tipoRegistro = "ordem_completa";
+          tipoNegociacao = "alocado";
+        } else if (temMotorista && !temVeiculo) {
+          tipoRegistro = "negociando";
+          tipoNegociacao = "negociando";
+        } else {
+          tipoRegistro = "oferta";
+          tipoNegociacao = "oferta";
+        }
+      }
+
+      const ordemData = {
+        ...data,
+        empresa_id: user.empresa_id,
+        valor_total_frete: valorTotal,
+        data_solicitacao: editingOrdem ? editingOrdem.data_solicitacao : new Date().toISOString(),
+        numero_carga: editingOrdem ? editingOrdem.numero_carga : generateNumeroCarga(),
+        tipo_registro: tipoRegistro,
+        tipo_negociacao: tipoNegociacao,
+        status: editingOrdem?.status || "novo",
+        cliente_final_nome: clienteFinalNome,
+        cliente_final_cnpj: clienteFinalCnpj
+      };
+
+      let ordemId;
+
+      if (editingOrdem) {
+        await base44.entities.OrdemDeCarregamento.update(editingOrdem.id, ordemData);
+        ordemId = editingOrdem.id;
+        
+        const mudouParaAlocado = tipoNegociacao === "alocado" && editingOrdem.tipo_negociacao !== "alocado";
+        if (mudouParaAlocado) {
+          toast.success("Ordem alocada com sucesso! Motorista e veículo definidos.");
+        } else {
+          toast.success("Ordem de carregamento atualizada com sucesso!");
+        }
+      } else {
+        const novaOrdem = await base44.entities.OrdemDeCarregamento.create(ordemData);
+        ordemId = novaOrdem.id;
+
+        await vincularPrimeiraEtapa(ordemId);
+        toast.success("Ordem de carregamento criada com sucesso!");
+      }
+
+      // Processar e vincular notas fiscais
+      if (notasFiscaisData && notasFiscaisData.length > 0) {
+        const notasIds = [];
+        let pesoTotal = 0;
+        let valorTotal = 0;
+        let volumesTotal = 0;
+
+        for (const nf of notasFiscaisData) {
+          let notaId;
+          
+          if (nf.nota_id_existente) {
+            // Nota já existe na base, apenas atualizar o vínculo
+            await base44.entities.NotaFiscal.update(nf.nota_id_existente, {
+              ordem_id: ordemId,
+              status_nf: "aguardando_expedicao"
+            });
+            notaId = nf.nota_id_existente;
+          } else {
+            // Criar nova nota fiscal
+            const notaData = {
+              ordem_id: ordemId,
+              numero_nota: nf.numero_nota,
+              serie_nota: nf.serie_nota,
+              chave_nota_fiscal: nf.chave_nota_fiscal,
+              data_hora_emissao: nf.data_emissao_nf,
+              natureza_operacao: nf.natureza_operacao,
+              emitente_razao_social: nf.emitente_razao_social,
+              emitente_cnpj: nf.emitente_cnpj,
+              emitente_telefone: nf.emitente_telefone,
+              emitente_uf: nf.emitente_uf,
+              emitente_cidade: nf.emitente_cidade,
+              emitente_bairro: nf.emitente_bairro,
+              emitente_endereco: nf.emitente_endereco,
+              emitente_numero: nf.emitente_numero,
+              emitente_cep: nf.emitente_cep,
+              destinatario_razao_social: nf.destinatario_razao_social,
+              destinatario_cnpj: nf.destinatario_cnpj,
+              destinatario_telefone: nf.destinatario_telefone,
+              destinatario_cidade: nf.destino_cidade,
+              destinatario_uf: nf.destino_uf,
+              destinatario_endereco: nf.destino_endereco,
+              destinatario_numero: nf.destino_numero,
+              destinatario_bairro: nf.destino_bairro,
+              destinatario_cep: nf.destino_cep,
+              valor_nota_fiscal: nf.valor_nf,
+              xml_content: nf.xml_content,
+              peso_total_nf: nf.peso_nf,
+              quantidade_total_volumes_nf: nf.volumes_nf,
+              status_nf: "aguardando_expedicao"
+            };
+
+            const notaCriada = await base44.entities.NotaFiscal.create(notaData);
+            notaId = notaCriada.id;
+          }
+
+          // Acumular IDs e totais
+          notasIds.push(notaId);
+          pesoTotal += nf.peso_nf || 0;
+          valorTotal += nf.valor_nf || 0;
+          volumesTotal += nf.volumes_nf || 0;
+        }
+
+        // Atualizar ordem com array de IDs e totais consolidados
+        await base44.entities.OrdemDeCarregamento.update(ordemId, {
+          notas_fiscais_ids: notasIds,
+          peso_total_consolidado: pesoTotal,
+          valor_total_consolidado: valorTotal,
+          volumes_total_consolidado: volumesTotal,
+          peso: pesoTotal,
+          volumes: volumesTotal
+        });
+      }
+
+      setShowForm(false);
+      setEditingOrdem(null);
+      loadData();
+    } catch (error) {
+      console.error("Erro ao salvar ordem:", error);
+      toast.error("Erro ao salvar ordem de carregamento");
+    }
+  };
+
+  const vincularPrimeiraEtapa = async (ordemId) => {
+    try {
+      const etapas = await base44.entities.Etapa.list("ordem"); 
+      const etapasAtivas = etapas.filter(e => e.ativo);
+      
+      if (etapasAtivas.length > 0) {
+        const primeiraEtapa = etapasAtivas[0];
+        
+        await base44.entities.OrdemEtapa.create({
+          ordem_id: ordemId,
+          etapa_id: primeiraEtapa.id,
+          status: "em_andamento",
+          data_inicio: new Date().toISOString()
+        });
+        
+        console.log("Ordem vinculada à primeira etapa:", primeiraEtapa.nome);
+      }
+    } catch (error) {
+      console.error("Erro ao vincular ordem à primeira etapa:", error);
+    }
+  };
+
+  const handleSubmitOferta = async (data) => {
+    try {
+      const user = await base44.auth.me();
+      
+      let valorTotal = 0;
+      if (data.peso && data.valor_tonelada) {
+        valorTotal = (data.peso / 1000) * data.valor_tonelada;
+      } else if (data.frete_viagem) {
+        valorTotal = data.frete_viagem;
+      }
+
+      let clienteFinalNome = data.cliente_final_nome;
+      let clienteFinalCnpj = data.cliente_final_cnpj;
+      
+      if (!clienteFinalNome || !clienteFinalCnpj) {
+        if (data.tipo_operacao === "CIF") {
+          clienteFinalNome = data.cliente;
+          clienteFinalCnpj = data.cliente_cnpj;
+        } else if (data.tipo_operacao === "FOB") {
+          clienteFinalNome = data.destinatario || data.destino;
+          clienteFinalCnpj = data.destinatario_cnpj;
+        }
+      }
+      
+      const ofertaData = {
+        ...data,
+        empresa_id: user.empresa_id,
+        valor_total_frete: valorTotal,
+        data_solicitacao: new Date().toISOString(),
+        numero_carga: generateNumeroCarga(),
+        tipo_registro: "oferta",
+        status: "novo",
+        cliente_final_nome: clienteFinalNome,
+        cliente_final_cnpj: clienteFinalCnpj
+      };
+
+      const novaOferta = await base44.entities.OrdemDeCarregamento.create(ofertaData);
+      
+      await vincularPrimeiraEtapa(novaOferta.id);
+      
+      setShowOfertaForm(false);
+      loadData();
+      toast.success("Oferta de carga criada com sucesso!");
+    } catch (error) {
+      console.error("Erro ao salvar oferta:", error);
+      toast.error("Erro ao criar oferta de carga");
+    }
+  };
+
+  const handleSubmitOfertasLote = async (ofertas) => {
+    try {
+      const user = await base44.auth.me();
+      
+      const ofertasComDados = ofertas.map((oferta, index) => {
+        let clienteFinalNome = oferta.cliente_final_nome;
+        let clienteFinalCnpj = oferta.cliente_final_cnpj;
+        
+        if (!clienteFinalNome || !clienteFinalCnpj) {
+          if (oferta.tipo_operacao === "CIF") {
+            clienteFinalNome = oferta.cliente;
+            clienteFinalCnpj = oferta.cliente_cnpj;
+          } else if (oferta.tipo_operacao === "FOB") {
+            clienteFinalNome = oferta.destinatario || oferta.destino;
+            clienteFinalCnpj = oferta.destinatario_cnpj;
+          }
+        }
+
+        return {
+          ...oferta,
+          empresa_id: user.empresa_id,
+          data_solicitacao: new Date().toISOString(),
+          numero_carga: generateNumeroCarga(index),
+          tipo_registro: "oferta",
+          status: "novo",
+          cliente_final_nome: clienteFinalNome,
+          cliente_final_cnpj: clienteFinalCnpj,
+          carregamento_agendamento_data: oferta.carregamento_agendamento_data,
+          descarga_agendamento_data: oferta.descarga_agendamento_data,
+          status_tracking: oferta.status_tracking
+        };
+      });
+
+      for (const oferta of ofertasComDados) {
+        const novaOferta = await base44.entities.OrdemDeCarregamento.create(oferta);
+        await vincularPrimeiraEtapa(novaOferta.id);
+      }
+      
+      setShowOfertaLote(false);
+      loadData();
+      toast.success("Ofertas de carga criadas com sucesso!");
+    } catch (error) {
+      console.error("Erro ao salvar ofertas em lote:", error);
+      toast.error("Erro ao criar ofertas em lote");
+    }
+  };
+
+  const handleSelectTipoOrdem = (tipo) => {
+    setShowTipoModal(false);
+    if (tipo === "ordem_completa") {
+      setShowForm(true);
+    } else if (tipo === "oferta_individual") {
+      setShowOfertaForm(true);
+    } else if (tipo === "oferta_lote") {
+      setShowOfertaLote(true);
+    }
+  };
+
+  const toggleOperacao = (operacaoId) => {
+    setFilters(prev => {
+      const operacoesIds = prev.operacoesIds.includes(operacaoId)
+        ? prev.operacoesIds.filter(id => id !== operacaoId)
+        : [...prev.operacoesIds, operacaoId];
+      return { ...prev, operacoesIds };
+    });
+  };
+
+  const filteredOrdens = ordens.filter(ordem => {
+    // REGRA: Excluir apenas coletas, recebimentos e ordens de entrega
+    // Permitir: oferta, negociando, ordem_completa, alocado
+    if (ordem.tipo_ordem === "coleta" || ordem.tipo_ordem === "recebimento" || ordem.tipo_ordem === "entrega") {
+      return false;
+    }
+    
+    // Verificar tipo_registro legado para garantir exclusão de coletas/recebimentos/entregas
+    const tiposExcluidosLegado = ["coleta_solicitada", "coleta_aprovada", "coleta_reprovada", "recebimento", "ordem_entrega"];
+    if (tiposExcluidosLegado.includes(ordem.tipo_registro)) {
+      return false;
+    }
+
+    if (filters.operacoesIds.length > 0 && !filters.operacoesIds.includes(ordem.operacao_id)) return false;
+    if (filters.status && ordem.status !== filters.status) return false;
+    if (filters.tiposRegistro && filters.tiposRegistro.length > 0 && !filters.tiposRegistro.includes(ordem.tipo_registro)) return false;
+    if (filters.origem && !ordem.origem?.toLowerCase().includes(filters.origem.toLowerCase())) return false;
+    if (filters.destino && !ordem.destino?.toLowerCase().includes(filters.destino.toLowerCase())) return false;
+    
+    if (filters.dataInicio && ordem.data_solicitacao) {
+      if (new Date(ordem.data_solicitacao) < new Date(filters.dataInicio)) return false;
+    }
+    
+    if (filters.dataFim && ordem.data_solicitacao) {
+      const dataFim = new Date(filters.dataFim);
+      dataFim.setHours(23, 59, 59, 999);
+      if (new Date(ordem.data_solicitacao) > dataFim) return false;
+    }
+
+    if (!searchTerm) return true;
+
+    const term = searchTerm.toLowerCase();
+    const motorista = motoristas.find(m => m.id === ordem.motorista_id);
+    const nomeMotorista = motorista?.nome || ordem.motorista_nome_temp || "";
+
+    return (
+      ordem.numero_carga?.toLowerCase().includes(term) ||
+      ordem.cliente?.toLowerCase().includes(term) ||
+      ordem.origem?.toLowerCase().includes(term) ||
+      ordem.destino?.toLowerCase().includes(term) ||
+      ordem.produto?.toLowerCase().includes(term) ||
+      nomeMotorista.toLowerCase().includes(term)
+    );
+  });
+
+  const inicio = (paginaAtual - 1) * limite;
+  const fim = inicio + limite;
+  const ordensExibidas = filteredOrdens.slice(inicio, fim);
+
+  const handleEdit = (ordem) => {
+    setEditingOrdem(ordem);
+    setShowForm(true);
+  };
+
+  const handleViewDetails = (ordem) => {
+    setSelectedOrdem(ordem);
+  };
+
+  const handleDelete = async (ordem) => {
+    if (!confirm(`Tem certeza que deseja excluir a ordem ${ordem.numero_carga || '#' + ordem.id.slice(-6)}?`)) {
+      return;
+    }
+
+    try {
+      await base44.entities.OrdemDeCarregamento.delete(ordem.id);
+      toast.success("Ordem excluída com sucesso!");
+      loadData();
+    } catch (error) {
+      console.error("Erro ao excluir ordem:", error);
+      toast.error("Erro ao excluir ordem");
+    }
+  };
+
+  const theme = {
+    bg: isDark ? '#0f172a' : '#f9fafb',
+    text: isDark ? '#ffffff' : '#111827',
+    textMuted: isDark ? '#9ca3af' : '#6b7280',
+    inputBg: isDark ? '#1e293b' : '#ffffff',
+    inputBorder: isDark ? '#334155' : '#d1d5db',
+    cardBg: isDark ? '#1e293b' : '#ffffff',
+    cardBorder: isDark ? '#334155' : '#e5e7eb',
+  };
+
+  return (
+    <div className="p-6 min-h-screen transition-colors" style={{ backgroundColor: theme.bg }}>
+      <div className="max-w-[1800px] mx-auto">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+          <div>
+            <h1 className="text-2xl font-bold mb-1" style={{ color: theme.text }}>Ordens de Carregamento</h1>
+            <p className="text-sm" style={{ color: theme.textMuted }}>Gerencie todas as ordens de carregamento</p>
+          </div>
+          
+          <div className="flex gap-2 w-full lg:w-auto">
+            <div className="relative flex-1 lg:w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
+              <Input
+                placeholder="Buscar ordens..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-9 text-sm"
+                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+              />
+            </div>
+
+            <FiltrosPredefinidos
+              rota="ordens"
+              filtrosAtuais={filters}
+              onAplicarFiltro={(novosFiltros) => {
+                setFilters(novosFiltros);
+                setPaginaAtual(1);
+              }}
+            />
+            <PaginacaoControles
+              paginaAtual={paginaAtual}
+              totalRegistros={filteredOrdens.length}
+              limite={limite}
+              onPaginaAnterior={() => setPaginaAtual(prev => Math.max(1, prev - 1))}
+              onProximaPagina={() => setPaginaAtual(prev => prev + 1)}
+              isDark={isDark}
+            />
+            <Button
+              variant={showFilters ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="h-9"
+              style={!showFilters ? {
+                backgroundColor: 'transparent',
+                borderColor: theme.inputBorder,
+                color: theme.text
+              } : {}}
+            >
+              <Filter className="w-4 h-4" />
+            </Button>
+
+            <ExportarOfertasPDF ordens={filteredOrdens} />
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 h-9 text-sm flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Nova Ordem
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}>
+                <DropdownMenuItem onClick={() => setShowTipoModal(true)} style={{ color: theme.text }}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Ordem Completa
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowOfertaForm(true)} style={{ color: theme.text }}>
+                  <Package className="w-4 h-4 mr-2 text-green-600" />
+                  Oferta de Carga
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowOfertaLote(true)} style={{ color: theme.text }}>
+                  <FileSpreadsheet className="w-4 h-4 mr-2 text-purple-600" />
+                  Lançamento em Lote
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {showFilters && (
+          <Card className="mb-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+            <CardContent className="pt-4 pb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="md:col-span-2">
+                  <Label className="text-xs mb-2 block" style={{ color: theme.textMuted }}>Operações (múltiplas)</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {operacoes.map((op) => (
+                      <Badge
+                        key={op.id}
+                        variant={filters.operacoesIds.includes(op.id) ? "default" : "outline"}
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                        style={filters.operacoesIds.includes(op.id) ? {
+                          backgroundColor: '#3b82f6',
+                          color: 'white'
+                        } : {
+                          backgroundColor: 'transparent',
+                          borderColor: theme.inputBorder,
+                          color: theme.text
+                        }}
+                        onClick={() => toggleOperacao(op.id)}
+                      >
+                        {op.nome}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label className="text-xs mb-2 block" style={{ color: theme.textMuted }}>Tipo de Registro (múltiplos)</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { value: "oferta", label: "Oferta", color: "green" },
+                      { value: "negociando", label: "Negociando", color: "yellow" },
+                      { value: "ordem_completa", label: "Ordem Completa", color: "blue" }
+                    ].map((tipo) => (
+                      <Badge
+                        key={tipo.value}
+                        variant={filters.tiposRegistro?.includes(tipo.value) ? "default" : "outline"}
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                        style={filters.tiposRegistro?.includes(tipo.value) ? {
+                          backgroundColor: tipo.color === "green" ? "#16a34a" : tipo.color === "yellow" ? "#ca8a04" : "#3b82f6",
+                          color: "white"
+                        } : {
+                          backgroundColor: 'transparent',
+                          borderColor: theme.inputBorder,
+                          color: theme.text
+                        }}
+                        onClick={() => {
+                          const tiposRegistro = filters.tiposRegistro?.includes(tipo.value)
+                            ? filters.tiposRegistro.filter(t => t !== tipo.value)
+                            : [...(filters.tiposRegistro || []), tipo.value];
+                          setFilters({...filters, tiposRegistro});
+                        }}
+                      >
+                        {tipo.label}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Status</Label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full h-8 justify-between text-sm" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}>
+                        {filters.status || 'Todos'}
+                        <ChevronDown className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, status: ""})} style={{ color: theme.text }}>Todos</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, status: "novo"})} style={{ color: theme.text }}>Novo</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, status: "pendente_cadastro"})} style={{ color: theme.text }}>Pendente Cadastro</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, status: "aguardando_carregamento"})} style={{ color: theme.text }}>Aguardando Carregamento</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, status: "em_transito"})} style={{ color: theme.text }}>Em Trânsito</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, status: "entregue"})} style={{ color: theme.text }}>Entregue</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, status: "finalizado"})} style={{ color: theme.text }}>Finalizado</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, status: "cancelado"})} style={{ color: theme.text }}>Cancelado</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <div>
+                  <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Origem</Label>
+                  <Input
+                    value={filters.origem}
+                    onChange={(e) => setFilters({...filters, origem: e.target.value})}
+                    placeholder="Filtrar por origem"
+                    className="h-8 text-sm"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Destino</Label>
+                  <Input
+                    value={filters.destino}
+                    onChange={(e) => setFilters({...filters, destino: e.target.value})}
+                    placeholder="Filtrar por destino"
+                    className="h-8 text-sm"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Data Início</Label>
+                  <Input
+                    type="date"
+                    value={filters.dataInicio}
+                    onChange={(e) => setFilters({...filters, dataInicio: e.target.value})}
+                    className="h-8 text-sm"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Data Fim</Label>
+                  <Input
+                    type="date"
+                    value={filters.dataFim}
+                    onChange={(e) => setFilters({...filters, dataFim: e.target.value})}
+                    className="h-8 text-sm"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  />
+                  </div>
+
+                  <div>
+                  <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Tipo</Label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full h-8 justify-between text-sm" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}>
+                        {filters.tipoRegistro === "coleta" ? "Coleta" : filters.tipoRegistro === "ordem" ? "Ordem de Carga" : "Todos"}
+                        <ChevronDown className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, tipoRegistro: ""})} style={{ color: theme.text }}>Todos</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, tipoRegistro: "coleta"})} style={{ color: theme.text }}>Coleta</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, tipoRegistro: "ordem"})} style={{ color: theme.text }}>Ordem de Carga</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  </div>
+                  </div>
+              <div className="flex justify-end mt-3 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFilters({
+                    operacoesIds: [], status: "", tiposRegistro: [],
+                    origem: "", destino: "", dataInicio: "", dataFim: "", tipoRegistro: ""
+                  })}
+                  className="h-7 text-xs"
+                  style={{
+                    backgroundColor: 'transparent',
+                    borderColor: theme.inputBorder,
+                    color: theme.text
+                  }}
+                >
+                  Limpar Filtros
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <OrdensTableEditable
+          ordens={ordensExibidas}
+          motoristas={motoristas}
+          veiculos={veiculos}
+          operacoes={operacoes}
+          loading={loading}
+          onEdit={handleEdit}
+          onViewDetails={handleViewDetails}
+          onDelete={handleDelete}
+          onUpdate={loadData}
+        />
+      </div>
+
+      <TipoOrdemModal
+        open={showTipoModal}
+        onClose={() => setShowTipoModal(false)}
+        onSelectTipo={handleSelectTipoOrdem}
+      />
+
+      {showForm && (
+        <OrdemUnificadaForm
+          tipo_ordem="carregamento"
+          open={showForm}
+          onClose={() => {
+            setShowForm(false);
+            setEditingOrdem(null);
+          }}
+          onSubmit={(ordemData, notasFiscaisData) => handleSubmit(ordemData, notasFiscaisData)}
+          motoristas={motoristas}
+          veiculos={veiculos}
+          editingOrdem={editingOrdem}
+          user={currentUser}
+          isDark={isDark}
+        />
+      )}
+
+      {showOfertaForm && (
+        <OfertaCargaForm
+          open={showOfertaForm}
+          onClose={() => setShowOfertaForm(false)}
+          onSubmit={handleSubmitOferta}
+        />
+      )}
+
+      {showOfertaLote && (
+        <OfertaCargaLote
+          open={showOfertaLote}
+          onClose={() => setShowOfertaLote(false)}
+          onSubmit={handleSubmitOfertasLote}
+        />
+      )}
+
+      {selectedOrdem && (
+        <OrdemDetails
+          open={!!selectedOrdem}
+          onClose={() => setSelectedOrdem(null)}
+          ordem={selectedOrdem}
+          motoristas={motoristas}
+          veiculos={veiculos}
+          onUpdate={loadData}
+        />
+      )}
+    </div>
+  );
+}
