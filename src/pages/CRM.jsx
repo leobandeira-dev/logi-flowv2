@@ -25,11 +25,13 @@ import {
   X,
   Save,
   Calendar,
-  MessageSquare
+  MessageSquare,
+  GripVertical
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 export default function CRM() {
   const [user, setUser] = useState(null);
@@ -608,6 +610,22 @@ function ConfigurarEtapasModal({ open, onClose, etapas, theme, isDark }) {
     ));
   };
 
+  const handleOnDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const items = Array.from(etapasEditadas);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    // Atualizar a ordem de todas as etapas
+    const etapasComNovaOrdem = items.map((etapa, index) => ({
+      ...etapa,
+      ordem: index + 1, // 'Lead' é ordem 0, então as editáveis começam em 1
+    }));
+
+    setEtapasEditadas(etapasComNovaOrdem);
+  };
+
   const handleSalvar = async () => {
     try {
       for (const etapa of etapasEditadas) {
@@ -656,70 +674,95 @@ function ConfigurarEtapasModal({ open, onClose, etapas, theme, isDark }) {
           <Alert>
             <AlertCircle className="w-4 h-4" />
             <AlertDescription>
-              A etapa "Lead" é fixa e não pode ser editada. Configure as demais etapas do funil conforme seu processo comercial.
+              A etapa "Lead" é fixa e não pode ser editada. Arraste as etapas para reordenar o funil.
             </AlertDescription>
           </Alert>
 
-          {etapasEditadas.map((etapa, index) => (
-            <Card key={etapa.id} style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex-1 space-y-3">
-                    <div>
-                      <label className="text-xs font-semibold mb-1 block" style={{ color: theme.text }}>
-                        Nome da Etapa
-                      </label>
-                      <Input
-                        value={etapa.nome}
-                        onChange={(e) => handleEditarEtapa(etapa.id, 'nome', e.target.value)}
-                        style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-semibold mb-1 block" style={{ color: theme.text }}>
-                          Cor
-                        </label>
-                        <div className="flex gap-2">
-                          <Input
-                            type="color"
-                            value={etapa.cor}
-                            onChange={(e) => handleEditarEtapa(etapa.id, 'cor', e.target.value)}
-                            className="w-16 h-9 p-1"
-                          />
-                          <Input
-                            value={etapa.cor}
-                            onChange={(e) => handleEditarEtapa(etapa.id, 'cor', e.target.value)}
-                            placeholder="#3b82f6"
-                            style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold mb-1 block" style={{ color: theme.text }}>
-                          Ordem
-                        </label>
-                        <Input
-                          type="number"
-                          value={etapa.ordem}
-                          onChange={(e) => handleEditarEtapa(etapa.id, 'ordem', parseInt(e.target.value))}
-                          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoverEtapa(etapa.id)}
-                    className="text-red-600 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+          <DragDropContext onDragEnd={handleOnDragEnd}>
+            <Droppable droppableId="etapas">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
+                  {etapasEditadas.map((etapa, index) => (
+                    <Draggable key={etapa.id} draggableId={etapa.id} index={index}>
+                      {(provided, snapshot) => (
+                        <Card 
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          style={{
+                            backgroundColor: isDark ? '#0f172a' : '#f9fafb',
+                            borderColor: theme.cardBorder,
+                            ...provided.draggableProps.style,
+                          }}
+                          className={snapshot.isDragging ? 'shadow-2xl' : ''}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div {...provided.dragHandleProps} className="p-2 -ml-2 cursor-grab active:cursor-grabbing">
+                                <GripVertical className="w-5 h-5 text-gray-400" />
+                              </div>
+                              <div className="flex-1 space-y-3">
+                                <div>
+                                  <label className="text-xs font-semibold mb-1 block" style={{ color: theme.text }}>
+                                    Nome da Etapa
+                                  </label>
+                                  <Input
+                                    value={etapa.nome}
+                                    onChange={(e) => handleEditarEtapa(etapa.id, 'nome', e.target.value)}
+                                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                                  />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="text-xs font-semibold mb-1 block" style={{ color: theme.text }}>
+                                      Cor
+                                    </label>
+                                    <div className="flex gap-2">
+                                      <Input
+                                        type="color"
+                                        value={etapa.cor}
+                                        onChange={(e) => handleEditarEtapa(etapa.id, 'cor', e.target.value)}
+                                        className="w-16 h-9 p-1"
+                                      />
+                                      <Input
+                                        value={etapa.cor}
+                                        onChange={(e) => handleEditarEtapa(etapa.id, 'cor', e.target.value)}
+                                        placeholder="#3b82f6"
+                                        style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                                      />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-semibold mb-1 block" style={{ color: theme.text }}>
+                                      Ordem
+                                    </label>
+                                    <Input
+                                      type="number"
+                                      value={etapa.ordem}
+                                      readOnly
+                                      style={{ backgroundColor: isDark ? '#334155' : '#f3f4f6', borderColor: theme.cardBorder, color: theme.textMuted }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoverEtapa(etapa.id)}
+                                className="text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              )}
+            </Droppable>
+          </DragDropContext>
 
           <Button
             onClick={handleAddEtapa}
