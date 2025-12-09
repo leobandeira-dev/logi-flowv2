@@ -1482,6 +1482,70 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
           valorA = a.destinatario || a.destino || "";
           valorB = b.destinatario || b.destino || "";
           break;
+        case "sla_carregamento":
+          // Expurgados vão para o final
+          if (a.carregamento_expurgado && !b.carregamento_expurgado) return 1;
+          if (!a.carregamento_expurgado && b.carregamento_expurgado) return -1;
+          if (a.carregamento_expurgado && b.carregamento_expurgado) return 0;
+          
+          // Se já carregou, calcular horas de atraso (positivo) ou antecedência (negativo)
+          if (a.fim_carregamento && a.carregamento_agendamento_data) {
+            const agendadoA = new Date(a.carregamento_agendamento_data);
+            const realizadoA = new Date(a.fim_carregamento);
+            valorA = (realizadoA - agendadoA) / (1000 * 60 * 60); // horas
+          } else if (a.carregamento_agendamento_data) {
+            // Se ainda não carregou, calcular horas restantes (negativo = futuro)
+            const agora = new Date();
+            const agendadoA = new Date(a.carregamento_agendamento_data);
+            valorA = (agora - agendadoA) / (1000 * 60 * 60); // horas desde agendamento
+          } else {
+            valorA = -999999; // Sem dados vai para o início
+          }
+          
+          if (b.fim_carregamento && b.carregamento_agendamento_data) {
+            const agendadoB = new Date(b.carregamento_agendamento_data);
+            const realizadoB = new Date(b.fim_carregamento);
+            valorB = (realizadoB - agendadoB) / (1000 * 60 * 60);
+          } else if (b.carregamento_agendamento_data) {
+            const agora = new Date();
+            const agendadoB = new Date(b.carregamento_agendamento_data);
+            valorB = (agora - agendadoB) / (1000 * 60 * 60);
+          } else {
+            valorB = -999999;
+          }
+          break;
+        case "sla_entrega":
+          // Expurgados vão para o final
+          if (a.entrega_expurgada && !b.entrega_expurgada) return 1;
+          if (!a.entrega_expurgada && b.entrega_expurgada) return -1;
+          if (a.entrega_expurgada && b.entrega_expurgada) return 0;
+          
+          // Se já entregou, calcular horas de atraso (positivo) ou antecedência (negativo)
+          if (a.chegada_destino && a.prazo_entrega) {
+            const prazoA = new Date(a.prazo_entrega);
+            const realizadoA = new Date(a.chegada_destino);
+            valorA = (realizadoA - prazoA) / (1000 * 60 * 60); // horas
+          } else if (a.prazo_entrega) {
+            // Se ainda não entregou, calcular horas restantes (negativo = futuro)
+            const agora = new Date();
+            const prazoA = new Date(a.prazo_entrega);
+            valorA = (agora - prazoA) / (1000 * 60 * 60); // horas desde prazo
+          } else {
+            valorA = -999999; // Sem dados vai para o início
+          }
+          
+          if (b.chegada_destino && b.prazo_entrega) {
+            const prazoB = new Date(b.prazo_entrega);
+            const realizadoB = new Date(b.chegada_destino);
+            valorB = (realizadoB - prazoB) / (1000 * 60 * 60);
+          } else if (b.prazo_entrega) {
+            const agora = new Date();
+            const prazoB = new Date(b.prazo_entrega);
+            valorB = (agora - prazoB) / (1000 * 60 * 60);
+          } else {
+            valorB = -999999;
+          }
+          break;
         default:
           valorA = a[sortColumn] || "";
           valorB = b[sortColumn] || "";
