@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
-import { DOMParser } from 'https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -16,60 +15,80 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'XML não fornecido' }, { status: 400 });
     }
 
-    // Parse do XML
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlContent, 'application/xml');
+    // Helper para extrair texto de tags XML
+    const getTagValue = (xml, tagName) => {
+      const regex = new RegExp(`<${tagName}[^>]*>([^<]*)</${tagName}>`, 'i');
+      const match = xml.match(regex);
+      return match ? match[1].trim() : '';
+    };
+
+    const getAllTagValues = (xml, tagName) => {
+      const regex = new RegExp(`<${tagName}[^>]*>([^<]*)</${tagName}>`, 'gi');
+      const matches = [...xml.matchAll(regex)];
+      return matches.map(m => m[1].trim());
+    };
 
     // Extrair dados principais do CT-e
-    const chave = xmlDoc.querySelector('infCte')?.getAttribute('Id')?.replace('CTe', '') || '';
-    const numeroCte = xmlDoc.querySelector('nCT')?.textContent || '';
-    const serieCte = xmlDoc.querySelector('serie')?.textContent || '';
-    const dataEmissao = xmlDoc.querySelector('dhEmi')?.textContent || '';
+    const chavMatch = xmlContent.match(/Id="CTe([^"]+)"/i);
+    const chave = chavMatch ? chavMatch[1] : '';
+    
+    const numeroCte = getTagValue(xmlContent, 'nCT');
+    const serieCte = getTagValue(xmlContent, 'serie');
+    const dataEmissao = getTagValue(xmlContent, 'dhEmi');
 
     // Emitente
-    const emitenteCnpj = xmlDoc.querySelector('emit CNPJ')?.textContent || '';
-    const emitenteNome = xmlDoc.querySelector('emit xNome')?.textContent || '';
+    const emitSection = xmlContent.match(/<emit>(.*?)<\/emit>/s);
+    const emitenteCnpj = emitSection ? getTagValue(emitSection[0], 'CNPJ') : '';
+    const emitenteNome = emitSection ? getTagValue(emitSection[0], 'xNome') : '';
 
     // Remetente
-    const remetenteCnpj = xmlDoc.querySelector('rem CNPJ')?.textContent || '';
-    const remetenteNome = xmlDoc.querySelector('rem xNome')?.textContent || '';
+    const remSection = xmlContent.match(/<rem>(.*?)<\/rem>/s);
+    const remetenteCnpj = remSection ? getTagValue(remSection[0], 'CNPJ') : '';
+    const remetenteNome = remSection ? getTagValue(remSection[0], 'xNome') : '';
 
     // Destinatário
-    const destinatarioCnpj = xmlDoc.querySelector('dest CNPJ')?.textContent || '';
-    const destinatarioNome = xmlDoc.querySelector('dest xNome')?.textContent || '';
+    const destSection = xmlContent.match(/<dest>(.*?)<\/dest>/s);
+    const destinatarioCnpj = destSection ? getTagValue(destSection[0], 'CNPJ') : '';
+    const destinatarioNome = destSection ? getTagValue(destSection[0], 'xNome') : '';
 
     // Localidades
-    const municipioOrigem = xmlDoc.querySelector('xMunIni')?.textContent || '';
-    const ufOrigem = xmlDoc.querySelector('UFIni')?.textContent || '';
-    const municipioDestino = xmlDoc.querySelector('xMunFim')?.textContent || '';
-    const ufDestino = xmlDoc.querySelector('UFFim')?.textContent || '';
+    const municipioOrigem = getTagValue(xmlContent, 'xMunIni');
+    const ufOrigem = getTagValue(xmlContent, 'UFIni');
+    const municipioDestino = getTagValue(xmlContent, 'xMunFim');
+    const ufDestino = getTagValue(xmlContent, 'UFFim');
 
     // Valores
-    const valorTotal = parseFloat(xmlDoc.querySelector('vTPrest')?.textContent || '0');
-    const valorReceber = parseFloat(xmlDoc.querySelector('vRec')?.textContent || '0');
+    const valorTotal = parseFloat(getTagValue(xmlContent, 'vTPrest') || '0');
+    const valorReceber = parseFloat(getTagValue(xmlContent, 'vRec') || '0');
 
     // Carga
-    const pesoTotal = parseFloat(xmlDoc.querySelector('infQ qCarga')?.textContent || '0');
-    const quantidadeVolumes = parseFloat(
-      Array.from(xmlDoc.querySelectorAll('infQ'))
-        .find(el => el.querySelector('tpMed')?.textContent === 'UNIDADE')
-        ?.querySelector('qCarga')?.textContent || '0'
-    );
+    const infQs = xmlContent.match(/<infQ>(.*?)<\/infQ>/gs) || [];
+    let pesoTotal = 0;
+    let quantidadeVolumes = 0;
+
+    for (const infQ of infQs) {
+      const tpMed = getTagValue(infQ, 'tpMed');
+      const qCarga = parseFloat(getTagValue(infQ, 'qCarga') || '0');
+      
+      if (tpMed.includes('PESO') || tpMed.includes('BRUTO')) {
+        pesoTotal = qCarga;
+      } else if (tpMed.includes('UNIDADE')) {
+        quantidadeVolumes = qCarga;
+      }
+    }
 
     // Chaves de NF-e vinculadas
-    const chavesNfe = Array.from(xmlDoc.querySelectorAll('infNFe chave'))
-      .map(el => el.textContent?.trim())
-      .filter(Boolean);
+    const chavesNfe = getAllTagValues(xmlContent, 'chave');
 
     // Protocolo
-    const protocoloAutorizacao = xmlDoc.querySelector('protCTe nProt')?.textContent || '';
-    const statusSefaz = xmlDoc.querySelector('protCTe cStat')?.textContent || '';
+    const protocoloAutorizacao = getTagValue(xmlContent, 'nProt');
+    const statusSefaz = getTagValue(xmlContent, 'cStat');
 
     // Outras informações
-    const cfop = xmlDoc.querySelector('CFOP')?.textContent || '';
-    const naturezaOperacao = xmlDoc.querySelector('natOp')?.textContent || '';
-    const modal = xmlDoc.querySelector('modal')?.textContent || '';
-    const tipoServico = xmlDoc.querySelector('tpServ')?.textContent || '';
+    const cfop = getTagValue(xmlContent, 'CFOP');
+    const naturezaOperacao = getTagValue(xmlContent, 'natOp');
+    const modal = getTagValue(xmlContent, 'modal');
+    const tipoServico = getTagValue(xmlContent, 'tpServ');
 
     // Verificar se o CT-e já existe
     const ctesExistentes = await base44.asServiceRole.entities.CTe.filter(
