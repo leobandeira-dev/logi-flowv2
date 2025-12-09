@@ -658,7 +658,7 @@ export default function Tracking() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `tracking_${tipoFinal}_${new Date().getTime()}.pdf`;
+      a.download = `tracking_${tipoFinal}_${format(new Date(), 'dd-MM-yyyy_HHmm')}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -2078,16 +2078,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
           .no-print {
             display: none !important;
           }
-          .print-only {
-            display: none;
-          }
           @media print {
-            .print-only {
-              display: block !important;
-            }
-            .relatorio-sla-print table {
-              font-size: 9px !important;
-            }
             .relatorio-sla-print table {
               font-size: 8px !important;
             }
@@ -2106,12 +2097,9 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             .relatorio-sla-print .resumo-card .text-xl {
               font-size: 16px !important;
             }
-            .print-only {
-              display: block !important;
-              visibility: visible !important;
-            }
             .resumo-section {
               page-break-inside: avoid;
+              margin-bottom: 20px !important;
             }
           }
           @page {
@@ -2140,85 +2128,19 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
           </div>
         </CardHeader>
         <CardContent className="p-4 space-y-4">
-          {/* Versão para impressão - lista simples */}
-          <div className="print-only">
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs border-collapse">
-                <thead>
-                  <tr style={{ borderBottom: `2px solid ${theme.border}`, backgroundColor: '#f9fafb' }}>
-                    <th className="text-left p-2 font-semibold" style={{ width: '6%' }}>Ordem</th>
-                    <th className="text-left p-2 font-semibold" style={{ width: '6%' }}>Pedido</th>
-                    <th className="text-left p-2 font-semibold" style={{ width: '10%' }}>Cliente</th>
-                    <th className="text-left p-2 font-semibold" style={{ width: '12%' }}>Origem - Destino</th>
-                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '9%' }}>Agenda Carga</th>}
-                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '9%' }}>Chegada Carga</th>}
-                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '7%' }}>SLA Carga</th>}
-                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '9%' }}>Agenda Descarga</th>}
-                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '9%' }}>Chegada Descarga</th>}
-                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '7%' }}>SLA Descarga</th>}
-                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '16%' }}>Motivo Expurgo</th>}
-                    {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '11%' }}>Agendado</th>}
-                    {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '11%' }}>Realizado</th>}
-                    {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '10%' }}>Status SLA</th>}
-                    {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '8%' }}>Diferença</th>}
-                    {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '16%' }}>Motivo Expurgo</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {listaImpressao.map((ordem, idx) => {
-                    const agendado = tipo === 'carga' ? ordem.carregamento_agendamento_data : ordem.prazo_entrega;
-                    const realizado = tipo === 'carga' ? ordem.fim_carregamento : ordem.chegada_destino;
-                    const statusSLA = tipo !== 'geral' ? getStatusSLA(ordem, tipo) : null;
-                    const statusCarga = tipo === 'geral' ? getStatusSLA(ordem, 'carga') : null;
-                    const statusEntrega = tipo === 'geral' ? getStatusSLA(ordem, 'entrega') : null;
-                    const motivoExpurgoCarga = ordem.carregamento_expurgado ? (ordem.carregamento_expurgo_motivo || 'Não informado') : '-';
-                    const motivoExpurgoEntrega = ordem.entrega_expurgada ? (ordem.entrega_expurgo_motivo || 'Não informado') : '-';
-                    const motivoExpurgo = tipo === 'carga' ? motivoExpurgoCarga : motivoExpurgoEntrega;
-                    const motivoExpurgoGeral = ordem.carregamento_expurgado || ordem.entrega_expurgada 
-                      ? (ordem.carregamento_expurgado ? `Carga: ${motivoExpurgoCarga}` : '') + (ordem.entrega_expurgada && ordem.carregamento_expurgado ? ' | ' : '') + (ordem.entrega_expurgada ? `Entrega: ${motivoExpurgoEntrega}` : '')
-                      : '-';
-                    
-                    return (
-                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                        <td className="p-2 font-mono font-bold">{ordem.numero_carga || `#${ordem.id.slice(-6)}`}</td>
-                        <td className="p-2">{ordem.viagem_pedido || '-'}</td>
-                        <td className="p-2">{ordem.cliente || '-'}</td>
-                        <td className="p-2">
-                          {(ordem.origem_cidade || ordem.origem || '-')} - {(ordem.destino_cidade || ordem.destino || '-')}
-                        </td>
-                        {tipo === 'geral' && (
-                          <>
-                            <td className="p-2">{formatarData(ordem.carregamento_agendamento_data)}</td>
-                            <td className="p-2">{formatarData(ordem.fim_carregamento)}</td>
-                            <td className="p-2 font-bold" style={{ color: statusCarga.color }}>{statusCarga.label}</td>
-                            <td className="p-2">{formatarData(ordem.prazo_entrega)}</td>
-                            <td className="p-2">{formatarData(ordem.chegada_destino)}</td>
-                            <td className="p-2 font-bold" style={{ color: statusEntrega.color }}>{statusEntrega.label}</td>
-                            <td className="p-2 text-xs">{motivoExpurgoGeral}</td>
-                          </>
-                        )}
-                        {tipo !== 'geral' && (
-                          <>
-                            <td className="p-2">{formatarData(agendado)}</td>
-                            <td className="p-2">{formatarData(realizado)}</td>
-                            <td className="p-2 font-bold" style={{ color: statusSLA.color }}>{statusSLA.label}</td>
-                            <td className="p-2 font-bold" style={{ color: agendado && realizado ? (new Date(realizado) <= new Date(agendado) ? '#22c55e' : '#ef4444') : theme.textMuted }}>
-                              {agendado && realizado ? calcularAtraso(agendado, realizado) : '-'}
-                            </td>
-                            <td className="p-2 text-xs">{motivoExpurgo}</td>
-                          </>
-                        )}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+          {/* Cabeçalho e totais - sempre visível */}
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold" style={{ color: theme.text }}>
+              Total de Ordens: {listaImpressao.length}
+            </h3>
+            <p className="text-xs" style={{ color: theme.textMuted }}>
+              Ordenado por {tipo === 'carga' ? 'Data de Agendamento de Carga' : tipo === 'entrega' ? 'Prazo de Entrega' : 'Data de Agendamento'}
+            </p>
+          </div>
 
-            {/* Totalizadores para impressão */}
-            <div className="mt-6 pt-4 border-t-2 resumo-section" style={{ borderColor: theme.border }}>
-              <h3 className="font-bold text-sm mb-3">Resumo</h3>
-              <div className="grid grid-cols-5 gap-3 resumo-cards">
+          {/* Totalizadores */}
+          <div className="mb-6 resumo-section">
+            <div className="grid grid-cols-5 gap-3 resumo-cards">
                 <div className="p-2 rounded border resumo-card" style={{ backgroundColor: '#eff6ff', borderColor: '#93c5fd' }}>
                   <div className="text-xs text-blue-600 font-medium">Total de Ordens</div>
                   <div className="text-xl font-bold text-blue-900">{listaImpressao.length}</div>
@@ -2291,9 +2213,82 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             </div>
           </div>
 
+          {/* Tabela de ordens - sempre visível */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr style={{ borderBottom: `2px solid ${theme.border}`, backgroundColor: '#f9fafb' }}>
+                  <th className="text-left p-2 font-semibold" style={{ width: '6%' }}>Ordem</th>
+                  <th className="text-left p-2 font-semibold" style={{ width: '6%' }}>Pedido</th>
+                  <th className="text-left p-2 font-semibold" style={{ width: '10%' }}>Cliente</th>
+                  <th className="text-left p-2 font-semibold" style={{ width: '12%' }}>Origem - Destino</th>
+                  {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '9%' }}>Agenda Carga</th>}
+                  {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '9%' }}>Chegada Carga</th>}
+                  {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '7%' }}>SLA Carga</th>}
+                  {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '9%' }}>Agenda Descarga</th>}
+                  {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '9%' }}>Chegada Descarga</th>}
+                  {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '7%' }}>SLA Descarga</th>}
+                  {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '16%' }}>Motivo Expurgo</th>}
+                  {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '11%' }}>Agendado</th>}
+                  {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '11%' }}>Realizado</th>}
+                  {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '10%' }}>Status SLA</th>}
+                  {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '8%' }}>Diferença</th>}
+                  {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '16%' }}>Motivo Expurgo</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {listaImpressao.map((ordem, idx) => {
+                  const agendado = tipo === 'carga' ? ordem.carregamento_agendamento_data : ordem.prazo_entrega;
+                  const realizado = tipo === 'carga' ? ordem.fim_carregamento : ordem.chegada_destino;
+                  const statusSLA = tipo !== 'geral' ? getStatusSLA(ordem, tipo) : null;
+                  const statusCarga = tipo === 'geral' ? getStatusSLA(ordem, 'carga') : null;
+                  const statusEntrega = tipo === 'geral' ? getStatusSLA(ordem, 'entrega') : null;
+                  const motivoExpurgoCarga = ordem.carregamento_expurgado ? (ordem.carregamento_expurgo_motivo || 'Não informado') : '-';
+                  const motivoExpurgoEntrega = ordem.entrega_expurgada ? (ordem.entrega_expurgo_motivo || 'Não informado') : '-';
+                  const motivoExpurgo = tipo === 'carga' ? motivoExpurgoCarga : motivoExpurgoEntrega;
+                  const motivoExpurgoGeral = ordem.carregamento_expurgado || ordem.entrega_expurgada 
+                    ? (ordem.carregamento_expurgado ? `Carga: ${motivoExpurgoCarga}` : '') + (ordem.entrega_expurgada && ordem.carregamento_expurgado ? ' | ' : '') + (ordem.entrega_expurgada ? `Entrega: ${motivoExpurgoEntrega}` : '')
+                    : '-';
+                  
+                  return (
+                    <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                      <td className="p-2 font-mono font-bold">{ordem.numero_carga || `#${ordem.id.slice(-6)}`}</td>
+                      <td className="p-2">{ordem.viagem_pedido || '-'}</td>
+                      <td className="p-2">{ordem.cliente || '-'}</td>
+                      <td className="p-2">
+                        {(ordem.origem_cidade || ordem.origem || '-')} - {(ordem.destino_cidade || ordem.destino || '-')}
+                      </td>
+                      {tipo === 'geral' && (
+                        <>
+                          <td className="p-2">{formatarData(ordem.carregamento_agendamento_data)}</td>
+                          <td className="p-2">{formatarData(ordem.fim_carregamento)}</td>
+                          <td className="p-2 font-bold" style={{ color: statusCarga.color }}>{statusCarga.label}</td>
+                          <td className="p-2">{formatarData(ordem.prazo_entrega)}</td>
+                          <td className="p-2">{formatarData(ordem.chegada_destino)}</td>
+                          <td className="p-2 font-bold" style={{ color: statusEntrega.color }}>{statusEntrega.label}</td>
+                          <td className="p-2 text-xs">{motivoExpurgoGeral}</td>
+                        </>
+                      )}
+                      {tipo !== 'geral' && (
+                        <>
+                          <td className="p-2">{formatarData(agendado)}</td>
+                          <td className="p-2">{formatarData(realizado)}</td>
+                          <td className="p-2 font-bold" style={{ color: statusSLA.color }}>{statusSLA.label}</td>
+                          <td className="p-2 font-bold" style={{ color: agendado && realizado ? (new Date(realizado) <= new Date(agendado) ? '#22c55e' : '#ef4444') : theme.textMuted }}>
+                            {agendado && realizado ? calcularAtraso(agendado, realizado) : '-'}
+                          </td>
+                          <td className="p-2 text-xs">{motivoExpurgo}</td>
+                        </>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
           {/* Versão para tela - com gráfico e abas */}
           <div className="no-print">
-          </div>
 
           {/* Versão para tela - com gráfico e abas */}
           <div className="no-print">
