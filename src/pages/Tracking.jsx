@@ -33,7 +33,8 @@ import {
   Loader2,
   ChevronDown
 } from "lucide-react";
-import { differenceInDays } from "date-fns";
+import { format, differenceInDays, differenceInHours } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -225,15 +226,15 @@ export default function Tracking() {
     }
   };
 
-  const calcularMetricas = () => {
-    const emViagem = ordens.filter(o => o.status_tracking === "em_viagem");
-    const aguardandoCarregamento = ordens.filter(o =>
+  const calcularMetricas = (ordensBase) => {
+    const emViagem = ordensBase.filter(o => o.status_tracking === "em_viagem");
+    const aguardandoCarregamento = ordensBase.filter(o =>
       o.status_tracking === "aguardando_agendamento" ||
       o.status_tracking === "carregamento_agendado"
     );
-    const finalizadas = ordens.filter(o => o.status_tracking === "finalizado");
+    const finalizadas = ordensBase.filter(o => o.status_tracking === "finalizado");
 
-    const atrasadas = ordens.filter(o => {
+    const atrasadas = ordensBase.filter(o => {
       if (o.status_tracking === "finalizado") return false;
 
       if (o.prazo_entrega && !o.descarga_realizada_data) {
@@ -246,7 +247,7 @@ export default function Tracking() {
     });
 
     // Calcular SLA de carregamento - excluindo expurgados
-    const carregamentosRealizados = ordens.filter(o => 
+    const carregamentosRealizados = ordensBase.filter(o => 
       o.fim_carregamento && o.carregamento_agendamento_data && !o.carregamento_expurgado
     );
     const carregamentosNoPrazo = carregamentosRealizados.filter(o => {
@@ -256,7 +257,7 @@ export default function Tracking() {
     });
 
     // Calcular SLA de descarga - excluindo expurgados
-    const descargasRealizadas = ordens.filter(o => 
+    const descargasRealizadas = ordensBase.filter(o => 
       o.chegada_destino && o.prazo_entrega && !o.entrega_expurgada
     );
     const descargasNoPrazo = descargasRealizadas.filter(o => {
@@ -266,7 +267,7 @@ export default function Tracking() {
     });
 
     return {
-      total: ordens.length,
+      total: ordensBase.length,
       emViagem: emViagem.length,
       aguardandoCarregamento: aguardandoCarregamento.length,
       atrasadas: atrasadas.length,
@@ -570,7 +571,7 @@ export default function Tracking() {
     return filteredOrdens.filter(o => o.status_tracking === status).length;
   };
 
-  const metrics = calcularMetricas();
+  const metrics = calcularMetricas(filteredOrdens);
   const insights = calcularInsights();
 
   const handleSubmitOrdemCompleta = async (data) => {
