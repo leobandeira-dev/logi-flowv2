@@ -2106,6 +2106,13 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             .relatorio-sla-print .resumo-card .text-xl {
               font-size: 16px !important;
             }
+            .print-only {
+              display: block !important;
+              visibility: visible !important;
+            }
+            .resumo-section {
+              page-break-inside: avoid;
+            }
           }
           @page {
             size: A4 landscape;
@@ -2135,14 +2142,6 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
         <CardContent className="p-4 space-y-4">
           {/* Versão para impressão - lista simples */}
           <div className="print-only">
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold" style={{ color: theme.text }}>
-                Total de Ordens: {listaImpressao.length}
-              </h3>
-              <p className="text-xs" style={{ color: theme.textMuted }}>
-                Ordenado por {tipo === 'carga' ? 'Data de Agendamento de Carga' : tipo === 'entrega' ? 'Prazo de Entrega' : 'Data de Agendamento'}
-              </p>
-            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <thead>
