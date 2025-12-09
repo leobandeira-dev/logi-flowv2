@@ -123,6 +123,7 @@ export default function LandingPage() {
   });
   const [enviando, setEnviando] = useState(false);
   const [propostaEnviada, setPropostaEnviada] = useState(false);
+  const [camposComErro, setCamposComErro] = useState([]);
 
   useEffect(() => {
     const saved = localStorage.getItem('precos_customizados');
@@ -225,11 +226,20 @@ export default function LandingPage() {
   };
 
   const handleSolicitarProposta = async () => {
-    if (!formData.email || !formData.telefone || !formData.nome) {
-      toast.error("Preencha nome, email e telefone");
+    // Validar campos obrigatórios
+    const erros = [];
+    if (!formData.nome) erros.push('nome');
+    if (!formData.email) erros.push('email');
+    if (!formData.telefone) erros.push('telefone');
+
+    if (erros.length > 0) {
+      setCamposComErro(erros);
+      toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
+    // Limpar erros e prosseguir
+    setCamposComErro([]);
     const totais = calcularTotais();
 
     // Mostrar feedback imediatamente
@@ -298,6 +308,7 @@ Enviado em ${new Date().toLocaleString('pt-BR')}`
   const handleNovaSimulacao = () => {
     setPropostaEnviada(false);
     setFormData({ nome: "", email: "", telefone: "", empresa: "" });
+    setCamposComErro([]);
     setAddonsSelecionados([]);
     setVolumeColetas(0);
     setVolumeCarregamentos(0);
@@ -743,10 +754,18 @@ Enviado em ${new Date().toLocaleString('pt-BR')}`
                         <Input
                           id="nome"
                           value={formData.nome}
-                          onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, nome: e.target.value });
+                            if (camposComErro.includes('nome')) {
+                              setCamposComErro(camposComErro.filter(c => c !== 'nome'));
+                            }
+                          }}
                           placeholder="Seu nome"
-                          className="mt-1"
+                          className={`mt-1 ${camposComErro.includes('nome') ? 'border-red-500 border-2' : ''}`}
                         />
+                        {camposComErro.includes('nome') && (
+                          <p className="text-xs text-red-600 mt-1">Campo obrigatório</p>
+                        )}
                       </div>
 
                       <div>
@@ -755,10 +774,18 @@ Enviado em ${new Date().toLocaleString('pt-BR')}`
                           id="email"
                           type="email"
                           value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, email: e.target.value });
+                            if (camposComErro.includes('email')) {
+                              setCamposComErro(camposComErro.filter(c => c !== 'email'));
+                            }
+                          }}
                           placeholder="seu@email.com"
-                          className="mt-1"
+                          className={`mt-1 ${camposComErro.includes('email') ? 'border-red-500 border-2' : ''}`}
                         />
+                        {camposComErro.includes('email') && (
+                          <p className="text-xs text-red-600 mt-1">Campo obrigatório</p>
+                        )}
                       </div>
 
                       <div>
@@ -766,10 +793,18 @@ Enviado em ${new Date().toLocaleString('pt-BR')}`
                         <Input
                           id="telefone"
                           value={formData.telefone}
-                          onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, telefone: e.target.value });
+                            if (camposComErro.includes('telefone')) {
+                              setCamposComErro(camposComErro.filter(c => c !== 'telefone'));
+                            }
+                          }}
                           placeholder="(00) 00000-0000"
-                          className="mt-1"
+                          className={`mt-1 ${camposComErro.includes('telefone') ? 'border-red-500 border-2' : ''}`}
                         />
+                        {camposComErro.includes('telefone') && (
+                          <p className="text-xs text-red-600 mt-1">Campo obrigatório</p>
+                        )}
                       </div>
 
                       <div>
