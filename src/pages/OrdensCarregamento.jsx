@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Filter, ChevronDown, FileText, Package, FileSpreadsheet } from "lucide-react";
+import { Plus, Search, Filter, ChevronDown, FileText, Package, FileSpreadsheet, X } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { toast } from 'react-hot-toast';
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -48,7 +50,8 @@ export default function OrdensCarregamento() {
     destino: "",
     dataInicio: "",
     dataFim: "",
-    tipoRegistro: ""
+    tipoRegistro: "",
+    statusTracking: ""
   });
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [limite, setLimite] = useState(50);
@@ -469,6 +472,7 @@ export default function OrdensCarregamento() {
 
     if (filters.operacoesIds.length > 0 && !filters.operacoesIds.includes(ordem.operacao_id)) return false;
     if (filters.status && ordem.status !== filters.status) return false;
+    if (filters.statusTracking && ordem.status_tracking !== filters.statusTracking) return false;
     if (filters.tiposRegistro && filters.tiposRegistro.length > 0 && !filters.tiposRegistro.includes(ordem.tipo_registro)) return false;
     if (filters.origem && !ordem.origem?.toLowerCase().includes(filters.origem.toLowerCase())) return false;
     if (filters.destino && !ordem.destino?.toLowerCase().includes(filters.destino.toLowerCase())) return false;
@@ -700,6 +704,31 @@ export default function OrdensCarregamento() {
                 </div>
 
                 <div>
+                  <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Status Tracking</Label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full h-8 justify-between text-sm" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}>
+                        {filters.statusTracking || 'Todos'}
+                        <ChevronDown className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: ""})} style={{ color: theme.text }}>Todos</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "aguardando_agendamento"})} style={{ color: theme.text }}>Aguardando Agendamento</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "carregamento_agendado"})} style={{ color: theme.text }}>Carregamento Agendado</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "em_carregamento"})} style={{ color: theme.text }}>Em Carregamento</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "carregado"})} style={{ color: theme.text }}>Carregado</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "em_viagem"})} style={{ color: theme.text }}>Em Viagem</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "chegada_destino"})} style={{ color: theme.text }}>Chegada Destino</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "descarga_agendada"})} style={{ color: theme.text }}>Descarga Agendada</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "em_descarga"})} style={{ color: theme.text }}>Em Descarga</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "descarga_realizada"})} style={{ color: theme.text }}>Descarga Realizada</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "finalizado"})} style={{ color: theme.text }}>Finalizado</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <div>
                   <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Origem</Label>
                   <Input
                     value={filters.origem}
@@ -766,7 +795,7 @@ export default function OrdensCarregamento() {
                   size="sm"
                   onClick={() => setFilters({
                     operacoesIds: [], status: "", tiposRegistro: [],
-                    origem: "", destino: "", dataInicio: "", dataFim: "", tipoRegistro: ""
+                    origem: "", destino: "", dataInicio: "", dataFim: "", tipoRegistro: "", statusTracking: ""
                   })}
                   className="h-7 text-xs"
                   style={{
