@@ -838,108 +838,100 @@ export default function Tracking() {
         </div>
 
         {/* SLA Cards - Carregamento e Descarga */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 px-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 px-3">
           <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.border }} className="border-l-4 border-l-blue-500">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
-                <Package className="w-4 h-4 text-blue-600" />
-                SLA de Carregamento
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs" style={{ color: theme.textMuted }}>No Prazo</span>
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-green-600 text-white text-xs">
-                      {metrics.carregamentosNoPrazo}
-                    </Badge>
-                    <span className="text-xs font-bold text-green-600">
-                      {metrics.carregamentosRealizados > 0 
-                        ? Math.round((metrics.carregamentosNoPrazo / metrics.carregamentosRealizados) * 100)
-                        : 0}%
-                    </span>
-                  </div>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Package className="w-4 h-4 text-blue-600" />
+                  <span className="text-xs font-semibold" style={{ color: theme.text }}>SLA de Carregamento</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs" style={{ color: theme.textMuted }}>Fora do Prazo</span>
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-red-600 text-white text-xs">
-                      {metrics.carregamentosForaPrazo}
-                    </Badge>
-                    <span className="text-xs font-bold text-red-600">
-                      {metrics.carregamentosRealizados > 0 
-                        ? Math.round((metrics.carregamentosForaPrazo / metrics.carregamentosRealizados) * 100)
-                        : 0}%
-                    </span>
-                  </div>
-                </div>
-                <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-green-600 transition-all"
-                    style={{
-                      width: `${metrics.carregamentosRealizados > 0 
-                        ? (metrics.carregamentosNoPrazo / metrics.carregamentosRealizados) * 100
-                        : 0}%`
-                    }}
-                  />
-                </div>
-                <p className="text-[10px] text-center" style={{ color: theme.textMuted }}>
-                  Total de {metrics.carregamentosRealizados} carregamentos realizados
-                </p>
               </div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px]" style={{ color: theme.textMuted }}>No Prazo</span>
+                  <Badge className="bg-green-600 text-white text-[10px] h-4 px-1.5">
+                    {metrics.carregamentosNoPrazo}
+                  </Badge>
+                  <span className="text-[10px] font-bold text-green-600">
+                    {metrics.carregamentosRealizados > 0 
+                      ? Math.round((metrics.carregamentosNoPrazo / metrics.carregamentosRealizados) * 100)
+                      : 0}%
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px]" style={{ color: theme.textMuted }}>Fora do Prazo</span>
+                  <Badge className="bg-red-600 text-white text-[10px] h-4 px-1.5">
+                    {metrics.carregamentosForaPrazo}
+                  </Badge>
+                  <span className="text-[10px] font-bold text-red-600">
+                    {metrics.carregamentosRealizados > 0 
+                      ? Math.round((metrics.carregamentosForaPrazo / metrics.carregamentosRealizados) * 100)
+                      : 0}%
+                  </span>
+                </div>
+              </div>
+              <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-green-600 transition-all"
+                  style={{
+                    width: `${metrics.carregamentosRealizados > 0 
+                      ? (metrics.carregamentosNoPrazo / metrics.carregamentosRealizados) * 100
+                      : 0}%`
+                  }}
+                />
+              </div>
+              <p className="text-[9px] text-center mt-1" style={{ color: theme.textMuted }}>
+                Total de {metrics.carregamentosRealizados} carregamentos realizados
+              </p>
             </CardContent>
           </Card>
 
           <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.border }} className="border-l-4 border-l-purple-500">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
-                <Truck className="w-4 h-4 text-purple-600" />
-                SLA de Descarga
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs" style={{ color: theme.textMuted }}>No Prazo</span>
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-green-600 text-white text-xs">
-                      {metrics.descargasNoPrazo}
-                    </Badge>
-                    <span className="text-xs font-bold text-green-600">
-                      {metrics.descargasRealizadas > 0 
-                        ? Math.round((metrics.descargasNoPrazo / metrics.descargasRealizadas) * 100)
-                        : 0}%
-                    </span>
-                  </div>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-purple-600" />
+                  <span className="text-xs font-semibold" style={{ color: theme.text }}>SLA de Descarga</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs" style={{ color: theme.textMuted }}>Fora do Prazo</span>
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-red-600 text-white text-xs">
-                      {metrics.descargasForaPrazo}
-                    </Badge>
-                    <span className="text-xs font-bold text-red-600">
-                      {metrics.descargasRealizadas > 0 
-                        ? Math.round((metrics.descargasForaPrazo / metrics.descargasRealizadas) * 100)
-                        : 0}%
-                    </span>
-                  </div>
-                </div>
-                <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-green-600 transition-all"
-                    style={{
-                      width: `${metrics.descargasRealizadas > 0 
-                        ? (metrics.descargasNoPrazo / metrics.descargasRealizadas) * 100
-                        : 0}%`
-                    }}
-                  />
-                </div>
-                <p className="text-[10px] text-center" style={{ color: theme.textMuted }}>
-                  Total de {metrics.descargasRealizadas} descargas realizadas
-                </p>
               </div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px]" style={{ color: theme.textMuted }}>No Prazo</span>
+                  <Badge className="bg-green-600 text-white text-[10px] h-4 px-1.5">
+                    {metrics.descargasNoPrazo}
+                  </Badge>
+                  <span className="text-[10px] font-bold text-green-600">
+                    {metrics.descargasRealizadas > 0 
+                      ? Math.round((metrics.descargasNoPrazo / metrics.descargasRealizadas) * 100)
+                      : 0}%
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px]" style={{ color: theme.textMuted }}>Fora do Prazo</span>
+                  <Badge className="bg-red-600 text-white text-[10px] h-4 px-1.5">
+                    {metrics.descargasForaPrazo}
+                  </Badge>
+                  <span className="text-[10px] font-bold text-red-600">
+                    {metrics.descargasRealizadas > 0 
+                      ? Math.round((metrics.descargasForaPrazo / metrics.descargasRealizadas) * 100)
+                      : 0}%
+                  </span>
+                </div>
+              </div>
+              <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-green-600 transition-all"
+                  style={{
+                    width: `${metrics.descargasRealizadas > 0 
+                      ? (metrics.descargasNoPrazo / metrics.descargasRealizadas) * 100
+                      : 0}%`
+                  }}
+                />
+              </div>
+              <p className="text-[9px] text-center mt-1" style={{ color: theme.textMuted }}>
+                Total de {metrics.descargasRealizadas} descargas realizadas
+              </p>
             </CardContent>
           </Card>
         </div>
