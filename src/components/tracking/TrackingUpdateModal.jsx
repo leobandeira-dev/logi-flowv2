@@ -150,12 +150,13 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
     fim_carregamento: convertISOToLocal(ordem?.fim_carregamento),
     saida_unidade: convertISOToLocal(ordem?.saida_unidade),
     chegada_destino: convertISOToLocal(ordem?.chegada_destino),
+    descarga_agendamento_data: convertISOToLocal(ordem?.descarga_agendamento_data),
+    agendamento_checklist_data: convertISOToLocal(ordem?.agendamento_checklist_data),
     descarga_realizada_data: convertISOToLocal(ordem?.descarga_realizada_data),
     prazo_entrega: convertISOToLocal(ordem?.prazo_entrega),
     asn: ordem?.asn || "",
     numero_cte: ordem?.numero_cte || "",
     senha_agendamento: ordem?.senha_agendamento || "",
-    descarga_agendamento_data: convertISOToLocal(ordem?.descarga_agendamento_data),
     localizacao_atual: ordem?.localizacao_atual || "",
     km_faltam: ordem?.km_faltam || ""
   });
@@ -435,6 +436,7 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
         saida_unidade: convertLocalToISO(formData.saida_unidade),
         chegada_destino: convertLocalToISO(formData.chegada_destino),
         descarga_agendamento_data: convertLocalToISO(formData.descarga_agendamento_data),
+        agendamento_checklist_data: convertLocalToISO(formData.agendamento_checklist_data),
         descarga_realizada_data: convertLocalToISO(formData.descarga_realizada_data),
         prazo_entrega: prazoEntregaCalculado,
         asn: formData.asn || null,
@@ -878,6 +880,23 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
                         descarga_agendamento_data: e.target.value
                       })}
                       onKeyDown={(e) => handleKeyDown(e, "descarga_agendamento_data")}
+                      placeholder="dd/mm/aaaa hh:mm"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Checklist de Agendamento
+                    </Label>
+                    <Input
+                      type="text"
+                      value={formData.agendamento_checklist_data}
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        agendamento_checklist_data: e.target.value
+                      })}
+                      onKeyDown={(e) => handleKeyDown(e, "agendamento_checklist_data")}
                       placeholder="dd/mm/aaaa hh:mm"
                     />
                   </div>
