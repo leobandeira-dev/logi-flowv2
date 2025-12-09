@@ -99,8 +99,8 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
         <section>
           <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>3. CATEGORIAS DE OCORRÊNCIAS</h3>
           <div className="space-y-3">
-            <div className="border-l-4 border-red-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#fff5f5' }}>
-              <h4 className="font-bold text-sm mb-2 text-red-600">3.1 TRACKING (Viagem)</h4>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.text }}>
+              <h4 className="font-bold text-sm mb-2" style={{ color: theme.text }}>3.1 TRACKING (Viagem)</h4>
               <div className="text-xs space-y-2" style={{ color: theme.textMuted }}>
                 <p><strong>Impacto:</strong> Afeta SLA de carregamento ou descarga. Pode gerar diária.</p>
                 <p><strong>Exemplos:</strong></p>
@@ -123,8 +123,8 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </div>
             </div>
 
-            <div className="border-l-4 border-purple-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#faf5ff' }}>
-              <h4 className="font-bold text-sm mb-2 text-purple-600">3.2 FLUXO (Processos Internos)</h4>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.text }}>
+              <h4 className="font-bold text-sm mb-2" style={{ color: theme.text }}>3.2 FLUXO (Processos Internos)</h4>
               <div className="text-xs space-y-2" style={{ color: theme.textMuted }}>
                 <p><strong>Impacto:</strong> Bloqueia ou atrasa etapas do workflow operacional.</p>
                 <p><strong>Exemplos:</strong></p>
@@ -146,8 +146,8 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </div>
             </div>
 
-            <div className="border-l-4 border-gray-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb' }}>
-              <h4 className="font-bold text-sm mb-2 text-gray-600">3.3 TAREFA</h4>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.textMuted }}>
+              <h4 className="font-bold text-sm mb-2" style={{ color: theme.text }}>3.3 TAREFA</h4>
               <div className="text-xs space-y-2" style={{ color: theme.textMuted }}>
                 <p><strong>Impacto:</strong> NÃO afeta SLA ou prazo. Atividade administrativa.</p>
                 <p><strong>Exemplos:</strong></p>
@@ -162,8 +162,8 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </div>
             </div>
 
-            <div className="border-l-4 border-yellow-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#fefce8' }}>
-              <h4 className="font-bold text-sm mb-2 text-yellow-600">3.4 DIÁRIA (Cobrança Adicional)</h4>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.text }}>
+              <h4 className="font-bold text-sm mb-2" style={{ color: theme.text }}>3.4 DIÁRIA (Cobrança Adicional)</h4>
               <div className="text-xs space-y-2" style={{ color: theme.textMuted }}>
                 <p><strong>Impacto:</strong> Gera cobrança adicional ao cliente (receita).</p>
                 <p><strong>Geração:</strong> Sistema cria AUTOMATICAMENTE quando:</p>
@@ -188,7 +188,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
           <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>4. REGISTRO DE OCORRÊNCIA - PASSO A PASSO</h3>
           
           <div className="space-y-4">
-            <div className="border-l-4 border-blue-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.accentBlue }}>
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">1</div>
                 <h4 className="font-bold text-base" style={{ color: theme.text }}>Acessar Módulo de Ocorrências</h4>
@@ -201,7 +201,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </ol>
             </div>
 
-            <div className="border-l-4 border-blue-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.accentBlue }}>
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">2</div>
                 <h4 className="font-bold text-base" style={{ color: theme.text }}>Vincular Ordem (Se Aplicável)</h4>
@@ -232,7 +232,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </div>
             </div>
 
-            <div className="border-l-4 border-blue-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.accentBlue }}>
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">3</div>
                 <h4 className="font-bold text-base" style={{ color: theme.text }}>Selecionar Tipo de Ocorrência</h4>
@@ -264,7 +264,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </div>
             </div>
 
-            <div className="border-l-4 border-blue-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.accentBlue }}>
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">4</div>
                 <h4 className="font-bold text-base" style={{ color: theme.text }}>Selecionar Categoria e Gravidade</h4>
@@ -328,7 +328,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </div>
             </div>
 
-            <div className="border-l-4 border-blue-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.accentBlue }}>
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">5</div>
                 <h4 className="font-bold text-base" style={{ color: theme.text }}>Preencher Dados da Ocorrência</h4>
@@ -374,7 +374,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </div>
             </div>
 
-            <div className="border-l-4 border-blue-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.accentBlue }}>
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">6</div>
                 <h4 className="font-bold text-base" style={{ color: theme.text }}>Atribuir Responsável (Opcional)</h4>
@@ -424,7 +424,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
           </p>
 
           <div className="space-y-4">
-            <div className="border-l-4 border-orange-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#fff7ed' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.textMuted }}>
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">1</div>
                 <h4 className="font-bold text-base" style={{ color: theme.text }}>Acessar Ocorrência</h4>
@@ -437,7 +437,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </ol>
             </div>
 
-            <div className="border-l-4 border-orange-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#fff7ed' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.textMuted }}>
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">2</div>
                 <h4 className="font-bold text-base" style={{ color: theme.text }}>Alterar Status para "Em Andamento"</h4>
@@ -450,7 +450,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </ol>
             </div>
 
-            <div className="border-l-4 border-orange-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#fff7ed' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.textMuted }}>
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">3</div>
                 <h4 className="font-bold text-base" style={{ color: theme.text }}>Preencher Campos Customizados</h4>
@@ -471,7 +471,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </div>
             </div>
 
-            <div className="border-l-4 border-orange-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#fff7ed' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.textMuted }}>
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">4</div>
                 <h4 className="font-bold text-base" style={{ color: theme.text }}>Anexar Evidências</h4>
@@ -491,7 +491,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </ol>
             </div>
 
-            <div className="border-l-4 border-orange-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#fff7ed' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.textMuted }}>
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">5</div>
                 <h4 className="font-bold text-base" style={{ color: theme.text }}>Informar Resolução</h4>
@@ -539,7 +539,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
           </p>
 
           <div className="space-y-3">
-            <div className="border-l-4 border-yellow-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#fefce8' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.textMuted }}>
               <p className="font-bold text-sm mb-2 text-yellow-600">PASSO 1: Identificar Diária Gerada</p>
               <ol className="text-xs space-y-1 ml-4 list-decimal" style={{ color: theme.textMuted }}>
                 <li>Sistema detecta atraso além da tolerância (carregamento ou descarga)</li>
@@ -551,7 +551,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </ol>
             </div>
 
-            <div className="border-l-4 border-yellow-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#fefce8' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.textMuted }}>
               <p className="font-bold text-sm mb-2 text-yellow-600">PASSO 2: Revisar Valor (Gestor)</p>
               <ol className="text-xs space-y-1 ml-4 list-decimal" style={{ color: theme.textMuted }}>
                 <li>Acesse Qualidade → Ocorrências → Filtro "Categoria: Diária"</li>
@@ -564,7 +564,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </ol>
             </div>
 
-            <div className="border-l-4 border-yellow-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#fefce8' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.textMuted }}>
               <p className="font-bold text-sm mb-2 text-yellow-600">PASSO 3: Obter Autorização do Cliente</p>
               <ol className="text-xs space-y-1 ml-4 list-decimal" style={{ color: theme.textMuted }}>
                 <li>Comercial entra em contato com cliente</li>
@@ -587,7 +587,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
               </ol>
             </div>
 
-            <div className="border-l-4 border-yellow-600 pl-4 py-3" style={{ backgroundColor: isDark ? '#0f172a' : '#fefce8' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: theme.textMuted }}>
               <p className="font-bold text-sm mb-2 text-yellow-600">PASSO 4: Faturamento</p>
               <ol className="text-xs space-y-1 ml-4 list-decimal" style={{ color: theme.textMuted }}>
                 <li>Financeiro filtra diárias com status "Autorizado para Faturamento"</li>
@@ -835,8 +835,8 @@ export function ManualSistemaCompleto({ theme, isDark }) {
 
         {/* PARTE I */}
         <section className="print-page-break">
-          <div className="bg-blue-600 text-white px-4 py-3 rounded-t-lg mb-4">
-            <h2 className="text-xl font-bold">PARTE I - FUNDAMENTOS DO SISTEMA</h2>
+          <div className="border-b-2 px-4 py-3 mb-4" style={{ borderColor: theme.text }}>
+            <h2 className="text-xl font-bold" style={{ color: theme.text }}>PARTE I - FUNDAMENTOS DO SISTEMA</h2>
           </div>
 
           <div className="space-y-6">
@@ -1044,8 +1044,8 @@ export function ManualSistemaCompleto({ theme, isDark }) {
 
         {/* PARTE II */}
         <section className="print-page-break">
-          <div className="bg-green-600 text-white px-4 py-3 rounded-t-lg mb-4">
-            <h2 className="text-xl font-bold">PARTE II - MÓDULOS OPERACIONAIS (CORE)</h2>
+          <div className="border-b-2 px-4 py-3 mb-4" style={{ borderColor: theme.text }}>
+            <h2 className="text-xl font-bold" style={{ color: theme.text }}>PARTE II - MÓDULOS OPERACIONAIS (CORE)</h2>
           </div>
 
           <div className="space-y-6">
@@ -1193,8 +1193,8 @@ export function ManualSistemaCompleto({ theme, isDark }) {
 
         {/* PARTE III */}
         <section className="print-page-break">
-          <div className="bg-red-600 text-white px-4 py-3 rounded-t-lg mb-4">
-            <h2 className="text-xl font-bold">PARTE III - GESTÃO DE QUALIDADE (ISO 9001)</h2>
+          <div className="border-b-2 px-4 py-3 mb-4" style={{ borderColor: theme.text }}>
+            <h2 className="text-xl font-bold" style={{ color: theme.text }}>PARTE III - GESTÃO DE QUALIDADE (ISO 9001)</h2>
           </div>
 
           <div className="space-y-6">
@@ -1286,8 +1286,8 @@ export function ManualSistemaCompleto({ theme, isDark }) {
 
         {/* PARTE VII */}
         <section className="print-page-break">
-          <div className="bg-cyan-600 text-white px-4 py-3 rounded-t-lg mb-4">
-            <h2 className="text-xl font-bold">PARTE VII - COMUNICAÇÃO</h2>
+          <div className="border-b-2 px-4 py-3 mb-4" style={{ borderColor: theme.text }}>
+            <h2 className="text-xl font-bold" style={{ color: theme.text }}>PARTE VII - COMUNICAÇÃO</h2>
           </div>
 
           <div className="space-y-6">
@@ -1348,8 +1348,8 @@ export function ManualSistemaCompleto({ theme, isDark }) {
 
         {/* BOAS PRÁTICAS */}
         <section className="print-page-break">
-          <div className="bg-purple-600 text-white px-4 py-3 rounded-t-lg mb-4">
-            <h2 className="text-xl font-bold">PARTE VIII - BOAS PRÁTICAS OPERACIONAIS</h2>
+          <div className="border-b-2 px-4 py-3 mb-4" style={{ borderColor: theme.text }}>
+            <h2 className="text-xl font-bold" style={{ color: theme.text }}>PARTE VIII - BOAS PRÁTICAS OPERACIONAIS</h2>
           </div>
 
           <div className="space-y-6">

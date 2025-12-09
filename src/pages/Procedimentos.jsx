@@ -61,11 +61,13 @@ export default function Procedimentos() {
   };
 
   const theme = {
-    bg: isDark ? '#0f172a' : '#f9fafb',
-    cardBg: isDark ? '#1e293b' : '#ffffff',
-    cardBorder: isDark ? '#334155' : '#e5e7eb',
-    text: isDark ? '#f1f5f9' : '#111827',
-    textMuted: isDark ? '#94a3b8' : '#6b7280',
+    bg: isDark ? '#1e1e1e' : '#ffffff',
+    cardBg: isDark ? '#2d2d2d' : '#ffffff',
+    cardBorder: isDark ? '#404040' : '#d1d5db',
+    text: isDark ? '#e5e5e5' : '#1f2937',
+    textMuted: isDark ? '#a3a3a3' : '#4b5563',
+    headerBg: isDark ? '#1a1a1a' : '#f3f4f6',
+    accentBlue: '#1e40af',
   };
 
   if (loading) {
@@ -846,7 +848,7 @@ function ProcedimentoGestaoTransportes({ theme, isDark }) {
             </div>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-3 text-xs">
+          <div className="border rounded p-3 text-xs" style={{ borderColor: theme.cardBorder, backgroundColor: theme.headerBg }}>
             <p className="font-semibold mb-1" style={{ color: theme.text }}>Conformidade Normativa:</p>
             <p style={{ color: theme.textMuted }}>
               • NBR ISO 9001:2015 (itens 4.4, 6.1, 8.1, 8.5, 9.1, 10.2)<br/>
@@ -1029,7 +1031,7 @@ function ProcedimentoGestaoTransportes({ theme, isDark }) {
           <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>5. MACROPROCESSO DE TRANSPORTE (ISO 9001 - 4.4)</h3>
           <div className="space-y-4">
             <div>
-              <h4 className="font-bold text-base mb-3 bg-blue-100 dark:bg-blue-900/30 px-3 py-2 rounded" style={{ color: theme.text }}>
+              <h4 className="font-bold text-base mb-3 px-3 py-2 border-l-4" style={{ color: theme.text, borderColor: theme.accentBlue, backgroundColor: theme.headerBg }}>
                 5.1 PLANEJAMENTO (ISO 9001:2015 - 8.1)
               </h4>
               <table className="w-full text-xs border mt-2" style={{ borderColor: theme.cardBorder }}>
@@ -1107,7 +1109,7 @@ function ProcedimentoGestaoTransportes({ theme, isDark }) {
             </div>
 
             <div>
-              <h4 className="font-bold text-base mb-3 bg-green-100 dark:bg-green-900/30 px-3 py-2 rounded" style={{ color: theme.text }}>
+              <h4 className="font-bold text-base mb-3 px-3 py-2 border-l-4" style={{ color: theme.text, borderColor: theme.accentBlue, backgroundColor: theme.headerBg }}>
                 5.2 EXECUÇÃO (ISO 9001:2015 - 8.5)
               </h4>
               <table className="w-full text-xs border mt-2" style={{ borderColor: theme.cardBorder }}>
@@ -1175,7 +1177,7 @@ function ProcedimentoGestaoTransportes({ theme, isDark }) {
             </div>
 
             <div>
-              <h4 className="font-bold text-base mb-3 bg-purple-100 dark:bg-purple-900/30 px-3 py-2 rounded" style={{ color: theme.text }}>
+              <h4 className="font-bold text-base mb-3 px-3 py-2 border-l-4" style={{ color: theme.text, borderColor: theme.accentBlue, backgroundColor: theme.headerBg }}>
                 5.3 MONITORAMENTO E MEDIÇÃO (ISO 9001:2015 - 9.1)
               </h4>
               <table className="w-full text-xs border mt-2" style={{ borderColor: theme.cardBorder }}>
@@ -1243,7 +1245,7 @@ function ProcedimentoGestaoTransportes({ theme, isDark }) {
             </div>
 
             <div>
-              <h4 className="font-bold text-base mb-3 bg-red-100 dark:bg-red-900/30 px-3 py-2 rounded" style={{ color: theme.text }}>
+              <h4 className="font-bold text-base mb-3 px-3 py-2 border-l-4" style={{ color: theme.text, borderColor: theme.accentBlue, backgroundColor: theme.headerBg }}>
                 5.4 NÃO CONFORMIDADE E AÇÃO CORRETIVA (ISO 9001:2015 - 10.2)
               </h4>
               <div className="text-sm space-y-2" style={{ color: theme.textMuted }}>

@@ -516,8 +516,8 @@ export function InstrucaoOrdensCarregamentoDetalhada({ theme, isDark }) {
                   </div>
                 </div>
 
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded p-2">
-                  <p className="font-semibold text-xs">✅ BENEFÍCIO:</p>
+                <div className="border rounded p-2" style={{ backgroundColor: theme.headerBg, borderColor: theme.cardBorder }}>
+                  <p className="font-semibold text-xs" style={{ color: theme.text }}>✓ BENEFÍCIO:</p>
                   <p className="text-xs" style={{ color: theme.textMuted }}>
                     Quando NFs são vinculadas, peso/volumes da ordem são atualizados AUTOMATICAMENTE com totais consolidados.
                   </p>
@@ -526,7 +526,7 @@ export function InstrucaoOrdensCarregamentoDetalhada({ theme, isDark }) {
             </div>
 
             {/* PASSO 9 */}
-            <div className="border-l-4 border-green-600 pl-4 py-3" style={{ backgroundColor: isDark ? 'rgba(34, 197, 94, 0.1)' : '#dcfce7' }}>
+            <div className="border-l-4 pl-4 py-3" style={{ backgroundColor: theme.headerBg, borderColor: '#6b7280' }}>
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">9</div>
                 <h4 className="font-bold text-base text-green-600">Conferir e Salvar</h4>

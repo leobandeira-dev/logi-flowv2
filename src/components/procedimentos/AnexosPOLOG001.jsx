@@ -194,8 +194,8 @@ export function AnexosProcedimentoTransportes({ theme, isDark }) {
             </table>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded p-3 text-xs">
-            <p className="font-semibold mb-1">💡 COMO LER O SIPOC:</p>
+          <div className="border rounded p-3 text-xs" style={{ backgroundColor: theme.headerBg, borderColor: theme.cardBorder }}>
+            <p className="font-semibold mb-1" style={{ color: theme.text }}>NOTA - Como Ler o SIPOC:</p>
             <p style={{ color: theme.textMuted }}>
               Leia horizontalmente cada linha. Exemplo linha 1: <strong>Cliente</strong> fornece 
               <strong> Solicitação</strong>, que passa pelo processo de <strong>Planejamento</strong>, 
@@ -699,8 +699,8 @@ export function AnexosProcedimentoTransportes({ theme, isDark }) {
             </tbody>
           </table>
 
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded p-3 text-xs">
-            <p className="font-semibold mb-1">⚠️ IMPORTANTE - DIAS ÚTEIS vs CORRIDOS:</p>
+          <div className="border rounded p-3 text-xs" style={{ backgroundColor: theme.headerBg, borderColor: theme.cardBorder }}>
+            <p className="font-semibold mb-1" style={{ color: theme.text }}>IMPORTANTE - Dias Úteis vs Corridos:</p>
             <p style={{ color: theme.textMuted }}>
               O sistema calcula automaticamente com base na flag "prazo_entrega_dias_uteis" da operação:<br/>
               • <strong>Dias Úteis:</strong> Conta apenas seg-sex, pula sáb/dom e feriados<br/>
@@ -996,8 +996,8 @@ export function AnexosProcedimentoTransportes({ theme, isDark }) {
             </div>
           </div>
 
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded p-3 text-xs">
-            <p className="font-semibold mb-1 text-red-600">🚫 NÃO LIBERAR VIAGEM SE:</p>
+          <div className="border-2 rounded p-3 text-xs" style={{ backgroundColor: theme.headerBg, borderColor: theme.text }}>
+            <p className="font-semibold mb-1" style={{ color: theme.text }}>⚠️ CRITÉRIO DE BLOQUEIO - Não Liberar Viagem Se:</p>
             <ul className="list-disc ml-6 space-y-1" style={{ color: theme.textMuted }}>
               <li>Bafômetro REPROVADO (tolerância zero para álcool)</li>
               <li>CNH vencida ou categoria incompatível</li>
@@ -1358,8 +1358,8 @@ export function AnexosProcedimentoTransportes({ theme, isDark }) {
             </table>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded p-3 text-xs">
-            <p className="font-semibold mb-1">📊 ESCALA DE AVALIAÇÃO:</p>
+          <div className="border rounded p-3 text-xs" style={{ backgroundColor: theme.headerBg, borderColor: theme.cardBorder }}>
+            <p className="font-semibold mb-1" style={{ color: theme.text }}>ESCALA DE AVALIAÇÃO:</p>
             <div className="grid grid-cols-2 gap-4 mt-2">
               <div>
                 <p className="font-semibold mb-1">Probabilidade:</p>
@@ -1620,8 +1620,8 @@ export function AnexosProcedimentoTransportes({ theme, isDark }) {
           </div>
 
           {/* Exemplo Prático */}
-          <div className="border rounded p-4 bg-blue-50 dark:bg-blue-900/20" style={{ borderColor: '#3b82f6' }}>
-            <h4 className="font-bold text-sm mb-3 text-blue-600">📘 EXEMPLO PRÁTICO - ATRASO RECORRENTE</h4>
+          <div className="border rounded p-4" style={{ borderColor: theme.cardBorder, backgroundColor: theme.headerBg }}>
+            <h4 className="font-bold text-sm mb-3" style={{ color: theme.text }}>EXEMPLO PRÁTICO - Análise de Atraso Recorrente</h4>
             <div className="space-y-3 text-xs" style={{ color: theme.textMuted }}>
               <div>
                 <p className="font-semibold">Problema:</p>
