@@ -14,6 +14,10 @@ import {
   Truck,
   FileSpreadsheet
 } from "lucide-react";
+import { 
+  InstrucaoOrdensCarregamentoDetalhada, 
+  InstrucaoTrackingDetalhada 
+} from "../components/procedimentos/DocumentosDetalhados";
 
 export default function Procedimentos() {
   const [user, setUser] = useState(null);
@@ -231,10 +235,10 @@ export default function Procedimentos() {
             <ProcedimentoGestaoTransportes theme={theme} isDark={isDark} />
           )}
           {procedimentoSelecionado === "ordens_carga" && (
-            <InstrucaoOrdensCarregamento theme={theme} isDark={isDark} />
+            <InstrucaoOrdensCarregamentoDetalhada theme={theme} isDark={isDark} />
           )}
           {procedimentoSelecionado === "tracking" && (
-            <InstrucaoTracking theme={theme} isDark={isDark} />
+            <InstrucaoTrackingDetalhada theme={theme} isDark={isDark} />
           )}
           {procedimentoSelecionado === "ocorrencias" && (
             <InstrucaoOcorrencias theme={theme} isDark={isDark} />
