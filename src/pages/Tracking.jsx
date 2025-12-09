@@ -2198,7 +2198,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             {/* Totalizadores para impressão */}
             <div className="mt-6 pt-4 border-t-2" style={{ borderColor: theme.border }}>
               <h3 className="font-bold text-sm mb-3">Resumo</h3>
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-5 gap-3">
                 <div className="p-2 rounded border" style={{ backgroundColor: '#eff6ff', borderColor: '#93c5fd' }}>
                   <div className="text-xs text-blue-600 font-medium">Total de Ordens</div>
                   <div className="text-xl font-bold text-blue-900">{listaImpressao.length}</div>
@@ -2236,8 +2236,35 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                     }).length}
                   </div>
                 </div>
+                <div className="p-2 rounded border" style={{ backgroundColor: '#ecfdf5', borderColor: '#6ee7b7' }}>
+                  <div className="text-xs text-green-700 font-medium">% no Prazo</div>
+                  <div className="text-xl font-bold text-green-900">
+                    {(() => {
+                      const noPrazo = listaImpressao.filter(ordem => {
+                        if (tipo === 'geral') {
+                          return getStatusSLA(ordem, 'carga').label === 'No Prazo' && getStatusSLA(ordem, 'entrega').label === 'No Prazo';
+                        }
+                        return getStatusSLA(ordem, tipo).label === 'No Prazo';
+                      }).length;
+                      const totalConsiderado = listaImpressao.filter(ordem => {
+                        if (tipo === 'geral') {
+                          return (ordem.fim_carregamento && ordem.carregamento_agendamento_data && !ordem.carregamento_expurgado) ||
+                                 (ordem.chegada_destino && ordem.prazo_entrega && !ordem.entrega_expurgada);
+                        }
+                        return tipo === 'carga' 
+                          ? (ordem.fim_carregamento && ordem.carregamento_agendamento_data && !ordem.carregamento_expurgado)
+                          : (ordem.chegada_destino && ordem.prazo_entrega && !ordem.entrega_expurgada);
+                      }).length;
+                      return totalConsiderado > 0 ? Math.round((noPrazo / totalConsiderado) * 100) : 0;
+                    })()}%
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* Versão para tela - com gráfico e abas */}
+          <div className="no-print">
           </div>
 
           {/* Versão para tela - com gráfico e abas */}
