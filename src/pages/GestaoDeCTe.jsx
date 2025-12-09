@@ -194,8 +194,9 @@ export default function GestaoDeCTe() {
                 <Mail className="w-4 h-4" />
                 Config. E-mail
               </Button>
-              <label>
+              <label htmlFor="upload-xml-input" className="cursor-pointer">
                 <input
+                  id="upload-xml-input"
                   type="file"
                   accept=".xml"
                   multiple
@@ -204,12 +205,15 @@ export default function GestaoDeCTe() {
                   disabled={uploading}
                 />
                 <Button
-                  as="span"
+                  type="button"
                   disabled={uploading}
-                  className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2 cursor-pointer"
+                  className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2 pointer-events-none"
+                  asChild
                 >
-                  <Upload className="w-4 h-4" />
-                  {uploading ? 'Processando...' : 'Upload XML'}
+                  <span>
+                    <Upload className="w-4 h-4" />
+                    {uploading ? 'Processando...' : 'Upload XML'}
+                  </span>
                 </Button>
               </label>
             </div>
