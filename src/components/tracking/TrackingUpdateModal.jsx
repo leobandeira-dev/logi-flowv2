@@ -146,6 +146,7 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
   const [formData, setFormData] = useState({
     status_tracking: ordem?.status_tracking || "aguardando_agendamento",
     carregamento_agendamento_data: convertISOToLocal(ordem?.carregamento_agendamento_data),
+    entrada_galpao: convertISOToLocal(ordem?.entrada_galpao),
     inicio_carregamento: convertISOToLocal(ordem?.inicio_carregamento),
     fim_carregamento: convertISOToLocal(ordem?.fim_carregamento),
     saida_unidade: convertISOToLocal(ordem?.saida_unidade),
@@ -431,6 +432,7 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
       const dataToSave = {
         status_tracking: formData.status_tracking,
         carregamento_agendamento_data: convertLocalToISO(formData.carregamento_agendamento_data),
+        entrada_galpao: convertLocalToISO(formData.entrada_galpao),
         inicio_carregamento: convertLocalToISO(formData.inicio_carregamento),
         fim_carregamento: convertLocalToISO(formData.fim_carregamento),
         saida_unidade: convertLocalToISO(formData.saida_unidade),
@@ -802,7 +804,24 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
                   <div>
                     <Label className="flex items-center gap-2">
                       <Clock className="w-4 h-4" />
-                      Chegada no Carregamento
+                      Chegada Carga
+                    </Label>
+                    <Input
+                      type="text"
+                      value={formData.entrada_galpao}
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        entrada_galpao: e.target.value
+                      })}
+                      onKeyDown={(e) => handleKeyDown(e, "entrada_galpao")}
+                      placeholder="dd/mm/aaaa hh:mm"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Início Carga
                     </Label>
                     <Input
                       type="text"
