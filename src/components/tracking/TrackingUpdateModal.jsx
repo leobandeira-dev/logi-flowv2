@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
 import { sincronizarOrdemMaeParaFilhas } from "@/functions/sincronizarOrdemMaeParaFilhas";
 import { sincronizarStatusNotas } from "@/functions/sincronizarStatusNotas";
-import { Save, Loader2, MapPin, Package, Calendar, Edit, CheckCircle2, Truck, Clock, AlertTriangle } from "lucide-react";
+import { Save, Loader2, MapPin, Package, Calendar, FileText, Edit, CheckCircle2, Truck, Clock, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -784,7 +784,7 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
                   <div>
                     <Label className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      Carregamento Agendado
+                      Agend. Carregamento
                     </Label>
                     <Input
                       type="text"
@@ -900,24 +900,25 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
                   </div>
                 </div>
 
-                <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
-                  <Label className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-4 h-4 text-orange-600" />
-                    <span className="font-semibold text-orange-900">Prazo de Entrega (SLA)</span>
-                  </Label>
-                  <Input
-                    type="text"
-                    value={formData.prazo_entrega}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      prazo_entrega: e.target.value
-                    })}
-                    onKeyDown={(e) => handleKeyDown(e, "prazo_entrega")}
-                    placeholder="dd/mm/aaaa hh:mm"
-                  />
-                  <p className="text-xs text-orange-700 mt-2">
-                    ⚠️ Calculado automaticamente baseado na operação. Pode ser editado manualmente se necessário.
-                  </p>
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-orange-600" />
+                      <span className="font-semibold text-orange-900">Prazo de Entrega (SLA)</span>
+                    </Label>
+                    <Input
+                      type="text"
+                      value={formData.prazo_entrega}
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        prazo_entrega: e.target.value
+                      })}
+                      onKeyDown={(e) => handleKeyDown(e, "prazo_entrega")}
+                      placeholder="dd/mm/aaaa hh:mm"
+                    />
+                    <p className="text-xs text-orange-700 mt-1">
+                      ⚠️ Calculado automaticamente baseado na operação. Pode ser editado manualmente se necessário.
+                    </p>
+                  </div>
                 </div>
               </TabsContent>
 
