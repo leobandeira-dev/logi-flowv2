@@ -18,6 +18,10 @@ import {
   InstrucaoOrdensCarregamentoDetalhada, 
   InstrucaoTrackingDetalhada 
 } from "../components/procedimentos/DocumentosDetalhados";
+import { 
+  InstrucaoOcorrenciasDetalhada, 
+  ManualSistemaCompleto 
+} from "../components/procedimentos/DocumentosComplementares";
 
 export default function Procedimentos() {
   const [user, setUser] = useState(null);
@@ -241,13 +245,13 @@ export default function Procedimentos() {
             <InstrucaoTrackingDetalhada theme={theme} isDark={isDark} />
           )}
           {procedimentoSelecionado === "ocorrencias" && (
-            <InstrucaoOcorrencias theme={theme} isDark={isDark} />
+            <InstrucaoOcorrenciasDetalhada theme={theme} isDark={isDark} />
           )}
           {procedimentoSelecionado === "formulario" && (
             <FormularioOrdemCarregamento theme={theme} isDark={isDark} />
           )}
           {procedimentoSelecionado === "manual" && (
-            <ManualSistema theme={theme} isDark={isDark} />
+            <ManualSistemaCompleto theme={theme} isDark={isDark} />
           )}
         </div>
       </div>
