@@ -1889,6 +1889,10 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
     tabsBg: isDark ? '#0f172a' : '#f9fafb',
   };
 
+  const handleImprimir = () => {
+    window.print();
+  };
+
   const formatarData = (dataStr) => {
     if (!dataStr) return '-';
     try {
@@ -1985,11 +1989,46 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-7xl max-h-[90vh] overflow-auto" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .relatorio-sla-print, .relatorio-sla-print * {
+            visibility: visible !important;
+          }
+          .relatorio-sla-print {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          .no-print {
+            display: none !important;
+          }
+          @page {
+            size: A4 landscape;
+            margin: 1cm;
+          }
+        }
+      `}</style>
+      <Card className="w-full max-w-7xl max-h-[90vh] overflow-auto relatorio-sla-print" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
         <CardHeader className="border-b sticky top-0 z-10" style={{ borderColor: theme.border, backgroundColor: theme.cardBg }}>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg" style={{ color: theme.text }}>{titulo}</CardTitle>
-            <Button variant="ghost" size="sm" onClick={onClose} style={{ color: theme.text }}>✕</Button>
+            <div className="flex gap-2 no-print">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleImprimir}
+                className="flex items-center gap-2"
+                style={{ borderColor: theme.border, color: theme.text }}
+              >
+                <Printer className="w-4 h-4" />
+                Imprimir
+              </Button>
+              <Button variant="ghost" size="sm" onClick={onClose} style={{ color: theme.text }}>✕</Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-4 space-y-4">
