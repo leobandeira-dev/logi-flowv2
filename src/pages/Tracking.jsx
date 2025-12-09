@@ -32,7 +32,8 @@ import {
   User,
   Loader2,
   ChevronDown,
-  BarChart3
+  BarChart3,
+  Printer
 } from "lucide-react";
 import { format, differenceInDays, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
