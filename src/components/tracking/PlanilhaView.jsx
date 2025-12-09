@@ -35,11 +35,13 @@ const COLUNAS_DISPONIVEIS = [
   { id: "produto", label: "Produto", width: "w-32", enabled: true, truncate: true },
   { id: "modalidade_carga", label: "Modalidade", width: "w-24", enabled: true },
   { id: "carregamento_agendamento_data", label: "Agend. Carregamento", width: "w-32", enabled: true },
-  { id: "inicio_carregamento", label: "Chegada no Carregamento", width: "w-32", enabled: true },
+  { id: "entrada_galpao", label: "Chegada Carga", width: "w-32", enabled: true },
+  { id: "inicio_carregamento", label: "Início Carga", width: "w-32", enabled: true },
   { id: "fim_carregamento", label: "Fim do Carregamento", width: "w-32", enabled: true },
   { id: "saida_unidade", label: "Saída da Unidade", width: "w-32", enabled: true },
   { id: "chegada_destino", label: "Chegada no Destino", width: "w-32", enabled: true },
   { id: "descarga_agendamento_data", label: "Descarga Agendada", width: "w-32", enabled: true },
+  { id: "agendamento_checklist_data", label: "Checklist Agendamento", width: "w-32", enabled: true },
   { id: "descarga_realizada_data", label: "Descarga Realizada", width: "w-32", enabled: true },
   { id: "prazo_entrega", label: "Prazo de Entrega (SLA)", width: "w-32", enabled: true },
   { id: "sla_carregamento", label: "SLA Carga", width: "w-28", enabled: true },
@@ -125,19 +127,7 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
         
         const filteredConfig = parsedConfig.filter(col => col.id !== "data_programacao_descarga");
         
-        const newColumnIds = ["mdfe_baixado", "saldo_pago", "comprovante_entrega_recebido", "tolerancia", "diaria_carregamento", "diaria_descarga", "modalidade_carga", "prazo_entrega"];
-        const hasNewColumns = newColumnIds.some(colId => !filteredConfig.some(col => col.id === colId));
-        
-        // Verificar se precisa atualizar label da coluna origem_destino
-        const needsLabelUpdate = filteredConfig.some(col => 
-          col.id === "origem_destino" && col.label !== "Origem - Destino"
-        );
 
-        if (hasNewColumns || needsLabelUpdate) {
-          const updatedConfig = COLUNAS_DISPONIVEIS.map(defaultCol => {
-            const existingCol = filteredConfig.find(pCol => pCol.id === defaultCol.id);
-            return existingCol ? { ...defaultCol, enabled: existingCol.enabled } : defaultCol;
-          });
           const finalConfig = updatedConfig.filter(col => COLUNAS_DISPONIVEIS.some(defaultCol => defaultCol.id === col.id));
           setColunas(finalConfig);
           localStorage.setItem('planilha_colunas_config', JSON.stringify(finalConfig));
@@ -174,11 +164,13 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
         observacao_carga: ordem.observacao_carga || "",
         senha_agendamento: ordem.senha_agendamento || "",
         carregamento_agendamento_data: ordem.carregamento_agendamento_data || "",
+        entrada_galpao: ordem.entrada_galpao || "",
         inicio_carregamento: ordem.inicio_carregamento || "",
         fim_carregamento: ordem.fim_carregamento || "",
         saida_unidade: ordem.saida_unidade || "",
         chegada_destino: ordem.chegada_destino || "",
         descarga_agendamento_data: ordem.descarga_agendamento_data || "",
+        agendamento_checklist_data: ordem.agendamento_checklist_data || "",
         descarga_realizada_data: ordem.descarga_realizada_data || "",
         prazo_entrega: ordem.prazo_entrega || "",
         numero_cte: ordem.numero_cte || "",
@@ -588,11 +580,13 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
           observacao_carga: data.observacao_carga ? String(data.observacao_carga) : null,
           senha_agendamento: data.senha_agendamento ? String(data.senha_agendamento) : null,
           carregamento_agendamento_data: toISO(data.carregamento_agendamento_data),
+          entrada_galpao: toISO(data.entrada_galpao),
           inicio_carregamento: toISO(data.inicio_carregamento),
           fim_carregamento: toISO(data.fim_carregamento),
           saida_unidade: toISO(data.saida_unidade),
           chegada_destino: toISO(data.chegada_destino),
           descarga_agendamento_data: toISO(data.descarga_agendamento_data),
+          agendamento_checklist_data: toISO(data.agendamento_checklist_data),
           descarga_realizada_data: toISO(data.descarga_realizada_data),
           prazo_entrega: toISO(data.prazo_entrega),
           numero_cte: data.numero_cte ? String(data.numero_cte) : null,
@@ -980,11 +974,13 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
           </div>
         );
       case "carregamento_agendamento_data":
+      case "entrada_galpao":
       case "inicio_carregamento":
       case "fim_carregamento":
       case "saida_unidade":
       case "chegada_destino":
       case "descarga_agendamento_data":
+      case "agendamento_checklist_data":
       case "descarga_realizada_data":
       case "prazo_entrega":
         const formatDateTimeLocal = (dateStr) => {
@@ -1409,11 +1405,13 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
                         observacao_carga: data.observacao_carga ? String(data.observacao_carga) : null,
                         senha_agendamento: data.senha_agendamento ? String(data.senha_agendamento) : null,
                         carregamento_agendamento_data: toISO(data.carregamento_agendamento_data),
+                        entrada_galpao: toISO(data.entrada_galpao),
                         inicio_carregamento: toISO(data.inicio_carregamento),
                         fim_carregamento: toISO(data.fim_carregamento),
                         saida_unidade: toISO(data.saida_unidade),
                         chegada_destino: toISO(data.chegada_destino),
                         descarga_agendamento_data: toISO(data.descarga_agendamento_data),
+                        agendamento_checklist_data: toISO(data.agendamento_checklist_data),
                         descarga_realizada_data: toISO(data.descarga_realizada_data),
                         prazo_entrega: toISO(data.prazo_entrega),
                         numero_cte: data.numero_cte ? String(data.numero_cte) : null,
