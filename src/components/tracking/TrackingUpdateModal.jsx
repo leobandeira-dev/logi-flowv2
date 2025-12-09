@@ -898,7 +898,6 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
                       placeholder="dd/mm/aaaa hh:mm"
                     />
                   </div>
-                </div>
 
                   <div>
                     <Label className="flex items-center gap-2">
