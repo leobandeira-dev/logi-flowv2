@@ -230,32 +230,36 @@ export default function LandingPage() {
       return;
     }
 
-    setEnviando(true);
+    const totais = calcularTotais();
 
+    // Mostrar feedback imediatamente
+    setPropostaEnviada(true);
+    setEnviando(false);
+
+    // Processar em background
     try {
-      const totais = calcularTotais();
-      
-      // Criar lead no CRM com dados da proposta
-      await base44.entities.Lead.create({
-        razao_social: formData.empresa || formData.nome,
-        responsavel_nome: formData.nome,
-        responsavel_email: formData.email,
-        responsavel_telefone: formData.telefone,
-        status_funil: "lead",
-        origem: "landing_page",
-        pacote_base_preco: totais.pacoteBase,
-        addons_selecionados: JSON.stringify(totais.addons.map(a => ({ id: a.id, nome: a.nome, preco: a.preco }))),
-        volume_coletas: volumeColetas,
-        volume_carregamentos: volumeCarregamentos,
-        volume_entregas: volumeEntregas,
-        volume_notas_fiscais: volumeNotasFiscais,
-        valor_total_proposta: totais.totalMensal,
-        data_proposta: new Date().toISOString()
-      });
-
-      // Enviar email de notificação
-      const emailBody = `
-Nova Proposta via Landing Page - Log Flow
+      // Criar lead e enviar email em paralelo para ser mais rápido
+      await Promise.all([
+        base44.entities.Lead.create({
+          razao_social: formData.empresa || formData.nome,
+          responsavel_nome: formData.nome,
+          responsavel_email: formData.email,
+          responsavel_telefone: formData.telefone,
+          status_funil: "lead",
+          origem: "landing_page",
+          pacote_base_preco: totais.pacoteBase,
+          addons_selecionados: JSON.stringify(totais.addons.map(a => ({ id: a.id, nome: a.nome, preco: a.preco }))),
+          volume_coletas: volumeColetas,
+          volume_carregamentos: volumeCarregamentos,
+          volume_entregas: volumeEntregas,
+          volume_notas_fiscais: volumeNotasFiscais,
+          valor_total_proposta: totais.totalMensal,
+          data_proposta: new Date().toISOString()
+        }),
+        base44.integrations.Core.SendEmail({
+          to: "leonardobandeira@laflogistica.com.br",
+          subject: `💰 Nova Proposta Landing Page - ${formData.nome} - R$ ${totais.totalMensal.toFixed(2)}/mês`,
+          body: `Nova Proposta via Landing Page - Log Flow
 
 CONTATO:
 Nome: ${formData.nome}
@@ -283,30 +287,28 @@ VALOR TOTAL MENSAL: R$ ${totais.totalMensal.toFixed(2)}
 
 ---
 Lead criado automaticamente no CRM
-Enviado em ${new Date().toLocaleString('pt-BR')}
-      `;
-
-      await base44.integrations.Core.SendEmail({
-        to: "leonardobandeira@laflogistica.com.br",
-        subject: `💰 Nova Proposta Landing Page - ${formData.nome} - R$ ${totais.totalMensal.toFixed(2)}/mês`,
-        body: emailBody
-      });
-
-      toast.success("Proposta enviada com sucesso! Entraremos em contato em breve.");
-      
-      // Limpar formulário
-      setFormData({ nome: "", email: "", telefone: "", empresa: "" });
-      setAddonsSelecionados([]);
-      setVolumeColetas(0);
-      setVolumeCarregamentos(0);
-      setVolumeEntregas(0);
-      setVolumeNotasFiscais(0);
+Enviado em ${new Date().toLocaleString('pt-BR')}`
+        })
+      ]);
     } catch (error) {
-      console.error("Erro ao enviar proposta:", error);
-      toast.error("Erro ao enviar. Tente novamente.");
-    } finally {
-      setEnviando(false);
+      console.error("Erro ao processar proposta (background):", error);
     }
+  };
+
+  const handleNovaSimulacao = () => {
+    setPropostaEnviada(false);
+    setFormData({ nome: "", email: "", telefone: "", empresa: "" });
+    setAddonsSelecionados([]);
+    setVolumeColetas(0);
+    setVolumeCarregamentos(0);
+    setVolumeEntregas(0);
+    setVolumeNotasFiscais(0);
+  };
+
+  const handleChamarWhatsApp = () => {
+    const mensagem = `Olá! Acabei de solicitar uma proposta comercial do Log Flow no valor de R$ ${totais.totalMensal.toFixed(2)}/mês. Gostaria de mais informações.`;
+    const url = `https://wa.me/5511961719449?text=${encodeURIComponent(mensagem)}`;
+    window.open(url, '_blank');
   };
 
   const pacoteBase = obterPacoteBase();
