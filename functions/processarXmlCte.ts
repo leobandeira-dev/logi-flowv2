@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { DOMParser } from 'npm:xmldom@0.6.0';
 
 Deno.serve(async (req) => {
   try {
