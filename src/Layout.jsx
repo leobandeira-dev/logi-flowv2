@@ -197,6 +197,72 @@ const getNavigationItems = (userProfile, userRole, ocorrenciasCount, etapasCount
         ]
       },
     ],
+    operador: [
+      ...baseMenu,
+      { 
+        title: "Operações", 
+        icon: Activity, 
+        type: "dropdown",
+        items: [
+          { title: "Dashboard", url: createPageUrl("Dashboard"), icon: Activity },
+          { title: "Tracking", url: createPageUrl("Tracking"), icon: MapPin },
+          { title: "Fluxo", url: createPageUrl("Fluxo"), icon: Workflow, badge: etapasCount },
+          { title: "Ordens", url: createPageUrl("OrdensCarregamento"), icon: FileText },
+        ]
+      },
+      { 
+        title: "Coletas", 
+        icon: Package, 
+        type: "dropdown",
+        items: [
+          { title: "Dashboard Coletas", url: createPageUrl("Coletas"), icon: Activity },
+          { title: "Solicitar Coleta", url: createPageUrl("SolicitacaoColeta"), icon: Package },
+          { title: "Aprovar Coletas", url: createPageUrl("AprovacaoColeta"), icon: ClipboardCheck },
+        ]
+      },
+      { 
+        title: "Armazém", 
+        icon: Package, 
+        type: "dropdown",
+        items: [
+          { title: "Recebimento", url: createPageUrl("Recebimento"), icon: Package },
+          { title: "Gestão de Notas Fiscais", url: createPageUrl("GestaoDeNotasFiscais"), icon: FileText },
+          { title: "Gestão de CT-e", url: createPageUrl("GestaoDeCTe"), icon: FileText },
+          { title: "Etiquetas Mãe", url: createPageUrl("EtiquetasMae"), icon: Tag },
+          { title: "Carregamento", url: createPageUrl("Carregamento"), icon: Truck },
+          { title: "Ordem de Entrega", url: createPageUrl("OrdemDeEntrega"), icon: Truck },
+        ]
+      },
+      { 
+        title: "Recursos", 
+        icon: Users, 
+        type: "dropdown",
+        items: [
+          { title: "Motoristas", url: createPageUrl("Motoristas"), icon: Users },
+          { title: "Veículos", url: createPageUrl("Veiculos"), icon: Truck },
+          { title: "Operações", url: createPageUrl("Operacoes"), icon: Settings },
+        ]
+      },
+      { 
+        title: "Qualidade", 
+        icon: Shield, 
+        type: "dropdown",
+        badge: ocorrenciasCount,
+        items: [
+          { title: "Ocorrências", url: createPageUrl("OcorrenciasGestao"), icon: Shield, badge: ocorrenciasCount },
+          { title: "Gamificação", url: createPageUrl("Gamificacao"), icon: Trophy },
+        ]
+      },
+      { 
+        title: "Comunicação", 
+        icon: MessageCircle, 
+        type: "dropdown",
+        items: [
+          { title: "App Motorista", url: createPageUrl("AppMotorista"), icon: Smartphone },
+          { title: "SAC", url: createPageUrl("SAC"), icon: MessageCircle },
+        ]
+      },
+    ],
     fornecedor: [
       ...baseMenu,
       { 

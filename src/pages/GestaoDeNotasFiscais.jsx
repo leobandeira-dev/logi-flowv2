@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Search, RefreshCw, Eye, Package, Printer, Clock, MapPin, CheckCircle2, Edit, Download, Filter, Calendar } from "lucide-react";
+import { Search, RefreshCw, Eye, Package, Printer, Clock, MapPin, CheckCircle2, Edit, Download, Filter, Calendar, FileText } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -38,6 +38,7 @@ export default function GestaoDeNotasFiscais() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [notaParaEditar, setNotaParaEditar] = useState(null);
   const [ordens, setOrdens] = useState([]);
+  const [ctes, setCtes] = useState([]);
   
   // Filtros adicionais
   const [filtroEmitente, setFiltroEmitente] = useState("");
@@ -70,17 +71,19 @@ export default function GestaoDeNotasFiscais() {
     try {
       const user = await base44.auth.me();
       
-      const [notasData, volumesData, empresaData, ordensData] = await Promise.all([
+      const [notasData, volumesData, empresaData, ordensData, ctesData] = await Promise.all([
         base44.entities.NotaFiscal.list("-created_date"),
         base44.entities.Volume.list(),
         user.empresa_id ? base44.entities.Empresa.get(user.empresa_id) : Promise.resolve(null),
-        base44.entities.OrdemDeCarregamento.list()
+        base44.entities.OrdemDeCarregamento.list(),
+        base44.entities.CTe.list()
       ]);
       
       setNotasFiscais(notasData);
       setVolumes(volumesData);
       setEmpresa(empresaData);
       setOrdens(ordensData);
+      setCtes(ctesData);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
@@ -534,6 +537,9 @@ export default function GestaoDeNotasFiscais() {
                     const statusDinamico = calcularStatusDinamico(nota);
                     const statusInfo = statusConfig[statusDinamico] || statusConfig.recebida;
                     const ordem = ordens.find(o => o.id === nota.ordem_id);
+                    const ctesVinculados = ctes.filter(cte => 
+                      cte.notas_fiscais_ids?.includes(nota.id)
+                    );
                     return (
                       <tr key={nota.id} className="border-b hover:bg-opacity-50" style={{ borderColor: theme.cardBorder }}>
                         <td className="px-2 py-1.5">
@@ -592,6 +598,67 @@ export default function GestaoDeNotasFiscais() {
                         </td>
                         <td className="px-2 py-1.5">
                           <div className="flex gap-0.5">
+                            {ctesVinculados.length > 0 && (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    style={{ 
+                                      borderColor: '#10b981',
+                                      color: '#10b981',
+                                      backgroundColor: isDark ? '#064e3b33' : '#d1fae533'
+                                    }}
+                                    title={`${ctesVinculados.length} CT-e(s) vinculado(s)`}
+                                    className="h-6 w-6 p-0 relative"
+                                  >
+                                    <FileText className="w-3 h-3" />
+                                    {ctesVinculados.length > 1 && (
+                                      <span className="absolute -top-1 -right-1 bg-green-600 text-white text-[8px] rounded-full w-3 h-3 flex items-center justify-center">
+                                        {ctesVinculados.length}
+                                      </span>
+                                    )}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent 
+                                  className="w-80" 
+                                  align="start"
+                                  style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+                                >
+                                  <div className="space-y-3">
+                                    <h4 className="font-semibold text-sm" style={{ color: theme.text }}>
+                                      CT-es Vinculados ({ctesVinculados.length})
+                                    </h4>
+                                    {ctesVinculados.map(cte => (
+                                      <div key={cte.id} className="border rounded p-2" style={{ borderColor: theme.cardBorder }}>
+                                        <p className="text-xs font-semibold mb-1" style={{ color: theme.text }}>
+                                          CT-e Nº {cte.numero_cte} - Série {cte.serie_cte}
+                                        </p>
+                                        <p className="text-[10px] mb-1" style={{ color: theme.textMuted }}>
+                                          {cte.emitente_nome}
+                                        </p>
+                                        <div className="flex items-center justify-between mt-2">
+                                          <span className="text-xs font-semibold text-green-600">
+                                            R$ {(cte.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                          </span>
+                                          {cte.xml_url && (
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={() => window.open(cte.xml_url, '_blank')}
+                                              className="h-6 text-[10px]"
+                                            >
+                                              <Download className="w-3 h-3 mr-1" />
+                                              XML
+                                            </Button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            )}
                             <Button
                               variant="outline"
                               size="sm"
