@@ -306,7 +306,12 @@ Enviado em ${new Date().toLocaleString('pt-BR')}`
   };
 
   const handleChamarWhatsApp = () => {
-    const mensagem = `Olá! Acabei de solicitar uma proposta comercial do Log Flow no valor de R$ ${totais.totalMensal.toFixed(2)}/mês. Gostaria de mais informações.`;
+    const propostaId = `LP${Date.now().toString().slice(-8)}`;
+    const mensagem = `Olá! Acabei de solicitar uma proposta comercial do Log Flow no valor de R$ ${totais.totalMensal.toFixed(2)}/mês. Gostaria de mais informações.
+
+📋 Proposta: ${propostaId}
+👤 Nome: ${formData.nome}
+📧 Email: ${formData.email}`;
     const url = `https://wa.me/5511961719449?text=${encodeURIComponent(mensagem)}`;
     window.open(url, '_blank');
   };
