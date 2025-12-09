@@ -2085,10 +2085,18 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             .print-only {
               display: block !important;
             }
+            .relatorio-sla-print table {
+              font-size: 9px !important;
+            }
+            .relatorio-sla-print th,
+            .relatorio-sla-print td {
+              padding: 4px !important;
+              word-break: break-word;
+            }
           }
           @page {
             size: A4 landscape;
-            margin: 1cm;
+            margin: 0.5cm;
           }
         }
       `}</style>
@@ -2126,16 +2134,18 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
               <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr style={{ borderBottom: `2px solid ${theme.border}`, backgroundColor: '#f9fafb' }}>
-                    <th className="text-left p-2 font-semibold">Ordem</th>
-                    <th className="text-left p-2 font-semibold">Pedido</th>
-                    <th className="text-left p-2 font-semibold">Cliente</th>
-                    <th className="text-left p-2 font-semibold">Origem - Destino</th>
-                    <th className="text-left p-2 font-semibold">Agendado</th>
-                    <th className="text-left p-2 font-semibold">Realizado</th>
-                    {tipo === 'geral' && <th className="text-left p-2 font-semibold">SLA Carga</th>}
-                    {tipo === 'geral' && <th className="text-left p-2 font-semibold">SLA Entrega</th>}
-                    {tipo !== 'geral' && <th className="text-left p-2 font-semibold">Status SLA</th>}
-                    {tipo !== 'geral' && <th className="text-left p-2 font-semibold">Diferença</th>}
+                    <th className="text-left p-2 font-semibold" style={{ width: '8%' }}>Ordem</th>
+                    <th className="text-left p-2 font-semibold" style={{ width: '8%' }}>Pedido</th>
+                    <th className="text-left p-2 font-semibold" style={{ width: '12%' }}>Cliente</th>
+                    <th className="text-left p-2 font-semibold" style={{ width: '16%' }}>Origem - Destino</th>
+                    <th className="text-left p-2 font-semibold" style={{ width: '11%' }}>Agendado</th>
+                    <th className="text-left p-2 font-semibold" style={{ width: '11%' }}>Realizado</th>
+                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '10%' }}>SLA Carga</th>}
+                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '10%' }}>SLA Entrega</th>}
+                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '14%' }}>Motivo Expurgo</th>}
+                    {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '10%' }}>Status SLA</th>}
+                    {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '8%' }}>Diferença</th>}
+                    {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '16%' }}>Motivo Expurgo</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -2145,6 +2155,12 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                     const statusSLA = tipo !== 'geral' ? getStatusSLA(ordem, tipo) : null;
                     const statusCarga = tipo === 'geral' ? getStatusSLA(ordem, 'carga') : null;
                     const statusEntrega = tipo === 'geral' ? getStatusSLA(ordem, 'entrega') : null;
+                    const motivoExpurgoCarga = ordem.carregamento_expurgado ? (ordem.carregamento_expurgo_motivo || 'Não informado') : '-';
+                    const motivoExpurgoEntrega = ordem.entrega_expurgada ? (ordem.entrega_expurgo_motivo || 'Não informado') : '-';
+                    const motivoExpurgo = tipo === 'carga' ? motivoExpurgoCarga : motivoExpurgoEntrega;
+                    const motivoExpurgoGeral = ordem.carregamento_expurgado || ordem.entrega_expurgada 
+                      ? (ordem.carregamento_expurgado ? motivoExpurgoCarga : '') + (ordem.entrega_expurgada && ordem.carregamento_expurgado ? ' / ' : '') + (ordem.entrega_expurgada ? motivoExpurgoEntrega : '')
+                      : '-';
                     
                     return (
                       <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
@@ -2160,6 +2176,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                           <>
                             <td className="p-2 font-bold" style={{ color: statusCarga.color }}>{statusCarga.label}</td>
                             <td className="p-2 font-bold" style={{ color: statusEntrega.color }}>{statusEntrega.label}</td>
+                            <td className="p-2 text-xs">{motivoExpurgoGeral}</td>
                           </>
                         )}
                         {tipo !== 'geral' && (
@@ -2168,6 +2185,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                             <td className="p-2 font-bold" style={{ color: agendado && realizado ? (new Date(realizado) <= new Date(agendado) ? '#22c55e' : '#ef4444') : theme.textMuted }}>
                               {agendado && realizado ? calcularAtraso(agendado, realizado) : '-'}
                             </td>
+                            <td className="p-2 text-xs">{motivoExpurgo}</td>
                           </>
                         )}
                       </tr>
