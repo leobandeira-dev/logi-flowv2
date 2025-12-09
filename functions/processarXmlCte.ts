@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
 
     // Parse do XML
     const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
+    const xmlDoc = parser.parseFromString(xmlContent, 'application/xml');
 
     // Extrair dados principais do CT-e
     const chave = xmlDoc.querySelector('infCte')?.getAttribute('Id')?.replace('CTe', '') || '';
