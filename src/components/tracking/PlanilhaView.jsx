@@ -127,7 +127,18 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
         
         const filteredConfig = parsedConfig.filter(col => col.id !== "data_programacao_descarga");
         
+        const newColumnIds = ["mdfe_baixado", "saldo_pago", "comprovante_entrega_recebido", "tolerancia", "diaria_carregamento", "diaria_descarga", "modalidade_carga", "prazo_entrega", "entrada_galpao", "agendamento_checklist_data"];
+        const hasNewColumns = newColumnIds.some(colId => !filteredConfig.some(col => col.id === colId));
+        
+        const needsLabelUpdate = filteredConfig.some(col => 
+          col.id === "origem_destino" && col.label !== "Origem - Destino"
+        );
 
+        if (hasNewColumns || needsLabelUpdate) {
+          const updatedConfig = COLUNAS_DISPONIVEIS.map(defaultCol => {
+            const existingCol = filteredConfig.find(pCol => pCol.id === defaultCol.id);
+            return existingCol ? { ...defaultCol, enabled: existingCol.enabled } : defaultCol;
+          });
           const finalConfig = updatedConfig.filter(col => COLUNAS_DISPONIVEIS.some(defaultCol => defaultCol.id === col.id));
           setColunas(finalConfig);
           localStorage.setItem('planilha_colunas_config', JSON.stringify(finalConfig));
