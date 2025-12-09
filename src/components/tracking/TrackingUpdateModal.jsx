@@ -788,7 +788,7 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
                   <div>
                     <Label className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      Agend. Carregamento
+                      Agenda Carga
                     </Label>
                     <Input
                       type="text"
@@ -838,7 +838,7 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
                   <div>
                     <Label className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4" />
-                      Fim do Carregamento
+                      Fim Carga
                     </Label>
                     <Input
                       type="text"
@@ -855,7 +855,7 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
                   <div>
                     <Label className="flex items-center gap-2">
                       <Truck className="w-4 h-4" />
-                      Saída da Unidade
+                      Inicio Viagem
                     </Label>
                     <Input
                       type="text"
@@ -872,7 +872,7 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
                   <div>
                     <Label className="flex items-center gap-2">
                       <MapPin className="w-4 h-4" />
-                      Chegada no Destino
+                      Chegada Destino
                     </Label>
                     <Input
                       type="text"
@@ -889,7 +889,7 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
                   <div>
                     <Label className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      Descarga Agendada
+                      Agenda Descarga
                     </Label>
                     <Input
                       type="text"
@@ -906,7 +906,7 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
                   <div>
                     <Label className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4" />
-                      Checklist de Agendamento
+                      Agenda Checklist
                     </Label>
                     <Input
                       type="text"
