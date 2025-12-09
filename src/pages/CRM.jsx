@@ -1223,7 +1223,8 @@ function DetalhesLeadModal({ open, onClose, lead, todasEtapas, onAtualizar, them
           {lead.valor_total_proposta && (
             <div>
               <h3 className="font-bold text-lg mb-3" style={{ color: theme.text }}>Proposta Comercial</h3>
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
                   <CardContent className="p-4">
                     <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Valor Total Mensal</p>
@@ -1243,6 +1244,71 @@ function DetalhesLeadModal({ open, onClose, lead, todasEtapas, onAtualizar, them
                   </Card>
                 )}
               </div>
+
+              {/* Detalhes da Composição */}
+              <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
+                <CardContent className="p-4 space-y-4">
+                  <div>
+                    <p className="text-xs font-semibold mb-2" style={{ color: theme.textMuted }}>Módulos Selecionados:</p>
+                    <div className="space-y-2">
+                      {lead.pacote_base_preco && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span style={{ color: theme.text }}>Pacote Base</span>
+                          <span className="font-semibold" style={{ color: theme.text }}>
+                            R$ {lead.pacote_base_preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      )}
+                      {lead.addons_selecionados && JSON.parse(lead.addons_selecionados).map((addon, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-sm">
+                          <span style={{ color: theme.text }}>{addon.nome}</span>
+                          <span className="font-semibold" style={{ color: theme.text }}>
+                            R$ {addon.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {(lead.volume_coletas > 0 || lead.volume_carregamentos > 0 || lead.volume_entregas > 0 || lead.volume_notas_fiscais > 0) && (
+                    <div className="pt-3 border-t" style={{ borderColor: theme.cardBorder }}>
+                      <p className="text-xs font-semibold mb-2" style={{ color: theme.textMuted }}>Volume de Documentos/Mês:</p>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        {lead.volume_coletas > 0 && (
+                          <div className="flex justify-between">
+                            <span style={{ color: theme.textMuted }}>Coletas:</span>
+                            <span style={{ color: theme.text }}>{lead.volume_coletas}</span>
+                          </div>
+                        )}
+                        {lead.volume_carregamentos > 0 && (
+                          <div className="flex justify-between">
+                            <span style={{ color: theme.textMuted }}>Carregamentos:</span>
+                            <span style={{ color: theme.text }}>{lead.volume_carregamentos}</span>
+                          </div>
+                        )}
+                        {lead.volume_entregas > 0 && (
+                          <div className="flex justify-between">
+                            <span style={{ color: theme.textMuted }}>Entregas:</span>
+                            <span style={{ color: theme.text }}>{lead.volume_entregas}</span>
+                          </div>
+                        )}
+                        {lead.volume_notas_fiscais > 0 && (
+                          <div className="flex justify-between">
+                            <span style={{ color: theme.textMuted }}>Notas Fiscais:</span>
+                            <span style={{ color: theme.text }}>{lead.volume_notas_fiscais}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-2 pt-2 border-t flex justify-between" style={{ borderColor: theme.cardBorder }}>
+                        <span className="text-xs font-semibold" style={{ color: theme.textMuted }}>Total Documentos:</span>
+                        <span className="text-sm font-bold text-blue-600">
+                          {(lead.volume_coletas || 0) + (lead.volume_carregamentos || 0) + (lead.volume_entregas || 0) + (lead.volume_notas_fiscais || 0)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )}
 
