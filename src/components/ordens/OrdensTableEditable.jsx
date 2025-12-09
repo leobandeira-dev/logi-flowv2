@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Trash2, Eye, Package, User, Printer } from "lucide-react";
+import { Edit, Trash2, Eye, Package, User, Truck, FileText, Printer, Check, X } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -365,6 +365,7 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                 <TableRow className="hover:bg-transparent" style={{ borderBottomColor: theme.border }}>
                   <TableHead className="h-8 text-[10px] font-bold uppercase w-[100px]" style={{ color: theme.textMuted }}>Nº</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase w-[80px]" style={{ color: theme.textMuted }}>Tipo</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[100px]" style={{ color: theme.textMuted }}>Status</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase w-[90px]" style={{ color: theme.textMuted }}>Status Aprov.</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase w-[90px]" style={{ color: theme.textMuted }}>Operação</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase w-[120px]" style={{ color: theme.textMuted }}>Cliente</TableHead>
@@ -378,7 +379,6 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                   <TableHead className="h-8 text-[10px] font-bold uppercase w-[110px]" style={{ color: theme.textMuted }}>Agend. Carreg.</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase w-[110px]" style={{ color: theme.textMuted }}>Agend. Desc.</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase w-[150px]" style={{ color: theme.textMuted }}>Observações</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[100px]" style={{ color: theme.textMuted }}>Status</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase text-right w-[110px] sticky right-0" style={{ color: theme.textMuted, backgroundColor: theme.headerBg, borderLeft: `1px solid ${theme.border}` }}>Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -430,6 +430,17 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                         <TableCell className="py-1 px-2 align-middle">
                           <Badge className={`text-[9px] h-4 px-1.5 font-bold border-2 ${tipoBadgeConfig.color}`}>
                             {tipoBadgeConfig.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-1 px-2 align-middle">
+                          <Badge className={`text-[9px] h-6 px-1.5 font-bold ${statusInfo.color} flex flex-col items-center justify-center leading-[1.1] py-0.5`}>
+                            {Array.isArray(statusInfo.label) ? (
+                              statusInfo.label.map((linha, i) => (
+                                <span key={i} className="whitespace-nowrap">{linha}</span>
+                              ))
+                            ) : (
+                              <span className="whitespace-nowrap">{statusInfo.label}</span>
+                            )}
                           </Badge>
                         </TableCell>
                         <TableCell className="py-1 px-2 align-middle">
@@ -906,17 +917,6 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                               {ordem.observacao_carga || "-"}
                             </span>
                           )}
-                        </TableCell>
-                        <TableCell className="py-1 px-2 align-middle">
-                          <Badge className={`text-[9px] h-6 px-1.5 font-bold ${statusInfo.color} flex flex-col items-center justify-center leading-[1.1] py-0.5`}>
-                            {Array.isArray(statusInfo.label) ? (
-                              statusInfo.label.map((linha, i) => (
-                                <span key={i} className="whitespace-nowrap">{linha}</span>
-                              ))
-                            ) : (
-                              <span className="whitespace-nowrap">{statusInfo.label}</span>
-                            )}
-                          </Badge>
                         </TableCell>
                         <TableCell className="py-1 px-2 align-middle text-right sticky right-0" style={{ backgroundColor: idx % 2 === 0 ? theme.rowBg : theme.rowBgAlt, borderLeft: `1px solid ${theme.border}` }}>
                           <div className="flex items-center justify-end gap-0.5">
