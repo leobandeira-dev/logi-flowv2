@@ -26,7 +26,14 @@ import {
   Save,
   Calendar,
   MessageSquare,
-  GripVertical
+  GripVertical,
+  Tag,
+  Download,
+  Filter,
+  ArrowUpDown,
+  ChevronDown,
+  CheckSquare,
+  MoreHorizontal
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
@@ -42,6 +49,12 @@ export default function CRM() {
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [showConfigEtapas, setShowConfigEtapas] = useState(false);
   const [leadDetalhes, setLeadDetalhes] = useState(null);
+  const [mostrarFiltrosAvancados, setMostrarFiltrosAvancados] = useState(false);
+  const [filtroOrigem, setFiltroOrigem] = useState("todos");
+  const [filtroDataDe, setFiltroDataDe] = useState("");
+  const [filtroDataAte, setFiltroDataAte] = useState("");
+  const [sortField, setSortField] = useState("created_date");
+  const [sortDirection, setSortDirection] = useState("desc");
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -142,8 +155,41 @@ export default function CRM() {
       lead.responsavel_email?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchStatus = filtroStatus === "todos" || lead.status_funil === filtroStatus;
+    const matchOrigem = filtroOrigem === "todos" || lead.origem === filtroOrigem;
+    
+    let matchData = true;
+    if (filtroDataDe) {
+      const dataLead = new Date(lead.created_date);
+      const dataDe = new Date(filtroDataDe);
+      matchData = dataLead >= dataDe;
+    }
+    if (filtroDataAte && matchData) {
+      const dataLead = new Date(lead.created_date);
+      const dataAte = new Date(filtroDataAte);
+      dataAte.setHours(23, 59, 59, 999);
+      matchData = dataLead <= dataAte;
+    }
 
-    return matchSearch && matchStatus;
+    return matchSearch && matchStatus && matchOrigem && matchData;
+  }).sort((a, b) => {
+    let aVal = a[sortField];
+    let bVal = b[sortField];
+    
+    if (sortField === "valor_total_proposta") {
+      aVal = aVal || 0;
+      bVal = bVal || 0;
+    }
+    
+    if (sortField === "created_date" || sortField === "data_proposta") {
+      aVal = aVal ? new Date(aVal).getTime() : 0;
+      bVal = bVal ? new Date(bVal).getTime() : 0;
+    }
+    
+    if (sortDirection === "asc") {
+      return aVal > bVal ? 1 : -1;
+    } else {
+      return aVal < bVal ? 1 : -1;
+    }
   });
 
   const todasEtapas = [
@@ -284,45 +330,118 @@ export default function CRM() {
           </div>
 
           {/* Filtros e Busca */}
-          <div className="flex flex-col md:flex-row gap-3 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
-              <Input
-                placeholder="Buscar por empresa, CNPJ, responsável..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-                style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-              />
+          <div className="space-y-3 mb-6">
+            <div className="flex flex-col md:flex-row gap-3">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
+                <Input
+                  placeholder="Buscar por empresa, CNPJ, responsável..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                  style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setMostrarFiltrosAvancados(!mostrarFiltrosAvancados)}
+                  className="flex items-center gap-2"
+                >
+                  <Filter className="w-4 h-4" />
+                  Filtros
+                  {mostrarFiltrosAvancados && <ChevronDown className="w-4 h-4" />}
+                </Button>
+                <select
+                  value={filtroStatus}
+                  onChange={(e) => setFiltroStatus(e.target.value)}
+                  className="px-3 py-2 rounded-lg border"
+                  style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                >
+                  <option value="todos">Todos Status</option>
+                  <option value="lead">Lead</option>
+                  {etapas.map(etapa => (
+                    <option key={etapa.id} value={etapa.id}>{etapa.nome}</option>
+                  ))}
+                </select>
+                <Button
+                  variant={viewMode === "lista" ? "default" : "outline"}
+                  onClick={() => setViewMode("lista")}
+                  size="icon"
+                >
+                  <LayoutList className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "kanban" ? "default" : "outline"}
+                  onClick={() => setViewMode("kanban")}
+                  size="icon"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <select
-                value={filtroStatus}
-                onChange={(e) => setFiltroStatus(e.target.value)}
-                className="px-3 py-2 rounded-lg border"
-                style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-              >
-                <option value="todos">Todos Status</option>
-                <option value="lead">Lead</option>
-                {etapas.map(etapa => (
-                  <option key={etapa.id} value={etapa.id}>{etapa.nome}</option>
-                ))}
-              </select>
-              <Button
-                variant={viewMode === "lista" ? "default" : "outline"}
-                onClick={() => setViewMode("lista")}
-                size="icon"
-              >
-                <LayoutList className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === "kanban" ? "default" : "outline"}
-                onClick={() => setViewMode("kanban")}
-                size="icon"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </Button>
-            </div>
+
+            {/* Filtros Avançados */}
+            {mostrarFiltrosAvancados && (
+              <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold mb-2 block" style={{ color: theme.text }}>
+                        Origem
+                      </label>
+                      <select
+                        value={filtroOrigem}
+                        onChange={(e) => setFiltroOrigem(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border text-sm"
+                        style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                      >
+                        <option value="todos">Todas Origens</option>
+                        <option value="landing_page">Landing Page</option>
+                        <option value="indicacao">Indicação</option>
+                        <option value="manual">Manual</option>
+                        <option value="cold_call">Cold Call</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold mb-2 block" style={{ color: theme.text }}>
+                        Data De
+                      </label>
+                      <Input
+                        type="date"
+                        value={filtroDataDe}
+                        onChange={(e) => setFiltroDataDe(e.target.value)}
+                        style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold mb-2 block" style={{ color: theme.text }}>
+                        Data Até
+                      </label>
+                      <Input
+                        type="date"
+                        value={filtroDataAte}
+                        onChange={(e) => setFiltroDataAte(e.target.value)}
+                        style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFiltroOrigem("todos");
+                        setFiltroDataDe("");
+                        setFiltroDataAte("");
+                      }}
+                    >
+                      Limpar Filtros
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
 
@@ -388,24 +507,36 @@ export default function CRM() {
 
 function KanbanView({ leadsPorStatus, todasEtapas, onMudarStatus, onGerarProposta, onVerDetalhes, theme, isDark, usuarios }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 overflow-x-auto">
+    <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 'calc(100vh - 450px)' }}>
       {todasEtapas.map((etapa) => {
         const leadsNaColuna = leadsPorStatus[etapa.id] || [];
+        const valorTotal = leadsNaColuna.reduce((sum, l) => sum + (l.valor_total_proposta || 0), 0);
         
         return (
-          <div key={etapa.id} className="min-w-[280px]">
-            <div className="mb-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge style={{ backgroundColor: etapa.cor }} className="text-white">
-                  {leadsNaColuna.length}
-                </Badge>
-                <h3 className="font-bold text-sm" style={{ color: theme.text }}>
-                  {etapa.nome}
-                </h3>
-              </div>
+          <div key={etapa.id} className="flex-shrink-0" style={{ width: '320px' }}>
+            <div className="sticky top-0 z-10 pb-3" style={{ backgroundColor: theme.bg }}>
+              <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderLeftWidth: '4px', borderLeftColor: etapa.cor }}>
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Badge style={{ backgroundColor: etapa.cor }} className="text-white text-xs">
+                        {leadsNaColuna.length}
+                      </Badge>
+                      <h3 className="font-bold text-sm" style={{ color: theme.text }}>
+                        {etapa.nome}
+                      </h3>
+                    </div>
+                  </div>
+                  {valorTotal > 0 && (
+                    <p className="text-xs font-semibold text-green-600">
+                      R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
             </div>
             
-            <div className="space-y-3 min-h-[200px]">
+            <div className="space-y-3 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 500px)' }}>
               {leadsNaColuna.map((lead) => (
                 <LeadCard
                   key={lead.id}
@@ -429,30 +560,182 @@ function KanbanView({ leadsPorStatus, todasEtapas, onMudarStatus, onGerarPropost
 }
 
 function ListView({ leads, todasEtapas, onMudarStatus, onGerarProposta, onVerDetalhes, theme, isDark, usuarios }) {
+  const [selectedLeads, setSelectedLeads] = useState([]);
+
+  const toggleSelect = (leadId) => {
+    setSelectedLeads(prev => 
+      prev.includes(leadId) ? prev.filter(id => id !== leadId) : [...prev, leadId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedLeads.length === leads.length) {
+      setSelectedLeads([]);
+    } else {
+      setSelectedLeads(leads.map(l => l.id));
+    }
+  };
+
+  if (leads.length === 0) {
+    return (
+      <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <CardContent className="p-12 text-center">
+          <Users className="w-12 h-12 mx-auto mb-3" style={{ color: theme.textMuted }} />
+          <p style={{ color: theme.textMuted }}>Nenhum lead encontrado</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="space-y-3">
-      {leads.length === 0 ? (
-        <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-          <CardContent className="p-12 text-center">
-            <Users className="w-12 h-12 mx-auto mb-3" style={{ color: theme.textMuted }} />
-            <p style={{ color: theme.textMuted }}>Nenhum lead encontrado</p>
-          </CardContent>
-        </Card>
-      ) : (
-        leads.map((lead) => (
-          <LeadCard
-            key={lead.id}
-            lead={lead}
-            todasEtapas={todasEtapas}
-            onMudarStatus={onMudarStatus}
-            onGerarProposta={onGerarProposta}
-            onVerDetalhes={onVerDetalhes}
-            theme={theme}
-            isDark={isDark}
-            usuarios={usuarios}
-            isKanban={false}
-          />
-        ))
+    <div>
+      {/* Cabeçalho da Tabela */}
+      <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }} className="mb-2">
+        <CardContent className="p-3">
+          <div className="grid grid-cols-12 gap-3 items-center text-xs font-semibold" style={{ color: theme.textMuted }}>
+            <div className="col-span-1 flex items-center">
+              <input
+                type="checkbox"
+                checked={selectedLeads.length === leads.length}
+                onChange={toggleSelectAll}
+                className="w-4 h-4"
+              />
+            </div>
+            <div className="col-span-3">Empresa</div>
+            <div className="col-span-2">Contato</div>
+            <div className="col-span-2">Status</div>
+            <div className="col-span-1 text-right">Valor</div>
+            <div className="col-span-2">Criado em</div>
+            <div className="col-span-1 text-center">Ações</div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Lista de Leads */}
+      <div className="space-y-2">
+        {leads.map((lead) => {
+          const etapaAtual = todasEtapas.find(e => e.id === lead.status_funil) || todasEtapas[0];
+          const vendedor = usuarios.find(u => u.id === lead.vendedor_id);
+          const isSelected = selectedLeads.includes(lead.id);
+
+          return (
+            <Card 
+              key={lead.id}
+              style={{ 
+                backgroundColor: isSelected ? (isDark ? '#1e3a8a' : '#eff6ff') : theme.cardBg, 
+                borderColor: theme.cardBorder,
+                borderLeftWidth: '4px',
+                borderLeftColor: etapaAtual.cor
+              }}
+              className="hover:shadow-md transition-all cursor-pointer"
+              onClick={() => onVerDetalhes(lead)}
+            >
+              <CardContent className="p-3">
+                <div className="grid grid-cols-12 gap-3 items-center">
+                  <div className="col-span-1 flex items-center" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelect(lead.id)}
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  
+                  <div className="col-span-3">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                      <div>
+                        <p className="font-bold text-sm" style={{ color: theme.text }}>
+                          {lead.razao_social}
+                        </p>
+                        {lead.cnpj && (
+                          <p className="text-xs font-mono" style={{ color: theme.textMuted }}>
+                            {lead.cnpj}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2">
+                    {lead.responsavel_nome && (
+                      <div>
+                        <p className="text-sm" style={{ color: theme.text }}>
+                          {lead.responsavel_nome}
+                        </p>
+                        {lead.responsavel_email && (
+                          <p className="text-xs" style={{ color: theme.textMuted }}>
+                            {lead.responsavel_email}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="col-span-2">
+                    <Badge style={{ backgroundColor: etapaAtual.cor }} className="text-white text-xs">
+                      {etapaAtual.nome}
+                    </Badge>
+                  </div>
+
+                  <div className="col-span-1 text-right">
+                    {lead.valor_total_proposta ? (
+                      <p className="text-sm font-bold text-green-600">
+                        R$ {(lead.valor_total_proposta / 1000).toFixed(0)}k
+                      </p>
+                    ) : (
+                      <p className="text-xs" style={{ color: theme.textMuted }}>-</p>
+                    )}
+                  </div>
+
+                  <div className="col-span-2">
+                    <p className="text-xs" style={{ color: theme.textMuted }}>
+                      {format(new Date(lead.created_date), "dd/MM/yyyy")}
+                    </p>
+                    {vendedor && (
+                      <p className="text-xs" style={{ color: theme.textMuted }}>
+                        {vendedor.full_name?.split(' ')[0]}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="col-span-1 flex justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      onClick={() => onGerarProposta(lead)}
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0"
+                    >
+                      <Calculator className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Ações em Massa */}
+      {selectedLeads.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+          <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }} className="shadow-2xl">
+            <CardContent className="p-4 flex items-center gap-4">
+              <p className="text-sm font-semibold" style={{ color: theme.text }}>
+                {selectedLeads.length} selecionado(s)
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedLeads([])}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
@@ -628,19 +911,35 @@ function ConfigurarEtapasModal({ open, onClose, etapas, theme, isDark }) {
 
   const handleSalvar = async () => {
     try {
-      for (const etapa of etapasEditadas) {
-        if (etapa.isNova) {
-          const { isNova, id, ...etapaData } = etapa;
-          await base44.entities.EtapaFunil.create(etapaData);
-        } else {
-          const { isNova, ...etapaData } = etapa;
-          await base44.entities.EtapaFunil.update(etapa.id, etapaData);
-        }
+      // Separar novas etapas e etapas para atualizar
+      const novasEtapas = etapasEditadas.filter(e => e.isNova).map(e => {
+        const { isNova, id, ...etapaData } = e;
+        return etapaData;
+      });
+
+      const etapasParaAtualizar = etapasEditadas.filter(e => !e.isNova);
+      const etapasParaRemover = etapas.filter(e => !etapasEditadas.find(ee => ee.id === e.id));
+
+      // Criar novas em lote
+      if (novasEtapas.length > 0) {
+        await base44.entities.EtapaFunil.bulkCreate(novasEtapas);
       }
 
-      const etapasParaRemover = etapas.filter(e => !etapasEditadas.find(ee => ee.id === e.id));
-      for (const etapa of etapasParaRemover) {
-        await base44.entities.EtapaFunil.delete(etapa.id);
+      // Atualizar existentes em paralelo
+      if (etapasParaAtualizar.length > 0) {
+        await Promise.all(
+          etapasParaAtualizar.map(etapa => {
+            const { isNova, ...etapaData } = etapa;
+            return base44.entities.EtapaFunil.update(etapa.id, etapaData);
+          })
+        );
+      }
+
+      // Remover em paralelo
+      if (etapasParaRemover.length > 0) {
+        await Promise.all(
+          etapasParaRemover.map(etapa => base44.entities.EtapaFunil.delete(etapa.id))
+        );
       }
 
       queryClient.invalidateQueries({ queryKey: ['etapas-funil'] });
