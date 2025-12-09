@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Save, Loader2, Table as TableIcon, Settings, GripVertical, ChevronLeft, ChevronRight, MapPin, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { Save, Loader2, Table as TableIcon, Settings, GripVertical, ChevronLeft, ChevronRight, MapPin, CheckCircle, XCircle, AlertTriangle, ArrowUp, ArrowDown } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import TrackingUpdateModal from "./TrackingUpdateModal";
@@ -97,6 +97,8 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
   const [isDark, setIsDark] = useState(false);
   const [selectedOrdemForTracking, setSelectedOrdemForTracking] = useState(null);
   const [showTrackingModal, setShowTrackingModal] = useState(false);
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState("asc");
   const saveTimeoutRef = useRef({});
   const initialDataRef = useRef({});
   const scrollContainerRef = useRef(null);
@@ -1443,6 +1445,81 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
     }
   };
 
+  const handleSort = (colunaId) => {
+    if (sortColumn === colunaId) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(colunaId);
+      setSortDirection("asc");
+    }
+  };
+
+  const ordensOrdenadas = React.useMemo(() => {
+    if (!sortColumn) return ordens;
+
+    return [...ordens].sort((a, b) => {
+      let valorA, valorB;
+
+      // Obter valores baseados na coluna
+      switch (sortColumn) {
+        case "motorista":
+          valorA = getMotorista(a.motorista_id)?.nome || "";
+          valorB = getMotorista(b.motorista_id)?.nome || "";
+          break;
+        case "cavalo":
+          valorA = getVeiculo(a.cavalo_id)?.placa || "";
+          valorB = getVeiculo(b.cavalo_id)?.placa || "";
+          break;
+        case "carreta":
+          valorA = getVeiculo(a.implemento1_id)?.placa || "";
+          valorB = getVeiculo(b.implemento1_id)?.placa || "";
+          break;
+        case "carreta2":
+          valorA = getVeiculo(a.implemento2_id)?.placa || "";
+          valorB = getVeiculo(b.implemento2_id)?.placa || "";
+          break;
+        case "peso":
+          valorA = a.peso || 0;
+          valorB = b.peso || 0;
+          break;
+        case "km_faltam":
+          valorA = a.km_faltam || 0;
+          valorB = b.km_faltam || 0;
+          break;
+        case "origem_destino":
+          valorA = `${a.origem_cidade || a.origem || ""} ${a.destino_cidade || a.destino || ""}`;
+          valorB = `${b.origem_cidade || b.origem || ""} ${b.destino_cidade || b.destino || ""}`;
+          break;
+        case "destinatario":
+          valorA = a.destinatario || a.destino || "";
+          valorB = b.destinatario || b.destino || "";
+          break;
+        default:
+          valorA = a[sortColumn] || "";
+          valorB = b[sortColumn] || "";
+      }
+
+      // Comparação
+      if (typeof valorA === "number" && typeof valorB === "number") {
+        return sortDirection === "asc" ? valorA - valorB : valorB - valorA;
+      }
+
+      // Comparação de datas
+      if (sortColumn.includes("data") || sortColumn === "prazo_entrega") {
+        const dateA = valorA ? new Date(valorA).getTime() : 0;
+        const dateB = valorB ? new Date(valorB).getTime() : 0;
+        return sortDirection === "asc" ? dateA - dateB : dateB - dateA;
+      }
+
+      // Comparação de strings
+      const strA = String(valorA).toLowerCase();
+      const strB = String(valorB).toLowerCase();
+      return sortDirection === "asc" 
+        ? strA.localeCompare(strB) 
+        : strB.localeCompare(strA);
+    });
+  }, [ordens, sortColumn, sortDirection, motoristas, veiculos]);
+
   const colunasVisiveis = colunas.filter(col => col.enabled);
 
   return (
@@ -1661,14 +1738,25 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
                       key={coluna.id}
                       className={`h-8 px-2 text-left font-bold uppercase text-[10px] ${coluna.width} ${
                         coluna.id === 'numero_carga' ? 'sticky left-8 z-20' : ''
-                      }`}
+                      } cursor-pointer hover:bg-opacity-80 transition-colors`}
                       style={{ 
                         borderRight: `1px solid ${theme.border}`,
-                        color: theme.textMuted,
+                        color: sortColumn === coluna.id ? theme.primaryBlue : theme.textMuted,
                         backgroundColor: theme.headerBg
                       }}
+                      onClick={() => handleSort(coluna.id)}
+                      title="Clique para ordenar"
                     >
-                      {coluna.label}
+                      <div className="flex items-center gap-1">
+                        {coluna.label}
+                        {sortColumn === coluna.id && (
+                          sortDirection === "asc" ? (
+                            <ArrowUp className="w-3 h-3" />
+                          ) : (
+                            <ArrowDown className="w-3 h-3" />
+                          )
+                        )}
+                      </div>
                     </th>
                   ))}
                   <th 
@@ -1680,7 +1768,7 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
                 </tr>
               </thead>
               <tbody>
-                {ordens.map((ordem, index) => {
+                {ordensOrdenadas.map((ordem, index) => {
                   const data = editingData[ordem.id] || {};
                   const isSelected = selectedRows.has(ordem.id);
                   const isAutoSaving = autoSavingRows.has(ordem.id);
