@@ -85,6 +85,7 @@ const getNavigationItems = (userProfile, userRole, ocorrenciasCount, etapasCount
         items: [
           { title: "Recebimento", url: createPageUrl("Recebimento"), icon: Package },
           { title: "Gestão de Notas Fiscais", url: createPageUrl("GestaoDeNotasFiscais"), icon: FileText },
+          { title: "Gestão de CT-e", url: createPageUrl("GestaoDeCTe"), icon: FileText },
           { title: "Etiquetas Mãe", url: createPageUrl("EtiquetasMae"), icon: Tag },
           { title: "Carregamento", url: createPageUrl("Carregamento"), icon: Truck },
           { title: "Ordem de Entrega", url: createPageUrl("OrdemDeEntrega"), icon: Truck },
