@@ -674,49 +674,34 @@ export default function Tracking() {
 
   const prepararDadosSLA = (tipo) => {
     if (tipo === 'geral') {
-      let carregamentosNoPrazo = 0;
-      let carregamentosForaPrazo = 0;
-      let carregamentosExpurgados = 0;
-      let descargasNoPrazo = 0;
-      let descargasForaPrazo = 0;
-      let descargasExpurgadas = 0;
-      const expurgos = [];
+      const ordensCarregamento = { noPrazo: [], foraPrazo: [], expurgado: [] };
+      const ordensEntrega = { noPrazo: [], foraPrazo: [], expurgado: [] };
 
       filteredOrdens.forEach(ordem => {
         if (ordem.fim_carregamento && ordem.carregamento_agendamento_data) {
           if (ordem.carregamento_expurgado) {
-            carregamentosExpurgados++;
-            expurgos.push({
-              tipo: 'Carregamento',
-              ordem: ordem.numero_carga || `#${ordem.id.slice(-6)}`,
-              motivo: ordem.carregamento_expurgo_motivo || 'Não informado'
-            });
+            ordensCarregamento.expurgado.push(ordem);
           } else {
             const agendado = new Date(ordem.carregamento_agendamento_data);
             const realizado = new Date(ordem.fim_carregamento);
             if (realizado <= agendado) {
-              carregamentosNoPrazo++;
+              ordensCarregamento.noPrazo.push(ordem);
             } else {
-              carregamentosForaPrazo++;
+              ordensCarregamento.foraPrazo.push(ordem);
             }
           }
         }
 
         if (ordem.chegada_destino && ordem.prazo_entrega) {
           if (ordem.entrega_expurgada) {
-            descargasExpurgadas++;
-            expurgos.push({
-              tipo: 'Entrega',
-              ordem: ordem.numero_carga || `#${ordem.id.slice(-6)}`,
-              motivo: ordem.entrega_expurgo_motivo || 'Não informado'
-            });
+            ordensEntrega.expurgado.push(ordem);
           } else {
             const prazo = new Date(ordem.prazo_entrega);
             const realizado = new Date(ordem.chegada_destino);
             if (realizado <= prazo) {
-              descargasNoPrazo++;
+              ordensEntrega.noPrazo.push(ordem);
             } else {
-              descargasForaPrazo++;
+              ordensEntrega.foraPrazo.push(ordem);
             }
           }
         }
@@ -724,15 +709,18 @@ export default function Tracking() {
 
       return {
         grafico: [
-          { nome: 'No Prazo', Carregamento: carregamentosNoPrazo, Entrega: descargasNoPrazo },
-          { nome: 'Fora do Prazo', Carregamento: carregamentosForaPrazo, Entrega: descargasForaPrazo },
-          { nome: 'Expurgado', Carregamento: carregamentosExpurgados, Entrega: descargasExpurgadas }
+          { nome: 'No Prazo', Carregamento: ordensCarregamento.noPrazo.length, Entrega: ordensEntrega.noPrazo.length },
+          { nome: 'Fora do Prazo', Carregamento: ordensCarregamento.foraPrazo.length, Entrega: ordensEntrega.foraPrazo.length },
+          { nome: 'Expurgado', Carregamento: ordensCarregamento.expurgado.length, Entrega: ordensEntrega.expurgado.length }
         ],
-        expurgos
+        ordensCarregamento,
+        ordensEntrega
       };
     } else if (tipo === 'carga') {
+      const ordensNoPrazo = [];
+      const ordensForaPrazo = [];
+      const ordensExpurgadas = [];
       const dadosPorData = {};
-      const expurgos = [];
 
       filteredOrdens.forEach(ordem => {
         if (ordem.fim_carregamento && ordem.carregamento_agendamento_data) {
@@ -744,18 +732,16 @@ export default function Tracking() {
 
           if (ordem.carregamento_expurgado) {
             dadosPorData[data].expurgado++;
-            expurgos.push({
-              data,
-              ordem: ordem.numero_carga || `#${ordem.id.slice(-6)}`,
-              motivo: ordem.carregamento_expurgo_motivo || 'Não informado'
-            });
+            ordensExpurgadas.push(ordem);
           } else {
             const agendado = new Date(ordem.carregamento_agendamento_data);
             const realizado = new Date(ordem.fim_carregamento);
             if (realizado <= agendado) {
               dadosPorData[data].noPrazo++;
+              ordensNoPrazo.push(ordem);
             } else {
               dadosPorData[data].foraPrazo++;
+              ordensForaPrazo.push(ordem);
             }
           }
         }
@@ -774,10 +760,12 @@ export default function Tracking() {
           'Expurgado': valores.expurgado
         }));
 
-      return { grafico, expurgos };
+      return { grafico, ordensNoPrazo, ordensForaPrazo, ordensExpurgadas };
     } else if (tipo === 'entrega') {
+      const ordensNoPrazo = [];
+      const ordensForaPrazo = [];
+      const ordensExpurgadas = [];
       const dadosPorData = {};
-      const expurgos = [];
 
       filteredOrdens.forEach(ordem => {
         if (ordem.chegada_destino && ordem.prazo_entrega) {
@@ -789,18 +777,16 @@ export default function Tracking() {
 
           if (ordem.entrega_expurgada) {
             dadosPorData[data].expurgado++;
-            expurgos.push({
-              data,
-              ordem: ordem.numero_carga || `#${ordem.id.slice(-6)}`,
-              motivo: ordem.entrega_expurgo_motivo || 'Não informado'
-            });
+            ordensExpurgadas.push(ordem);
           } else {
             const prazo = new Date(ordem.prazo_entrega);
             const realizado = new Date(ordem.chegada_destino);
             if (realizado <= prazo) {
               dadosPorData[data].noPrazo++;
+              ordensNoPrazo.push(ordem);
             } else {
               dadosPorData[data].foraPrazo++;
+              ordensForaPrazo.push(ordem);
             }
           }
         }
@@ -819,7 +805,7 @@ export default function Tracking() {
           'Expurgado': valores.expurgado
         }));
 
-      return { grafico, expurgos };
+      return { grafico, ordensNoPrazo, ordensForaPrazo, ordensExpurgadas };
     }
   };
 
@@ -1852,6 +1838,7 @@ export default function Tracking() {
 }
 
 function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
+  const [abaSelecionada, setAbaSelecionada] = useState('grafico');
   const titulo = tipo === 'geral' ? 'Relatório de SLA Geral' : tipo === 'carga' ? 'Relatório de SLA - Carregamento' : 'Relatório de SLA - Entrega';
 
   const theme = {
@@ -1859,12 +1846,107 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
     border: isDark ? '#334155' : '#e5e7eb',
     text: isDark ? '#f1f5f9' : '#111827',
     textMuted: isDark ? '#94a3b8' : '#6b7280',
+    tabsBg: isDark ? '#0f172a' : '#f9fafb',
   };
+
+  const formatarData = (dataStr) => {
+    if (!dataStr) return '-';
+    try {
+      return new Date(dataStr).toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return '-';
+    }
+  };
+
+  const calcularAtraso = (agendado, realizado) => {
+    const diff = new Date(realizado) - new Date(agendado);
+    const horas = Math.round(diff / (1000 * 60 * 60));
+    return horas > 0 ? `+${horas}h` : `${horas}h`;
+  };
+
+  const TabelaOrdens = ({ ordens, tipoSLA }) => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b" style={{ borderColor: theme.border, backgroundColor: isDark ? '#0f172a' : '#f9fafb' }}>
+            <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Ordem</th>
+            <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Cliente</th>
+            <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Origem - Destino</th>
+            <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Agendado</th>
+            <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Realizado</th>
+            <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Diferença</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ordens.map((ordem, idx) => {
+            const agendado = tipoSLA === 'carga' ? ordem.carregamento_agendamento_data : ordem.prazo_entrega;
+            const realizado = tipoSLA === 'carga' ? ordem.fim_carregamento : ordem.chegada_destino;
+            
+            return (
+              <tr key={idx} className="border-b hover:bg-opacity-50" style={{ borderColor: theme.border }}>
+                <td className="p-2 font-mono font-bold" style={{ color: theme.text }}>
+                  {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
+                </td>
+                <td className="p-2" style={{ color: theme.textMuted }}>{ordem.cliente || '-'}</td>
+                <td className="p-2" style={{ color: theme.textMuted }}>
+                  {(ordem.origem_cidade || ordem.origem || '-')} - {(ordem.destino_cidade || ordem.destino || '-')}
+                </td>
+                <td className="p-2" style={{ color: theme.textMuted }}>{formatarData(agendado)}</td>
+                <td className="p-2" style={{ color: theme.textMuted }}>{formatarData(realizado)}</td>
+                <td className="p-2 font-bold" style={{ color: new Date(realizado) <= new Date(agendado) ? '#22c55e' : '#ef4444' }}>
+                  {calcularAtraso(agendado, realizado)}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const TabelaExpurgos = ({ ordens, tipoSLA }) => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b" style={{ borderColor: theme.border, backgroundColor: isDark ? '#0f172a' : '#f9fafb' }}>
+            <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Ordem</th>
+            <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Cliente</th>
+            <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Origem - Destino</th>
+            <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Motivo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ordens.map((ordem, idx) => {
+            const motivo = tipoSLA === 'carga' ? ordem.carregamento_expurgo_motivo : ordem.entrega_expurgo_motivo;
+            
+            return (
+              <tr key={idx} className="border-b hover:bg-opacity-50" style={{ borderColor: theme.border }}>
+                <td className="p-2 font-mono font-bold" style={{ color: theme.text }}>
+                  {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
+                </td>
+                <td className="p-2" style={{ color: theme.textMuted }}>{ordem.cliente || '-'}</td>
+                <td className="p-2" style={{ color: theme.textMuted }}>
+                  {(ordem.origem_cidade || ordem.origem || '-')} - {(ordem.destino_cidade || ordem.destino || '-')}
+                </td>
+                <td className="p-2" style={{ color: theme.textMuted }}>{motivo || 'Não informado'}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-6xl max-h-[90vh] overflow-auto" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
-        <CardHeader className="border-b" style={{ borderColor: theme.border }}>
+      <Card className="w-full max-w-7xl max-h-[90vh] overflow-auto" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
+        <CardHeader className="border-b sticky top-0 z-10" style={{ borderColor: theme.border, backgroundColor: theme.cardBg }}>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg" style={{ color: theme.text }}>{titulo}</CardTitle>
             <Button variant="ghost" size="sm" onClick={onClose} style={{ color: theme.text }}>✕</Button>
@@ -1876,7 +1958,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             <h3 className="text-sm font-semibold mb-4" style={{ color: theme.text }}>
               {tipo === 'geral' ? 'Desempenho de SLA' : `Desempenho por ${tipo === 'carga' ? 'Data de Carregamento' : 'Data de Entrega'}`}
             </h3>
-            <ResponsiveContainer width="100%" height={350}>
+            <ResponsiveContainer width="100%" height={300}>
               <BarChart data={dados.grafico}>
                 <CartesianGrid strokeDasharray="3 3" stroke={theme.border} />
                 <XAxis 
@@ -1908,38 +1990,142 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             </ResponsiveContainer>
           </div>
 
-          {/* Tabela de Expurgos */}
-          {dados.expurgos.length > 0 && (
-            <div className="p-4 rounded-lg border" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
-              <h3 className="text-sm font-semibold mb-3" style={{ color: theme.text }}>Expurgos Registrados ({dados.expurgos.length})</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b" style={{ borderColor: theme.border }}>
-                      {tipo === 'geral' && <th className="text-left p-2" style={{ color: theme.text }}>Tipo</th>}
-                      {tipo !== 'geral' && <th className="text-left p-2" style={{ color: theme.text }}>Data</th>}
-                      <th className="text-left p-2" style={{ color: theme.text }}>Ordem</th>
-                      <th className="text-left p-2" style={{ color: theme.text }}>Motivo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dados.expurgos.map((exp, idx) => (
-                      <tr key={idx} className="border-b hover:bg-opacity-50" style={{ borderColor: theme.border }}>
-                        {tipo === 'geral' && <td className="p-2" style={{ color: theme.textMuted }}>{exp.tipo}</td>}
-                        {tipo !== 'geral' && <td className="p-2" style={{ color: theme.textMuted }}>{exp.data}</td>}
-                        <td className="p-2 font-mono font-bold" style={{ color: theme.text }}>{exp.ordem}</td>
-                        <td className="p-2" style={{ color: theme.textMuted }}>{exp.motivo}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          {/* Detalhamento das Ordens */}
+          {tipo === 'geral' ? (
+            <div className="space-y-4">
+              {/* Carregamento */}
+              <div className="p-4 rounded-lg border" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
+                  <Package className="w-4 h-4 text-blue-600" />
+                  SLA de Carregamento
+                </h3>
+                
+                <Tabs value={abaSelecionada} onValueChange={setAbaSelecionada}>
+                  <TabsList style={{ backgroundColor: theme.tabsBg }}>
+                    <TabsTrigger value="grafico" className="text-xs">Resumo</TabsTrigger>
+                    <TabsTrigger value="noPrazo_carga" className="text-xs">
+                      No Prazo ({dados.ordensCarregamento.noPrazo.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="foraPrazo_carga" className="text-xs">
+                      Fora do Prazo ({dados.ordensCarregamento.foraPrazo.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="expurgado_carga" className="text-xs">
+                      Expurgados ({dados.ordensCarregamento.expurgado.length})
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="noPrazo_carga" className="mt-3">
+                    {dados.ordensCarregamento.noPrazo.length > 0 ? (
+                      <TabelaOrdens ordens={dados.ordensCarregamento.noPrazo} tipoSLA="carga" />
+                    ) : (
+                      <p className="text-center text-sm py-4" style={{ color: theme.textMuted }}>Nenhuma ordem nesta categoria</p>
+                    )}
+                  </TabsContent>
+                  
+                  <TabsContent value="foraPrazo_carga" className="mt-3">
+                    {dados.ordensCarregamento.foraPrazo.length > 0 ? (
+                      <TabelaOrdens ordens={dados.ordensCarregamento.foraPrazo} tipoSLA="carga" />
+                    ) : (
+                      <p className="text-center text-sm py-4" style={{ color: theme.textMuted }}>Nenhuma ordem nesta categoria</p>
+                    )}
+                  </TabsContent>
+                  
+                  <TabsContent value="expurgado_carga" className="mt-3">
+                    {dados.ordensCarregamento.expurgado.length > 0 ? (
+                      <TabelaExpurgos ordens={dados.ordensCarregamento.expurgado} tipoSLA="carga" />
+                    ) : (
+                      <p className="text-center text-sm py-4" style={{ color: theme.textMuted }}>Nenhuma ordem nesta categoria</p>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </div>
+
+              {/* Entrega */}
+              <div className="p-4 rounded-lg border" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
+                  <Truck className="w-4 h-4 text-purple-600" />
+                  SLA de Entrega
+                </h3>
+                
+                <Tabs value={abaSelecionada} onValueChange={setAbaSelecionada}>
+                  <TabsList style={{ backgroundColor: theme.tabsBg }}>
+                    <TabsTrigger value="grafico" className="text-xs">Resumo</TabsTrigger>
+                    <TabsTrigger value="noPrazo_entrega" className="text-xs">
+                      No Prazo ({dados.ordensEntrega.noPrazo.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="foraPrazo_entrega" className="text-xs">
+                      Fora do Prazo ({dados.ordensEntrega.foraPrazo.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="expurgado_entrega" className="text-xs">
+                      Expurgados ({dados.ordensEntrega.expurgado.length})
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="noPrazo_entrega" className="mt-3">
+                    {dados.ordensEntrega.noPrazo.length > 0 ? (
+                      <TabelaOrdens ordens={dados.ordensEntrega.noPrazo} tipoSLA="entrega" />
+                    ) : (
+                      <p className="text-center text-sm py-4" style={{ color: theme.textMuted }}>Nenhuma ordem nesta categoria</p>
+                    )}
+                  </TabsContent>
+                  
+                  <TabsContent value="foraPrazo_entrega" className="mt-3">
+                    {dados.ordensEntrega.foraPrazo.length > 0 ? (
+                      <TabelaOrdens ordens={dados.ordensEntrega.foraPrazo} tipoSLA="entrega" />
+                    ) : (
+                      <p className="text-center text-sm py-4" style={{ color: theme.textMuted }}>Nenhuma ordem nesta categoria</p>
+                    )}
+                  </TabsContent>
+                  
+                  <TabsContent value="expurgado_entrega" className="mt-3">
+                    {dados.ordensEntrega.expurgado.length > 0 ? (
+                      <TabelaExpurgos ordens={dados.ordensEntrega.expurgado} tipoSLA="entrega" />
+                    ) : (
+                      <p className="text-center text-sm py-4" style={{ color: theme.textMuted }}>Nenhuma ordem nesta categoria</p>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </div>
             </div>
-          )}
-
-          {dados.expurgos.length === 0 && (
-            <div className="p-4 rounded-lg border text-center" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
-              <p className="text-sm" style={{ color: theme.textMuted }}>✅ Nenhum expurgo registrado no período</p>
+          ) : (
+            <div className="p-4 rounded-lg border" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
+              <Tabs defaultValue="noPrazo">
+                <TabsList style={{ backgroundColor: theme.tabsBg }}>
+                  <TabsTrigger value="noPrazo" className="text-xs">
+                    No Prazo ({dados.ordensNoPrazo.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="foraPrazo" className="text-xs">
+                    Fora do Prazo ({dados.ordensForaPrazo.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="expurgado" className="text-xs">
+                    Expurgados ({dados.ordensExpurgadas.length})
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="noPrazo" className="mt-3">
+                  {dados.ordensNoPrazo.length > 0 ? (
+                    <TabelaOrdens ordens={dados.ordensNoPrazo} tipoSLA={tipo === 'carga' ? 'carga' : 'entrega'} />
+                  ) : (
+                    <p className="text-center text-sm py-4" style={{ color: theme.textMuted }}>Nenhuma ordem nesta categoria</p>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="foraPrazo" className="mt-3">
+                  {dados.ordensForaPrazo.length > 0 ? (
+                    <TabelaOrdens ordens={dados.ordensForaPrazo} tipoSLA={tipo === 'carga' ? 'carga' : 'entrega'} />
+                  ) : (
+                    <p className="text-center text-sm py-4" style={{ color: theme.textMuted }}>Nenhuma ordem nesta categoria</p>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="expurgado" className="mt-3">
+                  {dados.ordensExpurgadas.length > 0 ? (
+                    <TabelaExpurgos ordens={dados.ordensExpurgadas} tipoSLA={tipo === 'carga' ? 'carga' : 'entrega'} />
+                  ) : (
+                    <p className="text-center text-sm py-4" style={{ color: theme.textMuted }}>✅ Nenhum expurgo registrado</p>
+                  )}
+                </TabsContent>
+              </Tabs>
             </div>
           )}
         </CardContent>
