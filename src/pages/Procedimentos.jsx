@@ -231,18 +231,30 @@ export default function Procedimentos() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card 
+              onClick={() => setProcedimentoSelecionado("anexos")}
+              className={`cursor-pointer transition-all ${procedimentoSelecionado === "anexos" ? 'ring-2 ring-blue-600' : ''}`}
+              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+            >
+              <CardContent className="p-4 flex items-center gap-3">
+                <FileText className="w-8 h-8 text-purple-600" />
+                <div>
+                  <h3 className="font-bold text-sm" style={{ color: theme.text }}>Anexos PO-LOG-001</h3>
+                  <p className="text-xs" style={{ color: theme.textMuted }}>SIPOC, RACI, SLA, etc.</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
         {/* Conteúdo para Impressão */}
         <div className="print-content">
           {procedimentoSelecionado === "gestao_transportes" && (
-            <>
-              <ProcedimentoGestaoTransportes theme={theme} isDark={isDark} />
-              <div className="mt-8 print-page-break">
-                <AnexosProcedimentoTransportes theme={theme} isDark={isDark} />
-              </div>
-            </>
+            <ProcedimentoGestaoTransportes theme={theme} isDark={isDark} />
+          )}
+          {procedimentoSelecionado === "anexos" && (
+            <AnexosProcedimentoTransportes theme={theme} isDark={isDark} />
           )}
           {procedimentoSelecionado === "ordens_carga" && (
             <InstrucaoOrdensCarregamentoDetalhada theme={theme} isDark={isDark} />
