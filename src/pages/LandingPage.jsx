@@ -122,6 +122,7 @@ export default function LandingPage() {
     empresa: ""
   });
   const [enviando, setEnviando] = useState(false);
+  const [propostaEnviada, setPropostaEnviada] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('precos_customizados');
@@ -728,65 +729,116 @@ Enviado em ${new Date().toLocaleString('pt-BR')}
                   <p className="text-sm text-gray-600">Preencha seus dados para receber a proposta detalhada</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="nome" className="text-sm">Nome Completo *</Label>
-                    <Input
-                      id="nome"
-                      value={formData.nome}
-                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                      placeholder="Seu nome"
-                      className="mt-1"
-                    />
-                  </div>
+                  {!propostaEnviada ? (
+                    <>
+                      <div>
+                        <Label htmlFor="nome" className="text-sm">Nome Completo *</Label>
+                        <Input
+                          id="nome"
+                          value={formData.nome}
+                          onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                          placeholder="Seu nome"
+                          className="mt-1"
+                        />
+                      </div>
 
-                  <div>
-                    <Label htmlFor="email" className="text-sm">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="seu@email.com"
-                      className="mt-1"
-                    />
-                  </div>
+                      <div>
+                        <Label htmlFor="email" className="text-sm">Email *</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="seu@email.com"
+                          className="mt-1"
+                        />
+                      </div>
 
-                  <div>
-                    <Label htmlFor="telefone" className="text-sm">WhatsApp *</Label>
-                    <Input
-                      id="telefone"
-                      value={formData.telefone}
-                      onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                      placeholder="(00) 00000-0000"
-                      className="mt-1"
-                    />
-                  </div>
+                      <div>
+                        <Label htmlFor="telefone" className="text-sm">WhatsApp *</Label>
+                        <Input
+                          id="telefone"
+                          value={formData.telefone}
+                          onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                          placeholder="(00) 00000-0000"
+                          className="mt-1"
+                        />
+                      </div>
 
-                  <div>
-                    <Label htmlFor="empresa" className="text-sm">Empresa</Label>
-                    <Input
-                      id="empresa"
-                      value={formData.empresa}
-                      onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
-                      placeholder="Nome da empresa (opcional)"
-                      className="mt-1"
-                    />
-                  </div>
+                      <div>
+                        <Label htmlFor="empresa" className="text-sm">Empresa</Label>
+                        <Input
+                          id="empresa"
+                          value={formData.empresa}
+                          onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
+                          placeholder="Nome da empresa (opcional)"
+                          className="mt-1"
+                        />
+                      </div>
 
-                  <Button 
-                    onClick={handleSolicitarProposta}
-                    disabled={enviando}
-                    className="w-full bg-blue-600 hover:bg-blue-700 h-12"
-                  >
-                    {enviando ? "Enviando..." : "Solicitar Proposta Comercial"}
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
+                      <Button 
+                        onClick={handleSolicitarProposta}
+                        disabled={enviando}
+                        className="w-full bg-blue-600 hover:bg-blue-700 h-12"
+                      >
+                        {enviando ? "Enviando..." : "Solicitar Proposta Comercial"}
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
 
-                  <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-                    <p className="text-xs font-semibold text-green-900 text-center">
-                      💰 Economia de até 60% vs. concorrentes
-                    </p>
-                  </div>
+                      <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                        <p className="text-xs font-semibold text-green-900 text-center">
+                          💰 Economia de até 60% vs. concorrentes
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="py-8 text-center space-y-6">
+                      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                        <CheckCircle2 className="w-10 h-10 text-green-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                          Proposta Enviada com Sucesso!
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Recebemos sua solicitação e entraremos em contato em breve.
+                        </p>
+                        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 mb-6">
+                          <p className="text-sm font-semibold text-blue-900 mb-1">
+                            Valor da Proposta Calculada:
+                          </p>
+                          <p className="text-3xl font-bold text-blue-600">
+                            R$ {totais.totalMensal.toFixed(2)}/mês
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <Button 
+                          onClick={handleChamarWhatsApp}
+                          className="w-full bg-green-600 hover:bg-green-700 h-12"
+                        >
+                          <MessageCircle className="w-5 h-5 mr-2" />
+                          Chamar no WhatsApp Agora
+                        </Button>
+
+                        <Button 
+                          onClick={handleNovaSimulacao}
+                          variant="outline"
+                          className="w-full h-10"
+                        >
+                          Fazer Nova Simulação
+                        </Button>
+                      </div>
+
+                      <p className="text-xs text-gray-500">
+                        Você também pode nos chamar diretamente: <br />
+                        <a href="https://wa.me/5511961719449" target="_blank" className="text-blue-600 hover:underline font-semibold">
+                          (11) 96171-9449
+                        </a>
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
