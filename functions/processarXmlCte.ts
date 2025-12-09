@@ -107,15 +107,21 @@ Deno.serve(async (req) => {
     // Buscar notas fiscais no sistema pelas chaves
     const notasFiscaisIds = [];
     if (chavesNfe.length > 0) {
-      const todasNotas = await base44.asServiceRole.entities.NotaFiscal.list();
-      
-      for (const chavaNfe of chavesNfe) {
-        const notaEncontrada = todasNotas.find(
-          nf => nf.chave_nota_fiscal === chavaNfe
-        );
-        if (notaEncontrada) {
-          notasFiscaisIds.push(notaEncontrada.id);
+      try {
+        const todasNotas = await base44.asServiceRole.entities.NotaFiscal.list();
+        
+        if (Array.isArray(todasNotas)) {
+          for (const chavaNfe of chavesNfe) {
+            const notaEncontrada = todasNotas.find(
+              nf => nf.chave_nota_fiscal === chavaNfe
+            );
+            if (notaEncontrada) {
+              notasFiscaisIds.push(notaEncontrada.id);
+            }
+          }
         }
+      } catch (error) {
+        console.log('Erro ao buscar notas fiscais (ignorando):', error.message);
       }
     }
 
