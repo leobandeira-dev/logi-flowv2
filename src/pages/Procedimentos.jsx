@@ -22,6 +22,7 @@ import {
   InstrucaoOcorrenciasDetalhada, 
   ManualSistemaCompleto 
 } from "../components/procedimentos/DocumentosComplementares";
+import { AnexosProcedimentoTransportes } from "../components/procedimentos/AnexosPOLOG001";
 
 export default function Procedimentos() {
   const [user, setUser] = useState(null);
@@ -236,7 +237,12 @@ export default function Procedimentos() {
         {/* Conteúdo para Impressão */}
         <div className="print-content">
           {procedimentoSelecionado === "gestao_transportes" && (
-            <ProcedimentoGestaoTransportes theme={theme} isDark={isDark} />
+            <>
+              <ProcedimentoGestaoTransportes theme={theme} isDark={isDark} />
+              <div className="mt-8 print-page-break">
+                <AnexosProcedimentoTransportes theme={theme} isDark={isDark} />
+              </div>
+            </>
           )}
           {procedimentoSelecionado === "ordens_carga" && (
             <InstrucaoOrdensCarregamentoDetalhada theme={theme} isDark={isDark} />
