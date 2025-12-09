@@ -130,8 +130,18 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
         const newColumnIds = ["mdfe_baixado", "saldo_pago", "comprovante_entrega_recebido", "tolerancia", "diaria_carregamento", "diaria_descarga", "modalidade_carga", "prazo_entrega", "entrada_galpao", "agendamento_checklist_data"];
         const hasNewColumns = newColumnIds.some(colId => !filteredConfig.some(col => col.id === colId));
         
+        const labelsAtualizados = {
+          "carregamento_agendamento_data": "Agenda Carga",
+          "fim_carregamento": "Fim Carga",
+          "saida_unidade": "Inicio Viagem",
+          "chegada_destino": "Chegada Destino",
+          "descarga_agendamento_data": "Agenda Descarga",
+          "agendamento_checklist_data": "Agenda Checklist",
+          "origem_destino": "Origem - Destino"
+        };
+        
         const needsLabelUpdate = filteredConfig.some(col => 
-          col.id === "origem_destino" && col.label !== "Origem - Destino"
+          labelsAtualizados[col.id] && col.label !== labelsAtualizados[col.id]
         );
 
         if (hasNewColumns || needsLabelUpdate) {
