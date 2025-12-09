@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Truck,
@@ -17,19 +16,105 @@ import {
   Zap,
   FileText,
   ArrowRight,
-  Mail,
-  Phone,
   Package,
   RefreshCw,
   Menu,
   X,
   MessageCircle,
-  Globe
+  Calculator,
+  Phone
 } from "lucide-react";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
 
+const PACOTE_BASE = {
+  nome: "Pacote Base",
+  preco: 299,
+  descricao: "Núcleo essencial do sistema",
+  modulos: [
+    "Dashboard Executivo",
+    "Ordens de Carregamento",
+    "Tracking Logístico",
+    "Gestão de Usuários",
+    "Motoristas e Veículos",
+    "Operações (Config SLA)",
+    "Parceiros"
+  ]
+};
+
+const ADDONS = [
+  {
+    id: "workflow_qualidade",
+    nome: "Workflow & Qualidade",
+    descricao: "Processos customizáveis com métricas de performance",
+    preco: 149,
+    icon: Workflow,
+    modulos: [
+      "Fluxo BPMN Customizável",
+      "Gestão de Ocorrências",
+      "Sistema de Gamificação"
+    ]
+  },
+  {
+    id: "wms_completo",
+    nome: "WMS Completo",
+    descricao: "Gestão completa de armazém e expedição",
+    preco: 199,
+    icon: Package,
+    modulos: [
+      "Recebimento de NF-e",
+      "Gestão de Notas Fiscais",
+      "Etiquetas Mãe (Unitização)",
+      "Carregamento e Expedição",
+      "Ordem de Entrega"
+    ]
+  },
+  {
+    id: "portal_b2b",
+    nome: "Portal B2B",
+    descricao: "Self-service para clientes e fornecedores",
+    preco: 149,
+    icon: Users,
+    modulos: [
+      "Dashboard Coletas",
+      "Solicitar Coleta (Fornecedor)",
+      "Aprovar Coletas (Cliente)"
+    ]
+  },
+  {
+    id: "comunicacao",
+    nome: "Comunicação Avançada",
+    descricao: "App móvel e atendimento com IA",
+    preco: 99,
+    icon: MessageCircle,
+    modulos: [
+      "App Motorista (SMS)",
+      "SAC com Chatbot IA"
+    ]
+  }
+];
+
+const FAIXAS_PROCESSAMENTO = [
+  { volume: 1000, preco: 450, nome: "Inicial" },
+  { volume: 2500, preco: 950, nome: "Crescimento" },
+  { volume: 5000, preco: 1450, nome: "Consolidado" },
+  { volume: 10000, preco: 1950, nome: "Expansão" },
+  { volume: 15000, preco: 2700, nome: "Enterprise" }
+];
+
 export default function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("visao-geral");
+  
+  // Estados da calculadora
+  const [addonsSelecionados, setAddonsSelecionados] = useState([]);
+  const [volumeColetas, setVolumeColetas] = useState(0);
+  const [volumeCarregamentos, setVolumeCarregamentos] = useState(0);
+  const [volumeEntregas, setVolumeEntregas] = useState(0);
+  const [volumeNotasFiscais, setVolumeNotasFiscais] = useState(0);
+  const [precosCustomizados, setPrecosCustomizados] = useState(null);
+  
+  // Estados do formulário
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
@@ -37,8 +122,93 @@ export default function LandingPage() {
     empresa: ""
   });
   const [enviando, setEnviando] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("visao-geral");
+
+  useEffect(() => {
+    const saved = localStorage.getItem('precos_customizados');
+    if (saved) {
+      setPrecosCustomizados(JSON.parse(saved));
+    }
+  }, []);
+
+  const obterPacoteBase = () => {
+    if (precosCustomizados?.pacoteBase) {
+      return { ...PACOTE_BASE, preco: precosCustomizados.pacoteBase };
+    }
+    return PACOTE_BASE;
+  };
+
+  const obterAddons = () => {
+    if (!precosCustomizados?.addons) return ADDONS;
+    return ADDONS.map(addon => ({
+      ...addon,
+      preco: precosCustomizados.addons[addon.id] || addon.preco
+    }));
+  };
+
+  const toggleAddon = (addonId) => {
+    setAddonsSelecionados(prev => {
+      if (prev.includes(addonId)) {
+        return prev.filter(id => id !== addonId);
+      } else {
+        return [...prev, addonId];
+      }
+    });
+  };
+
+  const calcularVolumeDocumentos = () => {
+    const totalOrdens = volumeColetas + volumeCarregamentos + volumeEntregas;
+    return totalOrdens + volumeNotasFiscais;
+  };
+
+  const obterFaixaProcessamento = (totalDocs) => {
+    for (let i = 0; i < FAIXAS_PROCESSAMENTO.length; i++) {
+      if (totalDocs <= FAIXAS_PROCESSAMENTO[i].volume) {
+        return FAIXAS_PROCESSAMENTO[i];
+      }
+    }
+    return FAIXAS_PROCESSAMENTO[FAIXAS_PROCESSAMENTO.length - 1];
+  };
+
+  const calcularCustoProcessamento = () => {
+    const totalDocs = calcularVolumeDocumentos();
+    const faixa = obterFaixaProcessamento(totalDocs);
+    let custoBase = faixa.preco;
+    let custoExtra = 0;
+    let docsExcedentes = 0;
+
+    if (totalDocs > 15000) {
+      docsExcedentes = totalDocs - 15000;
+      custoExtra = docsExcedentes * 0.18;
+    }
+
+    return {
+      faixa,
+      custoBase,
+      custoExtra,
+      docsExcedentes,
+      total: custoBase + custoExtra
+    };
+  };
+
+  const calcularTotais = () => {
+    const processamento = calcularCustoProcessamento();
+    const totalDocs = calcularVolumeDocumentos();
+    const pacoteBase = obterPacoteBase();
+    const addons = obterAddons();
+    
+    const totalAddons = addons
+      .filter(a => addonsSelecionados.includes(a.id))
+      .reduce((sum, a) => sum + a.preco, 0);
+    
+    return {
+      pacoteBase: pacoteBase.preco,
+      addons: addons.filter(a => addonsSelecionados.includes(a.id)),
+      totalAddons,
+      processamento,
+      totalDocumentos: totalDocs,
+      totalMensal: pacoteBase.preco + totalAddons + processamento.total
+    };
+  };
 
   const scrollToSection = (sectionId) => {
     setMobileMenuOpen(false);
@@ -53,41 +223,94 @@ export default function LandingPage() {
     base44.auth.redirectToLogin(window.location.origin);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!formData.nome || !formData.email || !formData.telefone) {
-      toast.error("Preencha os campos obrigatórios");
+  const handleSolicitarProposta = async () => {
+    if (!formData.email || !formData.telefone || !formData.nome) {
+      toast.error("Preencha nome, email e telefone");
       return;
     }
 
     setEnviando(true);
 
     try {
+      const totais = calcularTotais();
+      
+      // Criar lead no CRM com dados da proposta
       await base44.entities.Lead.create({
         razao_social: formData.empresa || formData.nome,
         responsavel_nome: formData.nome,
         responsavel_email: formData.email,
         responsavel_telefone: formData.telefone,
         status_funil: "lead",
-        origem: "landing_page"
+        origem: "landing_page",
+        pacote_base_preco: totais.pacoteBase,
+        addons_selecionados: JSON.stringify(totais.addons.map(a => ({ id: a.id, nome: a.nome, preco: a.preco }))),
+        volume_coletas: volumeColetas,
+        volume_carregamentos: volumeCarregamentos,
+        volume_entregas: volumeEntregas,
+        volume_notas_fiscais: volumeNotasFiscais,
+        valor_total_proposta: totais.totalMensal,
+        data_proposta: new Date().toISOString()
       });
+
+      // Enviar email de notificação
+      const emailBody = `
+Nova Proposta via Landing Page - Log Flow
+
+CONTATO:
+Nome: ${formData.nome}
+Email: ${formData.email}
+Telefone/WhatsApp: ${formData.telefone}
+Empresa: ${formData.empresa || "Não informado"}
+
+PROPOSTA CALCULADA:
+Pacote Base: R$ ${totais.pacoteBase.toFixed(2)}
+Add-ons Selecionados: ${totais.addons.map(a => `${a.nome} (R$ ${a.preco})`).join(', ') || 'Nenhum'}
+Total Add-ons: R$ ${totais.totalAddons.toFixed(2)}
+
+VOLUME DE DOCUMENTOS:
+Coletas: ${volumeColetas}
+Carregamentos: ${volumeCarregamentos}
+Entregas: ${volumeEntregas}
+Notas Fiscais: ${volumeNotasFiscais}
+Total Documentos: ${totais.totalDocumentos}
+
+PROCESSAMENTO:
+Faixa: ${totais.processamento.faixa.nome}
+Custo Processamento: R$ ${totais.processamento.total.toFixed(2)}
+
+VALOR TOTAL MENSAL: R$ ${totais.totalMensal.toFixed(2)}
+
+---
+Lead criado automaticamente no CRM
+Enviado em ${new Date().toLocaleString('pt-BR')}
+      `;
 
       await base44.integrations.Core.SendEmail({
         to: "leonardobandeira@laflogistica.com.br",
-        subject: `🚛 Nova Solicitação - ${formData.nome}`,
-        body: `Nome: ${formData.nome}\nEmail: ${formData.email}\nTelefone: ${formData.telefone}\nEmpresa: ${formData.empresa || "Não informado"}`
+        subject: `💰 Nova Proposta Landing Page - ${formData.nome} - R$ ${totais.totalMensal.toFixed(2)}/mês`,
+        body: emailBody
       });
 
-      toast.success("Solicitação enviada! Entraremos em contato em breve.");
+      toast.success("Proposta enviada com sucesso! Entraremos em contato em breve.");
+      
+      // Limpar formulário
       setFormData({ nome: "", email: "", telefone: "", empresa: "" });
+      setAddonsSelecionados([]);
+      setVolumeColetas(0);
+      setVolumeCarregamentos(0);
+      setVolumeEntregas(0);
+      setVolumeNotasFiscais(0);
     } catch (error) {
-      console.error("Erro:", error);
+      console.error("Erro ao enviar proposta:", error);
       toast.error("Erro ao enviar. Tente novamente.");
     } finally {
       setEnviando(false);
     }
   };
+
+  const pacoteBase = obterPacoteBase();
+  const addons = obterAddons();
+  const totais = calcularTotais();
 
   return (
     <div className="min-h-screen bg-white">
@@ -185,7 +408,7 @@ export default function LandingPage() {
             <Button 
               size="lg" 
               className="bg-blue-600 hover:bg-blue-700 h-12 px-6"
-              onClick={() => scrollToSection('contato')}
+              onClick={() => scrollToSection('calculadora')}
             >
               Solicitar Demonstração Gratuita
               <ArrowRight className="w-4 h-4 ml-2" />
@@ -251,130 +474,328 @@ export default function LandingPage() {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold text-gray-900">Plataforma Base</h3>
+                      <h3 className="text-xl font-bold text-gray-900">{pacoteBase.nome}</h3>
                       <Badge className="bg-blue-600 text-white">Obrigatório</Badge>
                     </div>
-                    <p className="text-sm text-gray-600">
-                      Dashboard, Tracking, Ordens, Motoristas, Veículos, Operações
-                    </p>
+                    <p className="text-sm text-gray-600">{pacoteBase.descricao}</p>
                   </div>
-                  <p className="text-3xl font-bold text-blue-600">R$ 299</p>
+                  <p className="text-3xl font-bold text-blue-600">R$ {pacoteBase.preco}</p>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    Dashboard operacional completo
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    Tracking logístico em tempo real
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    Gestão de recursos (motoristas/veículos)
-                  </div>
+                  {pacoteBase.modulos.slice(0, 3).map((mod, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      {mod}
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border border-gray-200 bg-white hover:border-blue-300 transition-colors">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold text-gray-900">Workflow & Qualidade</h3>
-                      <Badge variant="outline">Opcional</Badge>
+            {addons.map((addon) => {
+              const Icon = addon.icon;
+              return (
+                <Card key={addon.id} className="border border-gray-200 bg-white hover:border-blue-300 transition-colors">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-xl font-bold text-gray-900">{addon.nome}</h3>
+                          <Badge variant="outline">Opcional</Badge>
+                        </div>
+                        <p className="text-sm text-gray-600">{addon.descricao}</p>
+                      </div>
+                      <p className="text-3xl font-bold text-blue-600">R$ {addon.preco}</p>
                     </div>
-                    <p className="text-sm text-gray-600">
-                      Processos customizáveis com métricas
-                    </p>
-                  </div>
-                  <p className="text-3xl font-bold text-blue-600">R$ 149</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    Fluxo BPMN customizável
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    Gestão de ocorrências
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    Sistema de gamificação
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                    <div className="space-y-2">
+                      {addon.modulos.slice(0, 3).map((mod, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          {mod}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
-            <Card className="border border-gray-200 bg-white hover:border-blue-300 transition-colors">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold text-gray-900">WMS Completo</h3>
-                      <Badge variant="outline">Opcional</Badge>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      Gestão de armazém e expedição
-                    </p>
-                  </div>
-                  <p className="text-3xl font-bold text-blue-600">R$ 199</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    Recebimento de NF-e
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    Etiquetas e unitização
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    Expedição e carregamento
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+      {/* Calculadora */}
+      <section id="calculadora" className="py-20 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Calculadora de Investimento
+            </h2>
+            <p className="text-lg text-gray-600">
+              Descubra o investimento exato para sua operação
+            </p>
+          </div>
 
-            <Card className="border border-gray-200 bg-white hover:border-blue-300 transition-colors">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold text-gray-900">Portal B2B</h3>
-                      <Badge variant="outline">Opcional</Badge>
+          <div className="grid lg:grid-cols-5 gap-8">
+            {/* Seleção - 3 colunas */}
+            <div className="lg:col-span-3 space-y-6">
+              {/* Pacote Base */}
+              <Card className="border-2 border-blue-200 bg-blue-50/30">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <Package className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-lg text-gray-900">{pacoteBase.nome}</p>
+                        <p className="text-xs text-gray-600">{pacoteBase.descricao}</p>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600">
-                      Self-service para clientes/fornecedores
+                    <p className="text-2xl font-bold text-blue-600">R$ {pacoteBase.preco}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Add-ons Selecionáveis */}
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Add-ons Opcionais</h3>
+                <div className="space-y-3">
+                  {addons.map((addon) => {
+                    const Icon = addon.icon;
+                    const selecionado = addonsSelecionados.includes(addon.id);
+                    
+                    return (
+                      <Card
+                        key={addon.id}
+                        onClick={() => toggleAddon(addon.id)}
+                        className="cursor-pointer transition-all hover:shadow-lg border-2"
+                        style={{
+                          backgroundColor: selecionado ? '#dbeafe' : '#ffffff',
+                          borderColor: selecionado ? '#3b82f6' : '#e5e7eb'
+                        }}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                selecionado ? 'bg-blue-600' : 'bg-gray-200'
+                              }`}>
+                                <Icon className={`w-5 h-5 ${selecionado ? 'text-white' : 'text-gray-600'}`} />
+                              </div>
+                              <div>
+                                <p className="font-bold text-gray-900">{addon.nome}</p>
+                                <p className="text-xs text-gray-600">{addon.descricao}</p>
+                              </div>
+                            </div>
+                            <p className="text-xl font-bold text-blue-600">+R$ {addon.preco}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Volume de Documentos */}
+              <Card className="border border-gray-200 bg-white">
+                <CardHeader>
+                  <CardTitle className="text-lg">Volume de Documentos/Mês</CardTitle>
+                  <p className="text-sm text-gray-600">Informe a quantidade mensal de cada tipo</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block text-gray-700">Coletas</label>
+                      <Input
+                        type="number"
+                        value={volumeColetas}
+                        onChange={(e) => setVolumeColetas(parseInt(e.target.value) || 0)}
+                        min="0"
+                        className="text-center"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block text-gray-700">Carregamentos</label>
+                      <Input
+                        type="number"
+                        value={volumeCarregamentos}
+                        onChange={(e) => setVolumeCarregamentos(parseInt(e.target.value) || 0)}
+                        min="0"
+                        className="text-center"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block text-gray-700">Entregas</label>
+                      <Input
+                        type="number"
+                        value={volumeEntregas}
+                        onChange={(e) => setVolumeEntregas(parseInt(e.target.value) || 0)}
+                        min="0"
+                        className="text-center"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block text-gray-700">Notas Fiscais</label>
+                      <Input
+                        type="number"
+                        value={volumeNotasFiscais}
+                        onChange={(e) => setVolumeNotasFiscais(parseInt(e.target.value) || 0)}
+                        min="0"
+                        className="text-center"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm font-semibold text-blue-900">Total de Documentos:</p>
+                      <p className="text-2xl font-bold text-blue-600">{calcularVolumeDocumentos()}</p>
+                    </div>
+                    <div className="space-y-1">
+                      {FAIXAS_PROCESSAMENTO.map((faixa, idx) => {
+                        const totalDocs = calcularVolumeDocumentos();
+                        const isAtiva = totalDocs > 0 && totalDocs <= faixa.volume && (idx === 0 || totalDocs > FAIXAS_PROCESSAMENTO[idx - 1].volume);
+                        
+                        return (
+                          <div 
+                            key={faixa.volume} 
+                            className={`flex items-center justify-between py-1 px-2 rounded ${isAtiva ? 'bg-green-100 border-l-4 border-green-600' : ''}`}
+                          >
+                            <p className={`text-xs ${isAtiva ? 'font-semibold text-green-900' : 'text-blue-600'}`}>
+                              {faixa.nome} (até {faixa.volume.toLocaleString('pt-BR')})
+                            </p>
+                            <p className={`text-xs ${isAtiva ? 'font-bold text-green-900' : 'text-blue-600'}`}>
+                              R$ {faixa.preco.toFixed(2)}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Resumo e Formulário - 2 colunas */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Resumo */}
+              <Card className="border-2 border-gray-200 bg-white sticky top-24">
+                <CardHeader>
+                  <CardTitle>Resumo do Investimento</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-600 mb-3">Módulos Selecionados:</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-gray-900">{pacoteBase.nome}</p>
+                        <p className="font-semibold text-gray-900">R$ {pacoteBase.preco.toFixed(2)}</p>
+                      </div>
+                      {totais.addons.map(addon => (
+                        <div key={addon.id} className="flex items-center justify-between">
+                          <p className="text-sm text-gray-900">{addon.nome}</p>
+                          <p className="font-semibold text-gray-900">R$ {addon.preco.toFixed(2)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {totais.totalDocumentos > 0 && (
+                    <div className="pt-4 border-t border-gray-200">
+                      <p className="text-sm font-semibold text-gray-600 mb-3">Plano de Processamento:</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-gray-900">{totais.processamento.faixa.nome}</p>
+                        <p className="font-semibold text-gray-900">R$ {totais.processamento.total.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t-2 border-gray-900">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-lg font-bold text-gray-900">Total Mensal:</p>
+                    </div>
+                    <p className="text-4xl font-bold text-blue-600 text-right">
+                      R$ {totais.totalMensal.toFixed(2)}
                     </p>
                   </div>
-                  <p className="text-3xl font-bold text-blue-600">R$ 149</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    Dashboard de coletas
+                </CardContent>
+              </Card>
+
+              {/* Formulário de Contato */}
+              <Card className="border-2 border-blue-200 bg-white">
+                <CardHeader>
+                  <CardTitle className="text-lg">Solicitar Proposta Comercial</CardTitle>
+                  <p className="text-sm text-gray-600">Preencha seus dados para receber a proposta detalhada</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="nome" className="text-sm">Nome Completo *</Label>
+                    <Input
+                      id="nome"
+                      value={formData.nome}
+                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                      placeholder="Seu nome"
+                      className="mt-1"
+                    />
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    Solicitação/aprovação
+
+                  <div>
+                    <Label htmlFor="email" className="text-sm">Email *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="seu@email.com"
+                      className="mt-1"
+                    />
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    Rastreamento online
+
+                  <div>
+                    <Label htmlFor="telefone" className="text-sm">WhatsApp *</Label>
+                    <Input
+                      id="telefone"
+                      value={formData.telefone}
+                      onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                      placeholder="(00) 00000-0000"
+                      className="mt-1"
+                    />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+
+                  <div>
+                    <Label htmlFor="empresa" className="text-sm">Empresa</Label>
+                    <Input
+                      id="empresa"
+                      value={formData.empresa}
+                      onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
+                      placeholder="Nome da empresa (opcional)"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <Button 
+                    onClick={handleSolicitarProposta}
+                    disabled={enviando}
+                    className="w-full bg-blue-600 hover:bg-blue-700 h-12"
+                  >
+                    {enviando ? "Enviando..." : "Solicitar Proposta Comercial"}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+
+                  <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                    <p className="text-xs font-semibold text-green-900 text-center">
+                      💰 Economia de até 60% vs. concorrentes
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Como Funciona */}
-      <section className="py-20 px-6 bg-white">
+      <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -392,8 +813,8 @@ export default function LandingPage() {
                   <div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2">💳 Assinatura do Software</h3>
                     <p className="text-sm text-gray-600">
-                      Pague apenas pelos módulos que usar. Plataforma Base é obrigatória (R$ 299/mês), 
-                      demais módulos são opcionais (R$ 149-199/mês cada).
+                      Pague apenas pelos módulos que usar. {pacoteBase.nome} é obrigatório (R$ {pacoteBase.preco}/mês), 
+                      demais módulos são opcionais.
                     </p>
                   </div>
                 </div>
@@ -416,94 +837,42 @@ export default function LandingPage() {
               </CardContent>
             </Card>
           </div>
-        </div>
-      </section>
 
-      {/* Calculadora */}
-      <section id="calculadora" className="py-20 px-6 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Calculadora de Investimento
-            </h2>
-            <p className="text-lg text-gray-600">
-              Descubra o investimento exato para sua operação
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-12">
-            {/* Seleção */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-6">Selecione os Módulos</h3>
-              <div className="space-y-4">
-                <Card className="border-2 border-blue-200 bg-blue-50/30">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Package className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <p className="font-semibold text-gray-900">Plataforma Base</p>
-                        <p className="text-xs text-gray-600">Dashboard, Tracking e Ordens</p>
-                      </div>
-                    </div>
-                    <p className="font-bold text-blue-600">R$ 299</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="border border-gray-200 bg-white">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Workflow className="w-5 h-5 text-gray-600" />
-                      <div>
-                        <p className="font-semibold text-gray-900">Workflow & Qualidade</p>
-                        <p className="text-xs text-gray-600">Processos e gamificação</p>
-                      </div>
-                    </div>
-                    <p className="font-bold text-gray-900">R$ 149</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-
-            {/* Resumo */}
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-6">Resumo do Investimento</h3>
-              <Card className="border-2 border-gray-200 bg-white">
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-600 mb-3">Módulos Selecionados:</p>
-                      <div className="flex items-center justify-between py-2">
-                        <p className="text-sm text-gray-900">Plataforma Base</p>
-                        <p className="font-semibold text-gray-900">R$ 299,00</p>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t border-gray-200">
-                      <p className="text-sm font-semibold text-gray-600 mb-3">Plano de Processamento:</p>
-                      <div className="flex items-center justify-between py-2">
-                        <p className="text-sm text-gray-900">Inicial (até 1.000 docs)</p>
-                        <p className="font-semibold text-gray-900">R$ 450,00</p>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t-2 border-gray-900">
-                      <div className="flex items-center justify-between">
-                        <p className="text-lg font-bold text-gray-900">Total Mensal:</p>
-                        <p className="text-3xl font-bold text-blue-600">R$ 749,00</p>
-                      </div>
-                    </div>
-
-                    <Button 
-                      className="w-full bg-blue-600 hover:bg-blue-700 mt-4"
-                      onClick={() => scrollToSection('contato')}
-                    >
-                      Solicitar Proposta Comercial
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
+          {/* Custos Adicionais */}
+          <div className="grid md:grid-cols-2 gap-6 mt-8">
+            <Card className="border border-gray-200 bg-white">
+              <CardContent className="p-6">
+                <h4 className="font-bold mb-3 text-gray-900">Armazenamento em Nuvem</h4>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <div className="flex justify-between">
+                    <span>10 GB inclusos</span>
+                    <span className="font-semibold text-green-600">Grátis</span>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                  <div className="flex justify-between">
+                    <span>Armazenamento adicional</span>
+                    <span className="font-semibold">US$ 6,00/GB/mês</span>
+                  </div>
+                  <p className="text-xs mt-2">Backup automático, redundância e acesso 24/7</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-gray-200 bg-white">
+              <CardContent className="p-6">
+                <h4 className="font-bold mb-3 text-gray-900">Documentos Excedentes</h4>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <div className="flex justify-between">
+                    <span>Planos até 15.000 docs</span>
+                    <span className="font-semibold text-green-600">Sem cobrança</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Acima de 15.000 docs</span>
+                    <span className="font-semibold">R$ 0,18/doc extra</span>
+                  </div>
+                  <p className="text-xs mt-2">Flexibilidade para picos sazonais</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
@@ -627,88 +996,11 @@ export default function LandingPage() {
           <Button 
             size="lg"
             className="bg-blue-600 hover:bg-blue-700 text-lg px-8 h-14"
-            onClick={() => scrollToSection('contato')}
+            onClick={() => scrollToSection('calculadora')}
           >
             Começar Agora Gratuitamente
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
-        </div>
-      </section>
-
-      {/* Contato */}
-      <section id="contato" className="py-20 px-6 bg-white border-t border-gray-100">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">
-              Solicite uma Demonstração
-            </h2>
-            <p className="text-base text-gray-600">
-              Preencha o formulário e nossa equipe entrará em contato em até 24h
-            </p>
-          </div>
-
-          <Card className="border border-gray-200 bg-white">
-            <CardContent className="p-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="nome" className="text-sm">Nome Completo *</Label>
-                    <Input
-                      id="nome"
-                      value={formData.nome}
-                      onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                      placeholder="Seu nome"
-                      required
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="email" className="text-sm">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="seu@email.com"
-                      required
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="telefone" className="text-sm">Telefone *</Label>
-                    <Input
-                      id="telefone"
-                      value={formData.telefone}
-                      onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                      placeholder="(00) 00000-0000"
-                      required
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="empresa" className="text-sm">Empresa</Label>
-                    <Input
-                      id="empresa"
-                      value={formData.empresa}
-                      onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
-                      placeholder="Nome da empresa"
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-
-                <Button type="submit" disabled={enviando} className="w-full bg-blue-600 hover:bg-blue-700 h-12">
-                  {enviando ? "Enviando..." : "Solicitar Demonstração Gratuita"}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
         </div>
       </section>
 
