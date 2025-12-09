@@ -31,7 +31,8 @@ import {
   Package,
   User,
   Loader2,
-  ChevronDown
+  ChevronDown,
+  BarChart3
 } from "lucide-react";
 import { format, differenceInDays, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -40,7 +41,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import TrackingTable from "../components/tracking/TrackingTable";
 import TrackingUpdateModal from "../components/tracking/TrackingUpdateModal";
 import OrdemDetails from "../components/ordens/OrdemDetails";
@@ -108,6 +111,8 @@ export default function Tracking() {
   const [selectedOrdemForExpurgo, setSelectedOrdemForExpurgo] = useState(null);
   const [tipoExpurgo, setTipoExpurgo] = useState(null);
   const [showExpurgoModal, setShowExpurgoModal] = useState(false);
+  const [showRelatorioSLA, setShowRelatorioSLA] = useState(false);
+  const [tipoRelatorioSLA, setTipoRelatorioSLA] = useState(null);
 
   // Detect dark mode changes
   useEffect(() => {
@@ -664,6 +669,157 @@ export default function Tracking() {
       toast.error("Erro ao exportar relatório PDF");
     } finally {
       setExportando(false);
+    }
+  };
+
+  const prepararDadosSLA = (tipo) => {
+    if (tipo === 'geral') {
+      let carregamentosNoPrazo = 0;
+      let carregamentosForaPrazo = 0;
+      let carregamentosExpurgados = 0;
+      let descargasNoPrazo = 0;
+      let descargasForaPrazo = 0;
+      let descargasExpurgadas = 0;
+      const expurgos = [];
+
+      filteredOrdens.forEach(ordem => {
+        if (ordem.fim_carregamento && ordem.carregamento_agendamento_data) {
+          if (ordem.carregamento_expurgado) {
+            carregamentosExpurgados++;
+            expurgos.push({
+              tipo: 'Carregamento',
+              ordem: ordem.numero_carga || `#${ordem.id.slice(-6)}`,
+              motivo: ordem.carregamento_expurgo_motivo || 'Não informado'
+            });
+          } else {
+            const agendado = new Date(ordem.carregamento_agendamento_data);
+            const realizado = new Date(ordem.fim_carregamento);
+            if (realizado <= agendado) {
+              carregamentosNoPrazo++;
+            } else {
+              carregamentosForaPrazo++;
+            }
+          }
+        }
+
+        if (ordem.chegada_destino && ordem.prazo_entrega) {
+          if (ordem.entrega_expurgada) {
+            descargasExpurgadas++;
+            expurgos.push({
+              tipo: 'Entrega',
+              ordem: ordem.numero_carga || `#${ordem.id.slice(-6)}`,
+              motivo: ordem.entrega_expurgo_motivo || 'Não informado'
+            });
+          } else {
+            const prazo = new Date(ordem.prazo_entrega);
+            const realizado = new Date(ordem.chegada_destino);
+            if (realizado <= prazo) {
+              descargasNoPrazo++;
+            } else {
+              descargasForaPrazo++;
+            }
+          }
+        }
+      });
+
+      return {
+        grafico: [
+          { nome: 'No Prazo', Carregamento: carregamentosNoPrazo, Entrega: descargasNoPrazo },
+          { nome: 'Fora do Prazo', Carregamento: carregamentosForaPrazo, Entrega: descargasForaPrazo },
+          { nome: 'Expurgado', Carregamento: carregamentosExpurgados, Entrega: descargasExpurgadas }
+        ],
+        expurgos
+      };
+    } else if (tipo === 'carga') {
+      const dadosPorData = {};
+      const expurgos = [];
+
+      filteredOrdens.forEach(ordem => {
+        if (ordem.fim_carregamento && ordem.carregamento_agendamento_data) {
+          const data = new Date(ordem.carregamento_agendamento_data).toLocaleDateString('pt-BR');
+          
+          if (!dadosPorData[data]) {
+            dadosPorData[data] = { noPrazo: 0, foraPrazo: 0, expurgado: 0 };
+          }
+
+          if (ordem.carregamento_expurgado) {
+            dadosPorData[data].expurgado++;
+            expurgos.push({
+              data,
+              ordem: ordem.numero_carga || `#${ordem.id.slice(-6)}`,
+              motivo: ordem.carregamento_expurgo_motivo || 'Não informado'
+            });
+          } else {
+            const agendado = new Date(ordem.carregamento_agendamento_data);
+            const realizado = new Date(ordem.fim_carregamento);
+            if (realizado <= agendado) {
+              dadosPorData[data].noPrazo++;
+            } else {
+              dadosPorData[data].foraPrazo++;
+            }
+          }
+        }
+      });
+
+      const grafico = Object.entries(dadosPorData)
+        .sort((a, b) => {
+          const [diaA, mesA, anoA] = a[0].split('/');
+          const [diaB, mesB, anoB] = b[0].split('/');
+          return new Date(anoA, mesA - 1, diaA) - new Date(anoB, mesB - 1, diaB);
+        })
+        .map(([data, valores]) => ({
+          data,
+          'No Prazo': valores.noPrazo,
+          'Fora do Prazo': valores.foraPrazo,
+          'Expurgado': valores.expurgado
+        }));
+
+      return { grafico, expurgos };
+    } else if (tipo === 'entrega') {
+      const dadosPorData = {};
+      const expurgos = [];
+
+      filteredOrdens.forEach(ordem => {
+        if (ordem.chegada_destino && ordem.prazo_entrega) {
+          const data = new Date(ordem.prazo_entrega).toLocaleDateString('pt-BR');
+          
+          if (!dadosPorData[data]) {
+            dadosPorData[data] = { noPrazo: 0, foraPrazo: 0, expurgado: 0 };
+          }
+
+          if (ordem.entrega_expurgada) {
+            dadosPorData[data].expurgado++;
+            expurgos.push({
+              data,
+              ordem: ordem.numero_carga || `#${ordem.id.slice(-6)}`,
+              motivo: ordem.entrega_expurgo_motivo || 'Não informado'
+            });
+          } else {
+            const prazo = new Date(ordem.prazo_entrega);
+            const realizado = new Date(ordem.chegada_destino);
+            if (realizado <= prazo) {
+              dadosPorData[data].noPrazo++;
+            } else {
+              dadosPorData[data].foraPrazo++;
+            }
+          }
+        }
+      });
+
+      const grafico = Object.entries(dadosPorData)
+        .sort((a, b) => {
+          const [diaA, mesA, anoA] = a[0].split('/');
+          const [diaB, mesB, anoB] = b[0].split('/');
+          return new Date(anoA, mesA - 1, diaA) - new Date(anoB, mesB - 1, diaB);
+        })
+        .map(([data, valores]) => ({
+          data,
+          'No Prazo': valores.noPrazo,
+          'Fora do Prazo': valores.foraPrazo,
+          'Expurgado': valores.expurgado
+        }));
+
+      return { grafico, expurgos };
     }
   };
 
@@ -1477,6 +1633,37 @@ export default function Tracking() {
                     <Calendar className="w-4 h-4 mr-2" />
                     Agrupado por Data de Descarga
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator style={{ backgroundColor: theme.border }} />
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setTipoRelatorioSLA('geral');
+                      setShowRelatorioSLA(true);
+                    }}
+                    style={{ color: theme.text }}
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Relatório SLA Geral
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setTipoRelatorioSLA('carga');
+                      setShowRelatorioSLA(true);
+                    }}
+                    style={{ color: theme.text }}
+                  >
+                    <Package className="w-4 h-4 mr-2" />
+                    Relatório SLA Carregamento
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setTipoRelatorioSLA('entrega');
+                      setShowRelatorioSLA(true);
+                    }}
+                    style={{ color: theme.text }}
+                  >
+                    <Truck className="w-4 h-4 mr-2" />
+                    Relatório SLA Entrega
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -1648,6 +1835,115 @@ export default function Tracking() {
             }}
           />
         )}
+
+        {showRelatorioSLA && tipoRelatorioSLA && (
+          <RelatorioSLAModal 
+            tipo={tipoRelatorioSLA}
+            dados={prepararDadosSLA(tipoRelatorioSLA)}
+            onClose={() => {
+              setShowRelatorioSLA(false);
+              setTipoRelatorioSLA(null);
+            }}
+            isDark={isDark}
+          />
+        )}
+    </div>
+  );
+}
+
+function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
+  const titulo = tipo === 'geral' ? 'Relatório de SLA Geral' : tipo === 'carga' ? 'Relatório de SLA - Carregamento' : 'Relatório de SLA - Entrega';
+
+  const theme = {
+    cardBg: isDark ? '#1e293b' : '#ffffff',
+    border: isDark ? '#334155' : '#e5e7eb',
+    text: isDark ? '#f1f5f9' : '#111827',
+    textMuted: isDark ? '#94a3b8' : '#6b7280',
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-6xl max-h-[90vh] overflow-auto" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
+        <CardHeader className="border-b" style={{ borderColor: theme.border }}>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg" style={{ color: theme.text }}>{titulo}</CardTitle>
+            <Button variant="ghost" size="sm" onClick={onClose} style={{ color: theme.text }}>✕</Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4 space-y-4">
+          {/* Gráfico */}
+          <div className="p-4 rounded-lg border" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
+            <h3 className="text-sm font-semibold mb-4" style={{ color: theme.text }}>
+              {tipo === 'geral' ? 'Desempenho de SLA' : `Desempenho por ${tipo === 'carga' ? 'Data de Carregamento' : 'Data de Entrega'}`}
+            </h3>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={dados.grafico}>
+                <CartesianGrid strokeDasharray="3 3" stroke={theme.border} />
+                <XAxis 
+                  dataKey={tipo === 'geral' ? 'nome' : 'data'} 
+                  tick={{ fontSize: 11, fill: theme.text }} 
+                />
+                <YAxis tick={{ fontSize: 11, fill: theme.text }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: theme.cardBg, 
+                    borderColor: theme.border,
+                    color: theme.text 
+                  }} 
+                />
+                <Legend wrapperStyle={{ color: theme.text }} />
+                {tipo === 'geral' ? (
+                  <>
+                    <Bar dataKey="Carregamento" fill="#3b82f6" />
+                    <Bar dataKey="Entrega" fill="#8b5cf6" />
+                  </>
+                ) : (
+                  <>
+                    <Bar dataKey="No Prazo" fill="#22c55e" />
+                    <Bar dataKey="Fora do Prazo" fill="#ef4444" />
+                    <Bar dataKey="Expurgado" fill="#64748b" />
+                  </>
+                )}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Tabela de Expurgos */}
+          {dados.expurgos.length > 0 && (
+            <div className="p-4 rounded-lg border" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: theme.text }}>Expurgos Registrados ({dados.expurgos.length})</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b" style={{ borderColor: theme.border }}>
+                      {tipo === 'geral' && <th className="text-left p-2" style={{ color: theme.text }}>Tipo</th>}
+                      {tipo !== 'geral' && <th className="text-left p-2" style={{ color: theme.text }}>Data</th>}
+                      <th className="text-left p-2" style={{ color: theme.text }}>Ordem</th>
+                      <th className="text-left p-2" style={{ color: theme.text }}>Motivo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dados.expurgos.map((exp, idx) => (
+                      <tr key={idx} className="border-b hover:bg-opacity-50" style={{ borderColor: theme.border }}>
+                        {tipo === 'geral' && <td className="p-2" style={{ color: theme.textMuted }}>{exp.tipo}</td>}
+                        {tipo !== 'geral' && <td className="p-2" style={{ color: theme.textMuted }}>{exp.data}</td>}
+                        <td className="p-2 font-mono font-bold" style={{ color: theme.text }}>{exp.ordem}</td>
+                        <td className="p-2" style={{ color: theme.textMuted }}>{exp.motivo}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {dados.expurgos.length === 0 && (
+            <div className="p-4 rounded-lg border text-center" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
+              <p className="text-sm" style={{ color: theme.textMuted }}>✅ Nenhum expurgo registrado no período</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
