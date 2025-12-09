@@ -127,7 +127,7 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
         
         const filteredConfig = parsedConfig.filter(col => col.id !== "data_programacao_descarga");
         
-        const newColumnIds = ["mdfe_baixado", "saldo_pago", "comprovante_entrega_recebido", "tolerancia", "diaria_carregamento", "diaria_descarga", "modalidade_carga"];
+        const newColumnIds = ["mdfe_baixado", "saldo_pago", "comprovante_entrega_recebido", "tolerancia", "diaria_carregamento", "diaria_descarga", "modalidade_carga", "entrada_galpao", "agendamento_checklist_data", "prazo_entrega"];
         const hasNewColumns = newColumnIds.some(colId => !filteredConfig.some(col => col.id === colId));
         
         // Verificar se precisa atualizar label da coluna origem_destino
@@ -592,12 +592,15 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
           observacao_carga: data.observacao_carga ? String(data.observacao_carga) : null,
           senha_agendamento: data.senha_agendamento ? String(data.senha_agendamento) : null,
           carregamento_agendamento_data: toISO(data.carregamento_agendamento_data),
+          entrada_galpao: toISO(data.entrada_galpao),
           inicio_carregamento: toISO(data.inicio_carregamento),
           fim_carregamento: toISO(data.fim_carregamento),
           saida_unidade: toISO(data.saida_unidade),
           chegada_destino: toISO(data.chegada_destino),
           descarga_agendamento_data: toISO(data.descarga_agendamento_data),
+          agendamento_checklist_data: toISO(data.agendamento_checklist_data),
           descarga_realizada_data: toISO(data.descarga_realizada_data),
+          prazo_entrega: toISO(data.prazo_entrega),
           numero_cte: data.numero_cte ? String(data.numero_cte) : null,
           mdfe_url: data.mdfe_url ? String(data.mdfe_url) : null,
           mdfe_baixado: data.mdfe_baixado || false,
