@@ -1988,6 +1988,73 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
     </div>
   );
 
+  // Preparar lista única para impressão
+  const getListaParaImpressao = () => {
+    if (tipo === 'geral') {
+      const todasOrdens = [
+        ...dados.ordensCarregamento.noPrazo,
+        ...dados.ordensCarregamento.foraPrazo,
+        ...dados.ordensCarregamento.expurgado,
+        ...dados.ordensEntrega.noPrazo,
+        ...dados.ordensEntrega.foraPrazo,
+        ...dados.ordensEntrega.expurgado
+      ];
+      // Remover duplicatas
+      const ordensUnicas = todasOrdens.filter((ordem, index, self) => 
+        index === self.findIndex((o) => o.id === ordem.id)
+      );
+      return ordensUnicas.sort((a, b) => {
+        const dataA = new Date(a.carregamento_agendamento_data || a.prazo_entrega || 0);
+        const dataB = new Date(b.carregamento_agendamento_data || b.prazo_entrega || 0);
+        return dataA - dataB;
+      });
+    } else if (tipo === 'carga') {
+      const todasOrdens = [
+        ...dados.ordensNoPrazo,
+        ...dados.ordensForaPrazo,
+        ...dados.ordensExpurgadas
+      ];
+      return todasOrdens.sort((a, b) => {
+        const dataA = new Date(a.carregamento_agendamento_data || 0);
+        const dataB = new Date(b.carregamento_agendamento_data || 0);
+        return dataA - dataB;
+      });
+    } else {
+      const todasOrdens = [
+        ...dados.ordensNoPrazo,
+        ...dados.ordensForaPrazo,
+        ...dados.ordensExpurgadas
+      ];
+      return todasOrdens.sort((a, b) => {
+        const dataA = new Date(a.prazo_entrega || 0);
+        const dataB = new Date(b.prazo_entrega || 0);
+        return dataA - dataB;
+      });
+    }
+  };
+
+  const listaImpressao = getListaParaImpressao();
+
+  const getStatusSLA = (ordem, tipoSLA) => {
+    if (tipoSLA === 'carga') {
+      if (ordem.carregamento_expurgado) return { label: 'Expurgado', color: '#64748b' };
+      if (ordem.fim_carregamento && ordem.carregamento_agendamento_data) {
+        const agendado = new Date(ordem.carregamento_agendamento_data);
+        const realizado = new Date(ordem.fim_carregamento);
+        return realizado <= agendado ? { label: 'No Prazo', color: '#22c55e' } : { label: 'Fora do Prazo', color: '#ef4444' };
+      }
+      return { label: '-', color: theme.textMuted };
+    } else {
+      if (ordem.entrega_expurgada) return { label: 'Expurgado', color: '#64748b' };
+      if (ordem.chegada_destino && ordem.prazo_entrega) {
+        const prazo = new Date(ordem.prazo_entrega);
+        const realizado = new Date(ordem.chegada_destino);
+        return realizado <= prazo ? { label: 'No Prazo', color: '#22c55e' } : { label: 'Fora do Prazo', color: '#ef4444' };
+      }
+      return { label: '-', color: theme.textMuted };
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <style>{`
@@ -2006,6 +2073,14 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
           }
           .no-print {
             display: none !important;
+          }
+          .print-only {
+            display: none;
+          }
+          @media print {
+            .print-only {
+              display: block !important;
+            }
           }
           @page {
             size: A4 landscape;
@@ -2033,6 +2108,72 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
           </div>
         </CardHeader>
         <CardContent className="p-4 space-y-4">
+          {/* Versão para impressão - lista simples */}
+          <div className="print-only">
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold" style={{ color: theme.text }}>
+                Total de Ordens: {listaImpressao.length}
+              </h3>
+              <p className="text-xs" style={{ color: theme.textMuted }}>
+                Ordenado por {tipo === 'carga' ? 'Data de Agendamento de Carga' : tipo === 'entrega' ? 'Prazo de Entrega' : 'Data de Agendamento'}
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs border-collapse">
+                <thead>
+                  <tr style={{ borderBottom: `2px solid ${theme.border}`, backgroundColor: '#f9fafb' }}>
+                    <th className="text-left p-2 font-semibold">Ordem</th>
+                    <th className="text-left p-2 font-semibold">Cliente</th>
+                    <th className="text-left p-2 font-semibold">Origem - Destino</th>
+                    <th className="text-left p-2 font-semibold">Agendado</th>
+                    <th className="text-left p-2 font-semibold">Realizado</th>
+                    {tipo === 'geral' && <th className="text-left p-2 font-semibold">SLA Carga</th>}
+                    {tipo === 'geral' && <th className="text-left p-2 font-semibold">SLA Entrega</th>}
+                    {tipo !== 'geral' && <th className="text-left p-2 font-semibold">Status SLA</th>}
+                    {tipo !== 'geral' && <th className="text-left p-2 font-semibold">Diferença</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {listaImpressao.map((ordem, idx) => {
+                    const agendado = tipo === 'carga' ? ordem.carregamento_agendamento_data : ordem.prazo_entrega;
+                    const realizado = tipo === 'carga' ? ordem.fim_carregamento : ordem.chegada_destino;
+                    const statusSLA = tipo !== 'geral' ? getStatusSLA(ordem, tipo) : null;
+                    const statusCarga = tipo === 'geral' ? getStatusSLA(ordem, 'carga') : null;
+                    const statusEntrega = tipo === 'geral' ? getStatusSLA(ordem, 'entrega') : null;
+                    
+                    return (
+                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td className="p-2 font-mono font-bold">{ordem.numero_carga || `#${ordem.id.slice(-6)}`}</td>
+                        <td className="p-2">{ordem.cliente || '-'}</td>
+                        <td className="p-2">
+                          {(ordem.origem_cidade || ordem.origem || '-')} - {(ordem.destino_cidade || ordem.destino || '-')}
+                        </td>
+                        <td className="p-2">{formatarData(agendado)}</td>
+                        <td className="p-2">{formatarData(realizado)}</td>
+                        {tipo === 'geral' && (
+                          <>
+                            <td className="p-2 font-bold" style={{ color: statusCarga.color }}>{statusCarga.label}</td>
+                            <td className="p-2 font-bold" style={{ color: statusEntrega.color }}>{statusEntrega.label}</td>
+                          </>
+                        )}
+                        {tipo !== 'geral' && (
+                          <>
+                            <td className="p-2 font-bold" style={{ color: statusSLA.color }}>{statusSLA.label}</td>
+                            <td className="p-2 font-bold" style={{ color: agendado && realizado ? (new Date(realizado) <= new Date(agendado) ? '#22c55e' : '#ef4444') : theme.textMuted }}>
+                              {agendado && realizado ? calcularAtraso(agendado, realizado) : '-'}
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Versão para tela - com gráfico e abas */}
+          <div className="no-print">
           {/* Gráfico */}
           <div className="p-4 rounded-lg border" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
             <h3 className="text-sm font-semibold mb-4" style={{ color: theme.text }}>
@@ -2208,6 +2349,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
               </Tabs>
             </div>
           )}
+          </div>
         </CardContent>
       </Card>
     </div>
