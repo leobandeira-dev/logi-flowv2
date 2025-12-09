@@ -2088,15 +2088,28 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             .relatorio-sla-print table {
               font-size: 9px !important;
             }
+            .relatorio-sla-print table {
+              font-size: 8px !important;
+            }
             .relatorio-sla-print th,
             .relatorio-sla-print td {
-              padding: 4px !important;
+              padding: 3px !important;
               word-break: break-word;
+              line-height: 1.2;
+            }
+            .relatorio-sla-print h3 {
+              font-size: 11px !important;
+            }
+            .relatorio-sla-print .resumo-card {
+              font-size: 9px !important;
+            }
+            .relatorio-sla-print .resumo-card .text-xl {
+              font-size: 16px !important;
             }
           }
           @page {
             size: A4 landscape;
-            margin: 0.5cm;
+            margin: 0.4cm;
           }
         }
       `}</style>
@@ -2134,15 +2147,19 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
               <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr style={{ borderBottom: `2px solid ${theme.border}`, backgroundColor: '#f9fafb' }}>
-                    <th className="text-left p-2 font-semibold" style={{ width: '8%' }}>Ordem</th>
-                    <th className="text-left p-2 font-semibold" style={{ width: '8%' }}>Pedido</th>
-                    <th className="text-left p-2 font-semibold" style={{ width: '12%' }}>Cliente</th>
-                    <th className="text-left p-2 font-semibold" style={{ width: '16%' }}>Origem - Destino</th>
-                    <th className="text-left p-2 font-semibold" style={{ width: '11%' }}>Agendado</th>
-                    <th className="text-left p-2 font-semibold" style={{ width: '11%' }}>Realizado</th>
-                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '10%' }}>SLA Carga</th>}
-                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '10%' }}>SLA Entrega</th>}
-                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '14%' }}>Motivo Expurgo</th>}
+                    <th className="text-left p-2 font-semibold" style={{ width: '6%' }}>Ordem</th>
+                    <th className="text-left p-2 font-semibold" style={{ width: '6%' }}>Pedido</th>
+                    <th className="text-left p-2 font-semibold" style={{ width: '10%' }}>Cliente</th>
+                    <th className="text-left p-2 font-semibold" style={{ width: '12%' }}>Origem - Destino</th>
+                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '9%' }}>Agenda Carga</th>}
+                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '9%' }}>Chegada Carga</th>}
+                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '7%' }}>SLA Carga</th>}
+                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '9%' }}>Agenda Descarga</th>}
+                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '9%' }}>Chegada Descarga</th>}
+                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '7%' }}>SLA Descarga</th>}
+                    {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '16%' }}>Motivo Expurgo</th>}
+                    {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '11%' }}>Agendado</th>}
+                    {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '11%' }}>Realizado</th>}
                     {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '10%' }}>Status SLA</th>}
                     {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '8%' }}>Diferença</th>}
                     {tipo !== 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '16%' }}>Motivo Expurgo</th>}
@@ -2159,7 +2176,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                     const motivoExpurgoEntrega = ordem.entrega_expurgada ? (ordem.entrega_expurgo_motivo || 'Não informado') : '-';
                     const motivoExpurgo = tipo === 'carga' ? motivoExpurgoCarga : motivoExpurgoEntrega;
                     const motivoExpurgoGeral = ordem.carregamento_expurgado || ordem.entrega_expurgada 
-                      ? (ordem.carregamento_expurgado ? motivoExpurgoCarga : '') + (ordem.entrega_expurgada && ordem.carregamento_expurgado ? ' / ' : '') + (ordem.entrega_expurgada ? motivoExpurgoEntrega : '')
+                      ? (ordem.carregamento_expurgado ? `Carga: ${motivoExpurgoCarga}` : '') + (ordem.entrega_expurgada && ordem.carregamento_expurgado ? ' | ' : '') + (ordem.entrega_expurgada ? `Entrega: ${motivoExpurgoEntrega}` : '')
                       : '-';
                     
                     return (
@@ -2170,17 +2187,21 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                         <td className="p-2">
                           {(ordem.origem_cidade || ordem.origem || '-')} - {(ordem.destino_cidade || ordem.destino || '-')}
                         </td>
-                        <td className="p-2">{formatarData(agendado)}</td>
-                        <td className="p-2">{formatarData(realizado)}</td>
                         {tipo === 'geral' && (
                           <>
+                            <td className="p-2">{formatarData(ordem.carregamento_agendamento_data)}</td>
+                            <td className="p-2">{formatarData(ordem.fim_carregamento)}</td>
                             <td className="p-2 font-bold" style={{ color: statusCarga.color }}>{statusCarga.label}</td>
+                            <td className="p-2">{formatarData(ordem.prazo_entrega)}</td>
+                            <td className="p-2">{formatarData(ordem.chegada_destino)}</td>
                             <td className="p-2 font-bold" style={{ color: statusEntrega.color }}>{statusEntrega.label}</td>
                             <td className="p-2 text-xs">{motivoExpurgoGeral}</td>
                           </>
                         )}
                         {tipo !== 'geral' && (
                           <>
+                            <td className="p-2">{formatarData(agendado)}</td>
+                            <td className="p-2">{formatarData(realizado)}</td>
                             <td className="p-2 font-bold" style={{ color: statusSLA.color }}>{statusSLA.label}</td>
                             <td className="p-2 font-bold" style={{ color: agendado && realizado ? (new Date(realizado) <= new Date(agendado) ? '#22c55e' : '#ef4444') : theme.textMuted }}>
                               {agendado && realizado ? calcularAtraso(agendado, realizado) : '-'}
@@ -2196,65 +2217,73 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             </div>
 
             {/* Totalizadores para impressão */}
-            <div className="mt-6 pt-4 border-t-2" style={{ borderColor: theme.border }}>
+            <div className="mt-6 pt-4 border-t-2 resumo-section" style={{ borderColor: theme.border }}>
               <h3 className="font-bold text-sm mb-3">Resumo</h3>
-              <div className="grid grid-cols-5 gap-3">
-                <div className="p-2 rounded border" style={{ backgroundColor: '#eff6ff', borderColor: '#93c5fd' }}>
+              <div className="grid grid-cols-5 gap-3 resumo-cards">
+                <div className="p-2 rounded border resumo-card" style={{ backgroundColor: '#eff6ff', borderColor: '#93c5fd' }}>
                   <div className="text-xs text-blue-600 font-medium">Total de Ordens</div>
                   <div className="text-xl font-bold text-blue-900">{listaImpressao.length}</div>
                 </div>
-                <div className="p-2 rounded border" style={{ backgroundColor: '#f0fdf4', borderColor: '#86efac' }}>
+                <div className="p-2 rounded border resumo-card" style={{ backgroundColor: '#f0fdf4', borderColor: '#86efac' }}>
                   <div className="text-xs text-green-600 font-medium">No Prazo</div>
                   <div className="text-xl font-bold text-green-900">
-                    {listaImpressao.filter(ordem => {
+                    {(() => {
                       if (tipo === 'geral') {
-                        return getStatusSLA(ordem, 'carga').label === 'No Prazo' && getStatusSLA(ordem, 'entrega').label === 'No Prazo';
+                        return listaImpressao.filter(ordem => 
+                          getStatusSLA(ordem, 'carga').label === 'No Prazo' && getStatusSLA(ordem, 'entrega').label === 'No Prazo'
+                        ).length;
                       }
-                      return getStatusSLA(ordem, tipo).label === 'No Prazo';
-                    }).length}
+                      return listaImpressao.filter(ordem => getStatusSLA(ordem, tipo).label === 'No Prazo').length;
+                    })()}
                   </div>
                 </div>
-                <div className="p-2 rounded border" style={{ backgroundColor: '#fee2e2', borderColor: '#fca5a5' }}>
+                <div className="p-2 rounded border resumo-card" style={{ backgroundColor: '#fee2e2', borderColor: '#fca5a5' }}>
                   <div className="text-xs text-red-600 font-medium">Fora do Prazo</div>
                   <div className="text-xl font-bold text-red-900">
-                    {listaImpressao.filter(ordem => {
+                    {(() => {
                       if (tipo === 'geral') {
-                        return getStatusSLA(ordem, 'carga').label === 'Fora do Prazo' || getStatusSLA(ordem, 'entrega').label === 'Fora do Prazo';
+                        return listaImpressao.filter(ordem => 
+                          getStatusSLA(ordem, 'carga').label === 'Fora do Prazo' || getStatusSLA(ordem, 'entrega').label === 'Fora do Prazo'
+                        ).length;
                       }
-                      return getStatusSLA(ordem, tipo).label === 'Fora do Prazo';
-                    }).length}
+                      return listaImpressao.filter(ordem => getStatusSLA(ordem, tipo).label === 'Fora do Prazo').length;
+                    })()}
                   </div>
                 </div>
-                <div className="p-2 rounded border" style={{ backgroundColor: '#f3f4f6', borderColor: '#d1d5db' }}>
+                <div className="p-2 rounded border resumo-card" style={{ backgroundColor: '#f3f4f6', borderColor: '#d1d5db' }}>
                   <div className="text-xs text-gray-600 font-medium">Expurgos</div>
                   <div className="text-xl font-bold text-gray-900">
-                    {listaImpressao.filter(ordem => {
+                    {(() => {
                       if (tipo === 'geral') {
-                        return ordem.carregamento_expurgado || ordem.entrega_expurgada;
+                        return listaImpressao.filter(ordem => ordem.carregamento_expurgado || ordem.entrega_expurgada).length;
                       }
-                      return tipo === 'carga' ? ordem.carregamento_expurgado : ordem.entrega_expurgada;
-                    }).length}
+                      return listaImpressao.filter(ordem => 
+                        tipo === 'carga' ? ordem.carregamento_expurgado : ordem.entrega_expurgada
+                      ).length;
+                    })()}
                   </div>
                 </div>
-                <div className="p-2 rounded border" style={{ backgroundColor: '#ecfdf5', borderColor: '#6ee7b7' }}>
+                <div className="p-2 rounded border resumo-card" style={{ backgroundColor: '#ecfdf5', borderColor: '#6ee7b7' }}>
                   <div className="text-xs text-green-700 font-medium">% no Prazo</div>
                   <div className="text-xl font-bold text-green-900">
                     {(() => {
-                      const noPrazo = listaImpressao.filter(ordem => {
-                        if (tipo === 'geral') {
-                          return getStatusSLA(ordem, 'carga').label === 'No Prazo' && getStatusSLA(ordem, 'entrega').label === 'No Prazo';
-                        }
-                        return getStatusSLA(ordem, tipo).label === 'No Prazo';
-                      }).length;
-                      const totalConsiderado = listaImpressao.filter(ordem => {
-                        if (tipo === 'geral') {
-                          return (ordem.fim_carregamento && ordem.carregamento_agendamento_data && !ordem.carregamento_expurgado) ||
-                                 (ordem.chegada_destino && ordem.prazo_entrega && !ordem.entrega_expurgada);
-                        }
-                        return tipo === 'carga' 
-                          ? (ordem.fim_carregamento && ordem.carregamento_agendamento_data && !ordem.carregamento_expurgado)
-                          : (ordem.chegada_destino && ordem.prazo_entrega && !ordem.entrega_expurgada);
-                      }).length;
+                      const noPrazo = tipo === 'geral'
+                        ? listaImpressao.filter(ordem => 
+                            getStatusSLA(ordem, 'carga').label === 'No Prazo' && getStatusSLA(ordem, 'entrega').label === 'No Prazo'
+                          ).length
+                        : listaImpressao.filter(ordem => getStatusSLA(ordem, tipo).label === 'No Prazo').length;
+                      
+                      const totalConsiderado = tipo === 'geral'
+                        ? listaImpressao.filter(ordem => 
+                            (ordem.fim_carregamento && ordem.carregamento_agendamento_data && !ordem.carregamento_expurgado) ||
+                            (ordem.chegada_destino && ordem.prazo_entrega && !ordem.entrega_expurgada)
+                          ).length
+                        : listaImpressao.filter(ordem => 
+                            tipo === 'carga' 
+                              ? (ordem.fim_carregamento && ordem.carregamento_agendamento_data && !ordem.carregamento_expurgado)
+                              : (ordem.chegada_destino && ordem.prazo_entrega && !ordem.entrega_expurgada)
+                          ).length;
+                      
                       return totalConsiderado > 0 ? Math.round((noPrazo / totalConsiderado) * 100) : 0;
                     })()}%
                   </div>
