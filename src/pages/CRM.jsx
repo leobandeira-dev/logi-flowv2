@@ -506,56 +506,107 @@ export default function CRM() {
 }
 
 function KanbanView({ leadsPorStatus, todasEtapas, onMudarStatus, onGerarProposta, onVerDetalhes, theme, isDark, usuarios }) {
+  const handleDragEnd = (result) => {
+    const { source, destination, draggableId } = result;
+
+    // Dropped fora de uma área válida
+    if (!destination) return;
+
+    // Dropped na mesma posição
+    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+
+    // Mudou de coluna (etapa)
+    if (source.droppableId !== destination.droppableId) {
+      const leadId = draggableId;
+      const novoStatus = destination.droppableId;
+      onMudarStatus(leadId, novoStatus);
+    }
+  };
+
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 'calc(100vh - 450px)' }}>
-      {todasEtapas.map((etapa) => {
-        const leadsNaColuna = leadsPorStatus[etapa.id] || [];
-        const valorTotal = leadsNaColuna.reduce((sum, l) => sum + (l.valor_total_proposta || 0), 0);
-        
-        return (
-          <div key={etapa.id} className="flex-shrink-0" style={{ width: '320px' }}>
-            <div className="sticky top-0 z-10 pb-3" style={{ backgroundColor: theme.bg }}>
-              <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderLeftWidth: '4px', borderLeftColor: etapa.cor }}>
-                <CardContent className="p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Badge style={{ backgroundColor: etapa.cor }} className="text-white text-xs">
-                        {leadsNaColuna.length}
-                      </Badge>
-                      <h3 className="font-bold text-sm" style={{ color: theme.text }}>
-                        {etapa.nome}
-                      </h3>
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 'calc(100vh - 450px)' }}>
+        {todasEtapas.map((etapa) => {
+          const leadsNaColuna = leadsPorStatus[etapa.id] || [];
+          const valorTotal = leadsNaColuna.reduce((sum, l) => sum + (l.valor_total_proposta || 0), 0);
+
+          return (
+            <div key={etapa.id} className="flex-shrink-0" style={{ width: '320px' }}>
+              <div className="sticky top-0 z-10 pb-3" style={{ backgroundColor: theme.bg }}>
+                <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderLeftWidth: '4px', borderLeftColor: etapa.cor }}>
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Badge style={{ backgroundColor: etapa.cor }} className="text-white text-xs">
+                          {leadsNaColuna.length}
+                        </Badge>
+                        <h3 className="font-bold text-sm" style={{ color: theme.text }}>
+                          {etapa.nome}
+                        </h3>
+                      </div>
                     </div>
+                    {valorTotal > 0 && (
+                      <p className="text-xs font-semibold text-green-600">
+                        R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Droppable droppableId={etapa.id}>
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className="space-y-3 overflow-y-auto"
+                    style={{
+                      maxHeight: 'calc(100vh - 500px)',
+                      backgroundColor: snapshot.isDraggingOver ? (isDark ? '#1e293b' : '#f0f9ff') : 'transparent',
+                      borderRadius: '8px',
+                      padding: snapshot.isDraggingOver ? '8px' : '0',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {leadsNaColuna.map((lead, index) => (
+                      <Draggable key={lead.id} draggableId={lead.id} index={index}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            style={{
+                              ...provided.draggableProps.style,
+                              opacity: snapshot.isDragging ? 0.8 : 1,
+                              transform: snapshot.isDragging 
+                                ? `${provided.draggableProps.style?.transform} rotate(3deg)` 
+                                : provided.draggableProps.style?.transform
+                            }}
+                          >
+                            <LeadCard
+                              lead={lead}
+                              todasEtapas={todasEtapas}
+                              onMudarStatus={onMudarStatus}
+                              onGerarProposta={onGerarProposta}
+                              onVerDetalhes={onVerDetalhes}
+                              theme={theme}
+                              isDark={isDark}
+                              usuarios={usuarios}
+                              isKanban={true}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
                   </div>
-                  {valorTotal > 0 && (
-                    <p className="text-xs font-semibold text-green-600">
-                      R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+                )}
+              </Droppable>
             </div>
-            
-            <div className="space-y-3 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 500px)' }}>
-              {leadsNaColuna.map((lead) => (
-                <LeadCard
-                  key={lead.id}
-                  lead={lead}
-                  todasEtapas={todasEtapas}
-                  onMudarStatus={onMudarStatus}
-                  onGerarProposta={onGerarProposta}
-                  onVerDetalhes={onVerDetalhes}
-                  theme={theme}
-                  isDark={isDark}
-                  usuarios={usuarios}
-                  isKanban={true}
-                />
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </DragDropContext>
   );
 }
 
