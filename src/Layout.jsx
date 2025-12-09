@@ -43,6 +43,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 
@@ -229,6 +232,7 @@ const adminItems = [
   { title: "Configurações", url: createPageUrl("Configuracoes"), icon: Settings },
   { title: "Usuários", url: createPageUrl("Usuarios"), icon: UserCog },
   { title: "Precificação", url: createPageUrl("Precificacao"), icon: Activity },
+  { title: "Procedimentos", url: createPageUrl("Procedimentos"), icon: FileText },
 ];
 
 export default function Layout({ children, currentPageName }) {

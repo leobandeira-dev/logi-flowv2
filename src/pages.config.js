@@ -34,6 +34,7 @@ import ChamadosAdmin from './pages/ChamadosAdmin';
 import Parceiros from './pages/Parceiros';
 import Precificacao from './pages/Precificacao';
 import CRM from './pages/CRM';
+import Procedimentos from './pages/Procedimentos';
 import __Layout from './Layout.jsx';
 
 
@@ -74,6 +75,7 @@ export const PAGES = {
     "Parceiros": Parceiros,
     "Precificacao": Precificacao,
     "CRM": CRM,
+    "Procedimentos": Procedimentos,
 }
 
 export const pagesConfig = {
