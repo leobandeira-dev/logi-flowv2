@@ -720,9 +720,6 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
     badgeBgDark: isDark ? '#475569' : '#f9fafb',
   };
 
-  const getMotorista = (motoristaId) => motoristas.find(m => m.id === motoristaId);
-  const getVeiculo = (veiculoId) => veiculos.find(v => v.id === veiculoId);
-
   const getStatusBadge = (status) => {
     const colors = {
       finalizado: "bg-gray-600 text-white",
@@ -1433,17 +1430,8 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
     }
   };
 
-  const scrollLeft = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -400, behavior: 'smooth' });
-    }
-  };
-
-  const scrollRight = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 400, behavior: 'smooth' });
-    }
-  };
+  const getMotorista = (motoristaId) => motoristas.find(m => m.id === motoristaId);
+  const getVeiculo = (veiculoId) => veiculos.find(v => v.id === veiculoId);
 
   const handleSort = (colunaId) => {
     if (sortColumn === colunaId) {
@@ -1519,6 +1507,18 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
         : strB.localeCompare(strA);
     });
   }, [ordens, sortColumn, sortDirection, motoristas, veiculos]);
+
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -400, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 400, behavior: 'smooth' });
+    }
+  };
 
   const colunasVisiveis = colunas.filter(col => col.enabled);
 
