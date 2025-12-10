@@ -254,11 +254,11 @@ export default function Tracking() {
 
     // Calcular SLA de carregamento - excluindo expurgados
     const carregamentosRealizados = ordensBase.filter(o => 
-      o.fim_carregamento && o.carregamento_agendamento_data && !o.carregamento_expurgado
+      o.inicio_carregamento && o.carregamento_agendamento_data && !o.carregamento_expurgado
     );
     const carregamentosNoPrazo = carregamentosRealizados.filter(o => {
       const agendado = new Date(o.carregamento_agendamento_data);
-      const realizado = new Date(o.fim_carregamento);
+      const realizado = new Date(o.inicio_carregamento);
       return realizado <= agendado;
     });
 
@@ -679,12 +679,12 @@ export default function Tracking() {
       const ordensEntrega = { noPrazo: [], foraPrazo: [], expurgado: [] };
 
       filteredOrdens.forEach(ordem => {
-        if (ordem.fim_carregamento && ordem.carregamento_agendamento_data) {
+        if (ordem.inicio_carregamento && ordem.carregamento_agendamento_data) {
           if (ordem.carregamento_expurgado) {
             ordensCarregamento.expurgado.push(ordem);
           } else {
             const agendado = new Date(ordem.carregamento_agendamento_data);
-            const realizado = new Date(ordem.fim_carregamento);
+            const realizado = new Date(ordem.inicio_carregamento);
             if (realizado <= agendado) {
               ordensCarregamento.noPrazo.push(ordem);
             } else {
@@ -731,7 +731,7 @@ export default function Tracking() {
       const dadosPorData = {};
 
       filteredOrdens.forEach(ordem => {
-        if (ordem.fim_carregamento && ordem.carregamento_agendamento_data) {
+        if (ordem.inicio_carregamento && ordem.carregamento_agendamento_data) {
           const data = new Date(ordem.carregamento_agendamento_data).toLocaleDateString('pt-BR');
           
           if (!dadosPorData[data]) {
@@ -743,7 +743,7 @@ export default function Tracking() {
             ordensExpurgadas.push(ordem);
           } else {
             const agendado = new Date(ordem.carregamento_agendamento_data);
-            const realizado = new Date(ordem.fim_carregamento);
+            const realizado = new Date(ordem.inicio_carregamento);
             if (realizado <= agendado) {
               dadosPorData[data].noPrazo++;
               ordensNoPrazo.push(ordem);
@@ -2049,9 +2049,9 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
   const getStatusSLA = (ordem, tipoSLA) => {
     if (tipoSLA === 'carga') {
       if (ordem.carregamento_expurgado) return { label: 'Expurgado', color: '#64748b' };
-      if (ordem.fim_carregamento && ordem.carregamento_agendamento_data) {
+      if (ordem.inicio_carregamento && ordem.carregamento_agendamento_data) {
         const agendado = new Date(ordem.carregamento_agendamento_data);
-        const realizado = new Date(ordem.fim_carregamento);
+        const realizado = new Date(ordem.inicio_carregamento);
         return realizado <= agendado ? { label: 'No Prazo', color: '#22c55e' } : { label: 'Fora do Prazo', color: '#ef4444' };
       }
       return { label: '-', color: theme.textMuted };
@@ -2197,10 +2197,10 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                   {(() => {
                     if (tipo === 'geral') {
                       // Calcular SLA de Carga
-                      const totalCarga = listaImpressao.filter(o => o.fim_carregamento && o.carregamento_agendamento_data).length;
+                      const totalCarga = listaImpressao.filter(o => o.inicio_carregamento && o.carregamento_agendamento_data).length;
                       const noPrazoCarga = listaImpressao.filter(o => getStatusSLA(o, 'carga').label === 'No Prazo').length;
                       const percCarga = totalCarga > 0 ? (noPrazoCarga / totalCarga) * 100 : 0;
-                      
+
                       // Calcular SLA de Descarga
                       const totalDescarga = listaImpressao.filter(o => o.chegada_destino && o.prazo_entrega).length;
                       const noPrazoDescarga = listaImpressao.filter(o => getStatusSLA(o, 'entrega').label === 'No Prazo').length;
@@ -2213,7 +2213,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                       const noPrazo = listaImpressao.filter(ordem => getStatusSLA(ordem, tipo).label === 'No Prazo').length;
                       const totalConsiderado = listaImpressao.filter(ordem => 
                         tipo === 'carga' 
-                          ? (ordem.fim_carregamento && ordem.carregamento_agendamento_data)
+                          ? (ordem.inicio_carregamento && ordem.carregamento_agendamento_data)
                           : (ordem.chegada_destino && ordem.prazo_entrega)
                       ).length;
                       return totalConsiderado > 0 ? ((noPrazo / totalConsiderado) * 100).toFixed(2) : '0.00';
@@ -2226,7 +2226,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                       <div className="text-[9px] text-blue-700 font-medium">SLA Carga</div>
                       <div className="text-sm font-bold text-blue-900">
                         {(() => {
-                          const totalCarga = listaImpressao.filter(o => o.fim_carregamento && o.carregamento_agendamento_data).length;
+                          const totalCarga = listaImpressao.filter(o => o.inicio_carregamento && o.carregamento_agendamento_data).length;
                           const noPrazoCarga = listaImpressao.filter(o => getStatusSLA(o, 'carga').label === 'No Prazo').length;
                           return totalCarga > 0 ? ((noPrazoCarga / totalCarga) * 100).toFixed(2) : '0.00';
                         })()}%
@@ -2274,7 +2274,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
               <tbody>
                 {listaImpressao.map((ordem, idx) => {
                   const agendado = tipo === 'carga' ? ordem.carregamento_agendamento_data : ordem.prazo_entrega;
-                  const realizado = tipo === 'carga' ? ordem.fim_carregamento : ordem.chegada_destino;
+                  const realizado = tipo === 'carga' ? ordem.inicio_carregamento : ordem.chegada_destino;
                   const statusSLA = tipo !== 'geral' ? getStatusSLA(ordem, tipo) : null;
                   const statusCarga = tipo === 'geral' ? getStatusSLA(ordem, 'carga') : null;
                   const statusEntrega = tipo === 'geral' ? getStatusSLA(ordem, 'entrega') : null;
@@ -2295,19 +2295,19 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                       </td>
                       {tipo === 'geral' && (
                         <>
-                          <td className="p-2">{formatarData(ordem.carregamento_agendamento_data)}</td>
-                          <td className="p-2">{formatarData(ordem.fim_carregamento)}</td>
-                          <td className="p-2 font-bold" style={{ color: statusCarga.color }}>{statusCarga.label}</td>
-                          <td className="p-2">{formatarData(ordem.prazo_entrega)}</td>
-                          <td className="p-2">{formatarData(ordem.chegada_destino)}</td>
-                          <td className="p-2 font-bold" style={{ color: statusEntrega.color }}>{statusEntrega.label}</td>
-                          <td className="p-2 text-xs">{motivoExpurgoGeral}</td>
-                        </>
-                      )}
-                      {tipo !== 'geral' && (
-                        <>
-                          <td className="p-2">{formatarData(agendado)}</td>
-                          <td className="p-2">{formatarData(realizado)}</td>
+                              <td className="p-2">{formatarData(ordem.carregamento_agendamento_data)}</td>
+                              <td className="p-2">{formatarData(ordem.inicio_carregamento)}</td>
+                              <td className="p-2 font-bold" style={{ color: statusCarga.color }}>{statusCarga.label}</td>
+                              <td className="p-2">{formatarData(ordem.prazo_entrega)}</td>
+                              <td className="p-2">{formatarData(ordem.chegada_destino)}</td>
+                              <td className="p-2 font-bold" style={{ color: statusEntrega.color }}>{statusEntrega.label}</td>
+                              <td className="p-2 text-xs">{motivoExpurgoGeral}</td>
+                            </>
+                          )}
+                          {tipo !== 'geral' && (
+                            <>
+                              <td className="p-2">{formatarData(agendado)}</td>
+                              <td className="p-2">{formatarData(realizado)}</td>
                           <td className="p-2 font-bold" style={{ color: statusSLA.color }}>{statusSLA.label}</td>
                           <td className="p-2 font-bold" style={{ color: agendado && realizado ? (new Date(realizado) <= new Date(agendado) ? '#22c55e' : '#ef4444') : theme.textMuted }}>
                             {agendado && realizado ? calcularAtraso(agendado, realizado) : '-'}
