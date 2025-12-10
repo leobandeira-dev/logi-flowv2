@@ -626,16 +626,25 @@ export default function Configuracoes() {
           <div className="bg-white p-8 rounded-2xl shadow-xl">
             <h3 className="font-bold text-2xl text-center mb-6 text-gray-900">Múltiplas Visualizações</h3>
             <div className="grid grid-cols-3 gap-6">
-              <div className="p-5 bg-cyan-50 rounded-xl border-2 border-cyan-500">
-                <p className="font-bold text-lg text-cyan-900 mb-2">📊 Tabela Completa</p>
+              <div className="p-5 bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl border-2 border-cyan-500">
+                <div className="flex items-center gap-2 mb-2">
+                  <TableIcon className="w-5 h-5 text-cyan-700" />
+                  <p className="font-bold text-lg text-cyan-900">Tabela Completa</p>
+                </div>
                 <p className="text-sm text-gray-700">Drag-scroll horizontal, ordenação, filtros avançados</p>
               </div>
-              <div className="p-5 bg-blue-50 rounded-xl border-2 border-blue-500">
-                <p className="font-bold text-lg text-blue-900 mb-2">📝 Planilha Editável</p>
+              <div className="p-5 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-xl border-2 border-cyan-600">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileSpreadsheet className="w-5 h-5 text-cyan-700" />
+                  <p className="font-bold text-lg text-blue-900">Planilha Editável</p>
+                </div>
                 <p className="text-sm text-gray-700">Edição inline estilo Excel, auto-save</p>
               </div>
-              <div className="p-5 bg-blue-50 rounded-xl border-2 border-blue-700">
-                <p className="font-bold text-lg text-blue-900 mb-2">📺 Modo TV</p>
+              <div className="p-5 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-500">
+                <div className="flex items-center gap-2 mb-2">
+                  <Eye className="w-5 h-5 text-blue-700" />
+                  <p className="font-bold text-lg text-blue-900">Modo TV</p>
+                </div>
                 <p className="text-sm text-gray-700">Fullscreen auto-refresh monitor parede</p>
               </div>
             </div>
@@ -675,7 +684,7 @@ export default function Configuracoes() {
 
           <div className="grid grid-cols-2 gap-8">
             <div className="bg-white rounded-2xl p-8 shadow-xl">
-              <h3 className="font-bold text-2xl text-cyan-900 mb-6">📤 Fornecedor</h3>
+              <h3 className="font-bold text-2xl text-cyan-900 mb-6">Fornecedor</h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-l-4 border-cyan-600">
                   <FileText className="w-6 h-6 text-cyan-700" />
@@ -697,7 +706,7 @@ export default function Configuracoes() {
             </div>
 
             <div className="bg-white rounded-2xl p-8 shadow-xl">
-              <h3 className="font-bold text-2xl text-blue-900 mb-6">✅ Cliente</h3>
+              <h3 className="font-bold text-2xl text-blue-900 mb-6">Cliente</h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-l-4 border-cyan-600">
                   <CheckCircle2 className="w-6 h-6 text-cyan-700" />
@@ -820,23 +829,32 @@ export default function Configuracoes() {
                 Tipos de Ocorrências
               </h3>
               <div className="space-y-3">
-                <div className="p-4 bg-red-50 rounded-xl border-l-4 border-red-600">
-                  <p className="font-bold text-red-900">🚨 Tracking (Viagem)</p>
-                  <p className="text-sm text-gray-700 mt-1">Problemas na estrada, atrasos, acidentes</p>
+                <div className="p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-l-4 border-cyan-600">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Navigation className="w-5 h-5 text-cyan-700" />
+                    <p className="font-bold text-cyan-900">Tracking (Viagem)</p>
+                  </div>
+                  <p className="text-sm text-gray-700">Problemas na estrada, atrasos, acidentes</p>
                 </div>
-                <div className="p-4 bg-orange-50 rounded-xl border-l-4 border-orange-600">
-                  <p className="font-bold text-orange-900">⚠️ Fluxo (Processos)</p>
-                  <p className="text-sm text-gray-700 mt-1">Bloqueios em etapas internas, documentação</p>
+                <div className="p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-l-4 border-cyan-600">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Workflow className="w-5 h-5 text-cyan-700" />
+                    <p className="font-bold text-cyan-900">Fluxo (Processos)</p>
+                  </div>
+                  <p className="text-sm text-gray-700">Bloqueios em etapas internas, documentação</p>
                 </div>
-                <div className="p-4 bg-blue-50 rounded-xl border-l-4 border-blue-600">
-                  <p className="font-bold text-blue-900">📋 Configuráveis</p>
-                  <p className="text-sm text-gray-700 mt-1">Tipos personalizados por empresa</p>
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-l-4 border-blue-600">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Settings className="w-5 h-5 text-blue-700" />
+                    <p className="font-bold text-blue-900">Configuráveis</p>
+                  </div>
+                  <p className="text-sm text-gray-700">Tipos personalizados por empresa</p>
                 </div>
               </div>
             </div>
 
             <div className="bg-gradient-to-br from-blue-700 to-blue-800 text-white p-8 rounded-2xl shadow-2xl">
-              <h3 className="font-bold text-2xl mb-6">🎯 Níveis de Gravidade</h3>
+              <h3 className="font-bold text-2xl mb-6">Níveis de Gravidade</h3>
               <div className="space-y-4">
                 <div className="p-4 bg-white/20 rounded-xl border-2 border-white/40">
                   <div className="flex items-center justify-between mb-2">
@@ -1011,8 +1029,8 @@ export default function Configuracoes() {
             </div>
 
             <div className="space-y-6">
-              <div className="bg-gradient-to-br from-cyan-400 to-cyan-600 text-white p-6 rounded-2xl shadow-xl">
-                <h4 className="font-bold text-xl mb-4">✅ Pontos Positivos</h4>
+              <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white p-6 rounded-2xl shadow-xl">
+                <h4 className="font-bold text-xl mb-4">Pontos Positivos</h4>
                 <ul className="space-y-2 text-sm">
                   <li>• Ordem criada: <strong>+10 pts</strong></li>
                   <li>• Etapa concluída: <strong>+5 pts</strong></li>
@@ -1023,7 +1041,7 @@ export default function Configuracoes() {
               </div>
 
               <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-6 rounded-2xl shadow-xl">
-                <h4 className="font-bold text-xl mb-4">⚠️ Penalidades</h4>
+                <h4 className="font-bold text-xl mb-4">Penalidades</h4>
                 <ul className="space-y-2 text-sm">
                   <li>• Ocorrência baixa: <strong>-5 pts</strong></li>
                   <li>• Ocorrência média: <strong>-10 pts</strong></li>
@@ -1127,19 +1145,31 @@ export default function Configuracoes() {
               <h3 className="font-bold text-2xl mb-6 text-gray-900">📱 App do Motorista</h3>
               <div className="space-y-4">
                 <div className="p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-2 border-cyan-400">
-                  <p className="font-semibold text-cyan-900 mb-2">🗺️ Viagens Ativas</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="w-5 h-5 text-cyan-700" />
+                    <p className="font-semibold text-cyan-900">Viagens Ativas</p>
+                  </div>
                   <p className="text-sm text-gray-700">Visualização de todas as viagens atribuídas</p>
                 </div>
                 <div className="p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-2 border-cyan-500">
-                  <p className="font-semibold text-cyan-900 mb-2">📍 Atualização de Status</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Navigation className="w-5 h-5 text-cyan-700" />
+                    <p className="font-semibold text-cyan-900">Atualização de Status</p>
+                  </div>
                   <p className="text-sm text-gray-700">Mudança de status com um toque</p>
                 </div>
                 <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-2 border-blue-400">
-                  <p className="font-semibold text-blue-900 mb-2">💬 Chat Integrado</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageCircle className="w-5 h-5 text-blue-700" />
+                    <p className="font-semibold text-blue-900">Chat Integrado</p>
+                  </div>
                   <p className="text-sm text-gray-700">Comunicação direta com a central</p>
                 </div>
                 <div className="p-4 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl border-2 border-blue-500">
-                  <p className="font-semibold text-blue-900 mb-2">📸 Upload de Documentos</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Camera className="w-5 h-5 text-blue-700" />
+                    <p className="font-semibold text-blue-900">Upload de Documentos</p>
+                  </div>
                   <p className="text-sm text-gray-700">Fotos de canhoto, carga e CT-e</p>
                 </div>
               </div>
@@ -1149,19 +1179,31 @@ export default function Configuracoes() {
               <h3 className="font-bold text-2xl mb-6 text-gray-900">⚙️ Configurações</h3>
               <div className="space-y-4">
                 <div className="p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-2 border-cyan-400">
-                  <p className="font-semibold text-cyan-900 mb-2">🏢 Dados da Empresa</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building2 className="w-5 h-5 text-cyan-700" />
+                    <p className="font-semibold text-cyan-900">Dados da Empresa</p>
+                  </div>
                   <p className="text-sm text-gray-700">CNPJ, razão social, endereço, logo</p>
                 </div>
                 <div className="p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-2 border-cyan-500">
-                  <p className="font-semibold text-cyan-900 mb-2">👥 Gestão de Usuários</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-5 h-5 text-cyan-700" />
+                    <p className="font-semibold text-cyan-900">Gestão de Usuários</p>
+                  </div>
                   <p className="text-sm text-gray-700">Perfis, permissões, categorias</p>
                 </div>
                 <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-2 border-blue-400">
-                  <p className="font-semibold text-blue-900 mb-2">🎯 Etapas do Fluxo</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Workflow className="w-5 h-5 text-blue-700" />
+                    <p className="font-semibold text-blue-900">Etapas do Fluxo</p>
+                  </div>
                   <p className="text-sm text-gray-700">Criação e configuração de processos</p>
                 </div>
                 <div className="p-4 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl border-2 border-blue-500">
-                  <p className="font-semibold text-blue-900 mb-2">🏷️ Tipos de Ocorrências</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertCircle className="w-5 h-5 text-blue-700" />
+                    <p className="font-semibold text-blue-900">Tipos de Ocorrências</p>
+                  </div>
                   <p className="text-sm text-gray-700">Cadastro personalizado de problemas</p>
                 </div>
               </div>
@@ -1290,7 +1332,7 @@ export default function Configuracoes() {
 
           <div className="grid grid-cols-2 gap-8">
             <div className="bg-white rounded-2xl p-8 shadow-xl">
-              <h3 className="font-bold text-2xl text-blue-900 mb-6">📈 Métricas de Adoção</h3>
+              <h3 className="font-bold text-2xl text-blue-900 mb-6">Métricas de Adoção</h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-l-4 border-cyan-600">
                   <span className="font-semibold text-gray-900">Taxa Adoção</span>
@@ -1308,7 +1350,7 @@ export default function Configuracoes() {
             </div>
 
             <div className="bg-white rounded-2xl p-8 shadow-xl">
-              <h3 className="font-bold text-2xl text-green-900 mb-6">⭐ Satisfação</h3>
+              <h3 className="font-bold text-2xl text-blue-900 mb-6">Satisfação</h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-l-4 border-cyan-600">
                   <span className="font-semibold text-gray-900">NPS</span>
