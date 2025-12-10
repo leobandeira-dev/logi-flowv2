@@ -819,9 +819,9 @@ export default function Configuracoes() {
       )
     },
     {
-      title: "Gestão de Ocorrências",
+      title: "Gestão de Ocorrências - Sistema Profissional",
       subtitle: "Identificação e Resolução de Problemas",
-      icon: Shield, 
+      icon: Shield,
       content: (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-6">
