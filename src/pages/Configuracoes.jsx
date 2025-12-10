@@ -1857,8 +1857,7 @@ export default function Configuracoes() {
               <Button
                 onClick={async () => {
                   try {
-                    const { exportarApresentacaoPdf } = await import('@/functions/exportarApresentacaoPdf');
-                    const response = await exportarApresentacaoPdf({});
+                    const response = await base44.functions.invoke('exportarApresentacaoPdf', {});
                     
                     const blob = new Blob([response.data], { type: 'application/pdf' });
                     const url = window.URL.createObjectURL(blob);
