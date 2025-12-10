@@ -1234,17 +1234,17 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
         // Se tem agendamento de carregamento
         if (ordem.carregamento_agendamento_data) {
           const agendadoCarga = new Date(ordem.carregamento_agendamento_data);
-          // Se fim_carregamento estiver preenchido, usar ele. Caso contrário, usar data atual
-          const realizadoCarga = ordem.fim_carregamento 
-            ? new Date(ordem.fim_carregamento)
+          // Se entrada_galpao estiver preenchida, usar ela. Caso contrário, usar data atual
+          const realizadoCarga = ordem.entrada_galpao 
+            ? new Date(ordem.entrada_galpao)
             : getDataAtualSP();
 
           const diffMs = realizadoCarga - agendadoCarga;
           const horasAtraso = Math.round(diffMs / (1000 * 60 * 60));
           const noPrazoCarga = horasAtraso <= 0;
 
-          // Se já foi concluído (fim_carregamento preenchido)
-          if (ordem.fim_carregamento) {
+          // Se já foi concluído (entrada_galpao preenchida)
+          if (ordem.entrada_galpao) {
             if (noPrazoCarga) {
               return (
                 <Badge 

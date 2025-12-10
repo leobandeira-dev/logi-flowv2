@@ -257,11 +257,11 @@ Deno.serve(async (req) => {
         // Se tem agendamento de carregamento
         if (ordem.carregamento_agendamento_data) {
           const agendado = new Date(ordem.carregamento_agendamento_data);
-          // Se fim_carregamento vazio, usar data atual
-          const realizado = ordem.fim_carregamento ? new Date(ordem.fim_carregamento) : getDataAtualSP();
-          const noPrazo = realizado <= agendado;
+          // Se entrada_galpao vazio, usar data atual
+          const realizado = ordem.entrada_galpao ? new Date(ordem.entrada_galpao) : getDataAtualSP();
           const diffMs = realizado - agendado;
           const horasAtraso = Math.round(diffMs / (1000 * 60 * 60));
+          const noPrazo = horasAtraso <= 0;
           
           if (noPrazo) {
             return { content: "NO PRAZO", styles: { textColor: [21, 128, 61], fontStyle: 'bold', halign: 'center' } };
