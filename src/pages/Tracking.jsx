@@ -268,9 +268,9 @@ export default function Tracking() {
       if (o.carregamento_expurgado) return true;
       
       const agendado = new Date(o.carregamento_agendamento_data);
-      // Se fim_carregamento vazio, usar data atual
-      const realizado = o.fim_carregamento 
-        ? new Date(o.fim_carregamento)
+      // Se inicio_carregamento vazio, usar data atual
+      const realizado = o.inicio_carregamento 
+        ? new Date(o.inicio_carregamento)
         : getDataAtualSP();
       return realizado <= agendado;
     });
@@ -710,9 +710,9 @@ export default function Tracking() {
             ordensCarregamento.expurgado.push(ordem);
           } else {
             const agendado = new Date(ordem.carregamento_agendamento_data);
-            // Se fim_carregamento vazio, usar data atual
-            const realizado = ordem.fim_carregamento 
-              ? new Date(ordem.fim_carregamento)
+            // Se inicio_carregamento vazio, usar data atual
+            const realizado = ordem.inicio_carregamento 
+              ? new Date(ordem.inicio_carregamento)
               : getDataAtualSP();
             if (realizado <= agendado) {
               ordensCarregamento.noPrazo.push(ordem);
@@ -784,9 +784,9 @@ export default function Tracking() {
             ordensExpurgadas.push(ordem);
           } else {
             const agendado = new Date(ordem.carregamento_agendamento_data);
-            // Se fim_carregamento vazio, usar data atual
-            const realizado = ordem.fim_carregamento 
-              ? new Date(ordem.fim_carregamento)
+            // Se inicio_carregamento vazio, usar data atual
+            const realizado = ordem.inicio_carregamento 
+              ? new Date(ordem.inicio_carregamento)
               : getDataAtualSP();
             if (realizado <= agendado) {
               dadosPorData[data].noPrazo++;
@@ -2082,23 +2082,29 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
   const listaImpressao = getListaParaImpressao();
 
   const getStatusSLA = (ordem, tipoSLA) => {
-    if (tipoSLA === 'carga') {
-      if (ordem.carregamento_expurgado) return { label: 'Expurgado', color: '#64748b' };
-      if (ordem.inicio_carregamento && ordem.carregamento_agendamento_data) {
-        const agendado = new Date(ordem.carregamento_agendamento_data);
-        const realizado = new Date(ordem.inicio_carregamento);
-        return realizado <= agendado ? { label: 'No Prazo', color: '#22c55e' } : { label: 'Fora do Prazo', color: '#ef4444' };
-      }
-      return { label: '-', color: theme.textMuted };
-    } else {
-      if (ordem.entrega_expurgada) return { label: 'Expurgado', color: '#64748b' };
-      if (ordem.chegada_destino && ordem.prazo_entrega) {
-        const prazo = new Date(ordem.prazo_entrega);
-        const realizado = new Date(ordem.chegada_destino);
-        return realizado <= prazo ? { label: 'No Prazo', color: '#22c55e' } : { label: 'Fora do Prazo', color: '#ef4444' };
-      }
-      return { label: '-', color: theme.textMuted };
+  if (tipoSLA === 'carga') {
+    if (ordem.carregamento_expurgado) return { label: 'Expurgado', color: '#64748b' };
+    if (ordem.carregamento_agendamento_data) {
+      const agendado = new Date(ordem.carregamento_agendamento_data);
+      // Se inicio_carregamento vazio, usar data atual
+      const realizado = ordem.inicio_carregamento 
+        ? new Date(ordem.inicio_carregamento)
+        : getDataAtualSP();
+      return realizado <= agendado ? { label: 'No Prazo', color: '#22c55e' } : { label: 'Fora do Prazo', color: '#ef4444' };
     }
+    return { label: '-', color: theme.textMuted };
+  } else {
+    if (ordem.entrega_expurgada) return { label: 'Expurgado', color: '#64748b' };
+    if (ordem.prazo_entrega) {
+      const prazo = new Date(ordem.prazo_entrega);
+      // Se chegada_destino vazio, usar data atual
+      const realizado = ordem.chegada_destino 
+        ? new Date(ordem.chegada_destino)
+        : getDataAtualSP();
+      return realizado <= prazo ? { label: 'No Prazo', color: '#22c55e' } : { label: 'Fora do Prazo', color: '#ef4444' };
+    }
+    return { label: '-', color: theme.textMuted };
+  }
   };
 
   return (
@@ -2248,8 +2254,8 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                       const noPrazo = listaImpressao.filter(ordem => getStatusSLA(ordem, tipo).label === 'No Prazo').length;
                       const totalConsiderado = listaImpressao.filter(ordem => 
                         tipo === 'carga' 
-                          ? (ordem.inicio_carregamento && ordem.carregamento_agendamento_data)
-                          : (ordem.chegada_destino && ordem.prazo_entrega)
+                          ? ordem.carregamento_agendamento_data
+                          : ordem.prazo_entrega
                       ).length;
                       return totalConsiderado > 0 ? ((noPrazo / totalConsiderado) * 100).toFixed(2) : '0.00';
                     }
@@ -2261,7 +2267,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                       <div className="text-[9px] text-blue-700 font-medium">SLA Carga</div>
                       <div className="text-sm font-bold text-blue-900">
                         {(() => {
-                          const totalCarga = listaImpressao.filter(o => o.inicio_carregamento && o.carregamento_agendamento_data).length;
+                          const totalCarga = listaImpressao.filter(o => o.carregamento_agendamento_data).length;
                           const noPrazoCarga = listaImpressao.filter(o => getStatusSLA(o, 'carga').label === 'No Prazo').length;
                           return totalCarga > 0 ? ((noPrazoCarga / totalCarga) * 100).toFixed(2) : '0.00';
                         })()}%
@@ -2271,7 +2277,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                       <div className="text-[9px] text-purple-700 font-medium">SLA Descarga</div>
                       <div className="text-sm font-bold text-purple-900">
                         {(() => {
-                          const totalDescarga = listaImpressao.filter(o => o.chegada_destino && o.prazo_entrega).length;
+                          const totalDescarga = listaImpressao.filter(o => o.prazo_entrega).length;
                           const noPrazoDescarga = listaImpressao.filter(o => getStatusSLA(o, 'entrega').label === 'No Prazo').length;
                           return totalDescarga > 0 ? ((noPrazoDescarga / totalDescarga) * 100).toFixed(2) : '0.00';
                         })()}%
