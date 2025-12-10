@@ -1929,6 +1929,11 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
   const [abaSelecionada, setAbaSelecionada] = useState('grafico');
   const titulo = tipo === 'geral' ? 'Relatório de SLA Geral' : tipo === 'carga' ? 'Relatório de SLA - Carregamento' : 'Relatório de SLA - Entrega';
 
+  // Função para obter data atual no timezone de São Paulo
+  const getDataAtualSP = () => {
+    return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  };
+
   const theme = {
     cardBg: isDark ? '#1e293b' : '#ffffff',
     border: isDark ? '#334155' : '#e5e7eb',
