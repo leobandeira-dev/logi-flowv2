@@ -1494,13 +1494,13 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
           if (!a.carregamento_expurgado && b.carregamento_expurgado) return -1;
           if (a.carregamento_expurgado && b.carregamento_expurgado) return 0;
           
-          // Se já carregou, calcular horas de atraso (positivo) ou antecedência (negativo)
-          if (a.fim_carregamento && a.carregamento_agendamento_data) {
+          // Se já chegou na carga, calcular horas de atraso (positivo) ou antecedência (negativo)
+          if (a.entrada_galpao && a.carregamento_agendamento_data) {
             const agendadoA = new Date(a.carregamento_agendamento_data);
-            const realizadoA = new Date(a.fim_carregamento);
+            const realizadoA = new Date(a.entrada_galpao);
             valorA = (realizadoA - agendadoA) / (1000 * 60 * 60); // horas
           } else if (a.carregamento_agendamento_data) {
-            // Se ainda não carregou, calcular horas restantes (negativo = futuro)
+            // Se ainda não chegou, calcular horas restantes (negativo = futuro)
             const agora = new Date();
             const agendadoA = new Date(a.carregamento_agendamento_data);
             valorA = (agora - agendadoA) / (1000 * 60 * 60); // horas desde agendamento
@@ -1508,9 +1508,9 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
             valorA = -999999; // Sem dados vai para o início
           }
           
-          if (b.fim_carregamento && b.carregamento_agendamento_data) {
+          if (b.entrada_galpao && b.carregamento_agendamento_data) {
             const agendadoB = new Date(b.carregamento_agendamento_data);
-            const realizadoB = new Date(b.fim_carregamento);
+            const realizadoB = new Date(b.entrada_galpao);
             valorB = (realizadoB - agendadoB) / (1000 * 60 * 60);
           } else if (b.carregamento_agendamento_data) {
             const agora = new Date();
