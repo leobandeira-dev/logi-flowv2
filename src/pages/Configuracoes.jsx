@@ -108,9 +108,12 @@ export default function Configuracoes() {
               <div className="inline-block bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-3 rounded-full mb-6 shadow-lg">
                 <p className="text-lg font-semibold">Consultoria • Tecnologia • Transformação Digital</p>
               </div>
-              <h1 className="text-7xl font-bold mb-4 bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 bg-clip-text text-transparent">
-                LAF LOGÍSTICA
+              <h1 className="text-8xl font-bold mb-3 bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 bg-clip-text text-transparent">
+                LogiFlow
               </h1>
+              <p className="text-4xl text-gray-700 font-light mb-6">
+                By LAF Logística
+              </p>
               <div className="w-48 h-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 mx-auto mb-6" />
               <p className="text-xl text-gray-600 font-medium mb-8">
                 CNPJ 34.579.341/0001-85
