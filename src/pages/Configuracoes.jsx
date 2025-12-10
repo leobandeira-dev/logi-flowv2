@@ -825,80 +825,80 @@ export default function Configuracoes() {
       subtitle: "Identificação e Resolução de Problemas",
       icon: Shield,
       content: (
-        <div className="space-y-8">
-          <div className="grid grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-lg shadow-xl border-2 border-gray-300">
-              <h3 className="font-bold text-2xl mb-6 flex items-center gap-3 text-gray-900">
-                <AlertCircle className="w-8 h-8 text-cyan-600" />
-                Tipos de Ocorrências
-              </h3>
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+              <div className="flex items-center gap-2 mb-4">
+                <AlertCircle className="w-5 h-5 text-cyan-600" />
+                <h3 className="font-bold text-base text-gray-900">Tipos de Ocorrências</h3>
+              </div>
               <div className="space-y-3">
                 <div className="p-4 bg-white rounded-lg border-2 border-cyan-500">
                   <div className="flex items-center gap-2 mb-1">
                     <Navigation className="w-5 h-5 text-cyan-600" />
-                    <p className="font-bold text-gray-900">Tracking (Viagem)</p>
+                    <p className="font-semibold text-gray-900">Tracking (Viagem)</p>
                   </div>
-                  <p className="text-sm text-gray-700">Problemas na estrada, atrasos, acidentes</p>
+                  <p className="text-sm text-gray-600">Problemas na estrada, atrasos, acidentes</p>
                 </div>
                 <div className="p-4 bg-white rounded-lg border-2 border-blue-500">
                   <div className="flex items-center gap-2 mb-1">
                     <Workflow className="w-5 h-5 text-blue-600" />
-                    <p className="font-bold text-gray-900">Fluxo (Processos)</p>
+                    <p className="font-semibold text-gray-900">Fluxo (Processos)</p>
                   </div>
-                  <p className="text-sm text-gray-700">Bloqueios em etapas internas, documentação</p>
+                  <p className="text-sm text-gray-600">Bloqueios em etapas internas, documentação</p>
                 </div>
                 <div className="p-4 bg-white rounded-lg border-2 border-purple-500">
                   <div className="flex items-center gap-2 mb-1">
                     <Settings className="w-5 h-5 text-purple-600" />
-                    <p className="font-bold text-gray-900">Configuráveis</p>
+                    <p className="font-semibold text-gray-900">Configuráveis</p>
                   </div>
-                  <p className="text-sm text-gray-700">Tipos personalizados por empresa</p>
+                  <p className="text-sm text-gray-600">Tipos personalizados por empresa</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-8 rounded-lg shadow-xl border-2 border-blue-600">
-              <h3 className="font-bold text-2xl mb-6 text-gray-900">Níveis de Gravidade</h3>
-              <div className="space-y-4">
-                <div className="p-4 bg-white rounded-lg border-2 border-blue-400">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-lg text-gray-900">Baixa</span>
-                    <span className="text-sm text-gray-900">-5 pts</span>
+            <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+              <h3 className="font-bold text-base mb-4 text-gray-900">Níveis de Gravidade</h3>
+              <div className="space-y-3">
+                <div className="p-4 bg-white rounded-lg border-2 border-gray-300">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-semibold text-gray-900">Baixa</span>
+                    <span className="text-sm text-gray-600">-5 pts</span>
                   </div>
-                  <p className="text-sm text-gray-700">Impacto mínimo, resolução rápida</p>
+                  <p className="text-sm text-gray-600">Impacto mínimo, resolução rápida</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg border-2 border-blue-500">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-lg text-gray-900">Média</span>
-                    <span className="text-sm text-gray-900">-10 pts</span>
+                <div className="p-4 bg-white rounded-lg border-2 border-gray-300">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-semibold text-gray-900">Média</span>
+                    <span className="text-sm text-gray-600">-10 pts</span>
                   </div>
-                  <p className="text-sm text-gray-700">Requer atenção, prazo definido</p>
+                  <p className="text-sm text-gray-600">Requer atenção, prazo definido</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg border-2 border-blue-600">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-lg text-gray-900">Alta</span>
-                    <span className="text-sm text-gray-900">-20 pts</span>
+                <div className="p-4 bg-white rounded-lg border-2 border-gray-300">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-semibold text-gray-900">Alta</span>
+                    <span className="text-sm text-gray-600">-20 pts</span>
                   </div>
-                  <p className="text-sm text-gray-700">Urgente, impacto significativo</p>
+                  <p className="text-sm text-gray-600">Urgente, impacto significativo</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg border-2 border-blue-700">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-lg text-gray-900">Crítica</span>
-                    <span className="text-sm text-gray-900">-40 pts</span>
+                <div className="p-4 bg-white rounded-lg border-2 border-gray-300">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-semibold text-gray-900">Crítica</span>
+                    <span className="text-sm text-gray-600">-40 pts</span>
                   </div>
-                  <p className="text-sm text-gray-700">Bloqueio total, ação imediata</p>
+                  <p className="text-sm text-gray-600">Bloqueio total, ação imediata</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-3 gap-5">
             <div className="bg-white p-5 rounded-lg shadow-lg border border-gray-200">
               <div className="flex items-center gap-2 mb-3">
-                <Camera className="w-6 h-6 text-cyan-600" />
-                <h4 className="font-bold text-base text-gray-900">Evidências</h4>
+                <Camera className="w-5 h-5 text-cyan-600" />
+                <h4 className="font-bold text-sm text-gray-900">Evidências</h4>
               </div>
-              <ul className="space-y-1.5 text-sm text-gray-700">
+              <ul className="space-y-1 text-xs text-gray-700">
                 <li>• Upload de fotos</li>
                 <li>• Localização GPS</li>
                 <li>• Data e hora exatas</li>
@@ -908,10 +908,10 @@ export default function Configuracoes() {
 
             <div className="bg-white p-5 rounded-lg shadow-lg border border-gray-200">
               <div className="flex items-center gap-2 mb-3">
-                <Users className="w-6 h-6 text-cyan-600" />
-                <h4 className="font-bold text-base text-gray-900">Atribuição</h4>
+                <Users className="w-5 h-5 text-cyan-600" />
+                <h4 className="font-bold text-sm text-gray-900">Atribuição</h4>
               </div>
-              <ul className="space-y-1.5 text-sm text-gray-700">
+              <ul className="space-y-1 text-xs text-gray-700">
                 <li>• Responsável definido</li>
                 <li>• Prazo de resolução</li>
                 <li>• Notificações automáticas</li>
@@ -921,10 +921,10 @@ export default function Configuracoes() {
 
             <div className="bg-white p-5 rounded-lg shadow-lg border border-gray-200">
               <div className="flex items-center gap-2 mb-3">
-                <BarChart3 className="w-6 h-6 text-cyan-600" />
-                <h4 className="font-bold text-base text-gray-900">Análises</h4>
+                <BarChart3 className="w-5 h-5 text-cyan-600" />
+                <h4 className="font-bold text-sm text-gray-900">Análises</h4>
               </div>
-              <ul className="space-y-1.5 text-sm text-gray-700">
+              <ul className="space-y-1 text-xs text-gray-700">
                 <li>• Tempo médio de resolução</li>
                 <li>• Taxa de recorrência</li>
                 <li>• Impacto no SLA</li>
@@ -935,8 +935,8 @@ export default function Configuracoes() {
 
           <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
             <div className="flex items-center gap-2 mb-5">
-              <CheckCircle2 className="w-6 h-6 text-cyan-600" />
-              <h3 className="font-bold text-lg text-gray-900">Fluxo de Resolução</h3>
+              <CheckCircle2 className="w-5 h-5 text-cyan-600" />
+              <h3 className="font-bold text-base text-gray-900">Fluxo de Resolução</h3>
             </div>
             <div className="grid grid-cols-5 gap-4">
               <div className="text-center">
