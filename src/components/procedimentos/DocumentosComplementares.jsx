@@ -1,7 +1,9 @@
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 
 export { ManualSistemaCompleto } from "./ManualSistemaABNT";
+export { InstrucaoOcorrenciasDetalhada } from "./OcorrenciasABNT";
 
 export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
   return (

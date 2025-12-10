@@ -281,7 +281,7 @@ export default function Procedimentos() {
   );
 }
 
-function InstrucaoOrdensCarregamento({ theme, isDark }) {
+function InstrucaoOrdensCarregamentoOLD({ theme, isDark }) {
   return (
     <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
       <CardContent className="p-8 space-y-6">
@@ -812,7 +812,7 @@ function InstrucaoOrdensCarregamento({ theme, isDark }) {
   );
 }
 
-function ProcedimentoGestaoTransportes({ theme, isDark }) {
+function ProcedimentoGestaoTransportesOLD({ theme, isDark }) {
   return (
     <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
       <CardContent className="p-8 space-y-6">
@@ -1961,7 +1961,7 @@ function ProcedimentoGestaoTransportes({ theme, isDark }) {
   );
 }
 
-function InstrucaoTracking({ theme, isDark }) {
+function InstrucaoTrackingOLD({ theme, isDark }) {
   return (
     <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
       <CardContent className="p-8 space-y-6">
@@ -2082,7 +2082,7 @@ function InstrucaoTracking({ theme, isDark }) {
   );
 }
 
-function InstrucaoOcorrencias({ theme, isDark }) {
+function InstrucaoOcorrenciasOLD({ theme, isDark }) {
   return (
     <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
       <CardContent className="p-8 space-y-6">
@@ -2294,7 +2294,7 @@ function InstrucaoOcorrencias({ theme, isDark }) {
   );
 }
 
-function FormularioOrdemCarregamento({ theme, isDark }) {
+function FormularioOrdemCarregamentoOLD({ theme, isDark }) {
   return (
     <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
       <CardContent className="p-8 space-y-6">
@@ -2556,7 +2556,7 @@ function FormularioOrdemCarregamento({ theme, isDark }) {
   );
 }
 
-function ManualSistema({ theme, isDark }) {
+function ManualSistemaOLD({ theme, isDark }) {
   return (
     <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
       <CardContent className="p-8 space-y-6">
