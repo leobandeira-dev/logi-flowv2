@@ -195,38 +195,18 @@ Deno.serve(async (req) => {
       } else if (colunaId === "entrada_galpao") {
         return formatarDataHora(ordem.entrada_galpao);
       } else if (colunaId === "inicio_carregamento") {
-        // Se vazio e tem agendamento, usar data atual em roxo
-        if (!ordem.inicio_carregamento && ordem.carregamento_agendamento_data) {
-          const dataAtualFormatada = formatarDataHora(getDataAtualSP());
-          return { content: dataAtualFormatada, styles: { textColor: [147, 51, 234], fontStyle: 'bold' } }; // Roxo
-        }
         return formatarDataHora(ordem.inicio_carregamento);
       } else if (colunaId === "fim_carregamento") {
-        // Se vazio e tem agendamento, usar data atual em roxo
-        if (!ordem.fim_carregamento && ordem.carregamento_agendamento_data) {
-          const dataAtualFormatada = formatarDataHora(getDataAtualSP());
-          return { content: dataAtualFormatada, styles: { textColor: [147, 51, 234], fontStyle: 'bold' } }; // Roxo
-        }
         return formatarDataHora(ordem.fim_carregamento);
       } else if (colunaId === "saida_unidade") {
         return formatarDataHora(ordem.saida_unidade);
       } else if (colunaId === "chegada_destino") {
-        // Se vazio e tem prazo de entrega, usar data atual em roxo
-        if (!ordem.chegada_destino && ordem.prazo_entrega) {
-          const dataAtualFormatada = formatarDataHora(getDataAtualSP());
-          return { content: dataAtualFormatada, styles: { textColor: [147, 51, 234], fontStyle: 'bold' } }; // Roxo
-        }
         return formatarDataHora(ordem.chegada_destino);
       } else if (colunaId === "descarga_agendamento_data") {
         return formatarDataHora(ordem.descarga_agendamento_data);
       } else if (colunaId === "agendamento_checklist_data") {
         return formatarDataHora(ordem.agendamento_checklist_data);
       } else if (colunaId === "descarga_realizada_data") {
-        // Se vazio e tem prazo de entrega, usar data atual em roxo
-        if (!ordem.descarga_realizada_data && ordem.prazo_entrega) {
-          const dataAtualFormatada = formatarDataHora(getDataAtualSP());
-          return { content: dataAtualFormatada, styles: { textColor: [147, 51, 234], fontStyle: 'bold' } }; // Roxo
-        }
         return formatarDataHora(ordem.descarga_realizada_data);
       } else if (colunaId === "prazo_entrega") {
         return formatarDataHora(ordem.prazo_entrega);
@@ -269,6 +249,48 @@ Deno.serve(async (req) => {
           "carregamento_agendado": "AGENDADO"
         };
         return statusMap[ordem.status_tracking] || "PENDENTE";
+      } else if (colunaId === "sla_carregamento") {
+        // Se expurgado
+        if (ordem.carregamento_expurgado) {
+          return { content: "EXPURG.", styles: { textColor: [107, 114, 128], fontStyle: 'bold', halign: 'center' } };
+        }
+        // Se tem agendamento de carregamento
+        if (ordem.carregamento_agendamento_data) {
+          const agendado = new Date(ordem.carregamento_agendamento_data);
+          // Se fim_carregamento vazio, usar data atual
+          const realizado = ordem.fim_carregamento ? new Date(ordem.fim_carregamento) : getDataAtualSP();
+          const noPrazo = realizado <= agendado;
+          const diffMs = realizado - agendado;
+          const horasAtraso = Math.round(diffMs / (1000 * 60 * 60));
+          
+          if (noPrazo) {
+            return { content: "NO PRAZO", styles: { textColor: [21, 128, 61], fontStyle: 'bold', halign: 'center' } };
+          } else {
+            return { content: `+${horasAtraso}h`, styles: { textColor: [220, 38, 38], fontStyle: 'bold', halign: 'center' } };
+          }
+        }
+        return "-";
+      } else if (colunaId === "sla_entrega") {
+        // Se expurgado
+        if (ordem.entrega_expurgada) {
+          return { content: "EXPURG.", styles: { textColor: [107, 114, 128], fontStyle: 'bold', halign: 'center' } };
+        }
+        // Se tem prazo de entrega
+        if (ordem.prazo_entrega) {
+          const prazo = new Date(ordem.prazo_entrega);
+          // Se chegada_destino vazio, usar data atual
+          const realizado = ordem.chegada_destino ? new Date(ordem.chegada_destino) : getDataAtualSP();
+          const noPrazo = realizado <= prazo;
+          const diffMs = realizado - prazo;
+          const horasAtraso = Math.round(diffMs / (1000 * 60 * 60));
+          
+          if (noPrazo) {
+            return { content: "NO PRAZO", styles: { textColor: [21, 128, 61], fontStyle: 'bold', halign: 'center' } };
+          } else {
+            return { content: `+${horasAtraso}h`, styles: { textColor: [220, 38, 38], fontStyle: 'bold', halign: 'center' } };
+          }
+        }
+        return "-";
       }
       return "";
     };
