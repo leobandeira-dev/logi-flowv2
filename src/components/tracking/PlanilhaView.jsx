@@ -1234,14 +1234,14 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
         // Se tem agendamento de carregamento
         if (ordem.carregamento_agendamento_data) {
           const agendadoCarga = new Date(ordem.carregamento_agendamento_data);
-          // Se fim_carregamento vazio, usar data atual de SP
+          // Se fim_carregamento estiver preenchido, usar ele. Caso contrário, usar data atual
           const realizadoCarga = ordem.fim_carregamento 
             ? new Date(ordem.fim_carregamento)
             : getDataAtualSP();
-          
-          const noPrazoCarga = realizadoCarga <= agendadoCarga;
+
           const diffMs = realizadoCarga - agendadoCarga;
           const horasAtraso = Math.round(diffMs / (1000 * 60 * 60));
+          const noPrazoCarga = horasAtraso <= 0;
 
           // Se já foi concluído (fim_carregamento preenchido)
           if (ordem.fim_carregamento) {
@@ -1343,14 +1343,14 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
         // Se tem prazo de entrega
         if (ordem.prazo_entrega) {
           const prazoEntrega = new Date(ordem.prazo_entrega);
-          // Se chegada_destino vazio, usar data atual de SP
+          // Se chegada_destino estiver preenchida, usar ela. Caso contrário, usar data atual
           const realizadoEntrega = ordem.chegada_destino 
             ? new Date(ordem.chegada_destino)
             : getDataAtualSP();
-          
-          const noPrazoEntrega = realizadoEntrega <= prazoEntrega;
+
           const diffMs = realizadoEntrega - prazoEntrega;
           const horasAtraso = Math.round(diffMs / (1000 * 60 * 60));
+          const noPrazoEntrega = horasAtraso <= 0;
 
           // Se já foi concluído (chegada_destino preenchida)
           if (ordem.chegada_destino) {
