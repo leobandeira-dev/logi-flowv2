@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
+import FiltroDataPeriodo from "../filtros/FiltroDataPeriodo";
 
-export default function FilterModal({ open, onClose, filters, onFiltersChange, motoristas, etapas, operacoes }) {
+export default function FilterModal({ open, onClose, filters, onFiltersChange, motoristas, etapas, operacoes, periodoSelecionado, onPeriodoChange, isDark }) {
   const handleFilterChange = (field, value) => {
     onFiltersChange({ ...filters, [field]: value });
   };
@@ -33,23 +34,15 @@ export default function FilterModal({ open, onClose, filters, onFiltersChange, m
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-4 py-4">
-          <div>
-            <Label className="text-sm font-semibold">Data Início</Label>
-            <Input
-              type="date"
-              value={filters.dataInicio}
-              onChange={(e) => handleFilterChange("dataInicio", e.target.value)}
-              className="mt-1"
-            />
-          </div>
-
-          <div>
-            <Label className="text-sm font-semibold">Data Fim</Label>
-            <Input
-              type="date"
-              value={filters.dataFim}
-              onChange={(e) => handleFilterChange("dataFim", e.target.value)}
-              className="mt-1"
+          <div className="col-span-2">
+            <FiltroDataPeriodo
+              periodoSelecionado={periodoSelecionado}
+              onPeriodoChange={onPeriodoChange}
+              dataInicio={filters.dataInicio}
+              dataFim={filters.dataFim}
+              onDataInicioChange={(val) => handleFilterChange("dataInicio", val)}
+              onDataFimChange={(val) => handleFilterChange("dataFim", val)}
+              isDark={isDark}
             />
           </div>
 

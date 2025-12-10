@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -14,13 +15,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import OrdemDetails from "../components/ordens/OrdemDetails";
 import OrdemUnificadaForm from "../components/ordens/OrdemUnificadaForm";
 import QuickStatusPopover from "../components/fluxo/QuickStatusPopover";
 import FiltrosPredefinidos from "../components/filtros/FiltrosPredefinidos";
 import PaginacaoControles from "../components/filtros/PaginacaoControles";
+import FiltroDataPeriodo from "../components/filtros/FiltroDataPeriodo";
 import {
   Search,
   Filter,
@@ -36,9 +44,12 @@ import {
   Truck,
   PlayCircle,
   Settings,
-  ExternalLink
+  ExternalLink,
+  List,
+  Building2
 } from "lucide-react";
-import { differenceInMinutes } from "date-fns";
+import { format, differenceInHours, differenceInDays, differenceInMinutes, addHours } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import FilterModal from "../components/dashboard/FilterModal";
 
 
@@ -61,6 +72,7 @@ export default function Fluxo() {
   const [limite, setLimite] = useState(20);
   const [filtroAtribuicao, setFiltroAtribuicao] = useState("todos");
 
+  const [periodoSelecionado, setPeriodoSelecionado] = useState("");
   const [filters, setFilters] = useState({
     dataInicio: "",
     dataFim: "",
@@ -1573,6 +1585,9 @@ export default function Fluxo() {
         motoristas={motoristas}
         etapas={etapas}
         operacoes={operacoes}
+        periodoSelecionado={periodoSelecionado}
+        onPeriodoChange={setPeriodoSelecionado}
+        isDark={isDark}
       />
 
       {showEditModal && ordemParaEditar && (

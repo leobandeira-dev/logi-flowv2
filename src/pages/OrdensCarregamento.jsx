@@ -25,6 +25,7 @@ import TipoOrdemModal from "../components/ordens/TipoOrdemModal";
 import ExportarOfertasPDF from "../components/ordens/ExportarOfertasPDF";
 import FiltrosPredefinidos from "../components/filtros/FiltrosPredefinidos";
 import PaginacaoControles from "../components/filtros/PaginacaoControles";
+import FiltroDataPeriodo from "../components/filtros/FiltroDataPeriodo";
 
 export default function OrdensCarregamento() {
   const [ordens, setOrdens] = useState([]);
@@ -42,6 +43,7 @@ export default function OrdensCarregamento() {
   const [showOfertaLote, setShowOfertaLote] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [periodoSelecionado, setPeriodoSelecionado] = useState("");
   const [filters, setFilters] = useState({
     operacoesIds: [],
     status: "",
@@ -750,27 +752,17 @@ export default function OrdensCarregamento() {
                   />
                 </div>
 
-                <div>
-                  <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Data Início</Label>
-                  <Input
-                    type="date"
-                    value={filters.dataInicio}
-                    onChange={(e) => setFilters({...filters, dataInicio: e.target.value})}
-                    className="h-8 text-sm"
-                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                <div className="md:col-span-3 lg:col-span-4">
+                  <FiltroDataPeriodo
+                    periodoSelecionado={periodoSelecionado}
+                    onPeriodoChange={setPeriodoSelecionado}
+                    dataInicio={filters.dataInicio}
+                    dataFim={filters.dataFim}
+                    onDataInicioChange={(val) => setFilters({...filters, dataInicio: val})}
+                    onDataFimChange={(val) => setFilters({...filters, dataFim: val})}
+                    isDark={isDark}
                   />
                 </div>
-
-                <div>
-                  <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Data Fim</Label>
-                  <Input
-                    type="date"
-                    value={filters.dataFim}
-                    onChange={(e) => setFilters({...filters, dataFim: e.target.value})}
-                    className="h-8 text-sm"
-                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                  />
-                  </div>
 
                   <div>
                   <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Tipo</Label>
