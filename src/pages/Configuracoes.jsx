@@ -377,19 +377,19 @@ export default function Configuracoes() {
                 Métricas Principais
               </h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-2 border-cyan-400">
+                <div className="flex items-center justify-between p-4 bg-white rounded-xl border-2 border-cyan-500">
                   <span className="font-semibold text-gray-900">Total de Ordens</span>
                   <span className="text-2xl font-bold text-cyan-700">250</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-2 border-cyan-500">
+                <div className="flex items-center justify-between p-4 bg-white rounded-xl border-2 border-cyan-600">
                   <span className="font-semibold text-gray-900">Em Trânsito</span>
                   <span className="text-2xl font-bold text-cyan-700">90</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-2 border-blue-400">
+                <div className="flex items-center justify-between p-4 bg-white rounded-xl border-2 border-blue-600">
                   <span className="font-semibold text-gray-900">Pendentes</span>
                   <span className="text-2xl font-bold text-blue-700">45</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl border-2 border-blue-500">
+                <div className="flex items-center justify-between p-4 bg-white rounded-xl border-2 border-blue-700">
                   <span className="font-semibold text-gray-900">Finalizadas</span>
                   <span className="text-2xl font-bold text-blue-800">115</span>
                 </div>
@@ -427,19 +427,19 @@ export default function Configuracoes() {
             <div className="bg-white p-6 rounded-2xl shadow-xl">
               <h4 className="font-bold text-xl mb-4 text-gray-900">Filtros Inteligentes</h4>
               <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center gap-2 p-3 bg-cyan-50 rounded-lg border-2 border-cyan-400">
-                  <Calendar className="w-5 h-5 text-cyan-700" />
+                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border-2 border-cyan-500">
+                  <Calendar className="w-5 h-5 text-cyan-600" />
                   <span className="text-sm font-semibold text-gray-900">Período</span>
                 </div>
-                <div className="flex items-center gap-2 p-3 bg-cyan-50 rounded-lg border-2 border-cyan-400">
+                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border-2 border-cyan-600">
                   <MapPin className="w-5 h-5 text-cyan-700" />
                   <span className="text-sm font-semibold text-gray-900">Origem/Destino</span>
                 </div>
-                <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border-2 border-blue-400">
+                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border-2 border-blue-600">
                   <Users className="w-5 h-5 text-blue-700" />
                   <span className="text-sm font-semibold text-gray-900">Motorista</span>
                 </div>
-                <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border-2 border-blue-400">
+                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border-2 border-blue-700">
                   <Package className="w-5 h-5 text-blue-700" />
                   <span className="text-sm font-semibold text-gray-900">Status</span>
                 </div>
@@ -509,21 +509,21 @@ export default function Configuracoes() {
                 Ferramentas de Busca
               </h3>
               <div className="space-y-4">
-                <div className="p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-2 border-cyan-400">
+                <div className="p-4 bg-white rounded-xl border-2 border-cyan-500">
                   <div className="flex items-center gap-2 mb-2">
-                    <Search className="w-5 h-5 text-cyan-700" />
+                    <Search className="w-5 h-5 text-cyan-600" />
                     <p className="font-semibold text-cyan-900">Busca Avançada</p>
                   </div>
                   <p className="text-sm text-gray-700">Pesquise por nº carga, cliente, motorista, placa, origem ou destino</p>
                 </div>
-                <div className="p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-2 border-cyan-500">
+                <div className="p-4 bg-white rounded-xl border-2 border-cyan-600">
                   <div className="flex items-center gap-2 mb-2">
                     <Filter className="w-5 h-5 text-cyan-700" />
                     <p className="font-semibold text-cyan-900">Filtros Rápidos</p>
                   </div>
                   <p className="text-sm text-gray-700">Ofertas vs Alocados, Status, Período, Frota, Operação</p>
                 </div>
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-2 border-blue-400">
+                <div className="p-4 bg-white rounded-xl border-2 border-blue-600">
                   <div className="flex items-center gap-2 mb-2">
                     <LayoutDashboard className="w-5 h-5 text-blue-700" />
                     <p className="font-semibold text-blue-900">Visualizações</p>
@@ -539,21 +539,21 @@ export default function Configuracoes() {
                 Ações e Detalhes
               </h3>
               <div className="space-y-4">
-                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-2 border-cyan-400">
-                  <Eye className="w-6 h-6 text-cyan-700" />
+                <div className="flex items-center gap-3 p-4 bg-white rounded-xl border-2 border-cyan-500">
+                  <Eye className="w-6 h-6 text-cyan-600" />
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900">Visualizar Detalhes</p>
                     <p className="text-sm text-gray-600">Todos os dados em abas organizadas</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-2 border-cyan-500">
+                <div className="flex items-center gap-3 p-4 bg-white rounded-xl border-2 border-cyan-600">
                   <Edit className="w-6 h-6 text-cyan-700" />
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900">Editar Ordem</p>
                     <p className="text-sm text-gray-600">Atualização de dados em tempo real</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-2 border-blue-400">
+                <div className="flex items-center gap-3 p-4 bg-white rounded-xl border-2 border-blue-600">
                   <Download className="w-6 h-6 text-blue-700" />
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900">Imprimir/Exportar</p>
@@ -636,21 +636,21 @@ export default function Configuracoes() {
           <div className="bg-white p-8 rounded-2xl shadow-xl">
             <h3 className="font-bold text-2xl text-center mb-6 text-gray-900">Múltiplas Visualizações</h3>
             <div className="grid grid-cols-3 gap-6">
-              <div className="p-5 bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl border-2 border-cyan-500">
+              <div className="p-5 bg-white rounded-xl border-2 border-cyan-500">
                 <div className="flex items-center gap-2 mb-2">
-                  <TableIcon className="w-5 h-5 text-cyan-700" />
+                  <TableIcon className="w-5 h-5 text-cyan-600" />
                   <p className="font-bold text-lg text-cyan-900">Tabela Completa</p>
                 </div>
                 <p className="text-sm text-gray-700">Drag-scroll horizontal, ordenação, filtros avançados</p>
               </div>
-              <div className="p-5 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-xl border-2 border-cyan-600">
+              <div className="p-5 bg-white rounded-xl border-2 border-cyan-600">
                 <div className="flex items-center gap-2 mb-2">
                   <FileSpreadsheet className="w-5 h-5 text-cyan-700" />
-                  <p className="font-bold text-lg text-blue-900">Planilha Editável</p>
+                  <p className="font-bold text-lg text-cyan-900">Planilha Editável</p>
                 </div>
                 <p className="text-sm text-gray-700">Edição inline estilo Excel, auto-save</p>
               </div>
-              <div className="p-5 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-500">
+              <div className="p-5 bg-white rounded-xl border-2 border-blue-600">
                 <div className="flex items-center gap-2 mb-2">
                   <Eye className="w-5 h-5 text-blue-700" />
                   <p className="font-bold text-lg text-blue-900">Modo TV</p>
@@ -696,19 +696,19 @@ export default function Configuracoes() {
             <div className="bg-white rounded-2xl p-8 shadow-xl">
               <h3 className="font-bold text-2xl text-cyan-900 mb-6">Fornecedor</h3>
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-l-4 border-cyan-600">
-                  <FileText className="w-6 h-6 text-cyan-700" />
+                <div className="flex items-center gap-3 p-4 bg-white rounded-xl border-l-4 border-cyan-500">
+                  <FileText className="w-6 h-6 text-cyan-600" />
                   <p className="font-semibold text-gray-900">Solicitar Coleta Self-Service</p>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-l-4 border-cyan-600">
+                <div className="flex items-center gap-3 p-4 bg-white rounded-xl border-l-4 border-cyan-600">
                   <Package className="w-6 h-6 text-cyan-700" />
                   <p className="font-semibold text-gray-900">Upload XMLs NF-e</p>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-l-4 border-blue-600">
+                <div className="flex items-center gap-3 p-4 bg-white rounded-xl border-l-4 border-blue-600">
                   <Eye className="w-6 h-6 text-blue-700" />
                   <p className="font-semibold text-gray-900">Acompanhar Status</p>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl border-l-4 border-blue-700">
+                <div className="flex items-center gap-3 p-4 bg-white rounded-xl border-l-4 border-blue-700">
                   <Navigation className="w-6 h-6 text-blue-700" />
                   <p className="font-semibold text-gray-900">Tracking Tempo Real</p>
                 </div>
@@ -718,19 +718,19 @@ export default function Configuracoes() {
             <div className="bg-white rounded-2xl p-8 shadow-xl">
               <h3 className="font-bold text-2xl text-blue-900 mb-6">Cliente</h3>
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-l-4 border-cyan-600">
-                  <CheckCircle2 className="w-6 h-6 text-cyan-700" />
+                <div className="flex items-center gap-3 p-4 bg-white rounded-xl border-l-4 border-cyan-500">
+                  <CheckCircle2 className="w-6 h-6 text-cyan-600" />
                   <p className="font-semibold text-gray-900">Aprovar/Reprovar Coletas</p>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-l-4 border-cyan-600">
+                <div className="flex items-center gap-3 p-4 bg-white rounded-xl border-l-4 border-cyan-600">
                   <FileText className="w-6 h-6 text-cyan-700" />
                   <p className="font-semibold text-gray-900">Visualizar XMLs e Detalhes</p>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-l-4 border-blue-600">
+                <div className="flex items-center gap-3 p-4 bg-white rounded-xl border-l-4 border-blue-600">
                   <Bell className="w-6 h-6 text-blue-700" />
                   <p className="font-semibold text-gray-900">Notificações Automáticas</p>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl border-l-4 border-blue-700">
+                <div className="flex items-center gap-3 p-4 bg-white rounded-xl border-l-4 border-blue-700">
                   <BarChart3 className="w-6 h-6 text-blue-700" />
                   <p className="font-semibold text-gray-900">Dashboard Métricas</p>
                 </div>
@@ -1014,14 +1014,14 @@ export default function Configuracoes() {
             <div className="bg-white p-8 rounded-2xl shadow-xl">
               <h3 className="font-bold text-2xl mb-6 text-blue-900">Cálculo do SLA</h3>
               <div className="space-y-4">
-                <div className="p-5 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-2 border-cyan-400">
+                <div className="p-5 bg-white rounded-xl border-2 border-cyan-500">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-bold text-lg text-gray-900">Qualidade</span>
                     <span className="text-2xl font-bold text-cyan-700">60%</span>
                   </div>
                   <p className="text-sm text-gray-700">Baseado em ocorrências e problemas</p>
                 </div>
-                <div className="p-5 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-2 border-cyan-500">
+                <div className="p-5 bg-white rounded-xl border-2 border-cyan-600">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-bold text-lg text-gray-900">Produtividade</span>
                     <span className="text-2xl font-bold text-cyan-700">40%</span>
@@ -1154,28 +1154,28 @@ export default function Configuracoes() {
             <div className="bg-white p-8 rounded-2xl shadow-xl">
               <h3 className="font-bold text-2xl mb-6 text-gray-900">App do Motorista</h3>
               <div className="space-y-4">
-                <div className="p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-2 border-cyan-400">
+                <div className="p-4 bg-white rounded-xl border-2 border-cyan-500">
                   <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="w-5 h-5 text-cyan-700" />
+                    <MapPin className="w-5 h-5 text-cyan-600" />
                     <p className="font-semibold text-cyan-900">Viagens Ativas</p>
                   </div>
                   <p className="text-sm text-gray-700">Visualização de todas as viagens atribuídas</p>
                 </div>
-                <div className="p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-2 border-cyan-500">
+                <div className="p-4 bg-white rounded-xl border-2 border-cyan-600">
                   <div className="flex items-center gap-2 mb-2">
                     <Navigation className="w-5 h-5 text-cyan-700" />
                     <p className="font-semibold text-cyan-900">Atualização de Status</p>
                   </div>
                   <p className="text-sm text-gray-700">Mudança de status com um toque</p>
                 </div>
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-2 border-blue-400">
+                <div className="p-4 bg-white rounded-xl border-2 border-blue-600">
                   <div className="flex items-center gap-2 mb-2">
                     <MessageCircle className="w-5 h-5 text-blue-700" />
                     <p className="font-semibold text-blue-900">Chat Integrado</p>
                   </div>
                   <p className="text-sm text-gray-700">Comunicação direta com a central</p>
                 </div>
-                <div className="p-4 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl border-2 border-blue-500">
+                <div className="p-4 bg-white rounded-xl border-2 border-blue-700">
                   <div className="flex items-center gap-2 mb-2">
                     <Camera className="w-5 h-5 text-blue-700" />
                     <p className="font-semibold text-blue-900">Upload de Documentos</p>
@@ -1188,28 +1188,28 @@ export default function Configuracoes() {
             <div className="bg-white p-8 rounded-2xl shadow-xl">
               <h3 className="font-bold text-2xl mb-6 text-gray-900">Configurações</h3>
               <div className="space-y-4">
-                <div className="p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-2 border-cyan-400">
+                <div className="p-4 bg-white rounded-xl border-2 border-cyan-500">
                   <div className="flex items-center gap-2 mb-2">
-                    <Building2 className="w-5 h-5 text-cyan-700" />
+                    <Building2 className="w-5 h-5 text-cyan-600" />
                     <p className="font-semibold text-cyan-900">Dados da Empresa</p>
                   </div>
                   <p className="text-sm text-gray-700">CNPJ, razão social, endereço, logo</p>
                 </div>
-                <div className="p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-2 border-cyan-500">
+                <div className="p-4 bg-white rounded-xl border-2 border-cyan-600">
                   <div className="flex items-center gap-2 mb-2">
                     <Users className="w-5 h-5 text-cyan-700" />
                     <p className="font-semibold text-cyan-900">Gestão de Usuários</p>
                   </div>
                   <p className="text-sm text-gray-700">Perfis, permissões, categorias</p>
                 </div>
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-2 border-blue-400">
+                <div className="p-4 bg-white rounded-xl border-2 border-blue-600">
                   <div className="flex items-center gap-2 mb-2">
                     <Workflow className="w-5 h-5 text-blue-700" />
                     <p className="font-semibold text-blue-900">Etapas do Fluxo</p>
                   </div>
                   <p className="text-sm text-gray-700">Criação e configuração de processos</p>
                 </div>
-                <div className="p-4 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl border-2 border-blue-500">
+                <div className="p-4 bg-white rounded-xl border-2 border-blue-700">
                   <div className="flex items-center gap-2 mb-2">
                     <AlertCircle className="w-5 h-5 text-blue-700" />
                     <p className="font-semibold text-blue-900">Tipos de Ocorrências</p>
@@ -1344,15 +1344,15 @@ export default function Configuracoes() {
             <div className="bg-white rounded-2xl p-8 shadow-xl">
               <h3 className="font-bold text-2xl text-blue-900 mb-6">Métricas de Adoção</h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-l-4 border-cyan-600">
+                <div className="flex items-center justify-between p-4 bg-white rounded-xl border-l-4 border-cyan-500">
                   <span className="font-semibold text-gray-900">Taxa Adoção</span>
                   <span className="text-2xl font-bold text-cyan-700">90%</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-l-4 border-cyan-600">
+                <div className="flex items-center justify-between p-4 bg-white rounded-xl border-l-4 border-cyan-600">
                   <span className="font-semibold text-gray-900">DAU/MAU</span>
                   <span className="text-2xl font-bold text-cyan-700">0,6</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-l-4 border-blue-600">
+                <div className="flex items-center justify-between p-4 bg-white rounded-xl border-l-4 border-blue-600">
                   <span className="font-semibold text-gray-900">Time to Value</span>
                   <span className="text-2xl font-bold text-blue-700">&lt; 24h</span>
                 </div>
@@ -1362,15 +1362,15 @@ export default function Configuracoes() {
             <div className="bg-white rounded-2xl p-8 shadow-xl">
               <h3 className="font-bold text-2xl text-blue-900 mb-6">Satisfação</h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-l-4 border-cyan-600">
+                <div className="flex items-center justify-between p-4 bg-white rounded-xl border-l-4 border-cyan-500">
                   <span className="font-semibold text-gray-900">NPS</span>
                   <span className="text-2xl font-bold text-cyan-700">8/10</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-l-4 border-cyan-600">
+                <div className="flex items-center justify-between p-4 bg-white rounded-xl border-l-4 border-cyan-600">
                   <span className="font-semibold text-gray-900">SUS Score</span>
                   <span className="text-2xl font-bold text-cyan-700">80/100</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-l-4 border-blue-600">
+                <div className="flex items-center justify-between p-4 bg-white rounded-xl border-l-4 border-blue-600">
                   <span className="font-semibold text-gray-900">Taxa Resolução</span>
                   <span className="text-2xl font-bold text-blue-700">70%</span>
                 </div>
