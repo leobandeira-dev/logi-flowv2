@@ -112,6 +112,9 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
     return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
   };
 
+  // Mover a declaração para o topo do componente
+  React.useMemo(() => getDataAtualSP, []);
+
   // Detect dark mode changes
   useEffect(() => {
     const checkDarkMode = () => {
