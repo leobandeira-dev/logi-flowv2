@@ -1849,7 +1849,7 @@ export default function Configuracoes() {
             </div>
             <div className="flex gap-2">
               <Button
-                onClick={() => window.open(createPageUrl("Apresentacao"), '_blank')}
+                onClick={() => setShowPresentation(true)}
                 className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
               >
                 <Presentation className="w-5 h-5 mr-2" />
