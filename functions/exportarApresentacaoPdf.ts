@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
     doc.setFont(undefined, 'bold');
-    doc.text('Redução de 68% em ligações telefônicas', pageWidth / 2, 188, { align: 'center' });
+    doc.text('Redução de 70% em ligações telefônicas', pageWidth / 2, 188, { align: 'center' });
 
     // Slide 4 - Portal B2B
     doc.addPage();
@@ -280,11 +280,11 @@ Deno.serve(async (req) => {
     doc.text('Métricas de Performance e Reconhecimento', pageWidth / 2, 45, { align: 'center' });
     
     const niveis = [
-      { emoji: '🥉', nome: 'Iniciante', pts: '0-100' },
-      { emoji: '🥈', nome: 'Cadete', pts: '101-300' },
-      { emoji: '🥇', nome: 'Operacional', pts: '301-600' },
-      { emoji: '💎', nome: 'Mestre', pts: '601-1000' },
-      { emoji: '👑', nome: 'Comandante', pts: '1000+' }
+      { num: '1', nome: 'Iniciante', pts: '0-100' },
+      { num: '2', nome: 'Cadete', pts: '101-300' },
+      { num: '3', nome: 'Operacional', pts: '301-600' },
+      { num: '4', nome: 'Mestre', pts: '601-1000' },
+      { num: '5', nome: 'Comandante', pts: '1000+' }
     ];
     
     xPos = 20;
@@ -294,9 +294,14 @@ Deno.serve(async (req) => {
       doc.setFillColor(...colors[idx]);
       doc.roundedRect(xPos, 65, 52, 50, 3, 3, 'F');
       
+      doc.setFillColor(255, 255, 255);
+      doc.setTextColor(colors[idx][0], colors[idx][1], colors[idx][2]);
+      doc.circle(xPos + 26, 82, 8, 'F');
+      
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(24);
-      doc.text(nivel.emoji, xPos + 26, 85, { align: 'center' });
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text(nivel.num, xPos + 26, 86, { align: 'center' });
       
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
@@ -350,8 +355,8 @@ Deno.serve(async (req) => {
     
     const resultados = [
       { valor: '+10pp', titulo: 'SLA Entregas', desc: 'De 78% para 88%', color: [6, 182, 212] },
-      { valor: '-77%', titulo: 'Tempo Cadastro', desc: 'De 18min para 4,2min', color: [8, 145, 178] },
-      { valor: '-68%', titulo: 'Ligações Tel', desc: 'Redução comunicação', color: [37, 99, 235] }
+      { valor: '-75%', titulo: 'Tempo Cadastro', desc: 'De 18min para 4min', color: [8, 145, 178] },
+      { valor: '-70%', titulo: 'Ligações Tel', desc: 'Redução comunicação', color: [37, 99, 235] }
     ];
     
     xPos = 25;
