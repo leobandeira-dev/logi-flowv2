@@ -357,8 +357,8 @@ export default function Configuracoes() {
           </div>
 
           <div className="text-center bg-gradient-to-r from-cyan-600 to-blue-700 text-white p-8 rounded-2xl shadow-2xl">
-            <p className="text-3xl font-bold mb-3">Redução de 77% no tempo de cadastro</p>
-            <p className="text-xl opacity-90">De 18 minutos para apenas 4,2 minutos por ordem</p>
+            <p className="text-3xl font-bold mb-3">Redução de 75% no tempo de cadastro</p>
+            <p className="text-xl opacity-90">De 18 minutos para apenas 4 minutos por ordem</p>
           </div>
         </div>
       )
@@ -529,22 +529,22 @@ export default function Configuracoes() {
                 Ações e Detalhes
               </h3>
               <div className="space-y-4">
-                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border-2 border-gray-200">
-                  <Eye className="w-6 h-6 text-blue-600" />
+                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-2 border-cyan-400">
+                  <Eye className="w-6 h-6 text-cyan-700" />
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900">Visualizar Detalhes</p>
                     <p className="text-sm text-gray-600">Todos os dados em abas organizadas</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border-2 border-gray-200">
-                  <Edit className="w-6 h-6 text-green-600" />
+                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-2 border-cyan-500">
+                  <Edit className="w-6 h-6 text-cyan-700" />
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900">Editar Ordem</p>
                     <p className="text-sm text-gray-600">Atualização de dados em tempo real</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border-2 border-gray-200">
-                  <Download className="w-6 h-6 text-purple-600" />
+                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-2 border-blue-400">
+                  <Download className="w-6 h-6 text-blue-700" />
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900">Imprimir/Exportar</p>
                     <p className="text-sm text-gray-600">PDF, Excel, relatórios customizados</p>
@@ -642,7 +642,7 @@ export default function Configuracoes() {
           </div>
 
           <div className="bg-gradient-to-r from-cyan-600 to-blue-700 text-white p-6 rounded-2xl shadow-2xl text-center">
-            <p className="text-2xl font-bold">Redução de 68% em ligações telefônicas para consultar status</p>
+            <p className="text-2xl font-bold">Redução de 70% em ligações telefônicas para consultar status</p>
           </div>
         </div>
       )
@@ -677,20 +677,20 @@ export default function Configuracoes() {
             <div className="bg-white rounded-2xl p-8 shadow-xl">
               <h3 className="font-bold text-2xl text-cyan-900 mb-6">📤 Fornecedor</h3>
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-4 bg-cyan-50 rounded-xl border-l-4 border-cyan-600">
-                  <FileText className="w-6 h-6 text-cyan-600" />
+                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-l-4 border-cyan-600">
+                  <FileText className="w-6 h-6 text-cyan-700" />
                   <p className="font-semibold text-gray-900">Solicitar Coleta Self-Service</p>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-600">
-                  <Package className="w-6 h-6 text-blue-600" />
+                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-l-4 border-cyan-600">
+                  <Package className="w-6 h-6 text-cyan-700" />
                   <p className="font-semibold text-gray-900">Upload XMLs NF-e</p>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-600">
-                  <Eye className="w-6 h-6 text-blue-600" />
+                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-l-4 border-blue-600">
+                  <Eye className="w-6 h-6 text-blue-700" />
                   <p className="font-semibold text-gray-900">Acompanhar Status</p>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-600">
-                  <Navigation className="w-6 h-6 text-blue-600" />
+                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl border-l-4 border-blue-700">
+                  <Navigation className="w-6 h-6 text-blue-700" />
                   <p className="font-semibold text-gray-900">Tracking Tempo Real</p>
                 </div>
               </div>
@@ -699,20 +699,20 @@ export default function Configuracoes() {
             <div className="bg-white rounded-2xl p-8 shadow-xl">
               <h3 className="font-bold text-2xl text-blue-900 mb-6">✅ Cliente</h3>
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-600">
-                  <CheckCircle2 className="w-6 h-6 text-blue-600" />
+                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-l-4 border-cyan-600">
+                  <CheckCircle2 className="w-6 h-6 text-cyan-700" />
                   <p className="font-semibold text-gray-900">Aprovar/Reprovar Coletas</p>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-600">
-                  <FileText className="w-6 h-6 text-blue-600" />
+                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-l-4 border-cyan-600">
+                  <FileText className="w-6 h-6 text-cyan-700" />
                   <p className="font-semibold text-gray-900">Visualizar XMLs e Detalhes</p>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-600">
-                  <Bell className="w-6 h-6 text-blue-600" />
+                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-l-4 border-blue-600">
+                  <Bell className="w-6 h-6 text-blue-700" />
                   <p className="font-semibold text-gray-900">Notificações Automáticas</p>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border-l-4 border-blue-600">
-                  <BarChart3 className="w-6 h-6 text-blue-600" />
+                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl border-l-4 border-blue-700">
+                  <BarChart3 className="w-6 h-6 text-blue-700" />
                   <p className="font-semibold text-gray-900">Dashboard Métricas</p>
                 </div>
               </div>
@@ -986,21 +986,21 @@ export default function Configuracoes() {
             <div className="bg-white p-8 rounded-2xl shadow-xl">
               <h3 className="font-bold text-2xl mb-6 text-blue-900">📊 Cálculo do SLA</h3>
               <div className="space-y-4">
-                <div className="p-5 bg-blue-50 rounded-xl border-2 border-blue-200">
+                <div className="p-5 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-2 border-cyan-400">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-bold text-lg text-gray-900">Qualidade</span>
-                    <span className="text-2xl font-bold text-blue-600">60%</span>
+                    <span className="text-2xl font-bold text-cyan-700">60%</span>
                   </div>
                   <p className="text-sm text-gray-700">Baseado em ocorrências e problemas</p>
                 </div>
-                <div className="p-5 bg-cyan-50 rounded-xl border-2 border-cyan-500">
+                <div className="p-5 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-2 border-cyan-500">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-bold text-lg text-gray-900">Produtividade</span>
                     <span className="text-2xl font-bold text-cyan-700">40%</span>
                   </div>
                   <p className="text-sm text-gray-700">Ordens criadas e etapas concluídas</p>
                 </div>
-                <div className="p-6 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-xl border-4 border-blue-800 shadow-lg">
+                <div className="p-6 bg-gradient-to-r from-cyan-600 to-blue-700 text-white rounded-xl border-4 border-blue-800 shadow-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-bold text-2xl">SLA Final</span>
                     <span className="text-5xl font-bold">95%</span>
@@ -1126,20 +1126,20 @@ export default function Configuracoes() {
             <div className="bg-white p-8 rounded-2xl shadow-xl">
               <h3 className="font-bold text-2xl mb-6 text-gray-900">📱 App do Motorista</h3>
               <div className="space-y-4">
-                <div className="p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
-                  <p className="font-semibold text-blue-900 mb-2">🗺️ Viagens Ativas</p>
+                <div className="p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-2 border-cyan-400">
+                  <p className="font-semibold text-cyan-900 mb-2">🗺️ Viagens Ativas</p>
                   <p className="text-sm text-gray-700">Visualização de todas as viagens atribuídas</p>
                 </div>
-                <div className="p-4 bg-green-50 rounded-xl border-2 border-green-200">
-                  <p className="font-semibold text-green-900 mb-2">📍 Atualização de Status</p>
+                <div className="p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-2 border-cyan-500">
+                  <p className="font-semibold text-cyan-900 mb-2">📍 Atualização de Status</p>
                   <p className="text-sm text-gray-700">Mudança de status com um toque</p>
                 </div>
-                <div className="p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
-                  <p className="font-semibold text-purple-900 mb-2">💬 Chat Integrado</p>
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-2 border-blue-400">
+                  <p className="font-semibold text-blue-900 mb-2">💬 Chat Integrado</p>
                   <p className="text-sm text-gray-700">Comunicação direta com a central</p>
                 </div>
-                <div className="p-4 bg-orange-50 rounded-xl border-2 border-orange-200">
-                  <p className="font-semibold text-orange-900 mb-2">📸 Upload de Documentos</p>
+                <div className="p-4 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl border-2 border-blue-500">
+                  <p className="font-semibold text-blue-900 mb-2">📸 Upload de Documentos</p>
                   <p className="text-sm text-gray-700">Fotos de canhoto, carga e CT-e</p>
                 </div>
               </div>
@@ -1148,20 +1148,20 @@ export default function Configuracoes() {
             <div className="bg-white p-8 rounded-2xl shadow-xl">
               <h3 className="font-bold text-2xl mb-6 text-gray-900">⚙️ Configurações</h3>
               <div className="space-y-4">
-                <div className="p-4 bg-gray-100 rounded-xl border-2 border-gray-300">
-                  <p className="font-semibold text-gray-900 mb-2">🏢 Dados da Empresa</p>
+                <div className="p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-2 border-cyan-400">
+                  <p className="font-semibold text-cyan-900 mb-2">🏢 Dados da Empresa</p>
                   <p className="text-sm text-gray-700">CNPJ, razão social, endereço, logo</p>
                 </div>
-                <div className="p-4 bg-gray-100 rounded-xl border-2 border-gray-300">
-                  <p className="font-semibold text-gray-900 mb-2">👥 Gestão de Usuários</p>
+                <div className="p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-2 border-cyan-500">
+                  <p className="font-semibold text-cyan-900 mb-2">👥 Gestão de Usuários</p>
                   <p className="text-sm text-gray-700">Perfis, permissões, categorias</p>
                 </div>
-                <div className="p-4 bg-gray-100 rounded-xl border-2 border-gray-300">
-                  <p className="font-semibold text-gray-900 mb-2">🎯 Etapas do Fluxo</p>
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-2 border-blue-400">
+                  <p className="font-semibold text-blue-900 mb-2">🎯 Etapas do Fluxo</p>
                   <p className="text-sm text-gray-700">Criação e configuração de processos</p>
                 </div>
-                <div className="p-4 bg-gray-100 rounded-xl border-2 border-gray-300">
-                  <p className="font-semibold text-gray-900 mb-2">🏷️ Tipos de Ocorrências</p>
+                <div className="p-4 bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl border-2 border-blue-500">
+                  <p className="font-semibold text-blue-900 mb-2">🏷️ Tipos de Ocorrências</p>
                   <p className="text-sm text-gray-700">Cadastro personalizado de problemas</p>
                 </div>
               </div>
@@ -1273,15 +1273,15 @@ export default function Configuracoes() {
 
             <div className="bg-gradient-to-br from-cyan-500 to-blue-500 text-white p-10 rounded-2xl shadow-2xl">
               <div className="text-center">
-                <div className="text-7xl font-bold mb-4">-77%</div>
+                <div className="text-7xl font-bold mb-4">-75%</div>
                 <p className="text-2xl font-bold mb-2">Tempo Cadastro</p>
-                <p className="text-lg opacity-90">De 18min para 4,2min</p>
+                <p className="text-lg opacity-90">De 18min para 4min</p>
               </div>
             </div>
 
             <div className="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-10 rounded-2xl shadow-2xl">
               <div className="text-center">
-                <div className="text-7xl font-bold mb-4">-68%</div>
+                <div className="text-7xl font-bold mb-4">-70%</div>
                 <p className="text-2xl font-bold mb-2">Ligações Tel</p>
                 <p className="text-lg opacity-90">Redução comunicação</p>
               </div>
@@ -1292,17 +1292,17 @@ export default function Configuracoes() {
             <div className="bg-white rounded-2xl p-8 shadow-xl">
               <h3 className="font-bold text-2xl text-blue-900 mb-6">📈 Métricas de Adoção</h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-cyan-50 rounded-xl border-l-4 border-cyan-600">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-l-4 border-cyan-600">
                   <span className="font-semibold text-gray-900">Taxa Adoção</span>
-                  <span className="text-2xl font-bold text-cyan-700">92%</span>
+                  <span className="text-2xl font-bold text-cyan-700">90%</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border-l-4 border-blue-600">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-l-4 border-cyan-600">
                   <span className="font-semibold text-gray-900">DAU/MAU</span>
-                  <span className="text-2xl font-bold text-blue-700">0,61</span>
+                  <span className="text-2xl font-bold text-cyan-700">0,6</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border-l-4 border-blue-700">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-l-4 border-blue-600">
                   <span className="font-semibold text-gray-900">Time to Value</span>
-                  <span className="text-2xl font-bold text-blue-700">18h</span>
+                  <span className="text-2xl font-bold text-blue-700">&lt; 24h</span>
                 </div>
               </div>
             </div>
@@ -1310,17 +1310,17 @@ export default function Configuracoes() {
             <div className="bg-white rounded-2xl p-8 shadow-xl">
               <h3 className="font-bold text-2xl text-green-900 mb-6">⭐ Satisfação</h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl border-l-4 border-green-600">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-l-4 border-cyan-600">
                   <span className="font-semibold text-gray-900">NPS</span>
-                  <span className="text-2xl font-bold text-green-700">8,3/10</span>
+                  <span className="text-2xl font-bold text-cyan-700">8/10</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl border-l-4 border-green-600">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-l-4 border-cyan-600">
                   <span className="font-semibold text-gray-900">SUS Score</span>
-                  <span className="text-2xl font-bold text-green-700">82/100</span>
+                  <span className="text-2xl font-bold text-cyan-700">80/100</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl border-l-4 border-green-700">
-                  <span className="font-semibold text-gray-900">Taxa Ocorrências</span>
-                  <span className="text-2xl font-bold text-green-700">71%</span>
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-l-4 border-blue-600">
+                  <span className="font-semibold text-gray-900">Taxa Resolução</span>
+                  <span className="text-2xl font-bold text-blue-700">70%</span>
                 </div>
               </div>
             </div>
