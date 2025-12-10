@@ -117,6 +117,11 @@ export default function Tracking() {
   const [showRelatorioSLA, setShowRelatorioSLA] = useState(false);
   const [tipoRelatorioSLA, setTipoRelatorioSLA] = useState(null);
 
+  // Função para obter data atual no timezone de São Paulo
+  const getDataAtualSP = () => {
+    return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  };
+
   // Detect dark mode changes
   useEffect(() => {
     const checkDarkMode = () => {
