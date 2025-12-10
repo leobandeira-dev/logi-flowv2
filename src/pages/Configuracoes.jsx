@@ -1803,13 +1803,28 @@ export default function Configuracoes() {
                 <p className="text-gray-300 text-lg">{currentSlideData.subtitle}</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setShowPresentation(false)}
-              className="bg-white text-gray-900 border-2 border-gray-700 hover:bg-gray-100 text-lg px-6 py-3 font-semibold"
-            >
-              Fechar
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => {
+                  const style = document.createElement('style');
+                  style.innerHTML = '@page { margin: 0; size: landscape; }';
+                  document.head.appendChild(style);
+                  window.print();
+                  setTimeout(() => document.head.removeChild(style), 1000);
+                }}
+                className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-lg font-semibold text-lg px-6 py-3"
+              >
+                <Download className="w-5 h-5 mr-2" />
+                Baixar PDF
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowPresentation(false)}
+                className="bg-white text-gray-900 border-2 border-gray-700 hover:bg-gray-100 text-lg px-6 py-3 font-semibold"
+              >
+                Fechar
+              </Button>
+            </div>
           </div>
 
           {/* Content */}
