@@ -97,6 +97,76 @@ export default function Configuracoes() {
   // Slides Atualizados da Apresentação Comercial
   const slides = [
     {
+      title: "Apresentação Institucional",
+      subtitle: "Sistema de Gestão Logística Integrada",
+      icon: Building2,
+      content: (
+        <div className="min-h-[600px] flex flex-col items-center justify-center">
+          <div className="text-center mb-12">
+            {empresa?.logo_url && (
+              <div className="mb-8">
+                <img
+                  src={empresa.logo_url}
+                  alt={empresa.nome_fantasia || "Logo"}
+                  className="h-32 mx-auto object-contain"
+                />
+              </div>
+            )}
+            <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-cyan-600 via-blue-600 to-blue-800 bg-clip-text text-transparent">
+              {empresa?.nome_fantasia || "TRANSUL TRANSPORTE"}
+            </h1>
+            <div className="w-32 h-1 bg-gradient-to-r from-cyan-500 to-blue-600 mx-auto mb-8" />
+            <p className="text-3xl text-gray-700 font-light mb-4">
+              Sistema de Gestão Logística Integrada
+            </p>
+            <p className="text-xl text-gray-600 mb-12">
+              Processos Visuais • Métricas Objetivas • Melhoria Contínua
+            </p>
+          </div>
+
+          <div className="grid grid-cols-4 gap-6 w-full max-w-5xl">
+            <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-cyan-500 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center">
+                <Activity className="w-8 h-8 text-white" />
+              </div>
+              <p className="font-bold text-2xl text-cyan-700 mb-1">20+</p>
+              <p className="text-sm text-gray-600">Módulos Integrados</p>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-blue-500 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <p className="font-bold text-2xl text-blue-700 mb-1">4</p>
+              <p className="text-sm text-gray-600">Perfis de Usuário</p>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-blue-600 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                <Trophy className="w-8 h-8 text-white" />
+              </div>
+              <p className="font-bold text-2xl text-blue-700 mb-1">100%</p>
+              <p className="text-sm text-gray-600">Gamificado</p>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-blue-700 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center">
+                <Target className="w-8 h-8 text-white" />
+              </div>
+              <p className="font-bold text-2xl text-blue-800 mb-1">95%+</p>
+              <p className="text-sm text-gray-600">Meta SLA</p>
+            </div>
+          </div>
+
+          <div className="mt-12 text-center">
+            <p className="text-gray-600 text-lg">
+              {new Date().toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+          </div>
+        </div>
+      )
+    },
+    {
       title: "Sistema de Gestão Logística Integrada",
       subtitle: "Transforme sua operação com tecnologia e inteligência",
       icon: Presentation,
@@ -1783,6 +1853,32 @@ export default function Configuracoes() {
               >
                 <Presentation className="w-5 h-5 mr-2" />
                 Ver Apresentação
+              </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    const { exportarApresentacaoPdf } = await import('@/functions/exportarApresentacaoPdf');
+                    const response = await exportarApresentacaoPdf({});
+                    
+                    const blob = new Blob([response.data], { type: 'application/pdf' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'Apresentacao_Sistema_Logistica.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                  } catch (error) {
+                    console.error('Erro ao exportar PDF:', error);
+                    alert('Erro ao gerar PDF. Tente novamente.');
+                  }
+                }}
+                variant="outline"
+                className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+              >
+                <Download className="w-5 h-5 mr-2" />
+                Baixar PDF
               </Button>
 
             </div>
