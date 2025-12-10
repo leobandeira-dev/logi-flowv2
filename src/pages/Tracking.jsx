@@ -55,6 +55,7 @@ import PlanilhaView from "../components/tracking/PlanilhaView";
 import FiltrosPredefinidos from "../components/filtros/FiltrosPredefinidos";
 import PaginacaoControles from "../components/filtros/PaginacaoControles";
 import ExpurgoModal from "../components/tracking/ExpurgoModal";
+import FiltroDataPeriodo from "../components/filtros/FiltroDataPeriodo";
 
 const statusTrackingConfig = {
   aguardando_agendamento: { label: "Aguardando Agendamento", color: "bg-gray-500", icon: Clock },
@@ -1121,6 +1122,18 @@ export default function Tracking() {
             <CardContent className="pt-4 pb-4">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="md:col-span-4">
+                  <FiltroDataPeriodo
+                    periodoSelecionado={periodoSelecionado}
+                    onPeriodoChange={setPeriodoSelecionado}
+                    dataInicio={filters.dataInicio}
+                    dataFim={filters.dataFim}
+                    onDataInicioChange={(val) => setFilters({...filters, dataInicio: val})}
+                    onDataFimChange={(val) => setFilters({...filters, dataFim: val})}
+                    isDark={isDark}
+                  />
+                </div>
+
+                <div className="md:col-span-4">
                   <Label className="text-xs mb-2 block" style={{ color: theme.textMuted }}>Tipos de Ordem (múltiplos)</Label>
                   <div className="flex flex-wrap gap-2">
                     {[
@@ -1311,52 +1324,21 @@ export default function Tracking() {
                   </Select>
                 </div>
 
-                <div>
-                  <Label className="text-xs" style={{ color: theme.textMuted }}>Data Início</Label>
-                  <Input
-                    type="date"
-                    value={filters.dataInicio}
-                    onChange={(e) => setFilters({...filters, dataInicio: e.target.value})}
-                    className="h-8 text-sm"
-                    style={{ backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }}
-                  />
-                </div>
 
-                <div>
-                  <Label className="text-xs" style={{ color: theme.textMuted }}>Data Fim</Label>
-                  <Input
-                    type="date"
-                    value={filters.dataFim}
-                    onChange={(e) => setFilters({...filters, dataFim: e.target.value})}
-                    className="h-8 text-sm"
-                    style={{ backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-xs" style={{ color: theme.textMuted }}>Tipo</Label>
-                  <Select value={filters.tipoRegistro} onValueChange={(value) => setFilters({...filters, tipoRegistro: value})}>
-                    <SelectTrigger className="h-8 text-sm" style={{ backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }}>
-                      <SelectValue placeholder="Todos" />
-                    </SelectTrigger>
-                    <SelectContent style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
-                      <SelectItem value={null} style={{ color: theme.text }}>Todos</SelectItem>
-                      <SelectItem value="coleta" style={{ color: theme.text }}>Coleta</SelectItem>
-                      <SelectItem value="ordem" style={{ color: theme.text }}>Ordem de Carga</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
               <div className="flex justify-end mt-3 gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setFilters({
-                    statusTracking: "", origem: "", destino: "",
-                    dataInicio: "", dataFim: "", frota: "", operacoesIds: [], modalidadeCarga: "",
-                    tiposOrdem: [], diariaCarregamento: "", diariaDescarga: "", tipoRegistro: "",
-                    tiposOrdemFiltro: ["carregamento"]
-                  })}
+                  onClick={() => {
+                    setFilters({
+                      statusTracking: "", origem: "", destino: "",
+                      dataInicio: "", dataFim: "", frota: "", operacoesIds: [], modalidadeCarga: "",
+                      tiposOrdem: [], diariaCarregamento: "", diariaDescarga: "", tipoRegistro: "",
+                      tiposOrdemFiltro: ["carregamento"]
+                    });
+                    setPeriodoSelecionado("");
+                  }}
                   className="h-7 text-xs"
                   style={{
                     backgroundColor: 'transparent',
