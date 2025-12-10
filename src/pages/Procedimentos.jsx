@@ -17,12 +17,14 @@ import {
 import { 
   InstrucaoOrdensCarregamentoDetalhada, 
   InstrucaoTrackingDetalhada 
-} from "../components/procedimentos/DocumentosDetalhados";
+} from "../components/procedimentos/DocumentosDetalhadosABNT";
 import { 
   InstrucaoOcorrenciasDetalhada, 
   ManualSistemaCompleto 
 } from "../components/procedimentos/DocumentosComplementares";
-import { AnexosProcedimentoTransportes } from "../components/procedimentos/AnexosPOLOG001";
+import { AnexosProcedimentoTransportes } from "../components/procedimentos/AnexosPOLOG001ABNT";
+import { ProcedimentoGestaoTransportes as ProcedimentoGestaoTransportesABNT } from "../components/procedimentos/ProcedimentoTransportesABNT";
+import { FormularioOrdemCarregamento as FormularioABNT } from "../components/procedimentos/FormularioABNT";
 
 export default function Procedimentos() {
   const [user, setUser] = useState(null);
@@ -253,7 +255,7 @@ export default function Procedimentos() {
         {/* Conteúdo para Impressão */}
         <div className="print-content">
           {procedimentoSelecionado === "gestao_transportes" && (
-            <ProcedimentoGestaoTransportes theme={theme} isDark={isDark} />
+            <ProcedimentoGestaoTransportesABNT theme={theme} isDark={isDark} />
           )}
           {procedimentoSelecionado === "anexos" && (
             <AnexosProcedimentoTransportes theme={theme} isDark={isDark} />
@@ -268,7 +270,7 @@ export default function Procedimentos() {
             <InstrucaoOcorrenciasDetalhada theme={theme} isDark={isDark} />
           )}
           {procedimentoSelecionado === "formulario" && (
-            <FormularioOrdemCarregamento theme={theme} isDark={isDark} />
+            <FormularioABNT theme={theme} isDark={isDark} />
           )}
           {procedimentoSelecionado === "manual" && (
             <ManualSistemaCompleto theme={theme} isDark={isDark} />
