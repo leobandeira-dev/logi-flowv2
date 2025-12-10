@@ -73,16 +73,10 @@ export default function Apresentacao() {
         <div className="slide-content flex flex-col items-center justify-center h-full bg-gradient-to-br from-blue-50 via-white to-cyan-50">
           <div className="text-center max-w-5xl mx-auto px-8">
             <div className="mb-12">
-              <h1 className="text-8xl font-bold mb-3 bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 bg-clip-text text-transparent">
+              <h1 className="text-8xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 bg-clip-text text-transparent">
                 LogiFlow
               </h1>
-              <p className="text-3xl text-gray-700 font-light mb-6">
-                By LAF Logística
-              </p>
               <div className="w-48 h-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 mx-auto mb-6" />
-              <p className="text-xl text-gray-600 font-medium mb-2">
-                CNPJ 34.579.341/0001-85
-              </p>
             </div>
 
             <div className="mb-12">
@@ -132,9 +126,13 @@ export default function Apresentacao() {
             </div>
 
             <div className="bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 text-white p-6 rounded-xl shadow-xl">
-              <p className="text-xl font-semibold">
-                Desenvolvido por Leonardo Silva Bandeira | CPF 042.332.453-52
+              <p className="text-2xl font-bold mb-2">By LAF Logística</p>
+              <p className="text-lg opacity-90">CNPJ 34.579.341/0001-85</p>
+              <div className="w-32 h-0.5 bg-white/30 mx-auto my-3" />
+              <p className="text-lg font-semibold">
+                Leonardo Silva Bandeira | CPF 042.332.453-52
               </p>
+              <p className="text-sm opacity-80">Product Owner</p>
             </div>
 
             <p className="text-gray-500 mt-12 text-lg font-medium">

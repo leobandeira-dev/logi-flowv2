@@ -108,16 +108,10 @@ export default function Configuracoes() {
               <div className="inline-block bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-3 rounded-full mb-6 shadow-lg">
                 <p className="text-lg font-semibold">Consultoria • Tecnologia • Transformação Digital</p>
               </div>
-              <h1 className="text-8xl font-bold mb-3 bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 bg-clip-text text-transparent">
+              <h1 className="text-8xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 bg-clip-text text-transparent">
                 LogiFlow
               </h1>
-              <p className="text-4xl text-gray-700 font-light mb-6">
-                By LAF Logística
-              </p>
               <div className="w-48 h-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 mx-auto mb-6" />
-              <p className="text-xl text-gray-600 font-medium mb-8">
-                CNPJ 34.579.341/0001-85
-              </p>
             </div>
 
             <div className="mb-12">
@@ -167,6 +161,9 @@ export default function Configuracoes() {
             </div>
 
             <div className="bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 text-white p-8 rounded-2xl shadow-2xl mb-8">
+              <p className="text-3xl font-bold mb-2">By LAF Logística</p>
+              <p className="text-xl opacity-90 mb-4">CNPJ 34.579.341/0001-85</p>
+              <div className="w-40 h-0.5 bg-white/30 mx-auto my-4" />
               <p className="text-2xl font-bold mb-2">Leonardo Silva Bandeira</p>
               <p className="text-lg opacity-90">CPF 042.332.453-52 | Product Owner</p>
             </div>
