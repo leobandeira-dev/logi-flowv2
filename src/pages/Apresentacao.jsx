@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import { exportarApresentacaoPdf } from "@/functions/exportarApresentacaoPdf";
 import {
   ChevronLeft,
   ChevronRight,
@@ -691,7 +692,6 @@ export default function Apresentacao() {
               <Button
                 onClick={async () => {
                   try {
-                    const { exportarApresentacaoPdf } = await import('@/functions/exportarApresentacaoPdf');
                     const response = await exportarApresentacaoPdf({});
                     
                     const blob = new Blob([response.data], { type: 'application/pdf' });

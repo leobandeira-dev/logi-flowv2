@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Fase2Discover from "../components/documentacao/Fase2Discover";
 import Fase3Build from "../components/documentacao/Fase3Build";
+import { exportarApresentacaoPdf } from "@/functions/exportarApresentacaoPdf";
 import {
   Building2,
   Upload,
@@ -1807,7 +1808,6 @@ export default function Configuracoes() {
               <Button
                 onClick={async () => {
                   try {
-                    const { exportarApresentacaoPdf } = await import('@/functions/exportarApresentacaoPdf');
                     const response = await exportarApresentacaoPdf({});
                     
                     const blob = new Blob([response.data], { type: 'application/pdf' });
