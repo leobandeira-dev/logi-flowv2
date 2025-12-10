@@ -33,7 +33,9 @@ import {
   ArrowUpDown,
   ChevronDown,
   CheckSquare,
-  MoreHorizontal
+  MoreHorizontal,
+  FileText,
+  Send
 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
@@ -145,6 +147,28 @@ export default function CRM() {
   const handleGerarProposta = (lead) => {
     const url = createPageUrl("Precificacao") + `?lead_id=${lead.id}`;
     window.location.href = url;
+  };
+
+  const handleBaixarProposta = async (lead) => {
+    try {
+      const { gerarPropostaComercialPdf } = await import('@/functions/gerarPropostaComercialPdf');
+      const response = await gerarPropostaComercialPdf({ lead_id: lead.id });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Proposta_${lead.razao_social.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      
+      toast.success("Proposta gerada com sucesso!");
+    } catch (error) {
+      console.error('Erro ao gerar proposta:', error);
+      toast.error('Erro ao gerar proposta. Tente novamente.');
+    }
   };
 
   const leadsFiltrados = leads.filter(lead => {
@@ -913,8 +937,39 @@ function LeadCard({ lead, todasEtapas, onMudarStatus, onGerarProposta, onVerDeta
               className="flex items-center gap-1"
             >
               <Calculator className="w-3 h-3" />
-              {lead.valor_total_proposta ? "Editar" : "Proposta"}
+              {lead.valor_total_proposta ? "Editar" : "Criar"}
             </Button>
+            {lead.valor_total_proposta && (
+              <Button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  try {
+                    const { gerarPropostaComercialPdf } = await import('@/functions/gerarPropostaComercialPdf');
+                    const response = await gerarPropostaComercialPdf({ lead_id: lead.id });
+                    
+                    const blob = new Blob([response.data], { type: 'application/pdf' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Proposta_${lead.razao_social.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                    
+                    toast.success("Proposta baixada!");
+                  } catch (error) {
+                    console.error('Erro:', error);
+                    toast.error('Erro ao gerar PDF');
+                  }
+                }}
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 flex items-center gap-1"
+              >
+                <FileText className="w-3 h-3" />
+                PDF
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
