@@ -1056,7 +1056,60 @@ export function ManualSistemaCompleto({ theme, isDark }) {
               </p>
               
               <div className="space-y-3 text-sm text-black">
-...
+                <div>
+                  <p className="font-semibold text-black">6.1 Funções Principais:</p>
+                  <ul className="ml-6 list-disc space-y-1 text-xs text-black">
+                    <li>Criar ordens (completa, oferta, lote)</li>
+                    <li>Visualizar e filtrar ordens</li>
+                    <li>Editar campos inline (clique direto na tabela)</li>
+                    <li>Exportar ofertas em PDF</li>
+                    <li>Imprimir ordem de coleta</li>
+                    <li>Ver detalhes completos</li>
+                    <li>Excluir ordem (se permitido)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-black">6.2 Filtros Disponíveis:</p>
+                  <ul className="ml-6 list-disc text-xs text-black">
+                    <li>Por Operação (múltipla seleção)</li>
+                    <li>Por Tipo de Registro (Oferta, Negociando, Alocado)</li>
+                    <li>Por Status</li>
+                    <li>Por Status de Tracking</li>
+                    <li>Por Origem/Destino</li>
+                    <li>Por Período (data início/fim)</li>
+                    <li>Busca livre (nº ordem, cliente, cidade)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-black">6.3 Ações Rápidas:</p>
+                  <table className="w-full text-[10px] border-2 border-black mt-2">
+                    <tbody>
+                      <tr>
+                        <td className="border border-black p-2 font-semibold text-black">Clique no campo</td>
+                        <td className="border border-black p-2 text-black">Edita inline (modalidade, tipo veículo, placas, frete, agendamentos, obs)</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-black p-2 font-semibold text-black">Botão Olho</td>
+                        <td className="border border-black p-2 text-black">Ver detalhes completos (popup)</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-black p-2 font-semibold text-black">Botão Lápis</td>
+                        <td className="border border-black p-2 text-black">Editar completo (formulário full)</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-black p-2 font-semibold text-black">Botão Impressora</td>
+                        <td className="border border-black p-2 text-black">Imprimir ordem de coleta</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-black p-2 font-semibold text-black">Botão PDF</td>
+                        <td className="border border-black p-2 text-black">Exportar oferta (para ofertar a parceiros)</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
                 <div className="bg-white border-2 border-black rounded p-3">
                   <p className="font-semibold text-xs text-black">LEIA A IT-LOG-001 PARA:</p>
                   <p className="text-xs text-black">Passo a passo detalhado de criação, edição e validação de ordens</p>
@@ -1071,7 +1124,64 @@ export function ManualSistemaCompleto({ theme, isDark }) {
               </p>
               
               <div className="space-y-3 text-sm text-black">
-...
+                <div>
+                  <p className="font-semibold text-black">7.1 Funções Principais:</p>
+                  <ul className="ml-6 list-disc space-y-1 text-xs text-black">
+                    <li>Monitorar cargas em tempo real</li>
+                    <li>Atualizar status de tracking (10 estágios)</li>
+                    <li>Controlar SLA de carregamento e descarga</li>
+                    <li>Registrar ocorrências diretamente</li>
+                    <li>Chat com motorista (WhatsApp/SMS)</li>
+                    <li>Upload de documentos (CT-e, MDF-e, Comprovante)</li>
+                    <li>Expurgar atrasos justificados</li>
+                    <li>Exportar relatórios (PDF, Excel)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-black">7.2 Abas de Visualização:</p>
+                  <table className="w-full text-[10px] border-2 border-black mt-2">
+                    <tbody>
+                      <tr>
+                        <td className="border border-black p-2 font-semibold text-black">Todas</td>
+                        <td className="border border-black p-2 text-black">Exibe todas as ordens (filtros aplicados)</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-black p-2 font-semibold text-black">Ativas</td>
+                        <td className="border border-black p-2 text-black">Aguardando carregamento ou em carregamento</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-black p-2 font-semibold text-black">Em Viagem</td>
+                        <td className="border border-black p-2 text-black">Carregado, em viagem ou chegou destino</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-black p-2 font-semibold text-black">Descarregando</td>
+                        <td className="border border-black p-2 text-black">Descarga agendada, em descarga</td>
+                      </tr>
+                      <tr>
+                        <td className="border border-black p-2 font-semibold text-black">Finalizadas</td>
+                        <td className="border border-black p-2 text-black">Descarga realizada e finalizado</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-black">7.3 Visualizações:</p>
+                  <ul className="ml-6 list-disc text-xs text-black">
+                    <li><strong>Tabela Completa:</strong> Todos os campos (ideal para análise detalhada)</li>
+                    <li><strong>Modo Planilha:</strong> Visão compacta (ideal para múltiplas ordens, atualização rápida)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-black">7.4 Métricas em Tempo Real:</p>
+                  <p className="text-xs ml-4 text-black">
+                    Cards superiores exibem: Total de Ordens, Em Progresso, SLA Carregamento, SLA Descarga, 
+                    Média de Tempo de Carregamento/Descarga
+                  </p>
+                </div>
+
                 <div className="bg-white border-2 border-black rounded p-3">
                   <p className="font-semibold text-xs text-black">LEIA A IT-LOG-002 PARA:</p>
                   <p className="text-xs text-black">Sequência correta de status, controle de SLA, procedimento de expurgo</p>
@@ -1190,7 +1300,58 @@ export function ManualSistemaCompleto({ theme, isDark }) {
                   <CardContent className="p-4">
                     <h4 className="font-bold text-sm mb-2 text-black">Ordens de Carregamento (IT-LOG-001)</h4>
                     <ul className="text-xs space-y-1 list-disc ml-4 text-black">
-...
+                      <li>Sempre vincule uma <strong>Operação</strong> (garante SLA correto)</li>
+                      <li>Use <strong>edição inline</strong> para agilizar (80% mais rápido que formulário)</li>
+                      <li>Preencha <strong>observações</strong> para facilitar passagem de turno</li>
+                      <li>Use <strong>ofertas de carga</strong> para negociar com parceiros externos</li>
+                      <li>Revise tipo de operação <strong>(CIF/FOB)</strong> antes de salvar</li>
+                      <li>Vincule NFs logo na criação (evita retrabalho)</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                <Card style={{ backgroundColor: '#ffffff', borderColor: '#000000', border: '1px solid #000000' }}>
+                  <CardContent className="p-4">
+                    <h4 className="font-bold text-sm mb-2 text-black">Tracking (IT-LOG-002)</h4>
+                    <ul className="text-xs space-y-1 list-disc ml-4 text-black">
+                      <li>Atualize status <strong>assim que eventos ocorrem</strong> (não deixe acumular)</li>
+                      <li>Use atalho <strong>"H"</strong> em datas para preencher hora atual instantaneamente</li>
+                      <li>Registre ocorrências <strong>imediatamente</strong> ao identificar problemas</li>
+                      <li>Mantenha <strong>comunicação ativa</strong> com motorista via chat</li>
+                      <li>Anexe comprovantes assim que disponíveis</li>
+                      <li>Monitore alertas de SLA (cards vermelhos = atenção!)</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                <Card style={{ backgroundColor: '#ffffff', borderColor: '#000000', border: '1px solid #000000' }}>
+                  <CardContent className="p-4">
+                    <h4 className="font-bold text-sm mb-2 text-black">Ocorrências (IT-LOG-003)</h4>
+                    <ul className="text-xs space-y-1 list-disc ml-4 text-black">
+                      <li>Documente <strong>TODAS</strong> as ocorrências (mesmo resolvidas rápido)</li>
+                      <li>Anexe <strong>evidências sempre</strong> (foto, email, autorização)</li>
+                      <li>Trate dentro do <strong>prazo SLA</strong> do tipo</li>
+                      <li>Para recorrências, faça <strong>análise de causa raiz</strong> (5 Porquês)</li>
+                      <li>Registre <strong>lições aprendidas</strong> nas observações</li>
+                      <li>Ocorrências críticas: <strong>escalar imediatamente</strong> para gestão</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                <Card style={{ backgroundColor: '#ffffff', borderColor: '#000000', border: '1px solid #000000' }}>
+                  <CardContent className="p-4">
+                    <h4 className="font-bold text-sm mb-2 text-black">WMS (Armazém)</h4>
+                    <ul className="text-xs space-y-1 list-disc ml-4 text-black">
+                      <li>Sempre <strong>importe XML</strong> (evita 95% de erros de digitação)</li>
+                      <li>Confira <strong>peso e volumes</strong> antes de finalizar recebimento</li>
+                      <li>Use <strong>etiquetas mãe</strong> para agrupar volumes de mesma rota</li>
+                      <li>Mantenha <strong>organização de endereçamento</strong> (A1, A2, B1...)</li>
+                      <li>Imprima etiquetas <strong>imediatamente após recebimento</strong></li>
+                      <li>Confira notas na expedição antes de liberar veículo</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+
                 <Card style={{ backgroundColor: '#ffffff', borderColor: '#000000', border: '1px solid #000000' }}>
                   <CardContent className="p-4">
                     <h4 className="font-bold text-sm mb-2 text-black">Portal B2B (Coletas)</h4>
