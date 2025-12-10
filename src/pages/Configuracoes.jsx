@@ -176,7 +176,7 @@ export default function Configuracoes() {
               <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-slate-600 to-transparent my-6" />
               <div className="text-center">
                 <p className="text-sm text-slate-400 uppercase tracking-wider mb-2">Stack Tecnológica</p>
-                <p className="text-base text-slate-300">React • Base44 • PostgreSQL • Deno Deploy</p>
+                <p className="text-base text-slate-300">React • TypeScript • PostgreSQL • Deno Deploy</p>
               </div>
             </div>
 

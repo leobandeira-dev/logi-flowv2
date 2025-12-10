@@ -140,8 +140,8 @@ export default function Apresentacao() {
               </div>
               <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-slate-600 to-transparent my-4" />
               <div className="text-center">
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Tecnologia</p>
-                <p className="text-sm text-slate-300">React • Base44 • PostgreSQL • Deno</p>
+                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Stack Tecnológica</p>
+                <p className="text-sm text-slate-300">React • TypeScript • PostgreSQL • Deno Deploy</p>
               </div>
             </div>
 
@@ -696,10 +696,11 @@ export default function Apresentacao() {
                   window.print();
                   setTimeout(() => document.head.removeChild(style), 1000);
                 }}
-                className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
+                size="lg"
               >
-                <Printer className="w-5 h-5 mr-2" />
-                Imprimir PDF (Sem Margens)
+                <Download className="w-5 h-5 mr-2" />
+                Baixar PDF
               </Button>
               <Button
                 onClick={() => navigate(createPageUrl("Configuracoes"))}
