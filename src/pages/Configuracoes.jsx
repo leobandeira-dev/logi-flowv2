@@ -827,75 +827,75 @@ export default function Configuracoes() {
       content: (
         <div className="space-y-8">
           <div className="grid grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-lg shadow-xl">
+            <div className="bg-white p-8 rounded-lg shadow-xl border-2 border-gray-300">
               <h3 className="font-bold text-2xl mb-6 flex items-center gap-3 text-gray-900">
                 <AlertCircle className="w-8 h-8 text-cyan-600" />
                 Tipos de Ocorrências
               </h3>
               <div className="space-y-3">
-                <div className="p-4 bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl border-l-4 border-cyan-600">
+                <div className="p-4 bg-white rounded-lg border-l-4 border-cyan-600 shadow">
                   <div className="flex items-center gap-2 mb-1">
                     <Navigation className="w-5 h-5 text-cyan-700" />
-                    <p className="font-bold text-cyan-900">Tracking (Viagem)</p>
+                    <p className="font-bold text-gray-900">Tracking (Viagem)</p>
                   </div>
                   <p className="text-sm text-gray-700">Problemas na estrada, atrasos, acidentes</p>
                 </div>
-                <div className="p-4 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-xl border-l-4 border-cyan-600">
+                <div className="p-4 bg-white rounded-lg border-l-4 border-blue-500 shadow">
                   <div className="flex items-center gap-2 mb-1">
-                    <Workflow className="w-5 h-5 text-cyan-700" />
-                    <p className="font-bold text-cyan-900">Fluxo (Processos)</p>
+                    <Workflow className="w-5 h-5 text-blue-600" />
+                    <p className="font-bold text-gray-900">Fluxo (Processos)</p>
                   </div>
                   <p className="text-sm text-gray-700">Bloqueios em etapas internas, documentação</p>
                 </div>
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-l-4 border-blue-600">
+                <div className="p-4 bg-white rounded-lg border-l-4 border-blue-700 shadow">
                   <div className="flex items-center gap-2 mb-1">
                     <Settings className="w-5 h-5 text-blue-700" />
-                    <p className="font-bold text-blue-900">Configuráveis</p>
+                    <p className="font-bold text-gray-900">Configuráveis</p>
                   </div>
                   <p className="text-sm text-gray-700">Tipos personalizados por empresa</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-700 to-blue-800 text-white p-8 rounded-lg shadow-2xl">
-              <h3 className="font-bold text-2xl mb-6">Níveis de Gravidade</h3>
+            <div className="bg-white p-8 rounded-lg shadow-xl border-2 border-blue-600">
+              <h3 className="font-bold text-2xl mb-6 text-gray-900">Níveis de Gravidade</h3>
               <div className="space-y-4">
-                <div className="p-4 bg-white/20 rounded-xl border-2 border-white/40">
+                <div className="p-4 bg-white rounded-lg border-2 border-blue-400">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-lg">Baixa</span>
-                    <span className="text-sm">-5 pts</span>
+                    <span className="font-bold text-lg text-gray-900">Baixa</span>
+                    <span className="text-sm text-blue-600">-5 pts</span>
                   </div>
-                  <p className="text-sm opacity-90">Impacto mínimo, resolução rápida</p>
+                  <p className="text-sm text-gray-700">Impacto mínimo, resolução rápida</p>
                 </div>
-                <div className="p-4 bg-white/20 rounded-xl border-2 border-white/40">
+                <div className="p-4 bg-white rounded-lg border-2 border-blue-500">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-lg">Média</span>
-                    <span className="text-sm">-10 pts</span>
+                    <span className="font-bold text-lg text-gray-900">Média</span>
+                    <span className="text-sm text-blue-600">-10 pts</span>
                   </div>
-                  <p className="text-sm opacity-90">Requer atenção, prazo definido</p>
+                  <p className="text-sm text-gray-700">Requer atenção, prazo definido</p>
                 </div>
-                <div className="p-4 bg-white/20 rounded-xl border-2 border-white/40">
+                <div className="p-4 bg-white rounded-lg border-2 border-blue-600">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-lg">Alta</span>
-                    <span className="text-sm">-20 pts</span>
+                    <span className="font-bold text-lg text-gray-900">Alta</span>
+                    <span className="text-sm text-blue-600">-20 pts</span>
                   </div>
-                  <p className="text-sm opacity-90">Urgente, impacto significativo</p>
+                  <p className="text-sm text-gray-700">Urgente, impacto significativo</p>
                 </div>
-                <div className="p-4 bg-white/20 rounded-xl border-2 border-white/40">
+                <div className="p-4 bg-white rounded-lg border-2 border-blue-700">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-lg">Crítica</span>
-                    <span className="text-sm">-40 pts</span>
+                    <span className="font-bold text-lg text-gray-900">Crítica</span>
+                    <span className="text-sm text-blue-700">-40 pts</span>
                   </div>
-                  <p className="text-sm opacity-90">Bloqueio total, ação imediata</p>
+                  <p className="text-sm text-gray-700">Bloqueio total, ação imediata</p>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl border-t-4 border-cyan-500">
               <div className="flex items-center gap-3 mb-4">
-                <Camera className="w-8 h-8 text-blue-600" />
+                <Camera className="w-8 h-8 text-cyan-600" />
                 <h4 className="font-bold text-xl text-gray-900">Evidências</h4>
               </div>
               <ul className="space-y-2 text-sm text-gray-900">
@@ -906,9 +906,9 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl border-t-4 border-cyan-600">
               <div className="flex items-center gap-3 mb-4">
-                <Users className="w-8 h-8 text-cyan-600" />
+                <Users className="w-8 h-8 text-cyan-700" />
                 <h4 className="font-bold text-xl text-gray-900">Atribuição</h4>
               </div>
               <ul className="space-y-2 text-sm text-gray-900">
@@ -919,9 +919,9 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl border-t-4 border-blue-600">
               <div className="flex items-center gap-3 mb-4">
-                <BarChart3 className="w-8 h-8 text-blue-600" />
+                <BarChart3 className="w-8 h-8 text-blue-700" />
                 <h4 className="font-bold text-xl text-gray-900">Análises</h4>
               </div>
               <ul className="space-y-2 text-sm text-gray-900">
@@ -933,31 +933,31 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-cyan-500 to-blue-700 text-white p-8 rounded-lg shadow-2xl">
-            <h3 className="font-bold text-2xl mb-6 flex items-center gap-3">
-              <CheckCircle2 className="w-8 h-8" />
+          <div className="bg-white p-8 rounded-lg shadow-xl border-2 border-cyan-600">
+            <h3 className="font-bold text-2xl mb-6 flex items-center gap-3 text-gray-900">
+              <CheckCircle2 className="w-8 h-8 text-cyan-700" />
               Fluxo de Resolução
             </h3>
             <div className="grid grid-cols-5 gap-4">
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-white/30 mx-auto mb-3 flex items-center justify-center text-white font-bold text-xl border-2 border-white">1</div>
-                <p className="font-semibold">Registro</p>
+                <div className="w-16 h-16 rounded-full bg-cyan-500 mx-auto mb-3 flex items-center justify-center text-white font-bold text-xl border-2 border-cyan-600">1</div>
+                <p className="font-semibold text-gray-900">Registro</p>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-white/30 mx-auto mb-3 flex items-center justify-center text-white font-bold text-xl border-2 border-white">2</div>
-                <p className="font-semibold">Atribuição</p>
+                <div className="w-16 h-16 rounded-full bg-cyan-600 mx-auto mb-3 flex items-center justify-center text-white font-bold text-xl border-2 border-cyan-700">2</div>
+                <p className="font-semibold text-gray-900">Atribuição</p>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-white/30 mx-auto mb-3 flex items-center justify-center text-white font-bold text-xl border-2 border-white">3</div>
-                <p className="font-semibold">Tratamento</p>
+                <div className="w-16 h-16 rounded-full bg-blue-600 mx-auto mb-3 flex items-center justify-center text-white font-bold text-xl border-2 border-blue-700">3</div>
+                <p className="font-semibold text-gray-900">Tratamento</p>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-white/30 mx-auto mb-3 flex items-center justify-center text-white font-bold text-xl border-2 border-white">4</div>
-                <p className="font-semibold">Resolução</p>
+                <div className="w-16 h-16 rounded-full bg-blue-700 mx-auto mb-3 flex items-center justify-center text-white font-bold text-xl border-2 border-blue-800">4</div>
+                <p className="font-semibold text-gray-900">Resolução</p>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-white/30 mx-auto mb-3 flex items-center justify-center text-white font-bold text-xl border-2 border-white">5</div>
-                <p className="font-semibold">Análise</p>
+                <div className="w-16 h-16 rounded-full bg-blue-800 mx-auto mb-3 flex items-center justify-center text-white font-bold text-xl border-2 border-blue-900">5</div>
+                <p className="font-semibold text-gray-900">Análise</p>
               </div>
             </div>
           </div>
