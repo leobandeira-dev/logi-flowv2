@@ -291,38 +291,38 @@ export default function Configuracoes() {
       content: (
         <div className="min-h-[600px] flex flex-col justify-center">
           <div className="grid grid-cols-5 gap-4 mb-12">
-            <div className="bg-white rounded-2xl p-6 shadow-xl border-t-4 border-cyan-500">
+            <div className="bg-white rounded-lg p-6 shadow-xl border-t-4 border-cyan-500">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">01</div>
               <h3 className="font-bold text-lg text-gray-900 mb-2 text-center">Ordem Completa</h3>
               <p className="text-xs text-gray-600 text-center">Formulário completo com 60+ campos, motorista e veículo alocados</p>
             </div>
             
-            <div className="bg-white rounded-2xl p-6 shadow-xl border-t-4 border-cyan-400">
+            <div className="bg-white rounded-lg p-6 shadow-xl border-t-4 border-cyan-400">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">02</div>
               <h3 className="font-bold text-lg text-gray-900 mb-2 text-center">Oferta de Carga</h3>
               <p className="text-xs text-gray-600 text-center">Cadastro rápido sem motorista, conversão em ordem completa</p>
             </div>
             
-            <div className="bg-white rounded-2xl p-6 shadow-xl border-t-4 border-blue-500">
+            <div className="bg-white rounded-lg p-6 shadow-xl border-t-4 border-blue-500">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">03</div>
               <h3 className="font-bold text-lg text-gray-900 mb-2 text-center">Lote Excel</h3>
               <p className="text-xs text-gray-600 text-center">Importação em massa, template padronizado, validação automática</p>
             </div>
             
-            <div className="bg-white rounded-2xl p-6 shadow-xl border-t-4 border-blue-600">
+            <div className="bg-white rounded-lg p-6 shadow-xl border-t-4 border-blue-600">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">04</div>
               <h3 className="font-bold text-lg text-gray-900 mb-2 text-center">OCR de PDF</h3>
               <p className="text-xs text-gray-600 text-center">Extração inteligente via IA, sem digitação manual</p>
             </div>
             
-            <div className="bg-white rounded-2xl p-6 shadow-xl border-t-4 border-blue-700">
+            <div className="bg-white rounded-lg p-6 shadow-xl border-t-4 border-blue-700">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">05</div>
               <h3 className="font-bold text-lg text-gray-900 mb-2 text-center">Ordens Filhas</h3>
               <p className="text-xs text-gray-600 text-center">Múltiplos destinos vinculados a ordem-mãe</p>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-8 shadow-xl">
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-8 shadow-xl">
             <h3 className="font-bold text-2xl text-gray-900 mb-6 text-center">Recursos Avançados</h3>
             <div className="grid grid-cols-3 gap-6">
               <div className="flex items-start gap-3">
@@ -357,7 +357,7 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          <div className="text-center bg-gradient-to-r from-cyan-600 to-blue-700 text-white p-8 rounded-2xl shadow-2xl">
+          <div className="text-center bg-gradient-to-r from-cyan-600 to-blue-700 text-white p-8 rounded-lg shadow-2xl">
             <p className="text-3xl font-bold mb-3">Redução de 75% no tempo de cadastro</p>
             <p className="text-xl opacity-90">De 18 minutos para apenas 4 minutos por ordem</p>
           </div>
@@ -371,7 +371,7 @@ export default function Configuracoes() {
       content: (
         <div className="grid grid-cols-2 gap-8">
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-2xl shadow-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl">
               <h3 className="font-bold text-2xl mb-4 flex items-center gap-3 text-gray-900">
                 <BarChart3 className="w-8 h-8 text-cyan-600" />
                 Métricas Principais
@@ -398,7 +398,7 @@ export default function Configuracoes() {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-gradient-to-br from-cyan-500 to-blue-700 text-white p-8 rounded-2xl shadow-2xl">
+            <div className="bg-gradient-to-br from-cyan-500 to-blue-700 text-white p-8 rounded-lg shadow-2xl">
               <h3 className="font-bold text-2xl mb-6">Recursos do Dashboard</h3>
               <ul className="space-y-4 text-lg">
                 <li className="flex items-start gap-3">
@@ -424,7 +424,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl">
               <h4 className="font-bold text-xl mb-4 text-gray-900">Filtros Inteligentes</h4>
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex items-center gap-2 p-3 bg-white rounded-lg border-2 border-cyan-500">
@@ -456,7 +456,7 @@ export default function Configuracoes() {
       content: (
         <div className="space-y-8">
           <div className="grid grid-cols-3 gap-6">
-            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-500">
+            <div className="bg-white p-8 rounded-lg shadow-xl border-t-4 border-cyan-500">
               <div className="flex items-center gap-3 mb-4">
                 <FileText className="w-8 h-8 text-cyan-600" />
                 <h3 className="font-bold text-2xl text-gray-900">Ordem Completa</h3>
@@ -469,7 +469,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-600">
+            <div className="bg-white p-8 rounded-lg shadow-xl border-t-4 border-cyan-600">
               <div className="flex items-center gap-3 mb-4">
                 <Package className="w-8 h-8 text-cyan-700" />
                 <h3 className="font-bold text-2xl text-gray-900">Oferta de Carga</h3>
@@ -482,7 +482,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-blue-600">
+            <div className="bg-white p-8 rounded-lg shadow-xl border-t-4 border-blue-600">
               <div className="flex items-center gap-3 mb-4">
                 <FileSpreadsheet className="w-8 h-8 text-blue-700" />
                 <h3 className="font-bold text-2xl text-gray-900">Lote/Excel</h3>
@@ -497,7 +497,7 @@ export default function Configuracoes() {
           </div>
 
           <div className="grid grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-xl">
+            <div className="bg-white p-8 rounded-lg shadow-xl">
               <h3 className="font-bold text-2xl mb-6 flex items-center gap-3 text-gray-900">
                 <Search className="w-7 h-7 text-blue-600" />
                 Ferramentas de Busca
@@ -527,7 +527,7 @@ export default function Configuracoes() {
               </div>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-xl">
+            <div className="bg-white p-8 rounded-lg shadow-xl">
               <h3 className="font-bold text-2xl mb-6 flex items-center gap-3 text-gray-900">
                 <Eye className="w-7 h-7 text-cyan-600" />
                 Ações e Detalhes
@@ -610,24 +610,24 @@ export default function Configuracoes() {
           </div>
 
           <div className="grid grid-cols-3 gap-6 mb-8">
-            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-500">
+            <div className="bg-white p-8 rounded-lg shadow-xl border-t-4 border-cyan-500">
               <MapPin className="w-12 h-12 mx-auto mb-4 text-cyan-600" />
               <h3 className="font-bold text-2xl text-center mb-3 text-gray-900">Localização</h3>
               <p className="text-center text-gray-700">Calculo automático KM restantes via Google Distance Matrix</p>
             </div>
-            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-600">
+            <div className="bg-white p-8 rounded-lg shadow-xl border-t-4 border-cyan-600">
               <Clock className="w-12 h-12 mx-auto mb-4 text-cyan-700" />
               <h3 className="font-bold text-2xl text-center mb-3 text-gray-900">SLA Entrega</h3>
               <p className="text-center text-gray-700">Alertas visuais atraso, expurgo autorizado</p>
             </div>
-            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-blue-600">
+            <div className="bg-white p-8 rounded-lg shadow-xl border-t-4 border-blue-600">
               <MessageCircle className="w-12 h-12 mx-auto mb-4 text-blue-700" />
               <h3 className="font-bold text-2xl text-center mb-3 text-gray-900">Chat Central</h3>
               <p className="text-center text-gray-700">Comunicação bidirecional tempo real</p>
             </div>
           </div>
 
-          <div className="bg-white p-8 rounded-2xl shadow-xl">
+          <div className="bg-white p-8 rounded-lg shadow-xl">
             <h3 className="font-bold text-2xl text-center mb-6 text-gray-900">Múltiplas Visualizações</h3>
             <div className="grid grid-cols-3 gap-6">
               <div className="p-5 bg-white rounded-xl border-2 border-cyan-500">
@@ -654,7 +654,7 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-cyan-600 to-blue-700 text-white p-6 rounded-2xl shadow-2xl text-center">
+          <div className="bg-gradient-to-r from-cyan-600 to-blue-700 text-white p-6 rounded-lg shadow-2xl text-center">
             <p className="text-2xl font-bold">Redução de 70% em ligações telefônicas para consultar status</p>
           </div>
         </div>
@@ -667,19 +667,19 @@ export default function Configuracoes() {
       content: (
         <div className="min-h-[600px] flex flex-col justify-center space-y-8">
           <div className="grid grid-cols-3 gap-6 mb-8">
-            <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-2xl p-6 border-2 border-cyan-500 shadow-xl">
+            <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-lg p-6 border-2 border-cyan-500 shadow-xl">
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">1</div>
               <h3 className="font-bold text-xl text-center text-gray-900 mb-3">Fornecedor Solicita</h3>
               <p className="text-sm text-gray-600 text-center">Upload XMLs NF-e, dados carga, envio aprovação cliente</p>
             </div>
             
-            <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl p-6 border-2 border-blue-500 shadow-xl">
+            <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg p-6 border-2 border-blue-500 shadow-xl">
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">2</div>
               <h3 className="font-bold text-xl text-center text-gray-900 mb-3">Cliente Aprova</h3>
               <p className="text-sm text-gray-600 text-center">Portal aprovações, visualiza detalhes, aprovar/reprovar</p>
             </div>
             
-            <div className="bg-gradient-to-br from-blue-300 to-blue-400 rounded-2xl p-6 border-2 border-blue-700 shadow-xl">
+            <div className="bg-gradient-to-br from-blue-300 to-blue-400 rounded-lg p-6 border-2 border-blue-700 shadow-xl">
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-700 to-blue-800 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">3</div>
               <h3 className="font-bold text-xl text-center text-gray-900 mb-3">Conversão Automática</h3>
               <p className="text-sm text-gray-600 text-center">Solicitação aprovada vira ordem carregamento</p>
@@ -687,7 +687,7 @@ export default function Configuracoes() {
           </div>
 
           <div className="grid grid-cols-2 gap-8">
-            <div className="bg-white rounded-2xl p-8 shadow-xl">
+            <div className="bg-white rounded-lg p-8 shadow-xl">
               <h3 className="font-bold text-2xl text-cyan-900 mb-6">Fornecedor</h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-4 bg-white rounded-xl border-l-4 border-cyan-500">
@@ -709,7 +709,7 @@ export default function Configuracoes() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 shadow-xl">
+            <div className="bg-white rounded-lg p-8 shadow-xl">
               <h3 className="font-bold text-2xl text-blue-900 mb-6">Cliente</h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-4 bg-white rounded-xl border-l-4 border-cyan-500">
@@ -732,7 +732,7 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-cyan-600 to-blue-700 text-white p-8 rounded-2xl shadow-2xl text-center">
+          <div className="bg-gradient-to-r from-cyan-600 to-blue-700 text-white p-8 rounded-lg shadow-2xl text-center">
             <p className="text-3xl font-bold mb-3">Processo de coleta totalmente digital</p>
             <p className="text-xl opacity-90">De dias para minutos • Sem ligações • Rastreável</p>
           </div>
@@ -746,7 +746,7 @@ export default function Configuracoes() {
       icon: Workflow,
       content: (
         <div className="min-h-[600px] flex flex-col justify-center space-y-8">
-          <div className="bg-gradient-to-r from-cyan-500 to-blue-700 text-white p-10 rounded-2xl shadow-2xl">
+          <div className="bg-gradient-to-r from-cyan-500 to-blue-700 text-white p-10 rounded-lg shadow-2xl">
             <h3 className="font-bold text-3xl mb-8 text-center">Crie seu Próprio Workflow</h3>
             <div className="grid grid-cols-5 gap-4">
               <div className="text-center p-5 bg-white/20 rounded-xl border-2 border-white/40">
@@ -773,7 +773,7 @@ export default function Configuracoes() {
           </div>
 
           <div className="grid grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-2xl shadow-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl">
               <div className="flex items-center gap-3 mb-4">
                 <Clock className="w-10 h-10 text-cyan-600" />
                 <h3 className="font-bold text-xl text-gray-900">SLA Granular</h3>
@@ -786,7 +786,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl">
               <div className="flex items-center gap-3 mb-4">
                 <FileText className="w-10 h-10 text-blue-600" />
                 <h3 className="font-bold text-xl text-gray-900">Campos Custom</h3>
@@ -799,7 +799,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl">
               <div className="flex items-center gap-3 mb-4">
                 <Users className="w-10 h-10 text-blue-700" />
                 <h3 className="font-bold text-xl text-gray-900">Atribuição</h3>
@@ -813,7 +813,7 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-cyan-600 via-blue-600 to-blue-700 text-white p-8 rounded-2xl shadow-2xl text-center">
+          <div className="bg-gradient-to-r from-cyan-600 via-blue-600 to-blue-700 text-white p-8 rounded-lg shadow-2xl text-center">
             <p className="text-2xl font-bold mb-2">Adapte o sistema aos seus processos</p>
             <p className="text-lg opacity-90">Não mude seus processos para se adaptar ao sistema</p>
           </div>
@@ -827,7 +827,7 @@ export default function Configuracoes() {
       content: (
         <div className="space-y-8">
           <div className="grid grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-xl">
+            <div className="bg-white p-8 rounded-lg shadow-xl">
               <h3 className="font-bold text-2xl mb-6 flex items-center gap-3 text-gray-900">
                 <AlertCircle className="w-8 h-8 text-cyan-600" />
                 Tipos de Ocorrências
@@ -857,7 +857,7 @@ export default function Configuracoes() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-700 to-blue-800 text-white p-8 rounded-2xl shadow-2xl">
+            <div className="bg-gradient-to-br from-blue-700 to-blue-800 text-white p-8 rounded-lg shadow-2xl">
               <h3 className="font-bold text-2xl mb-6">Níveis de Gravidade</h3>
               <div className="space-y-4">
                 <div className="p-4 bg-white/20 rounded-xl border-2 border-white/40">
@@ -893,7 +893,7 @@ export default function Configuracoes() {
           </div>
 
           <div className="grid grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-2xl shadow-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl">
               <div className="flex items-center gap-3 mb-4">
                 <Camera className="w-8 h-8 text-blue-600" />
                 <h4 className="font-bold text-xl text-gray-900">Evidências</h4>
@@ -906,7 +906,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl">
               <div className="flex items-center gap-3 mb-4">
                 <Users className="w-8 h-8 text-cyan-600" />
                 <h4 className="font-bold text-xl text-gray-900">Atribuição</h4>
@@ -919,7 +919,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl">
               <div className="flex items-center gap-3 mb-4">
                 <BarChart3 className="w-8 h-8 text-blue-600" />
                 <h4 className="font-bold text-xl text-gray-900">Análises</h4>
@@ -933,7 +933,7 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-cyan-500 to-blue-700 text-white p-8 rounded-2xl shadow-2xl">
+          <div className="bg-gradient-to-r from-cyan-500 to-blue-700 text-white p-8 rounded-lg shadow-2xl">
             <h3 className="font-bold text-2xl mb-6 flex items-center gap-3">
               <CheckCircle2 className="w-8 h-8" />
               Fluxo de Resolução
@@ -970,7 +970,7 @@ export default function Configuracoes() {
       icon: Award,
       content: (
         <div className="space-y-8">
-          <div className="bg-gradient-to-r from-cyan-400 via-cyan-500 to-blue-600 text-white p-10 rounded-2xl shadow-2xl">
+          <div className="bg-gradient-to-r from-cyan-400 via-cyan-500 to-blue-600 text-white p-10 rounded-lg shadow-2xl">
             <h3 className="font-bold text-3xl mb-8 flex items-center gap-4">
               <Award className="w-12 h-12" />
               Sistema de Níveis e Evolução
@@ -1005,7 +1005,7 @@ export default function Configuracoes() {
           </div>
 
           <div className="grid grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-xl">
+            <div className="bg-white p-8 rounded-lg shadow-xl">
               <h3 className="font-bold text-2xl mb-6 text-blue-900">Cálculo do SLA</h3>
               <div className="space-y-4">
                 <div className="p-5 bg-white rounded-xl border-2 border-cyan-500">
@@ -1033,7 +1033,7 @@ export default function Configuracoes() {
             </div>
 
             <div className="space-y-6">
-              <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white p-6 rounded-2xl shadow-xl">
+              <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white p-6 rounded-lg shadow-xl">
                 <h4 className="font-bold text-xl mb-4">Pontos Positivos</h4>
                 <ul className="space-y-2 text-sm">
                   <li>• Ordem criada: <strong>+10 pts</strong></li>
@@ -1044,7 +1044,7 @@ export default function Configuracoes() {
                 </ul>
               </div>
 
-              <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-6 rounded-2xl shadow-xl">
+              <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-6 rounded-lg shadow-xl">
                 <h4 className="font-bold text-xl mb-4">Penalidades</h4>
                 <ul className="space-y-2 text-sm">
                   <li>• Ocorrência baixa: <strong>-5 pts</strong></li>
@@ -1058,7 +1058,7 @@ export default function Configuracoes() {
           </div>
 
           <div className="grid grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-2xl shadow-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl">
               <h4 className="font-bold text-xl mb-4 flex items-center gap-2 text-gray-900">
                 <TrendingUp className="w-6 h-6 text-blue-600" />
                 Rankings
@@ -1071,7 +1071,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl">
               <h4 className="font-bold text-xl mb-4 flex items-center gap-2 text-gray-900">
                 <BarChart3 className="w-6 h-6 text-cyan-600" />
                 Histórico
@@ -1084,7 +1084,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl">
               <h4 className="font-bold text-xl mb-4 flex items-center gap-2 text-gray-900">
                 <Target className="w-6 h-6 text-blue-700" />
                 Metas
@@ -1107,7 +1107,7 @@ export default function Configuracoes() {
       content: (
         <div className="space-y-8">
           <div className="grid grid-cols-3 gap-6">
-            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-500">
+            <div className="bg-white p-8 rounded-lg shadow-xl border-t-4 border-cyan-500">
               <Users className="w-12 h-12 mb-4 text-cyan-600" />
               <h3 className="font-bold text-2xl mb-4 text-gray-900">Motoristas</h3>
               <ul className="space-y-2 text-base text-gray-800">
@@ -1119,7 +1119,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-600">
+            <div className="bg-white p-8 rounded-lg shadow-xl border-t-4 border-cyan-600">
               <Truck className="w-12 h-12 mb-4 text-cyan-700" />
               <h3 className="font-bold text-2xl mb-4 text-gray-900">Veículos</h3>
               <ul className="space-y-2 text-base text-gray-800">
@@ -1131,7 +1131,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-blue-600">
+            <div className="bg-white p-8 rounded-lg shadow-xl border-t-4 border-blue-600">
               <Target className="w-12 h-12 mb-4 text-blue-700" />
               <h3 className="font-bold text-2xl mb-4 text-gray-900">Operações</h3>
               <ul className="space-y-2 text-base text-gray-800">
@@ -1145,7 +1145,7 @@ export default function Configuracoes() {
           </div>
 
           <div className="grid grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-xl">
+            <div className="bg-white p-8 rounded-lg shadow-xl">
               <h3 className="font-bold text-2xl mb-6 text-gray-900">App do Motorista</h3>
               <div className="space-y-4">
                 <div className="p-4 bg-white rounded-xl border-2 border-cyan-500">
@@ -1179,7 +1179,7 @@ export default function Configuracoes() {
               </div>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-xl">
+            <div className="bg-white p-8 rounded-lg shadow-xl">
               <h3 className="font-bold text-2xl mb-6 text-gray-900">Configurações</h3>
               <div className="space-y-4">
                 <div className="p-4 bg-white rounded-xl border-2 border-cyan-500">
@@ -1214,7 +1214,7 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-cyan-600 to-blue-700 text-white p-10 rounded-2xl shadow-2xl">
+          <div className="bg-gradient-to-r from-cyan-600 to-blue-700 text-white p-10 rounded-lg shadow-2xl">
             <h3 className="font-bold text-3xl mb-6 text-center">Integração Total</h3>
             <p className="text-xl text-center leading-relaxed mb-8">
               Todos os módulos trabalham de forma integrada, compartilhando dados em tempo real
@@ -1248,7 +1248,7 @@ export default function Configuracoes() {
       icon: RefreshCw,
       content: (
         <div className="grid grid-cols-2 gap-8">
-          <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-500">
+          <div className="bg-white p-8 rounded-lg shadow-xl border-t-4 border-cyan-500">
             <h3 className="font-bold text-3xl mb-6 flex items-center gap-3 text-gray-900">
               <Target className="w-10 h-10 text-cyan-600" />
               PLAN (Planejar)
@@ -1261,7 +1261,7 @@ export default function Configuracoes() {
             </ul>
           </div>
 
-          <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-600">
+          <div className="bg-white p-8 rounded-lg shadow-xl border-t-4 border-cyan-600">
             <h3 className="font-bold text-3xl mb-6 flex items-center gap-3 text-gray-900">
               <Zap className="w-10 h-10 text-cyan-700" />
               DO (Fazer)
@@ -1274,7 +1274,7 @@ export default function Configuracoes() {
             </ul>
           </div>
 
-          <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-blue-600">
+          <div className="bg-white p-8 rounded-lg shadow-xl border-t-4 border-blue-600">
             <h3 className="font-bold text-3xl mb-6 flex items-center gap-3 text-gray-900">
               <BarChart3 className="w-10 h-10 text-blue-700" />
               CHECK (Verificar)
@@ -1287,7 +1287,7 @@ export default function Configuracoes() {
             </ul>
           </div>
 
-          <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-blue-700">
+          <div className="bg-white p-8 rounded-lg shadow-xl border-t-4 border-blue-700">
             <h3 className="font-bold text-3xl mb-6 flex items-center gap-3 text-gray-900">
               <TrendingUp className="w-10 h-10 text-blue-700" />
               ACT (Agir)
@@ -1309,7 +1309,7 @@ export default function Configuracoes() {
       content: (
         <div className="min-h-[600px] flex flex-col justify-center space-y-8">
           <div className="grid grid-cols-3 gap-6 mb-8">
-            <div className="bg-gradient-to-br from-cyan-400 to-cyan-600 text-white p-10 rounded-2xl shadow-2xl">
+            <div className="bg-gradient-to-br from-cyan-400 to-cyan-600 text-white p-10 rounded-lg shadow-2xl">
               <div className="text-center">
                 <div className="text-7xl font-bold mb-4">+10pp</div>
                 <p className="text-2xl font-bold mb-2">SLA Entregas</p>
@@ -1317,7 +1317,7 @@ export default function Configuracoes() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-cyan-500 to-blue-500 text-white p-10 rounded-2xl shadow-2xl">
+            <div className="bg-gradient-to-br from-cyan-500 to-blue-500 text-white p-10 rounded-lg shadow-2xl">
               <div className="text-center">
                 <div className="text-7xl font-bold mb-4">-75%</div>
                 <p className="text-2xl font-bold mb-2">Tempo Cadastro</p>
@@ -1325,7 +1325,7 @@ export default function Configuracoes() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-10 rounded-2xl shadow-2xl">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-10 rounded-lg shadow-2xl">
               <div className="text-center">
                 <div className="text-7xl font-bold mb-4">-70%</div>
                 <p className="text-2xl font-bold mb-2">Ligações Tel</p>
@@ -1335,7 +1335,7 @@ export default function Configuracoes() {
           </div>
 
           <div className="grid grid-cols-2 gap-8">
-            <div className="bg-white rounded-2xl p-8 shadow-xl">
+            <div className="bg-white rounded-lg p-8 shadow-xl">
               <h3 className="font-bold text-2xl text-blue-900 mb-6">Métricas de Adoção</h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-white rounded-xl border-l-4 border-cyan-500">
@@ -1353,7 +1353,7 @@ export default function Configuracoes() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 shadow-xl">
+            <div className="bg-white rounded-lg p-8 shadow-xl">
               <h3 className="font-bold text-2xl text-blue-900 mb-6">Satisfação</h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-white rounded-xl border-l-4 border-cyan-500">
@@ -1372,7 +1372,7 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-cyan-600 via-blue-600 to-blue-700 text-white p-12 rounded-2xl shadow-2xl text-center">
+          <div className="bg-gradient-to-r from-cyan-600 via-blue-600 to-blue-700 text-white p-12 rounded-lg shadow-2xl text-center">
             <p className="text-4xl font-bold mb-4">Product-Market Fit Validado</p>
             <p className="text-2xl opacity-90">Todas métricas superaram metas em 30 dias</p>
           </div>
@@ -1385,7 +1385,7 @@ export default function Configuracoes() {
       icon: Zap,
       content: (
         <div className="space-y-6">
-          <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white p-6 rounded-2xl border-4 border-cyan-700 shadow-xl">
+          <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white p-6 rounded-lg border-4 border-cyan-700 shadow-xl">
             <h3 className="font-bold text-2xl mb-3 flex items-center gap-3">
               <span className="bg-white text-cyan-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">1</span>
               SEIRI (Senso de Utilização)
@@ -1395,7 +1395,7 @@ export default function Configuracoes() {
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-cyan-600 to-blue-600 text-white p-6 rounded-2xl border-4 border-blue-700 shadow-xl">
+          <div className="bg-gradient-to-br from-cyan-600 to-blue-600 text-white p-6 rounded-lg border-4 border-blue-700 shadow-xl">
             <h3 className="font-bold text-2xl mb-3 flex items-center gap-3">
               <span className="bg-white text-cyan-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">2</span>
               SEITON (Senso de Organização)
@@ -1405,7 +1405,7 @@ export default function Configuracoes() {
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl border-4 border-blue-700 shadow-xl">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-lg border-4 border-blue-700 shadow-xl">
             <h3 className="font-bold text-2xl mb-3 flex items-center gap-3">
               <span className="bg-white text-blue-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">3</span>
               SEISO (Senso de Limpeza)
@@ -1415,7 +1415,7 @@ export default function Configuracoes() {
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-6 rounded-2xl border-4 border-blue-800 shadow-xl">
+          <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-6 rounded-lg border-4 border-blue-800 shadow-xl">
             <h3 className="font-bold text-2xl mb-3 flex items-center gap-3">
               <span className="bg-white text-blue-700 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">4</span>
               SEIKETSU (Senso de Padronização)
@@ -1425,7 +1425,7 @@ export default function Configuracoes() {
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-700 to-blue-800 text-white p-6 rounded-2xl border-4 border-blue-900 shadow-xl">
+          <div className="bg-gradient-to-br from-blue-700 to-blue-800 text-white p-6 rounded-lg border-4 border-blue-900 shadow-xl">
             <h3 className="font-bold text-2xl mb-3 flex items-center gap-3">
               <span className="bg-white text-blue-800 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">5</span>
               SHITSUKE (Senso de Autodisciplina)
@@ -1444,7 +1444,7 @@ export default function Configuracoes() {
       content: (
         <div className="min-h-[600px] flex flex-col justify-center space-y-10">
           <div className="grid grid-cols-2 gap-8">
-            <div className="bg-white p-10 rounded-2xl shadow-xl border-t-4 border-cyan-500">
+            <div className="bg-white p-10 rounded-lg shadow-xl border-t-4 border-cyan-500">
               <Zap className="w-16 h-16 mb-4 text-cyan-600" />
               <h3 className="font-bold text-2xl mb-4 text-gray-900">Eficiência 10x</h3>
               <ul className="text-base space-y-2 text-gray-800">
@@ -1454,7 +1454,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-10 rounded-2xl shadow-xl border-t-4 border-cyan-600">
+            <div className="bg-white p-10 rounded-lg shadow-xl border-t-4 border-cyan-600">
               <CheckCircle2 className="w-16 h-16 mb-4 text-cyan-700" />
               <h3 className="font-bold text-2xl mb-4 text-gray-900">Qualidade Comprovada</h3>
               <ul className="text-base space-y-2 text-gray-800">
@@ -1464,7 +1464,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-10 rounded-2xl shadow-xl border-t-4 border-blue-600">
+            <div className="bg-white p-10 rounded-lg shadow-xl border-t-4 border-blue-600">
               <TrendingUp className="w-16 h-16 mb-4 text-blue-700" />
               <h3 className="font-bold text-2xl mb-4 text-gray-900">Crescimento Real</h3>
               <ul className="text-base space-y-2 text-gray-800">
@@ -1474,7 +1474,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-10 rounded-2xl shadow-xl border-t-4 border-blue-700">
+            <div className="bg-white p-10 rounded-lg shadow-xl border-t-4 border-blue-700">
               <Award className="w-16 h-16 mb-4 text-blue-700" />
               <h3 className="font-bold text-2xl mb-4 text-gray-900">Único no Mercado</h3>
               <ul className="text-base space-y-2 text-gray-800">
@@ -1485,7 +1485,7 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-cyan-500 via-blue-600 to-blue-700 text-white p-12 rounded-2xl text-center shadow-2xl">
+          <div className="bg-gradient-to-r from-cyan-500 via-blue-600 to-blue-700 text-white p-12 rounded-lg text-center shadow-2xl">
             <h3 className="font-bold text-4xl mb-6">Resultado Final</h3>
             <p className="text-2xl mb-10 leading-relaxed">
               Operação mais <strong>eficiente</strong>, equipe mais <strong>motivada</strong>,
