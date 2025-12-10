@@ -855,36 +855,36 @@ export default function Configuracoes() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-6 rounded-lg shadow-lg">
-              <h3 className="font-bold text-base mb-4 text-white">Níveis de Gravidade</h3>
+            <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+              <h3 className="font-bold text-base mb-4 text-gray-900">Níveis de Gravidade</h3>
               <div className="space-y-3">
-                <div className="p-4 bg-white rounded-lg border border-gray-200">
+                <div className="p-4 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg border border-gray-200">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-gray-900">Baixa</span>
-                    <span className="text-sm text-gray-600">-5 pts</span>
+                    <span className="font-semibold text-white">Baixa</span>
+                    <span className="text-sm text-white">-5 pts</span>
                   </div>
-                  <p className="text-sm text-gray-600">Impacto mínimo, resolução rápida</p>
+                  <p className="text-sm text-white">Impacto mínimo, resolução rápida</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg border border-gray-200">
+                <div className="p-4 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg border border-gray-200">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-gray-900">Média</span>
-                    <span className="text-sm text-gray-600">-10 pts</span>
+                    <span className="font-semibold text-white">Média</span>
+                    <span className="text-sm text-white">-10 pts</span>
                   </div>
-                  <p className="text-sm text-gray-600">Requer atenção, prazo definido</p>
+                  <p className="text-sm text-white">Requer atenção, prazo definido</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg border border-gray-200">
+                <div className="p-4 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg border border-gray-200">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-gray-900">Alta</span>
-                    <span className="text-sm text-gray-600">-20 pts</span>
+                    <span className="font-semibold text-white">Alta</span>
+                    <span className="text-sm text-white">-20 pts</span>
                   </div>
-                  <p className="text-sm text-gray-600">Urgente, impacto significativo</p>
+                  <p className="text-sm text-white">Urgente, impacto significativo</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg border border-gray-200">
+                <div className="p-4 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg border border-gray-200">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-gray-900">Crítica</span>
-                    <span className="text-sm text-gray-600">-40 pts</span>
+                    <span className="font-semibold text-white">Crítica</span>
+                    <span className="text-sm text-white">-40 pts</span>
                   </div>
-                  <p className="text-sm text-gray-600">Bloqueio total, ação imediata</p>
+                  <p className="text-sm text-white">Bloqueio total, ação imediata</p>
                 </div>
               </div>
             </div>
