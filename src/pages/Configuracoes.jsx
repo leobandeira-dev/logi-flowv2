@@ -831,21 +831,21 @@ export default function Configuracoes() {
                 <h3 className="font-bold text-base text-gray-900">Tipos de Ocorrências</h3>
               </div>
               <div className="space-y-3">
-                <div className="p-4 bg-white rounded-lg border-2 border-gray-300">
+                <div className="p-4 bg-white rounded-lg border border-gray-200">
                   <div className="flex items-center gap-2 mb-1">
                     <Navigation className="w-5 h-5 text-cyan-600" />
                     <p className="font-semibold text-gray-900">Tracking (Viagem)</p>
                   </div>
                   <p className="text-sm text-gray-600">Problemas na estrada, atrasos, acidentes</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg border-2 border-gray-300">
+                <div className="p-4 bg-white rounded-lg border border-gray-200">
                   <div className="flex items-center gap-2 mb-1">
                     <Workflow className="w-5 h-5 text-blue-600" />
                     <p className="font-semibold text-gray-900">Fluxo (Processos)</p>
                   </div>
                   <p className="text-sm text-gray-600">Bloqueios em etapas internas, documentação</p>
                 </div>
-                <div className="p-4 bg-white rounded-lg border-2 border-gray-300">
+                <div className="p-4 bg-white rounded-lg border border-gray-200">
                   <div className="flex items-center gap-2 mb-1">
                     <Settings className="w-5 h-5 text-purple-600" />
                     <p className="font-semibold text-gray-900">Configuráveis</p>
