@@ -708,6 +708,11 @@ export default function Tracking() {
         }
       });
 
+      const totalCarregamento = ordensCarregamento.noPrazo.length + ordensCarregamento.foraPrazo.length;
+      const totalEntrega = ordensEntrega.noPrazo.length + ordensEntrega.foraPrazo.length;
+      const percCarregamentoNoPrazo = totalCarregamento > 0 ? ((ordensCarregamento.noPrazo.length / totalCarregamento) * 100).toFixed(2) : '0.00';
+      const percEntregaNoPrazo = totalEntrega > 0 ? ((ordensEntrega.noPrazo.length / totalEntrega) * 100).toFixed(2) : '0.00';
+
       return {
         grafico: [
           { nome: 'No Prazo', Carregamento: ordensCarregamento.noPrazo.length, Entrega: ordensEntrega.noPrazo.length },
@@ -715,7 +720,9 @@ export default function Tracking() {
           { nome: 'Expurgado', Carregamento: ordensCarregamento.expurgado.length, Entrega: ordensEntrega.expurgado.length }
         ],
         ordensCarregamento,
-        ordensEntrega
+        ordensEntrega,
+        percCarregamentoNoPrazo,
+        percEntregaNoPrazo
       };
     } else if (tipo === 'carga') {
       const ordensNoPrazo = [];
@@ -998,8 +1005,8 @@ export default function Tracking() {
                   </Badge>
                   <span className="text-[10px] font-bold text-green-600">
                     {metrics.carregamentosRealizados > 0 
-                      ? Math.round((metrics.carregamentosNoPrazo / metrics.carregamentosRealizados) * 100)
-                      : 0}%
+                      ? ((metrics.carregamentosNoPrazo / metrics.carregamentosRealizados) * 100).toFixed(2)
+                      : '0.00'}%
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1009,8 +1016,8 @@ export default function Tracking() {
                   </Badge>
                   <span className="text-[10px] font-bold text-red-600">
                     {metrics.carregamentosRealizados > 0 
-                      ? Math.round((metrics.carregamentosForaPrazo / metrics.carregamentosRealizados) * 100)
-                      : 0}%
+                      ? ((metrics.carregamentosForaPrazo / metrics.carregamentosRealizados) * 100).toFixed(2)
+                      : '0.00'}%
                   </span>
                 </div>
               </div>
@@ -1046,8 +1053,8 @@ export default function Tracking() {
                   </Badge>
                   <span className="text-[10px] font-bold text-green-600">
                     {metrics.descargasRealizadas > 0 
-                      ? Math.round((metrics.descargasNoPrazo / metrics.descargasRealizadas) * 100)
-                      : 0}%
+                      ? ((metrics.descargasNoPrazo / metrics.descargasRealizadas) * 100).toFixed(2)
+                      : '0.00'}%
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1057,8 +1064,8 @@ export default function Tracking() {
                   </Badge>
                   <span className="text-[10px] font-bold text-red-600">
                     {metrics.descargasRealizadas > 0 
-                      ? Math.round((metrics.descargasForaPrazo / metrics.descargasRealizadas) * 100)
-                      : 0}%
+                      ? ((metrics.descargasForaPrazo / metrics.descargasRealizadas) * 100).toFixed(2)
+                      : '0.00'}%
                   </span>
                 </div>
               </div>
@@ -2205,7 +2212,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                             : (ordem.chegada_destino && ordem.prazo_entrega && !ordem.entrega_expurgada)
                         ).length;
                     
-                    return totalConsiderado > 0 ? Math.round((noPrazo / totalConsiderado) * 100) : 0;
+                    return totalConsiderado > 0 ? ((noPrazo / totalConsiderado) * 100).toFixed(2) : '0.00';
                   })()}%
                 </div>
               </div>
@@ -2293,6 +2300,30 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             <h3 className="text-sm font-semibold mb-4" style={{ color: theme.text }}>
               {tipo === 'geral' ? 'Desempenho de SLA' : `Desempenho por ${tipo === 'carga' ? 'Data de Carregamento' : 'Data de Entrega'}`}
             </h3>
+            {tipo === 'geral' && (
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="p-3 rounded-lg border-l-4 border-blue-500" style={{ backgroundColor: isDark ? '#1e293b' : '#eff6ff', borderColor: theme.border }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Package className="w-4 h-4 text-blue-600" />
+                    <span className="text-xs font-bold text-blue-600">SLA Carregamento</span>
+                  </div>
+                  <div className="text-2xl font-bold text-blue-900">{dados.percCarregamentoNoPrazo}%</div>
+                  <p className="text-xs text-blue-700 mt-1">
+                    {dados.ordensCarregamento.noPrazo.length} no prazo de {dados.ordensCarregamento.noPrazo.length + dados.ordensCarregamento.foraPrazo.length}
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg border-l-4 border-purple-500" style={{ backgroundColor: isDark ? '#1e293b' : '#f5f3ff', borderColor: theme.border }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Truck className="w-4 h-4 text-purple-600" />
+                    <span className="text-xs font-bold text-purple-600">SLA Entrega</span>
+                  </div>
+                  <div className="text-2xl font-bold text-purple-900">{dados.percEntregaNoPrazo}%</div>
+                  <p className="text-xs text-purple-700 mt-1">
+                    {dados.ordensEntrega.noPrazo.length} no prazo de {dados.ordensEntrega.noPrazo.length + dados.ordensEntrega.foraPrazo.length}
+                  </p>
+                </div>
+              </div>
+            )}
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={dados.grafico}>
                 <CartesianGrid strokeDasharray="3 3" stroke={theme.border} />
