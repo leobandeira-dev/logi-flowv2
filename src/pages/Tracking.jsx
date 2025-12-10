@@ -86,6 +86,7 @@ export default function Tracking() {
   const [limite, setLimite] = useState(50);
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [exportando, setExportando] = useState(false);
+  const [periodoSelecionado, setPeriodoSelecionado] = useState("");
   const [filters, setFilters] = useState({
     statusTracking: "",
     origem: "",
