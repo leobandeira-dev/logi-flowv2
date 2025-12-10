@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { exportarApresentacaoPdf } from "@/functions/exportarApresentacaoPdf";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import {
   ChevronLeft,
   ChevronRight,
@@ -691,21 +692,47 @@ export default function Apresentacao() {
             <div className="flex gap-3">
               <Button
                 onClick={async () => {
+                  const btn = event.target.closest('button');
+                  const originalText = btn.innerHTML;
+                  btn.innerHTML = '<div class="flex items-center gap-2"><div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>Gerando PDF...</div>';
+                  btn.disabled = true;
+                  
                   try {
-                    const response = await exportarApresentacaoPdf({});
+                    const pdf = new jsPDF({
+                      orientation: 'landscape',
+                      unit: 'px',
+                      format: 'a4'
+                    });
                     
-                    const blob = new Blob([response.data], { type: 'application/pdf' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'Apresentacao_LogiFlow.pdf';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    a.remove();
+                    const slideElements = document.querySelectorAll('.slide-content');
+                    
+                    for (let i = 0; i < slideElements.length; i++) {
+                      const slide = slideElements[i];
+                      
+                      const canvas = await html2canvas(slide, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff'
+                      });
+                      
+                      const imgData = canvas.toDataURL('image/png');
+                      
+                      if (i > 0) pdf.addPage();
+                      
+                      const pdfWidth = pdf.internal.pageSize.getWidth();
+                      const pdfHeight = pdf.internal.pageSize.getHeight();
+                      
+                      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                    }
+                    
+                    pdf.save('Apresentacao_LogiFlow.pdf');
                   } catch (error) {
                     console.error('Erro ao gerar PDF:', error);
                     alert('Erro ao gerar PDF. Tente novamente.');
+                  } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                   }
                 }}
                 className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-lg font-semibold px-6"

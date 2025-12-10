@@ -9,7 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Fase2Discover from "../components/documentacao/Fase2Discover";
 import Fase3Build from "../components/documentacao/Fase3Build";
-import { exportarApresentacaoPdf } from "@/functions/exportarApresentacaoPdf";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import {
   Building2,
   Upload,
@@ -1806,22 +1807,50 @@ export default function Configuracoes() {
             </div>
             <div className="flex gap-3">
               <Button
-                onClick={async () => {
+                onClick={async (event) => {
+                  const btn = event.target.closest('button');
+                  const originalText = btn.innerHTML;
+                  btn.innerHTML = '<div class="flex items-center gap-2"><div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>Gerando PDF...</div>';
+                  btn.disabled = true;
+                  
                   try {
-                    const response = await exportarApresentacaoPdf({});
+                    const slideContainer = document.querySelector('.apresentacao-slides');
+                    if (!slideContainer) throw new Error('Container de slides não encontrado');
                     
-                    const blob = new Blob([response.data], { type: 'application/pdf' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'Apresentacao_LogiFlow.pdf';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    a.remove();
+                    const slideElements = slideContainer.querySelectorAll('.apresentacao-slide');
+                    
+                    const pdf = new jsPDF({
+                      orientation: 'landscape',
+                      unit: 'px',
+                      format: [1920, 1080]
+                    });
+                    
+                    for (let i = 0; i < slideElements.length; i++) {
+                      const slide = slideElements[i];
+                      
+                      const canvas = await html2canvas(slide, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff',
+                        width: 1920,
+                        height: 1080
+                      });
+                      
+                      const imgData = canvas.toDataURL('image/png');
+                      
+                      if (i > 0) pdf.addPage();
+                      
+                      pdf.addImage(imgData, 'PNG', 0, 0, 1920, 1080);
+                    }
+                    
+                    pdf.save('Apresentacao_LogiFlow.pdf');
                   } catch (error) {
                     console.error('Erro ao gerar PDF:', error);
                     alert('Erro ao gerar PDF. Tente novamente.');
+                  } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                   }
                 }}
                 className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-lg font-semibold text-lg px-6 py-3"
