@@ -35,6 +35,9 @@ import {
   Zap,
   FileText,
   Search,
+  Filter,
+  PlayCircle,
+  XCircle,
   Calendar,
   MessageCircle,
   Camera,
@@ -42,6 +45,8 @@ import {
   Bell,
   Eye,
   Edit,
+  Trash2,
+  Plus,
   Download,
   FileSpreadsheet,
   Settings,
@@ -392,7 +397,7 @@ export default function Configuracoes() {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-blue-600 text-white p-8 rounded-2xl shadow-2xl">
+            <div className="bg-gradient-to-br from-cyan-600 to-blue-600 text-white p-8 rounded-2xl shadow-2xl">
               <h3 className="font-bold text-2xl mb-6">🎯 Recursos do Dashboard</h3>
               <ul className="space-y-4 text-lg">
                 <li className="flex items-start gap-3">
@@ -421,20 +426,20 @@ export default function Configuracoes() {
             <div className="bg-white p-6 rounded-2xl shadow-xl">
               <h4 className="font-bold text-xl mb-4 text-gray-900">Filtros Inteligentes</h4>
               <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg border-2 border-gray-300">
-                  <Calendar className="w-5 h-5 text-gray-700" />
+                <div className="flex items-center gap-2 p-3 bg-cyan-50 rounded-lg border-2 border-cyan-400">
+                  <Calendar className="w-5 h-5 text-cyan-700" />
                   <span className="text-sm font-semibold text-gray-900">Período</span>
                 </div>
-                <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg border-2 border-gray-300">
-                  <MapPin className="w-5 h-5 text-gray-700" />
+                <div className="flex items-center gap-2 p-3 bg-cyan-50 rounded-lg border-2 border-cyan-400">
+                  <MapPin className="w-5 h-5 text-cyan-700" />
                   <span className="text-sm font-semibold text-gray-900">Origem/Destino</span>
                 </div>
-                <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg border-2 border-gray-300">
-                  <Users className="w-5 h-5 text-gray-700" />
+                <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border-2 border-blue-400">
+                  <Users className="w-5 h-5 text-blue-700" />
                   <span className="text-sm font-semibold text-gray-900">Motorista</span>
                 </div>
-                <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg border-2 border-gray-300">
-                  <Package className="w-5 h-5 text-gray-700" />
+                <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border-2 border-blue-400">
+                  <Package className="w-5 h-5 text-blue-700" />
                   <span className="text-sm font-semibold text-gray-900">Status</span>
                 </div>
               </div>
@@ -450,7 +455,7 @@ export default function Configuracoes() {
       content: (
         <div className="space-y-8">
           <div className="grid grid-cols-3 gap-6">
-            <div className="bg-green-600 text-white p-8 rounded-2xl shadow-2xl">
+            <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white p-8 rounded-2xl shadow-2xl">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-white/20 rounded-xl">
                   <FileText className="w-8 h-8" />
@@ -465,7 +470,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-blue-600 text-white p-8 rounded-2xl shadow-2xl">
+            <div className="bg-gradient-to-br from-cyan-600 to-blue-600 text-white p-8 rounded-2xl shadow-2xl">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-white/20 rounded-xl">
                   <Package className="w-8 h-8" />
@@ -480,7 +485,7 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-purple-600 text-white p-8 rounded-2xl shadow-2xl">
+            <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-8 rounded-2xl shadow-2xl">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-white/20 rounded-xl">
                   <FileSpreadsheet className="w-8 h-8" />
@@ -636,7 +641,7 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white p-6 rounded-2xl shadow-2xl text-center">
+          <div className="bg-gradient-to-r from-cyan-600 to-blue-700 text-white p-6 rounded-2xl shadow-2xl text-center">
             <p className="text-2xl font-bold">Redução de 68% em ligações telefônicas para consultar status</p>
           </div>
         </div>
@@ -795,7 +800,7 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-cyan-500 via-blue-600 to-blue-700 text-white p-8 rounded-2xl shadow-2xl text-center">
+          <div className="bg-gradient-to-r from-cyan-600 via-blue-600 to-blue-700 text-white p-8 rounded-2xl shadow-2xl text-center">
             <p className="text-2xl font-bold mb-2">Adapte o sistema aos seus processos</p>
             <p className="text-lg opacity-90">Não mude seus processos para se adaptar ao sistema</p>
           </div>
@@ -830,7 +835,7 @@ export default function Configuracoes() {
               </div>
             </div>
 
-            <div className="bg-red-600 text-white p-8 rounded-2xl shadow-2xl">
+            <div className="bg-gradient-to-br from-blue-700 to-blue-800 text-white p-8 rounded-2xl shadow-2xl">
               <h3 className="font-bold text-2xl mb-6">🎯 Níveis de Gravidade</h3>
               <div className="space-y-4">
                 <div className="p-4 bg-white/20 rounded-xl border-2 border-white/40">
@@ -906,7 +911,7 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          <div className="bg-yellow-600 text-white p-8 rounded-2xl border-4 border-yellow-700 shadow-2xl">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-8 rounded-2xl border-4 border-blue-700 shadow-2xl">
             <h3 className="font-bold text-2xl mb-6 flex items-center gap-3">
               <CheckCircle2 className="w-8 h-8" />
               Fluxo de Resolução
@@ -1321,7 +1326,7 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-cyan-500 via-cyan-600 to-blue-700 text-white p-12 rounded-2xl shadow-2xl text-center">
+          <div className="bg-gradient-to-r from-cyan-600 via-blue-600 to-blue-700 text-white p-12 rounded-2xl shadow-2xl text-center">
             <p className="text-4xl font-bold mb-4">Product-Market Fit Validado</p>
             <p className="text-2xl opacity-90">Todas métricas superaram metas em 30 dias</p>
           </div>
@@ -1334,9 +1339,9 @@ export default function Configuracoes() {
       icon: Zap,
       content: (
         <div className="space-y-6">
-          <div className="bg-red-600 text-white p-6 rounded-2xl border-4 border-red-700 shadow-xl">
+          <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white p-6 rounded-2xl border-4 border-cyan-700 shadow-xl">
             <h3 className="font-bold text-2xl mb-3 flex items-center gap-3">
-              <span className="bg-white text-red-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">1</span>
+              <span className="bg-white text-cyan-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">1</span>
               SEIRI (Senso de Utilização)
             </h3>
             <p className="text-base leading-relaxed">
@@ -1344,9 +1349,9 @@ export default function Configuracoes() {
             </p>
           </div>
 
-          <div className="bg-blue-600 text-white p-6 rounded-2xl border-4 border-blue-700 shadow-xl">
+          <div className="bg-gradient-to-br from-cyan-600 to-blue-600 text-white p-6 rounded-2xl border-4 border-blue-700 shadow-xl">
             <h3 className="font-bold text-2xl mb-3 flex items-center gap-3">
-              <span className="bg-white text-blue-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">2</span>
+              <span className="bg-white text-cyan-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">2</span>
               SEITON (Senso de Organização)
             </h3>
             <p className="text-base leading-relaxed">
@@ -1354,9 +1359,9 @@ export default function Configuracoes() {
             </p>
           </div>
 
-          <div className="bg-green-600 text-white p-6 rounded-2xl border-4 border-green-700 shadow-xl">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl border-4 border-blue-700 shadow-xl">
             <h3 className="font-bold text-2xl mb-3 flex items-center gap-3">
-              <span className="bg-white text-green-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">3</span>
+              <span className="bg-white text-blue-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">3</span>
               SEISO (Senso de Limpeza)
             </h3>
             <p className="text-base leading-relaxed">
@@ -1364,9 +1369,9 @@ export default function Configuracoes() {
             </p>
           </div>
 
-          <div className="bg-yellow-600 text-white p-6 rounded-2xl border-4 border-yellow-700 shadow-xl">
+          <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-6 rounded-2xl border-4 border-blue-800 shadow-xl">
             <h3 className="font-bold text-2xl mb-3 flex items-center gap-3">
-              <span className="bg-white text-yellow-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">4</span>
+              <span className="bg-white text-blue-700 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">4</span>
               SEIKETSU (Senso de Padronização)
             </h3>
             <p className="text-base leading-relaxed">
@@ -1374,9 +1379,9 @@ export default function Configuracoes() {
             </p>
           </div>
 
-          <div className="bg-purple-600 text-white p-6 rounded-2xl border-4 border-purple-700 shadow-xl">
+          <div className="bg-gradient-to-br from-blue-700 to-blue-800 text-white p-6 rounded-2xl border-4 border-blue-900 shadow-xl">
             <h3 className="font-bold text-2xl mb-3 flex items-center gap-3">
-              <span className="bg-white text-purple-600 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">5</span>
+              <span className="bg-white text-blue-800 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white">5</span>
               SHITSUKE (Senso de Autodisciplina)
             </h3>
             <p className="text-base leading-relaxed">
@@ -1707,7 +1712,7 @@ export default function Configuracoes() {
               variant="outline"
               onClick={nextSlide}
               disabled={currentSlide === slides.length - 1}
-              className="bg-white text-gray-900 border-2 border-700 hover:bg-gray-100 disabled:opacity-30 text-lg px-6 py-3 font-semibold"
+              className="bg-white text-gray-900 border-2 border-gray-700 hover:bg-gray-100 disabled:opacity-30 text-lg px-6 py-3 font-semibold"
             >
               Próximo
               <ChevronRight className="w-6 h-6 ml-2" />
@@ -1727,13 +1732,41 @@ export default function Configuracoes() {
               <Building2 className="w-8 h-8 text-blue-600" />
               <h1 className="text-3xl font-bold text-gray-900">Configurações</h1>
             </div>
-            <Button
-              onClick={() => setShowPresentation(true)}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg"
-            >
-              <Presentation className="w-5 h-5 mr-2" />
-              Ver Apresentação do Sistema
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setShowPresentation(true)}
+                className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
+              >
+                <Presentation className="w-5 h-5 mr-2" />
+                Ver Apresentação
+              </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    const { exportarApresentacaoPdf } = await import('@/functions/exportarApresentacaoPdf');
+                    const response = await exportarApresentacaoPdf({});
+                    
+                    const blob = new Blob([response.data], { type: 'application/pdf' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'Apresentacao_Sistema_Logistica.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                  } catch (error) {
+                    console.error('Erro ao exportar PDF:', error);
+                    alert('Erro ao gerar PDF. Tente novamente.');
+                  }
+                }}
+                variant="outline"
+                className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+              >
+                <Download className="w-5 h-5 mr-2" />
+                Exportar PDF
+              </Button>
+            </div>
           </div>
           <p className="text-gray-600">Gerencie as informações da sua empresa</p>
         </div>
