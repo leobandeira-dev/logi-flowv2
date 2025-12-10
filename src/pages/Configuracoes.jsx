@@ -1784,32 +1784,7 @@ export default function Configuracoes() {
                 <Presentation className="w-5 h-5 mr-2" />
                 Ver Apresentação
               </Button>
-              <Button
-                onClick={async () => {
-                  try {
-                    const { exportarApresentacaoPdf } = await import('@/functions/exportarApresentacaoPdf');
-                    const response = await exportarApresentacaoPdf({});
-                    
-                    const blob = new Blob([response.data], { type: 'application/pdf' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'Apresentacao_Sistema_Logistica.pdf';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    a.remove();
-                  } catch (error) {
-                    console.error('Erro ao exportar PDF:', error);
-                    alert('Erro ao gerar PDF. Tente novamente.');
-                  }
-                }}
-                variant="outline"
-                className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
-              >
-                <Download className="w-5 h-5 mr-2" />
-                Exportar PDF
-              </Button>
+
             </div>
           </div>
           <p className="text-gray-600">Gerencie as informações da sua empresa</p>
