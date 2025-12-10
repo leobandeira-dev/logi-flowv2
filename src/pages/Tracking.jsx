@@ -253,22 +253,32 @@ export default function Tracking() {
     });
 
     // Calcular SLA de carregamento - excluindo expurgados
+    // Usar data atual de SP se inicio_carregamento estiver vazio
+    const getDataAtualSP = () => {
+      return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    };
+    
     const carregamentosRealizados = ordensBase.filter(o => 
-      o.inicio_carregamento && o.carregamento_agendamento_data && !o.carregamento_expurgado
+      o.carregamento_agendamento_data && !o.carregamento_expurgado
     );
     const carregamentosNoPrazo = carregamentosRealizados.filter(o => {
       const agendado = new Date(o.carregamento_agendamento_data);
-      const realizado = new Date(o.inicio_carregamento);
+      const realizado = o.inicio_carregamento 
+        ? new Date(o.inicio_carregamento)
+        : getDataAtualSP();
       return realizado <= agendado;
     });
 
     // Calcular SLA de descarga - excluindo expurgados
+    // Usar data atual de SP se chegada_destino estiver vazio
     const descargasRealizadas = ordensBase.filter(o => 
-      o.chegada_destino && o.prazo_entrega && !o.entrega_expurgada
+      o.prazo_entrega && !o.entrega_expurgada
     );
     const descargasNoPrazo = descargasRealizadas.filter(o => {
       const prazo = new Date(o.prazo_entrega);
-      const realizado = new Date(o.chegada_destino);
+      const realizado = o.chegada_destino 
+        ? new Date(o.chegada_destino)
+        : getDataAtualSP();
       return realizado <= prazo;
     });
 
@@ -678,13 +688,19 @@ export default function Tracking() {
       const ordensCarregamento = { noPrazo: [], foraPrazo: [], expurgado: [] };
       const ordensEntrega = { noPrazo: [], foraPrazo: [], expurgado: [] };
 
+      const getDataAtualSP = () => {
+        return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+      };
+
       filteredOrdens.forEach(ordem => {
-        if (ordem.inicio_carregamento && ordem.carregamento_agendamento_data) {
+        if (ordem.carregamento_agendamento_data) {
           if (ordem.carregamento_expurgado) {
             ordensCarregamento.expurgado.push(ordem);
           } else {
             const agendado = new Date(ordem.carregamento_agendamento_data);
-            const realizado = new Date(ordem.inicio_carregamento);
+            const realizado = ordem.inicio_carregamento 
+              ? new Date(ordem.inicio_carregamento)
+              : getDataAtualSP();
             if (realizado <= agendado) {
               ordensCarregamento.noPrazo.push(ordem);
             } else {
@@ -693,12 +709,14 @@ export default function Tracking() {
           }
         }
 
-        if (ordem.chegada_destino && ordem.prazo_entrega) {
+        if (ordem.prazo_entrega) {
           if (ordem.entrega_expurgada) {
             ordensEntrega.expurgado.push(ordem);
           } else {
             const prazo = new Date(ordem.prazo_entrega);
-            const realizado = new Date(ordem.chegada_destino);
+            const realizado = ordem.chegada_destino 
+              ? new Date(ordem.chegada_destino)
+              : getDataAtualSP();
             if (realizado <= prazo) {
               ordensEntrega.noPrazo.push(ordem);
             } else {
@@ -730,8 +748,12 @@ export default function Tracking() {
       const ordensExpurgadas = [];
       const dadosPorData = {};
 
+      const getDataAtualSP = () => {
+        return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+      };
+
       filteredOrdens.forEach(ordem => {
-        if (ordem.inicio_carregamento && ordem.carregamento_agendamento_data) {
+        if (ordem.carregamento_agendamento_data) {
           const data = new Date(ordem.carregamento_agendamento_data).toLocaleDateString('pt-BR');
           
           if (!dadosPorData[data]) {
@@ -743,7 +765,9 @@ export default function Tracking() {
             ordensExpurgadas.push(ordem);
           } else {
             const agendado = new Date(ordem.carregamento_agendamento_data);
-            const realizado = new Date(ordem.inicio_carregamento);
+            const realizado = ordem.inicio_carregamento 
+              ? new Date(ordem.inicio_carregamento)
+              : getDataAtualSP();
             if (realizado <= agendado) {
               dadosPorData[data].noPrazo++;
               ordensNoPrazo.push(ordem);
@@ -775,8 +799,12 @@ export default function Tracking() {
       const ordensExpurgadas = [];
       const dadosPorData = {};
 
+      const getDataAtualSP = () => {
+        return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+      };
+
       filteredOrdens.forEach(ordem => {
-        if (ordem.chegada_destino && ordem.prazo_entrega) {
+        if (ordem.prazo_entrega) {
           const data = new Date(ordem.prazo_entrega).toLocaleDateString('pt-BR');
           
           if (!dadosPorData[data]) {
@@ -788,7 +816,9 @@ export default function Tracking() {
             ordensExpurgadas.push(ordem);
           } else {
             const prazo = new Date(ordem.prazo_entrega);
-            const realizado = new Date(ordem.chegada_destino);
+            const realizado = ordem.chegada_destino 
+              ? new Date(ordem.chegada_destino)
+              : getDataAtualSP();
             if (realizado <= prazo) {
               dadosPorData[data].noPrazo++;
               ordensNoPrazo.push(ordem);
