@@ -679,11 +679,17 @@ export default function Apresentacao() {
             <h1 className="text-xl font-bold text-gray-900">Apresentação Institucional</h1>
             <div className="flex gap-2">
               <Button
-                onClick={handlePrint}
+                onClick={() => {
+                  const style = document.createElement('style');
+                  style.innerHTML = '@page { margin: 0; size: landscape; }';
+                  document.head.appendChild(style);
+                  window.print();
+                  setTimeout(() => document.head.removeChild(style), 1000);
+                }}
                 className="bg-cyan-600 hover:bg-cyan-700 text-white"
               >
                 <Printer className="w-5 h-5 mr-2" />
-                Imprimir / Salvar PDF
+                Imprimir PDF (Sem Margens)
               </Button>
               <Button
                 onClick={() => navigate(createPageUrl("Configuracoes"))}
