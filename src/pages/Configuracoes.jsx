@@ -893,12 +893,12 @@ export default function Configuracoes() {
           </div>
 
           <div className="grid grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-xl border-t-4 border-cyan-500">
-              <div className="flex items-center gap-3 mb-4">
-                <Camera className="w-8 h-8 text-cyan-600" />
-                <h4 className="font-bold text-xl text-gray-900">Evidências</h4>
+            <div className="bg-white p-5 rounded-lg shadow-lg border border-gray-200">
+              <div className="flex items-center gap-2 mb-3">
+                <Camera className="w-6 h-6 text-cyan-600" />
+                <h4 className="font-bold text-base text-gray-900">Evidências</h4>
               </div>
-              <ul className="space-y-2 text-sm text-gray-800">
+              <ul className="space-y-1.5 text-sm text-gray-700">
                 <li>• Upload de fotos</li>
                 <li>• Localização GPS</li>
                 <li>• Data e hora exatas</li>
@@ -906,12 +906,12 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-xl border-t-4 border-blue-600">
-              <div className="flex items-center gap-3 mb-4">
-                <Users className="w-8 h-8 text-blue-600" />
-                <h4 className="font-bold text-xl text-gray-900">Atribuição</h4>
+            <div className="bg-white p-5 rounded-lg shadow-lg border border-gray-200">
+              <div className="flex items-center gap-2 mb-3">
+                <Users className="w-6 h-6 text-cyan-600" />
+                <h4 className="font-bold text-base text-gray-900">Atribuição</h4>
               </div>
-              <ul className="space-y-2 text-sm text-gray-800">
+              <ul className="space-y-1.5 text-sm text-gray-700">
                 <li>• Responsável definido</li>
                 <li>• Prazo de resolução</li>
                 <li>• Notificações automáticas</li>
@@ -919,12 +919,12 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-xl border-t-4 border-purple-600">
-              <div className="flex items-center gap-3 mb-4">
-                <BarChart3 className="w-8 h-8 text-purple-600" />
-                <h4 className="font-bold text-xl text-gray-900">Análises</h4>
+            <div className="bg-white p-5 rounded-lg shadow-lg border border-gray-200">
+              <div className="flex items-center gap-2 mb-3">
+                <BarChart3 className="w-6 h-6 text-cyan-600" />
+                <h4 className="font-bold text-base text-gray-900">Análises</h4>
               </div>
-              <ul className="space-y-2 text-sm text-gray-800">
+              <ul className="space-y-1.5 text-sm text-gray-700">
                 <li>• Tempo médio de resolução</li>
                 <li>• Taxa de recorrência</li>
                 <li>• Impacto no SLA</li>
@@ -933,31 +933,31 @@ export default function Configuracoes() {
             </div>
           </div>
 
-          <div className="bg-white p-8 rounded-lg shadow-xl border-t-4 border-cyan-600">
-            <h3 className="font-bold text-2xl mb-6 flex items-center gap-3 text-gray-900">
-              <CheckCircle2 className="w-8 h-8 text-cyan-600" />
-              Fluxo de Resolução
-            </h3>
+          <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+            <div className="flex items-center gap-2 mb-5">
+              <CheckCircle2 className="w-6 h-6 text-cyan-600" />
+              <h3 className="font-bold text-lg text-gray-900">Fluxo de Resolução</h3>
+            </div>
             <div className="grid grid-cols-5 gap-4">
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full border-4 border-cyan-600 bg-white mx-auto mb-3 flex items-center justify-center text-cyan-600 font-bold text-xl">1</div>
-                <p className="font-semibold text-gray-900">Registro</p>
+                <div className="w-14 h-14 rounded-full border-4 border-cyan-500 bg-white mx-auto mb-2 flex items-center justify-center text-cyan-600 font-bold text-lg">1</div>
+                <p className="font-semibold text-sm text-gray-900">Registro</p>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full border-4 border-cyan-600 bg-white mx-auto mb-3 flex items-center justify-center text-cyan-600 font-bold text-xl">2</div>
-                <p className="font-semibold text-gray-900">Atribuição</p>
+                <div className="w-14 h-14 rounded-full border-4 border-cyan-500 bg-white mx-auto mb-2 flex items-center justify-center text-cyan-600 font-bold text-lg">2</div>
+                <p className="font-semibold text-sm text-gray-900">Atribuição</p>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full border-4 border-cyan-600 bg-white mx-auto mb-3 flex items-center justify-center text-cyan-600 font-bold text-xl">3</div>
-                <p className="font-semibold text-gray-900">Tratamento</p>
+                <div className="w-14 h-14 rounded-full border-4 border-cyan-500 bg-white mx-auto mb-2 flex items-center justify-center text-cyan-600 font-bold text-lg">3</div>
+                <p className="font-semibold text-sm text-gray-900">Tratamento</p>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full border-4 border-cyan-600 bg-white mx-auto mb-3 flex items-center justify-center text-cyan-600 font-bold text-xl">4</div>
-                <p className="font-semibold text-gray-900">Resolução</p>
+                <div className="w-14 h-14 rounded-full border-4 border-cyan-500 bg-white mx-auto mb-2 flex items-center justify-center text-cyan-600 font-bold text-lg">4</div>
+                <p className="font-semibold text-sm text-gray-900">Resolução</p>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full border-4 border-cyan-600 bg-white mx-auto mb-3 flex items-center justify-center text-cyan-600 font-bold text-xl">5</div>
-                <p className="font-semibold text-gray-900">Análise</p>
+                <div className="w-14 h-14 rounded-full border-4 border-cyan-500 bg-white mx-auto mb-2 flex items-center justify-center text-cyan-600 font-bold text-lg">5</div>
+                <p className="font-semibold text-sm text-gray-900">Análise</p>
               </div>
             </div>
           </div>
