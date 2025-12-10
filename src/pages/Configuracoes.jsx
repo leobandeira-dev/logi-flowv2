@@ -369,80 +369,78 @@ export default function Configuracoes() {
       subtitle: "10 Estágios Completos - Visibilidade Total da Operação",
       icon: Navigation,
       content: (
-        <div className="grid grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <div className="bg-white p-8 rounded-lg shadow-lg border border-gray-200">
-              <div className="flex items-center gap-3 mb-6">
-                <BarChart3 className="w-7 h-7 text-cyan-600" />
-                <h3 className="font-bold text-xl text-gray-900">Métricas Principais</h3>
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="w-5 h-5 text-cyan-600" />
+                <h3 className="font-bold text-base text-gray-900">Métricas Principais</h3>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-cyan-500">
-                  <span className="font-semibold text-gray-800">Total de Ordens</span>
-                  <span className="text-3xl font-bold text-cyan-600">250</span>
+                  <span className="font-medium text-sm text-gray-800">Total de Ordens</span>
+                  <span className="text-2xl font-bold text-cyan-600">250</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-cyan-600">
-                  <span className="font-semibold text-gray-800">Em Trânsito</span>
-                  <span className="text-3xl font-bold text-cyan-700">90</span>
+                <div className="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-cyan-500">
+                  <span className="font-medium text-sm text-gray-800">Em Trânsito</span>
+                  <span className="text-2xl font-bold text-cyan-600">90</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-blue-600">
-                  <span className="font-semibold text-gray-800">Pendentes</span>
-                  <span className="text-3xl font-bold text-blue-600">45</span>
+                <div className="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-cyan-500">
+                  <span className="font-medium text-sm text-gray-800">Pendentes</span>
+                  <span className="text-2xl font-bold text-cyan-600">45</span>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-blue-700">
-                  <span className="font-semibold text-gray-800">Finalizadas</span>
-                  <span className="text-3xl font-bold text-blue-700">115</span>
+                <div className="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-cyan-500">
+                  <span className="font-medium text-sm text-gray-800">Finalizadas</span>
+                  <span className="text-2xl font-bold text-cyan-600">115</span>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="space-y-6">
-            <div className="bg-cyan-600 text-white p-8 rounded-lg shadow-lg">
-              <h3 className="font-bold text-2xl mb-6">Recursos do Dashboard</h3>
-              <ul className="space-y-4 text-base">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
+            <div className="bg-cyan-600 text-white p-6 rounded-lg shadow-lg border border-cyan-700">
+              <h3 className="font-bold text-base mb-4">Recursos do Dashboard</h3>
+              <ul className="space-y-3 text-sm">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
                   <span>Visão consolidada de todas as operações</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
                   <span>Gráficos interativos de performance</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
                   <span>Análise de origem e destino</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
                   <span>Performance por motorista</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 flex-shrink-0 mt-0.5" />
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
                   <span>Alertas e notificações prioritárias</span>
                 </li>
               </ul>
             </div>
+          </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-              <h4 className="font-bold text-lg mb-4 text-gray-900">Filtros Inteligentes</h4>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border-2 border-cyan-500">
-                  <Calendar className="w-5 h-5 text-cyan-600" />
-                  <span className="text-sm font-semibold text-gray-900">Período</span>
-                </div>
-                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border-2 border-cyan-600">
-                  <MapPin className="w-5 h-5 text-cyan-600" />
-                  <span className="text-sm font-semibold text-gray-900">Origem/Destino</span>
-                </div>
-                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border-2 border-blue-600">
-                  <Users className="w-5 h-5 text-blue-600" />
-                  <span className="text-sm font-semibold text-gray-900">Motorista</span>
-                </div>
-                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border-2 border-blue-700">
-                  <Package className="w-5 h-5 text-blue-700" />
-                  <span className="text-sm font-semibold text-gray-900">Status</span>
-                </div>
+          <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+            <h4 className="font-bold text-sm mb-4 text-gray-900">Filtros Inteligentes</h4>
+            <div className="grid grid-cols-4 gap-3">
+              <div className="flex items-center gap-2 p-3 bg-white rounded-lg border-2 border-cyan-500">
+                <Calendar className="w-5 h-5 text-cyan-600" />
+                <span className="text-sm font-medium text-gray-900">Período</span>
+              </div>
+              <div className="flex items-center gap-2 p-3 bg-white rounded-lg border-2 border-cyan-500">
+                <MapPin className="w-5 h-5 text-cyan-600" />
+                <span className="text-sm font-medium text-gray-900">Origem/Destino</span>
+              </div>
+              <div className="flex items-center gap-2 p-3 bg-white rounded-lg border-2 border-cyan-500">
+                <Users className="w-5 h-5 text-cyan-600" />
+                <span className="text-sm font-medium text-gray-900">Motorista</span>
+              </div>
+              <div className="flex items-center gap-2 p-3 bg-white rounded-lg border-2 border-cyan-500">
+                <Package className="w-5 h-5 text-cyan-600" />
+                <span className="text-sm font-medium text-gray-900">Status</span>
               </div>
             </div>
           </div>
