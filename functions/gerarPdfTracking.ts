@@ -85,6 +85,10 @@ Deno.serve(async (req) => {
       }
     };
 
+    const getDataAtualSP = () => {
+      return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    };
+
     const formatarData = (data) => {
       if (!data) return "";
       try {
@@ -188,18 +192,44 @@ Deno.serve(async (req) => {
         return normalizeText(ordem.produto) || "";
       } else if (colunaId === "carregamento_agendamento_data") {
         return formatarDataHora(ordem.carregamento_agendamento_data);
+      } else if (colunaId === "entrada_galpao") {
+        return formatarDataHora(ordem.entrada_galpao);
       } else if (colunaId === "inicio_carregamento") {
+        // Se vazio e tem agendamento, usar data atual em roxo
+        if (!ordem.inicio_carregamento && ordem.carregamento_agendamento_data) {
+          const dataAtualFormatada = formatarDataHora(getDataAtualSP());
+          return { content: dataAtualFormatada, styles: { textColor: [147, 51, 234], fontStyle: 'bold' } }; // Roxo
+        }
         return formatarDataHora(ordem.inicio_carregamento);
       } else if (colunaId === "fim_carregamento") {
+        // Se vazio e tem agendamento, usar data atual em roxo
+        if (!ordem.fim_carregamento && ordem.carregamento_agendamento_data) {
+          const dataAtualFormatada = formatarDataHora(getDataAtualSP());
+          return { content: dataAtualFormatada, styles: { textColor: [147, 51, 234], fontStyle: 'bold' } }; // Roxo
+        }
         return formatarDataHora(ordem.fim_carregamento);
       } else if (colunaId === "saida_unidade") {
         return formatarDataHora(ordem.saida_unidade);
       } else if (colunaId === "chegada_destino") {
+        // Se vazio e tem prazo de entrega, usar data atual em roxo
+        if (!ordem.chegada_destino && ordem.prazo_entrega) {
+          const dataAtualFormatada = formatarDataHora(getDataAtualSP());
+          return { content: dataAtualFormatada, styles: { textColor: [147, 51, 234], fontStyle: 'bold' } }; // Roxo
+        }
         return formatarDataHora(ordem.chegada_destino);
       } else if (colunaId === "descarga_agendamento_data") {
         return formatarDataHora(ordem.descarga_agendamento_data);
+      } else if (colunaId === "agendamento_checklist_data") {
+        return formatarDataHora(ordem.agendamento_checklist_data);
       } else if (colunaId === "descarga_realizada_data") {
+        // Se vazio e tem prazo de entrega, usar data atual em roxo
+        if (!ordem.descarga_realizada_data && ordem.prazo_entrega) {
+          const dataAtualFormatada = formatarDataHora(getDataAtualSP());
+          return { content: dataAtualFormatada, styles: { textColor: [147, 51, 234], fontStyle: 'bold' } }; // Roxo
+        }
         return formatarDataHora(ordem.descarga_realizada_data);
+      } else if (colunaId === "prazo_entrega") {
+        return formatarDataHora(ordem.prazo_entrega);
       } else if (colunaId === "data_programacao_descarga") {
         return formatarData(ordem.data_programacao_descarga);
       } else if (colunaId === "localizacao_atual") {
