@@ -36,6 +36,7 @@ import Precificacao from './pages/Precificacao';
 import CRM from './pages/CRM';
 import Procedimentos from './pages/Procedimentos';
 import GestaoDeCTe from './pages/GestaoDeCTe';
+import Apresentacao from './pages/Apresentacao';
 import __Layout from './Layout.jsx';
 
 
@@ -78,6 +79,7 @@ export const PAGES = {
     "CRM": CRM,
     "Procedimentos": Procedimentos,
     "GestaoDeCTe": GestaoDeCTe,
+    "Apresentacao": Apresentacao,
 }
 
 export const pagesConfig = {

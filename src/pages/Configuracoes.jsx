@@ -1848,36 +1848,11 @@ export default function Configuracoes() {
             </div>
             <div className="flex gap-2">
               <Button
-                onClick={() => setShowPresentation(true)}
+                onClick={() => window.open(createPageUrl("Apresentacao"), '_blank')}
                 className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
               >
                 <Presentation className="w-5 h-5 mr-2" />
                 Ver Apresentação
-              </Button>
-              <Button
-                onClick={async () => {
-                  try {
-                    const response = await base44.functions.invoke('exportarApresentacaoPdf', {});
-                    
-                    const blob = new Blob([response.data], { type: 'application/pdf' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'Apresentacao_Sistema_Logistica.pdf';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    a.remove();
-                  } catch (error) {
-                    console.error('Erro ao exportar PDF:', error);
-                    alert('Erro ao gerar PDF. Tente novamente.');
-                  }
-                }}
-                variant="outline"
-                className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
-              >
-                <Download className="w-5 h-5 mr-2" />
-                Baixar PDF
               </Button>
 
             </div>
