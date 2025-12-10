@@ -10,6 +10,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Buscar dados da empresa
+    let empresa = null;
+    if (user.empresa_id) {
+      try {
+        empresa = await base44.asServiceRole.entities.Empresa.get(user.empresa_id);
+      } catch (error) {
+        console.log('Empresa não encontrada, continuando sem logo');
+      }
+    }
+
     // Criar PDF em modo paisagem (landscape) com margem zero
     const doc = new jsPDF({
       orientation: 'landscape',
@@ -21,7 +31,68 @@ Deno.serve(async (req) => {
     const pageWidth = 297; // A4 landscape width
     const pageHeight = 210; // A4 landscape height
 
-    // Slide 1 - Capa
+    // Slide 0 - Slide Inicial (Capa Institucional)
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+    
+    // Logo (se existir)
+    doc.setTextColor(8, 145, 178);
+    doc.setFontSize(48);
+    doc.setFont(undefined, 'bold');
+    doc.text(empresa?.nome_fantasia || 'TRANSUL TRANSPORTE', pageWidth / 2, 70, { align: 'center' });
+    
+    // Linha decorativa
+    doc.setFillColor(6, 182, 212);
+    doc.rect(pageWidth / 2 - 60, 80, 120, 2, 'F');
+    
+    doc.setTextColor(75, 85, 99);
+    doc.setFontSize(32);
+    doc.setFont(undefined, 'normal');
+    doc.text('Sistema de Gestão', pageWidth / 2, 105, { align: 'center' });
+    doc.text('Logística Integrada', pageWidth / 2, 125, { align: 'center' });
+    
+    doc.setFontSize(18);
+    doc.setTextColor(107, 114, 128);
+    doc.text('Processos Visuais • Métricas Objetivas • Melhoria Contínua', pageWidth / 2, 145, { align: 'center' });
+    
+    // Cards de destaque
+    const stats = [
+      { label: '20+ Módulos', value: '20+' },
+      { label: 'Perfis', value: '4' },
+      { label: 'Gamificação', value: '100%' },
+      { label: 'Meta SLA', value: '95%+' }
+    ];
+    
+    let statsX = 35;
+    stats.forEach((stat, idx) => {
+      const colors = [[6, 182, 212], [37, 99, 235], [29, 78, 216], [30, 64, 175]];
+      doc.setFillColor(240, 249, 255);
+      doc.roundedRect(statsX, 160, 55, 30, 2, 2, 'F');
+      
+      doc.setTextColor(...colors[idx]);
+      doc.setFontSize(20);
+      doc.setFont(undefined, 'bold');
+      doc.text(stat.value, statsX + 27.5, 174, { align: 'center' });
+      
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(75, 85, 99);
+      doc.text(stat.label, statsX + 27.5, 183, { align: 'center' });
+      
+      statsX += 60;
+    });
+    
+    // Data
+    doc.setFontSize(12);
+    doc.setTextColor(156, 163, 175);
+    const dataAtual = new Date().toLocaleDateString('pt-BR', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    doc.text(dataAtual, pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+    // Slide 1 - Visão Geral Módulos
     doc.setFillColor(8, 145, 178); // cyan-600
     doc.rect(0, 0, pageWidth, pageHeight, 'F');
     
