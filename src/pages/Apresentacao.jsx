@@ -73,7 +73,7 @@ export default function Apresentacao() {
         <div className="slide-content flex flex-col items-center justify-center h-full bg-gradient-to-br from-blue-50 via-white to-cyan-50">
           <div className="text-center max-w-5xl mx-auto px-8">
             <div className="mb-12">
-              <h1 className="text-8xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 bg-clip-text text-transparent">
+              <h1 className="text-7xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 bg-clip-text text-transparent leading-tight pb-2">
                 LogiFlow
               </h1>
               <div className="w-48 h-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 mx-auto mb-6" />
@@ -125,14 +125,24 @@ export default function Apresentacao() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 text-white p-6 rounded-xl shadow-xl">
-              <p className="text-2xl font-bold mb-2">By LAF Logística</p>
-              <p className="text-lg opacity-90">CNPJ 34.579.341/0001-85</p>
-              <div className="w-32 h-0.5 bg-white/30 mx-auto my-3" />
-              <p className="text-lg font-semibold">
-                Leonardo Silva Bandeira | CPF 042.332.453-52
-              </p>
-              <p className="text-sm opacity-80">Product Owner</p>
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 text-white p-8 rounded-xl shadow-2xl border border-slate-700">
+              <div className="grid grid-cols-2 gap-8 mb-6">
+                <div className="text-left">
+                  <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Empresa</p>
+                  <p className="text-2xl font-bold mb-1">LAF Logística</p>
+                  <p className="text-sm text-slate-300">CNPJ 34.579.341/0001-85</p>
+                </div>
+                <div className="text-left">
+                  <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Product Owner</p>
+                  <p className="text-xl font-bold mb-1">Leonardo Silva Bandeira</p>
+                  <p className="text-sm text-slate-300">CPF 042.332.453-52</p>
+                </div>
+              </div>
+              <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-slate-600 to-transparent my-4" />
+              <div className="text-center">
+                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Tecnologia</p>
+                <p className="text-sm text-slate-300">React • Base44 • PostgreSQL • Deno</p>
+              </div>
             </div>
 
             <p className="text-gray-500 mt-12 text-lg font-medium">
