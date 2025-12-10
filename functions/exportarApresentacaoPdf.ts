@@ -31,84 +31,280 @@ Deno.serve(async (req) => {
     const pageWidth = 297; // A4 landscape width
     const pageHeight = 210; // A4 landscape height
 
-    // Slide 0 - Slide Inicial (Capa Institucional)
-    doc.setFillColor(255, 255, 255);
+    // Slide 0 - Capa Institucional
+    doc.setFillColor(240, 249, 255);
     doc.rect(0, 0, pageWidth, pageHeight, 'F');
     
-    // Logo (se existir)
+    // LogiFlow Title
     doc.setTextColor(8, 145, 178);
-    doc.setFontSize(48);
+    doc.setFontSize(56);
     doc.setFont(undefined, 'bold');
-    doc.text(empresa?.nome_fantasia || 'TRANSUL TRANSPORTE', pageWidth / 2, 70, { align: 'center' });
+    doc.text('LogiFlow', pageWidth / 2, 60, { align: 'center' });
     
     // Linha decorativa
     doc.setFillColor(6, 182, 212);
-    doc.rect(pageWidth / 2 - 60, 80, 120, 2, 'F');
+    doc.rect(pageWidth / 2 - 24, 65, 48, 1.5, 'F');
     
-    doc.setTextColor(75, 85, 99);
-    doc.setFontSize(32);
-    doc.setFont(undefined, 'normal');
-    doc.text('Sistema de Gestão', pageWidth / 2, 105, { align: 'center' });
-    doc.text('Logística Integrada', pageWidth / 2, 125, { align: 'center' });
+    // Subtítulos
+    doc.setTextColor(31, 41, 55);
+    doc.setFontSize(28);
+    doc.setFont(undefined, 'bold');
+    doc.text('Sistema de Gestão Logística Integrada', pageWidth / 2, 85, { align: 'center' });
     
-    doc.setFontSize(18);
+    doc.setFontSize(16);
     doc.setTextColor(107, 114, 128);
-    doc.text('Processos Visuais • Métricas Objetivas • Melhoria Contínua', pageWidth / 2, 145, { align: 'center' });
+    doc.setFont(undefined, 'normal');
+    doc.text('Consultoria • Tecnologia • Transformação Digital', pageWidth / 2, 95, { align: 'center' });
+    
+    doc.setFontSize(14);
+    doc.setTextColor(6, 182, 212);
+    doc.setFont(undefined, 'bold');
+    doc.text('Processos Visuais • Métricas Objetivas • Melhoria Contínua', pageWidth / 2, 105, { align: 'center' });
     
     // Cards de destaque
     const stats = [
       { label: '20+ Módulos', value: '20+' },
-      { label: 'Perfis', value: '4' },
-      { label: 'Gamificação', value: '100%' },
-      { label: 'Meta SLA', value: '95%+' }
+      { label: '4 Perfis', value: '4' },
+      { label: '100% Gamificado', value: '100%' },
+      { label: 'Meta SLA 95%+', value: '95%+' }
     ];
     
     let statsX = 35;
     stats.forEach((stat, idx) => {
       const colors = [[6, 182, 212], [37, 99, 235], [29, 78, 216], [30, 64, 175]];
-      doc.setFillColor(240, 249, 255);
-      doc.roundedRect(statsX, 160, 55, 30, 2, 2, 'F');
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(...colors[idx]);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(statsX, 120, 55, 28, 2, 2, 'FD');
       
       doc.setTextColor(...colors[idx]);
       doc.setFontSize(20);
       doc.setFont(undefined, 'bold');
-      doc.text(stat.value, statsX + 27.5, 174, { align: 'center' });
+      doc.text(stat.value, statsX + 27.5, 135, { align: 'center' });
       
       doc.setFontSize(9);
       doc.setFont(undefined, 'normal');
       doc.setTextColor(75, 85, 99);
-      doc.text(stat.label, statsX + 27.5, 183, { align: 'center' });
+      doc.text(stat.label, statsX + 27.5, 142, { align: 'center' });
       
       statsX += 60;
     });
     
-    // Data
-    doc.setFontSize(12);
-    doc.setTextColor(156, 163, 175);
-    const dataAtual = new Date().toLocaleDateString('pt-BR', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-    doc.text(dataAtual, pageWidth / 2, pageHeight - 10, { align: 'center' });
-
-    // Slide 1 - Visão Geral Módulos
-    doc.setFillColor(8, 145, 178); // cyan-600
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+    // Rodapé estruturado
+    doc.setFillColor(30, 41, 59);
+    doc.roundedRect(20, 160, 257, 35, 2, 2, 'F');
+    
+    // Grid 2 colunas
+    doc.setTextColor(148, 163, 184);
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    doc.text('EMPRESA', 30, 168);
+    doc.text('PRODUCT OWNER', 155, 168);
     
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(48);
+    doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text('Sistema de Gestão', pageWidth / 2, 60, { align: 'center' });
-    doc.text('Logística Integrada', pageWidth / 2, 85, { align: 'center' });
+    doc.text('LAF Logística', 30, 176);
+    doc.text('Leonardo Silva Bandeira', 155, 176);
     
-    doc.setFontSize(24);
+    doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
-    doc.text('Transforme sua operação com', pageWidth / 2, 110, { align: 'center' });
-    doc.text('tecnologia e inteligência', pageWidth / 2, 125, { align: 'center' });
+    doc.setTextColor(203, 213, 225);
+    doc.text('CNPJ 34.579.341/0001-85', 30, 183);
+    doc.text('CPF 042.332.453-52', 155, 183);
     
-    doc.setFontSize(18);
-    doc.text('20 Módulos Integrados • Processos Visuais • Métricas Objetivas', pageWidth / 2, 150, { align: 'center' });
+    // Linha separadora
+    doc.setFillColor(71, 85, 105);
+    doc.rect(20, 188, 257, 0.5, 'F');
+    
+    // Stack tecnológica
+    doc.setTextColor(148, 163, 184);
+    doc.setFontSize(8);
+    doc.text('STACK TECNOLÓGICA', pageWidth / 2, 193, { align: 'center' });
+    doc.setFontSize(9);
+    doc.setTextColor(203, 213, 225);
+    doc.text('React • TypeScript • PostgreSQL • Deno Deploy', pageWidth / 2, 199, { align: 'center' });
+
+    // Slide 1 - Visão Geral Módulos
+    doc.addPage();
+    doc.setFillColor(240, 249, 255);
+    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+    
+    doc.setTextColor(8, 145, 178);
+    doc.setFontSize(32);
+    doc.setFont(undefined, 'bold');
+    doc.text('Gestão Logística Completa', pageWidth / 2, 25, { align: 'center' });
+    
+    doc.setFontSize(14);
+    doc.setTextColor(75, 85, 99);
+    doc.setFont(undefined, 'normal');
+    doc.text('20 Módulos Integrados • Processos visuais • Métricas objetivas', pageWidth / 2, 35, { align: 'center' });
+    
+    // Gestão de Operações
+    doc.setFontSize(12);
+    doc.setTextColor(6, 182, 212);
+    doc.setFont(undefined, 'bold');
+    doc.text('Gestão de Operações', 25, 50);
+    
+    let xPos = 25;
+    const opsModules = [
+      { name: 'Dashboard', desc: 'Métricas e KPIs' },
+      { name: 'Tracking', desc: 'Rastreamento' },
+      { name: 'Fluxo BPMN', desc: 'Workflow' },
+      { name: 'Ordens', desc: 'Carregamento' }
+    ];
+    
+    opsModules.forEach((mod, idx) => {
+      const colors = [[6, 182, 212], [8, 145, 178], [37, 99, 235], [29, 78, 216]];
+      doc.setFillColor(...colors[idx]);
+      doc.roundedRect(xPos, 55, 60, 22, 2, 2, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.text(mod.name, xPos + 30, 64, { align: 'center' });
+      
+      doc.setFontSize(7);
+      doc.setFont(undefined, 'normal');
+      doc.text(mod.desc, xPos + 30, 71, { align: 'center' });
+      
+      xPos += 63;
+    });
+    
+    // Gestão de Coletas
+    doc.setFontSize(12);
+    doc.setTextColor(6, 182, 212);
+    doc.setFont(undefined, 'bold');
+    doc.text('Gestão de Coletas', 25, 90);
+    
+    xPos = 25;
+    const coletasModules = [
+      { name: 'Dashboard Coletas', desc: 'Visão Geral' },
+      { name: 'Solicitar Coleta', desc: 'Portal Fornecedor' },
+      { name: 'Aprovar Coletas', desc: 'Portal Cliente' }
+    ];
+    
+    coletasModules.forEach((mod, idx) => {
+      const colors = [[6, 182, 212], [8, 145, 178], [37, 99, 235]];
+      doc.setFillColor(...colors[idx]);
+      doc.roundedRect(xPos, 95, 60, 22, 2, 2, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text(mod.name, xPos + 30, 104, { align: 'center' });
+      
+      doc.setFontSize(7);
+      doc.setFont(undefined, 'normal');
+      doc.text(mod.desc, xPos + 30, 111, { align: 'center' });
+      
+      xPos += 63;
+    });
+    
+    // WMS e Recursos - lado a lado
+    doc.setFontSize(12);
+    doc.setTextColor(6, 182, 212);
+    doc.setFont(undefined, 'bold');
+    doc.text('Armazém (WMS)', 25, 130);
+    
+    xPos = 25;
+    const wmsModules = [
+      { name: 'Recebimento' },
+      { name: 'Etiquetas Mãe' },
+      { name: 'Carregamento' }
+    ];
+    
+    wmsModules.forEach((mod, idx) => {
+      const colors = [[37, 99, 235], [29, 78, 216], [30, 64, 175]];
+      doc.setFillColor(...colors[idx]);
+      doc.roundedRect(xPos, 135, 40, 18, 2, 2, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'bold');
+      doc.text(mod.name, xPos + 20, 146, { align: 'center' });
+      
+      xPos += 42;
+    });
+    
+    // Recursos
+    doc.setFontSize(12);
+    doc.setTextColor(6, 182, 212);
+    doc.setFont(undefined, 'bold');
+    doc.text('Recursos', 155, 130);
+    
+    xPos = 155;
+    const recursosModules = [
+      { name: 'Motoristas' },
+      { name: 'Veículos' },
+      { name: 'Operações' }
+    ];
+    
+    recursosModules.forEach((mod, idx) => {
+      const colors = [[6, 182, 212], [8, 145, 178], [37, 99, 235]];
+      doc.setFillColor(...colors[idx]);
+      doc.roundedRect(xPos, 135, 40, 18, 2, 2, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'bold');
+      doc.text(mod.name, xPos + 20, 146, { align: 'center' });
+      
+      xPos += 42;
+    });
+    
+    // Qualidade e Comunicação - lado a lado
+    doc.setFontSize(12);
+    doc.setTextColor(6, 182, 212);
+    doc.setFont(undefined, 'bold');
+    doc.text('Qualidade', 25, 165);
+    
+    xPos = 25;
+    const qualidadeModules = [
+      { name: 'Ocorrências' },
+      { name: 'Gamificação' }
+    ];
+    
+    qualidadeModules.forEach((mod, idx) => {
+      const colors = [[6, 182, 212], [8, 145, 178]];
+      doc.setFillColor(...colors[idx]);
+      doc.roundedRect(xPos, 170, 40, 18, 2, 2, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'bold');
+      doc.text(mod.name, xPos + 20, 181, { align: 'center' });
+      
+      xPos += 42;
+    });
+    
+    doc.setFontSize(12);
+    doc.setTextColor(6, 182, 212);
+    doc.setFont(undefined, 'bold');
+    doc.text('Comunicação', 155, 165);
+    
+    xPos = 155;
+    const comunicacaoModules = [
+      { name: 'App Motorista' },
+      { name: 'SAC IA' }
+    ];
+    
+    comunicacaoModules.forEach((mod, idx) => {
+      const colors = [[37, 99, 235], [29, 78, 216]];
+      doc.setFillColor(...colors[idx]);
+      doc.roundedRect(xPos, 170, 40, 18, 2, 2, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'bold');
+      doc.text(mod.name, xPos + 20, 181, { align: 'center' });
+      
+      xPos += 42;
+    });
+
+    // Slide 2 - Gestão de Ordens
+    doc.addPage();
+    doc.setFillColor(240, 249, 255);
 
     // Slide 2 - Gestão de Ordens
     doc.addPage();
@@ -451,14 +647,14 @@ Deno.serve(async (req) => {
     });
     
     doc.setFillColor(6, 182, 212);
-    doc.roundedRect(20, 150, 257, 35, 3, 3, 'F');
+    doc.roundedRect(20, 150, 257, 30, 3, 3, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(28);
+    doc.setFontSize(24);
     doc.setFont(undefined, 'bold');
-    doc.text('Product-Market Fit Validado', pageWidth / 2, 170, { align: 'center' });
-    doc.setFontSize(16);
+    doc.text('Product-Market Fit Validado', pageWidth / 2, 166, { align: 'center' });
+    doc.setFontSize(14);
     doc.setFont(undefined, 'normal');
-    doc.text('Todas métricas superaram metas em 30 dias', pageWidth / 2, 181, { align: 'center' });
+    doc.text('Todas métricas superaram metas em 30 dias', pageWidth / 2, 174, { align: 'center' });
 
     // Gerar PDF como arraybuffer
     const pdfBytes = doc.output('arraybuffer');

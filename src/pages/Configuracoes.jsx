@@ -1805,12 +1805,24 @@ export default function Configuracoes() {
             </div>
             <div className="flex gap-3">
               <Button
-                onClick={() => {
-                  const style = document.createElement('style');
-                  style.innerHTML = '@page { margin: 0; size: landscape; }';
-                  document.head.appendChild(style);
-                  window.print();
-                  setTimeout(() => document.head.removeChild(style), 1000);
+                onClick={async () => {
+                  try {
+                    const { exportarApresentacaoPdf } = await import('@/functions/exportarApresentacaoPdf');
+                    const response = await exportarApresentacaoPdf({});
+                    
+                    const blob = new Blob([response.data], { type: 'application/pdf' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'Apresentacao_LogiFlow.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                  } catch (error) {
+                    console.error('Erro ao gerar PDF:', error);
+                    alert('Erro ao gerar PDF. Tente novamente.');
+                  }
                 }}
                 className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-lg font-semibold text-lg px-6 py-3"
               >
