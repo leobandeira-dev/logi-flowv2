@@ -2195,24 +2195,29 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                 <div className="text-xs text-green-700 font-medium">% no Prazo</div>
                 <div className="text-xl font-bold text-green-900">
                   {(() => {
-                    const noPrazo = tipo === 'geral'
-                      ? listaImpressao.filter(ordem => 
-                          getStatusSLA(ordem, 'carga').label === 'No Prazo' && getStatusSLA(ordem, 'entrega').label === 'No Prazo'
-                        ).length
-                      : listaImpressao.filter(ordem => getStatusSLA(ordem, tipo).label === 'No Prazo').length;
-                    
-                    const totalConsiderado = tipo === 'geral'
-                      ? listaImpressao.filter(ordem => 
-                          (ordem.fim_carregamento && ordem.carregamento_agendamento_data) ||
-                          (ordem.chegada_destino && ordem.prazo_entrega)
-                        ).length
-                      : listaImpressao.filter(ordem => 
-                          tipo === 'carga' 
-                            ? (ordem.fim_carregamento && ordem.carregamento_agendamento_data)
-                            : (ordem.chegada_destino && ordem.prazo_entrega)
-                        ).length;
-                    
-                    return totalConsiderado > 0 ? ((noPrazo / totalConsiderado) * 100).toFixed(2) : '0.00';
+                    if (tipo === 'geral') {
+                      // Calcular SLA de Carga
+                      const totalCarga = listaImpressao.filter(o => o.fim_carregamento && o.carregamento_agendamento_data).length;
+                      const noPrazoCarga = listaImpressao.filter(o => getStatusSLA(o, 'carga').label === 'No Prazo').length;
+                      const percCarga = totalCarga > 0 ? (noPrazoCarga / totalCarga) * 100 : 0;
+                      
+                      // Calcular SLA de Descarga
+                      const totalDescarga = listaImpressao.filter(o => o.chegada_destino && o.prazo_entrega).length;
+                      const noPrazoDescarga = listaImpressao.filter(o => getStatusSLA(o, 'entrega').label === 'No Prazo').length;
+                      const percDescarga = totalDescarga > 0 ? (noPrazoDescarga / totalDescarga) * 100 : 0;
+                      
+                      // Média dos dois SLAs
+                      const mediaSLA = (percCarga + percDescarga) / 2;
+                      return mediaSLA.toFixed(2);
+                    } else {
+                      const noPrazo = listaImpressao.filter(ordem => getStatusSLA(ordem, tipo).label === 'No Prazo').length;
+                      const totalConsiderado = listaImpressao.filter(ordem => 
+                        tipo === 'carga' 
+                          ? (ordem.fim_carregamento && ordem.carregamento_agendamento_data)
+                          : (ordem.chegada_destino && ordem.prazo_entrega)
+                      ).length;
+                      return totalConsiderado > 0 ? ((noPrazo / totalConsiderado) * 100).toFixed(2) : '0.00';
+                    }
                   })()}%
                 </div>
                 {tipo === 'geral' && (
