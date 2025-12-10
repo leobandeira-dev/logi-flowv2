@@ -254,16 +254,19 @@ export default function Tracking() {
       return false;
     });
 
-    // Calcular SLA de carregamento - excluindo expurgados
+    // Calcular SLA de carregamento - INCLUINDO expurgados como "No Prazo"
     // Usar data atual de SP se inicio_carregamento estiver vazio
     const getDataAtualSP = () => {
       return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
     };
     
     const carregamentosRealizados = ordensBase.filter(o => 
-      o.carregamento_agendamento_data && !o.carregamento_expurgado
+      o.carregamento_agendamento_data
     );
     const carregamentosNoPrazo = carregamentosRealizados.filter(o => {
+      // Se foi expurgado, contar como "No Prazo"
+      if (o.carregamento_expurgado) return true;
+      
       const agendado = new Date(o.carregamento_agendamento_data);
       const realizado = o.inicio_carregamento 
         ? new Date(o.inicio_carregamento)
@@ -271,12 +274,15 @@ export default function Tracking() {
       return realizado <= agendado;
     });
 
-    // Calcular SLA de descarga - excluindo expurgados
+    // Calcular SLA de descarga - INCLUINDO expurgados como "No Prazo"
     // Usar data atual de SP se chegada_destino estiver vazio
     const descargasRealizadas = ordensBase.filter(o => 
-      o.prazo_entrega && !o.entrega_expurgada
+      o.prazo_entrega
     );
     const descargasNoPrazo = descargasRealizadas.filter(o => {
+      // Se foi expurgado, contar como "No Prazo"
+      if (o.entrega_expurgada) return true;
+      
       const prazo = new Date(o.prazo_entrega);
       const realizado = o.chegada_destino 
         ? new Date(o.chegada_destino)
@@ -697,6 +703,8 @@ export default function Tracking() {
       filteredOrdens.forEach(ordem => {
         if (ordem.carregamento_agendamento_data) {
           if (ordem.carregamento_expurgado) {
+            // Expurgos são contados como "No Prazo" E também no array de expurgados (para relatório)
+            ordensCarregamento.noPrazo.push(ordem);
             ordensCarregamento.expurgado.push(ordem);
           } else {
             const agendado = new Date(ordem.carregamento_agendamento_data);
@@ -713,6 +721,8 @@ export default function Tracking() {
 
         if (ordem.prazo_entrega) {
           if (ordem.entrega_expurgada) {
+            // Expurgos são contados como "No Prazo" E também no array de expurgados (para relatório)
+            ordensEntrega.noPrazo.push(ordem);
             ordensEntrega.expurgado.push(ordem);
           } else {
             const prazo = new Date(ordem.prazo_entrega);
@@ -763,7 +773,10 @@ export default function Tracking() {
           }
 
           if (ordem.carregamento_expurgado) {
+            // Expurgos contam como "No Prazo" E também como expurgado
+            dadosPorData[data].noPrazo++;
             dadosPorData[data].expurgado++;
+            ordensNoPrazo.push(ordem);
             ordensExpurgadas.push(ordem);
           } else {
             const agendado = new Date(ordem.carregamento_agendamento_data);
@@ -814,7 +827,10 @@ export default function Tracking() {
           }
 
           if (ordem.entrega_expurgada) {
+            // Expurgos contam como "No Prazo" E também como expurgado
+            dadosPorData[data].noPrazo++;
             dadosPorData[data].expurgado++;
+            ordensNoPrazo.push(ordem);
             ordensExpurgadas.push(ordem);
           } else {
             const prazo = new Date(ordem.prazo_entrega);
