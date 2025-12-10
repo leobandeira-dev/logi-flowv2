@@ -64,7 +64,7 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
 
         <section>
           <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>2. CATEGORIAS E RESPONSABILIDADES</h3>
-          <p className="text-sm mb-3" style={{ color: theme.textMuted }}>
+          <p className="text-sm mb-3" style={{ color: theme.textMuted }>
             O sistema possui 4 categorias de ocorrências: Tracking, Fluxo, Tarefa e Diária. 
             Todos os usuários são responsáveis por identificar e registrar ocorrências.
           </p>
