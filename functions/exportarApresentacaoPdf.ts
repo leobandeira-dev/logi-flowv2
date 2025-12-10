@@ -16,391 +16,229 @@ Deno.serve(async (req) => {
       try {
         empresa = await base44.asServiceRole.entities.Empresa.get(user.empresa_id);
       } catch (error) {
-        console.log('Empresa não encontrada, continuando sem logo');
+        console.log('Empresa nao encontrada, continuando sem logo');
       }
     }
 
-    // Criar PDF em modo paisagem (landscape) com margem zero
+    // Criar PDF em modo paisagem
     const doc = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
-      format: 'a4',
-      compress: true
+      format: 'a4'
     });
 
-    const pageWidth = 297; // A4 landscape width
-    const pageHeight = 210; // A4 landscape height
+    const w = 297;
+    const h = 210;
 
-    // Slide 0 - Capa Institucional
+    // ========== SLIDE 0 - CAPA ==========
     doc.setFillColor(240, 249, 255);
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+    doc.rect(0, 0, w, h, 'F');
     
-    // LogiFlow Title
+    // LogiFlow
     doc.setTextColor(8, 145, 178);
     doc.setFontSize(56);
-    doc.setFont(undefined, 'bold');
-    doc.text('LogiFlow', pageWidth / 2, 60, { align: 'center' });
+    doc.text('LogiFlow', w/2, 60, { align: 'center' });
     
-    // Linha decorativa
+    // Linha
     doc.setFillColor(6, 182, 212);
-    doc.rect(pageWidth / 2 - 24, 65, 48, 1.5, 'F');
+    doc.rect(w/2 - 24, 65, 48, 1.5, 'F');
     
-    // Subtítulos
+    // Subtitulos
     doc.setTextColor(31, 41, 55);
     doc.setFontSize(28);
-    doc.setFont(undefined, 'bold');
-    doc.text('Sistema de Gestão Logística Integrada', pageWidth / 2, 85, { align: 'center' });
+    doc.text('Sistema de Gestao Logistica Integrada', w/2, 85, { align: 'center' });
     
     doc.setFontSize(16);
     doc.setTextColor(107, 114, 128);
-    doc.setFont(undefined, 'normal');
-    doc.text('Consultoria • Tecnologia • Transformação Digital', pageWidth / 2, 95, { align: 'center' });
+    doc.text('Consultoria - Tecnologia - Transformacao Digital', w/2, 95, { align: 'center' });
     
     doc.setFontSize(14);
     doc.setTextColor(6, 182, 212);
-    doc.setFont(undefined, 'bold');
-    doc.text('Processos Visuais • Métricas Objetivas • Melhoria Contínua', pageWidth / 2, 105, { align: 'center' });
+    doc.text('Processos Visuais - Metricas Objetivas - Melhoria Continua', w/2, 105, { align: 'center' });
     
-    // Cards de destaque
+    // Cards
     const stats = [
-      { label: '20+ Módulos', value: '20+' },
+      { label: '20+ Modulos', value: '20+' },
       { label: '4 Perfis', value: '4' },
       { label: '100% Gamificado', value: '100%' },
       { label: 'Meta SLA 95%+', value: '95%+' }
     ];
     
-    let statsX = 35;
-    stats.forEach((stat, idx) => {
+    let x = 35;
+    stats.forEach((stat, i) => {
       const colors = [[6, 182, 212], [37, 99, 235], [29, 78, 216], [30, 64, 175]];
       doc.setFillColor(255, 255, 255);
-      doc.setDrawColor(...colors[idx]);
-      doc.setLineWidth(0.5);
-      doc.roundedRect(statsX, 120, 55, 28, 2, 2, 'FD');
+      doc.setDrawColor(...colors[i]);
+      doc.rect(x, 120, 55, 28, 'FD');
       
-      doc.setTextColor(...colors[idx]);
+      doc.setTextColor(...colors[i]);
       doc.setFontSize(20);
-      doc.setFont(undefined, 'bold');
-      doc.text(stat.value, statsX + 27.5, 135, { align: 'center' });
+      doc.text(stat.value, x + 27.5, 135, { align: 'center' });
       
       doc.setFontSize(9);
-      doc.setFont(undefined, 'normal');
       doc.setTextColor(75, 85, 99);
-      doc.text(stat.label, statsX + 27.5, 142, { align: 'center' });
+      doc.text(stat.label, x + 27.5, 142, { align: 'center' });
       
-      statsX += 60;
+      x += 60;
     });
     
-    // Rodapé estruturado
+    // Rodape
     doc.setFillColor(30, 41, 59);
-    doc.roundedRect(20, 160, 257, 35, 2, 2, 'F');
+    doc.rect(20, 160, 257, 35, 'F');
     
-    // Grid 2 colunas
     doc.setTextColor(148, 163, 184);
     doc.setFontSize(8);
-    doc.setFont(undefined, 'normal');
     doc.text('EMPRESA', 30, 168);
     doc.text('PRODUCT OWNER', 155, 168);
     
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
-    doc.setFont(undefined, 'bold');
-    doc.text('LAF Logística', 30, 176);
+    doc.text('LAF Logistica', 30, 176);
     doc.text('Leonardo Silva Bandeira', 155, 176);
     
     doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
     doc.setTextColor(203, 213, 225);
     doc.text('CNPJ 34.579.341/0001-85', 30, 183);
     doc.text('CPF 042.332.453-52', 155, 183);
     
-    // Linha separadora
     doc.setFillColor(71, 85, 105);
     doc.rect(20, 188, 257, 0.5, 'F');
     
-    // Stack tecnológica
     doc.setTextColor(148, 163, 184);
     doc.setFontSize(8);
-    doc.text('STACK TECNOLÓGICA', pageWidth / 2, 193, { align: 'center' });
+    doc.text('STACK TECNOLOGICA', w/2, 193, { align: 'center' });
     doc.setFontSize(9);
     doc.setTextColor(203, 213, 225);
-    doc.text('React • TypeScript • PostgreSQL • Deno Deploy', pageWidth / 2, 199, { align: 'center' });
+    doc.text('React - TypeScript - PostgreSQL - Deno Deploy', w/2, 199, { align: 'center' });
 
-    // Slide 1 - Visão Geral Módulos
+    // ========== SLIDE 1 - VISAO GERAL ==========
     doc.addPage();
     doc.setFillColor(240, 249, 255);
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+    doc.rect(0, 0, w, h, 'F');
     
     doc.setTextColor(8, 145, 178);
     doc.setFontSize(32);
-    doc.setFont(undefined, 'bold');
-    doc.text('Gestão Logística Completa', pageWidth / 2, 25, { align: 'center' });
+    doc.text('Gestao Logistica Completa', w/2, 25, { align: 'center' });
     
     doc.setFontSize(14);
     doc.setTextColor(75, 85, 99);
-    doc.setFont(undefined, 'normal');
-    doc.text('20 Módulos Integrados • Processos visuais • Métricas objetivas', pageWidth / 2, 35, { align: 'center' });
+    doc.text('20 Modulos Integrados - Processos visuais - Metricas objetivas', w/2, 35, { align: 'center' });
     
-    // Gestão de Operações
+    // Gestao de Operacoes
     doc.setFontSize(12);
     doc.setTextColor(6, 182, 212);
-    doc.setFont(undefined, 'bold');
-    doc.text('Gestão de Operações', 25, 50);
+    doc.text('Gestao de Operacoes', 25, 50);
     
-    let xPos = 25;
-    const opsModules = [
-      { name: 'Dashboard', desc: 'Métricas e KPIs' },
-      { name: 'Tracking', desc: 'Rastreamento' },
-      { name: 'Fluxo BPMN', desc: 'Workflow' },
-      { name: 'Ordens', desc: 'Carregamento' }
-    ];
-    
-    opsModules.forEach((mod, idx) => {
+    x = 25;
+    ['Dashboard', 'Tracking', 'Fluxo BPMN', 'Ordens'].forEach((nome, i) => {
       const colors = [[6, 182, 212], [8, 145, 178], [37, 99, 235], [29, 78, 216]];
-      doc.setFillColor(...colors[idx]);
-      doc.roundedRect(xPos, 55, 60, 22, 2, 2, 'F');
+      doc.setFillColor(...colors[i]);
+      doc.rect(x, 55, 60, 22, 'F');
       
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
-      doc.setFont(undefined, 'bold');
-      doc.text(mod.name, xPos + 30, 64, { align: 'center' });
+      doc.text(nome, x + 30, 66, { align: 'center' });
       
-      doc.setFontSize(7);
-      doc.setFont(undefined, 'normal');
-      doc.text(mod.desc, xPos + 30, 71, { align: 'center' });
-      
-      xPos += 63;
+      x += 63;
     });
     
-    // Gestão de Coletas
+    // Coletas
     doc.setFontSize(12);
     doc.setTextColor(6, 182, 212);
-    doc.setFont(undefined, 'bold');
-    doc.text('Gestão de Coletas', 25, 90);
+    doc.text('Gestao de Coletas', 25, 90);
     
-    xPos = 25;
-    const coletasModules = [
-      { name: 'Dashboard Coletas', desc: 'Visão Geral' },
-      { name: 'Solicitar Coleta', desc: 'Portal Fornecedor' },
-      { name: 'Aprovar Coletas', desc: 'Portal Cliente' }
-    ];
-    
-    coletasModules.forEach((mod, idx) => {
+    x = 25;
+    ['Dashboard Coletas', 'Solicitar Coleta', 'Aprovar Coletas'].forEach((nome, i) => {
       const colors = [[6, 182, 212], [8, 145, 178], [37, 99, 235]];
-      doc.setFillColor(...colors[idx]);
-      doc.roundedRect(xPos, 95, 60, 22, 2, 2, 'F');
+      doc.setFillColor(...colors[i]);
+      doc.rect(x, 95, 60, 22, 'F');
       
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(9);
-      doc.setFont(undefined, 'bold');
-      doc.text(mod.name, xPos + 30, 104, { align: 'center' });
+      doc.text(nome, x + 30, 106, { align: 'center' });
       
-      doc.setFontSize(7);
-      doc.setFont(undefined, 'normal');
-      doc.text(mod.desc, xPos + 30, 111, { align: 'center' });
-      
-      xPos += 63;
-    });
-    
-    // WMS e Recursos - lado a lado
-    doc.setFontSize(12);
-    doc.setTextColor(6, 182, 212);
-    doc.setFont(undefined, 'bold');
-    doc.text('Armazém (WMS)', 25, 130);
-    
-    xPos = 25;
-    const wmsModules = [
-      { name: 'Recebimento' },
-      { name: 'Etiquetas Mãe' },
-      { name: 'Carregamento' }
-    ];
-    
-    wmsModules.forEach((mod, idx) => {
-      const colors = [[37, 99, 235], [29, 78, 216], [30, 64, 175]];
-      doc.setFillColor(...colors[idx]);
-      doc.roundedRect(xPos, 135, 40, 18, 2, 2, 'F');
-      
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(8);
-      doc.setFont(undefined, 'bold');
-      doc.text(mod.name, xPos + 20, 146, { align: 'center' });
-      
-      xPos += 42;
-    });
-    
-    // Recursos
-    doc.setFontSize(12);
-    doc.setTextColor(6, 182, 212);
-    doc.setFont(undefined, 'bold');
-    doc.text('Recursos', 155, 130);
-    
-    xPos = 155;
-    const recursosModules = [
-      { name: 'Motoristas' },
-      { name: 'Veículos' },
-      { name: 'Operações' }
-    ];
-    
-    recursosModules.forEach((mod, idx) => {
-      const colors = [[6, 182, 212], [8, 145, 178], [37, 99, 235]];
-      doc.setFillColor(...colors[idx]);
-      doc.roundedRect(xPos, 135, 40, 18, 2, 2, 'F');
-      
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(8);
-      doc.setFont(undefined, 'bold');
-      doc.text(mod.name, xPos + 20, 146, { align: 'center' });
-      
-      xPos += 42;
-    });
-    
-    // Qualidade e Comunicação - lado a lado
-    doc.setFontSize(12);
-    doc.setTextColor(6, 182, 212);
-    doc.setFont(undefined, 'bold');
-    doc.text('Qualidade', 25, 165);
-    
-    xPos = 25;
-    const qualidadeModules = [
-      { name: 'Ocorrências' },
-      { name: 'Gamificação' }
-    ];
-    
-    qualidadeModules.forEach((mod, idx) => {
-      const colors = [[6, 182, 212], [8, 145, 178]];
-      doc.setFillColor(...colors[idx]);
-      doc.roundedRect(xPos, 170, 40, 18, 2, 2, 'F');
-      
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(8);
-      doc.setFont(undefined, 'bold');
-      doc.text(mod.name, xPos + 20, 181, { align: 'center' });
-      
-      xPos += 42;
-    });
-    
-    doc.setFontSize(12);
-    doc.setTextColor(6, 182, 212);
-    doc.setFont(undefined, 'bold');
-    doc.text('Comunicação', 155, 165);
-    
-    xPos = 155;
-    const comunicacaoModules = [
-      { name: 'App Motorista' },
-      { name: 'SAC IA' }
-    ];
-    
-    comunicacaoModules.forEach((mod, idx) => {
-      const colors = [[37, 99, 235], [29, 78, 216]];
-      doc.setFillColor(...colors[idx]);
-      doc.roundedRect(xPos, 170, 40, 18, 2, 2, 'F');
-      
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(8);
-      doc.setFont(undefined, 'bold');
-      doc.text(mod.name, xPos + 20, 181, { align: 'center' });
-      
-      xPos += 42;
+      x += 63;
     });
 
-    // Slide 2 - Gestão de Ordens
+    // ========== SLIDE 2 - GESTAO DE ORDENS ==========
     doc.addPage();
     doc.setFillColor(240, 249, 255);
-
-    // Slide 2 - Gestão de Ordens
-    doc.addPage();
-    doc.setFillColor(240, 249, 255); // blue-50
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
-    
-    doc.setTextColor(8, 145, 178); // cyan-600
-    doc.setFontSize(32);
-    doc.setFont(undefined, 'bold');
-    doc.text('Gestão Completa de Ordens', pageWidth / 2, 30, { align: 'center' });
-    
-    doc.setFontSize(18);
-    doc.setTextColor(75, 85, 99);
-    doc.text('5 Modalidades de Criação - Do Simples ao Avançado', pageWidth / 2, 45, { align: 'center' });
-    
-    const modalidades = [
-      { num: '01', title: 'Ordem Completa', desc: '60+ campos completos' },
-      { num: '02', title: 'Oferta de Carga', desc: 'Cadastro rápido' },
-      { num: '03', title: 'Lote Excel', desc: 'Importação em massa' },
-      { num: '04', title: 'OCR de PDF', desc: 'Extração via IA' },
-      { num: '05', title: 'Ordens Filhas', desc: 'Múltiplos destinos' }
-    ];
-    
-    let xPos = 15;
-    modalidades.forEach((mod, idx) => {
-      const colors = [
-        [6, 182, 212],   // cyan-500
-        [8, 145, 178],   // cyan-600
-        [37, 99, 235],   // blue-600
-        [29, 78, 216],   // blue-700
-        [30, 64, 175]    // blue-800
-      ];
-      
-      doc.setFillColor(...colors[idx]);
-      doc.roundedRect(xPos, 60, 50, 70, 3, 3, 'F');
-      
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(24);
-      doc.setFont(undefined, 'bold');
-      doc.text(mod.num, xPos + 25, 85, { align: 'center' });
-      
-      doc.setFontSize(14);
-      doc.text(mod.title, xPos + 25, 100, { align: 'center' });
-      
-      doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
-      doc.text(mod.desc, xPos + 25, 110, { align: 'center' });
-      
-      xPos += 55;
-    });
-    
-    doc.setFillColor(6, 182, 212); // cyan-500
-    doc.roundedRect(20, 145, 257, 40, 3, 3, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(24);
-    doc.setFont(undefined, 'bold');
-    doc.text('Redução de 77% no tempo de cadastro', pageWidth / 2, 165, { align: 'center' });
-    doc.setFontSize(16);
-    doc.setFont(undefined, 'normal');
-    doc.text('De 18 minutos para apenas 4,2 minutos por ordem', pageWidth / 2, 178, { align: 'center' });
-
-    // Slide 3 - Tracking
-    doc.addPage();
-    doc.setFillColor(240, 249, 255);
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+    doc.rect(0, 0, w, h, 'F');
     
     doc.setTextColor(8, 145, 178);
     doc.setFontSize(32);
-    doc.setFont(undefined, 'bold');
-    doc.text('Tracking Logístico', pageWidth / 2, 30, { align: 'center' });
+    doc.text('Gestao Completa de Ordens', w/2, 30, { align: 'center' });
     
     doc.setFontSize(18);
     doc.setTextColor(75, 85, 99);
-    doc.text('10 Estágios Completos - Visibilidade Total', pageWidth / 2, 45, { align: 'center' });
+    doc.text('5 Modalidades de Criacao - Do Simples ao Avancado', w/2, 45, { align: 'center' });
     
-    const estagios = [
-      'Agend.', 'Agendado', 'Carreg.', 'Carregado', 'Viagem',
-      'Chegou', 'Desc.Ag', 'Descar.', 'Desc.OK', 'Final'
+    const modalidades = [
+      { num: '01', title: 'Ordem Completa', desc: '60+ campos' },
+      { num: '02', title: 'Oferta de Carga', desc: 'Cadastro rapido' },
+      { num: '03', title: 'Lote Excel', desc: 'Importacao massa' },
+      { num: '04', title: 'OCR de PDF', desc: 'Extracao via IA' },
+      { num: '05', title: 'Ordens Filhas', desc: 'Multiplos destinos' }
     ];
     
-    xPos = 20;
-    estagios.forEach((est, idx) => {
-      const progress = idx / (estagios.length - 1);
-      const r = Math.round(6 + progress * (29 - 6));
-      const g = Math.round(182 - progress * (182 - 78));
-      const b = Math.round(212 + progress * (216 - 212));
+    x = 15;
+    modalidades.forEach((mod, i) => {
+      const colors = [[6, 182, 212], [8, 145, 178], [37, 99, 235], [29, 78, 216], [30, 64, 175]];
+      
+      doc.setFillColor(...colors[i]);
+      doc.rect(x, 60, 50, 70, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.text(mod.num, x + 25, 85, { align: 'center' });
+      
+      doc.setFontSize(14);
+      doc.text(mod.title, x + 25, 100, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.text(mod.desc, x + 25, 110, { align: 'center' });
+      
+      x += 55;
+    });
+    
+    doc.setFillColor(6, 182, 212);
+    doc.rect(20, 145, 257, 30, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text('Reducao de 75% no tempo de cadastro', w/2, 162, { align: 'center' });
+    doc.setFontSize(14);
+    doc.text('De 18 minutos para apenas 4 minutos por ordem', w/2, 172, { align: 'center' });
+
+    // ========== SLIDE 3 - TRACKING ==========
+    doc.addPage();
+    doc.setFillColor(240, 249, 255);
+    doc.rect(0, 0, w, h, 'F');
+    
+    doc.setTextColor(8, 145, 178);
+    doc.setFontSize(32);
+    doc.text('Tracking Logistico', w/2, 30, { align: 'center' });
+    
+    doc.setFontSize(18);
+    doc.setTextColor(75, 85, 99);
+    doc.text('10 Estagios Completos - Visibilidade Total', w/2, 45, { align: 'center' });
+    
+    const estagios = ['Agend.', 'Agendado', 'Carreg.', 'Carregado', 'Viagem', 'Chegou', 'Desc.Ag', 'Descar.', 'Desc.OK', 'Final'];
+    
+    x = 20;
+    estagios.forEach((est, i) => {
+      const progress = i / 9;
+      const r = Math.round(6 + progress * 23);
+      const g = Math.round(182 - progress * 104);
+      const b = Math.round(212);
       
       doc.setFillColor(r, g, b);
-      doc.roundedRect(xPos, 65, 26, 30, 2, 2, 'F');
+      doc.rect(x, 65, 26, 30, 'F');
       
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(8);
-      doc.setFont(undefined, 'bold');
-      doc.text(est, xPos + 13, 83, { align: 'center' });
+      doc.text(est, x + 13, 83, { align: 'center' });
       
-      xPos += 27;
+      x += 27;
     });
     
     doc.setTextColor(17, 24, 39);
@@ -408,143 +246,130 @@ Deno.serve(async (req) => {
     doc.text('Recursos Principais:', 30, 115);
     
     doc.setFontSize(12);
-    doc.setFont(undefined, 'normal');
     const recursos = [
-      '✓ Localização via Google Distance Matrix',
-      '✓ SLA com alertas visuais e expurgo',
-      '✓ Chat central tempo real',
-      '✓ Múltiplas visualizações (Tabela/Planilha/TV)'
+      'Localizacao via Google Distance Matrix',
+      'SLA com alertas visuais e expurgo',
+      'Chat central tempo real',
+      'Multiplas visualizacoes (Tabela/Planilha/TV)'
     ];
     
-    let yPos = 130;
+    let y = 130;
     recursos.forEach(rec => {
-      doc.text(rec, 30, yPos);
-      yPos += 12;
+      doc.text('- ' + rec, 30, y);
+      y += 12;
     });
     
     doc.setFillColor(6, 182, 212);
-    doc.roundedRect(20, 175, 257, 20, 3, 3, 'F');
+    doc.rect(20, 175, 257, 20, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
-    doc.setFont(undefined, 'bold');
-    doc.text('Redução de 70% em ligações telefônicas', pageWidth / 2, 188, { align: 'center' });
+    doc.text('Reducao de 70% em ligacoes telefonicas', w/2, 188, { align: 'center' });
 
-    // Slide 4 - Portal B2B
+    // ========== SLIDE 4 - PORTAL B2B ==========
     doc.addPage();
     doc.setFillColor(240, 249, 255);
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+    doc.rect(0, 0, w, h, 'F');
     
     doc.setTextColor(8, 145, 178);
     doc.setFontSize(32);
-    doc.setFont(undefined, 'bold');
-    doc.text('Portal B2B - Coletas', pageWidth / 2, 30, { align: 'center' });
+    doc.text('Portal B2B - Coletas', w/2, 30, { align: 'center' });
     
     doc.setFontSize(18);
     doc.setTextColor(75, 85, 99);
-    doc.text('Self-Service para Fornecedores e Clientes', pageWidth / 2, 45, { align: 'center' });
+    doc.text('Self-Service para Fornecedores e Clientes', w/2, 45, { align: 'center' });
     
     const fluxoB2B = [
       { num: '1', title: 'Fornecedor Solicita', desc: 'Upload XMLs, dados carga' },
-      { num: '2', title: 'Cliente Aprova', desc: 'Portal aprovações online' },
-      { num: '3', title: 'Conversão Auto', desc: 'Vira ordem carregamento' }
+      { num: '2', title: 'Cliente Aprova', desc: 'Portal aprovacoes online' },
+      { num: '3', title: 'Conversao Auto', desc: 'Vira ordem carregamento' }
     ];
     
-    xPos = 30;
-    fluxoB2B.forEach((etapa, idx) => {
+    x = 30;
+    fluxoB2B.forEach((etapa, i) => {
       const colors = [[6, 182, 212], [37, 99, 235], [29, 78, 216]];
       
-      doc.setFillColor(...colors[idx]);
-      doc.roundedRect(xPos, 70, 75, 50, 3, 3, 'F');
+      doc.setFillColor(...colors[i]);
+      doc.rect(x, 70, 75, 50, 'F');
       
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(28);
-      doc.setFont(undefined, 'bold');
-      doc.text(etapa.num, xPos + 37.5, 90, { align: 'center' });
+      doc.text(etapa.num, x + 37.5, 90, { align: 'center' });
       
       doc.setFontSize(14);
-      doc.text(etapa.title, xPos + 37.5, 103, { align: 'center' });
+      doc.text(etapa.title, x + 37.5, 103, { align: 'center' });
       
       doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
-      doc.text(etapa.desc, xPos + 37.5, 113, { align: 'center' });
+      doc.text(etapa.desc, x + 37.5, 113, { align: 'center' });
       
-      xPos += 85;
+      x += 85;
     });
     
     doc.setFillColor(6, 182, 212);
-    doc.roundedRect(20, 140, 257, 40, 3, 3, 'F');
+    doc.rect(20, 140, 257, 40, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
-    doc.setFont(undefined, 'bold');
-    doc.text('Processo de coleta totalmente digital', pageWidth / 2, 160, { align: 'center' });
+    doc.text('Processo de coleta totalmente digital', w/2, 160, { align: 'center' });
     doc.setFontSize(16);
-    doc.setFont(undefined, 'normal');
-    doc.text('De dias para minutos • Sem ligações • Rastreável', pageWidth / 2, 172, { align: 'center' });
+    doc.text('De dias para minutos - Sem ligacoes - Rastreavel', w/2, 172, { align: 'center' });
 
-    // Slide 5 - Workflow BPMN
+    // ========== SLIDE 5 - WORKFLOW ==========
     doc.addPage();
     doc.setFillColor(6, 182, 212);
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+    doc.rect(0, 0, w, h, 'F');
     
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(36);
-    doc.setFont(undefined, 'bold');
-    doc.text('Workflow BPMN', pageWidth / 2, 40, { align: 'center' });
+    doc.text('Workflow BPMN', w/2, 40, { align: 'center' });
     
     doc.setFontSize(20);
-    doc.setFont(undefined, 'normal');
-    doc.text('Etapas Configuráveis com SLA Granular', pageWidth / 2, 55, { align: 'center' });
+    doc.text('Etapas Configuraveis com SLA Granular', w/2, 55, { align: 'center' });
     
-    const etapas = ['Cadastro', 'Rastreamento', 'Expedição', 'Financeiro', 'Finalização'];
-    xPos = 25;
-    etapas.forEach((etapa, idx) => {
+    const etapas = ['Cadastro', 'Rastreamento', 'Expedicao', 'Financeiro', 'Finalizacao'];
+    x = 25;
+    etapas.forEach((etapa, i) => {
       doc.setFillColor(255, 255, 255);
-      doc.circle(xPos + 25, 100, 15, 'F');
+      doc.circle(x + 25, 100, 15, 'F');
       
       doc.setTextColor(6, 182, 212);
       doc.setFontSize(20);
-      doc.setFont(undefined, 'bold');
-      doc.text((idx + 1).toString(), xPos + 25, 105, { align: 'center' });
+      doc.text((i + 1).toString(), x + 25, 105, { align: 'center' });
       
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(12);
-      doc.text(etapa, xPos + 25, 125, { align: 'center' });
+      doc.text(etapa, x + 25, 125, { align: 'center' });
       
-      xPos += 53;
+      x += 53;
     });
     
     doc.setFontSize(20);
-    doc.setFont(undefined, 'bold');
     doc.text('Recursos:', 30, 150);
     
     doc.setFontSize(14);
-    doc.setFont(undefined, 'normal');
     const recursos2 = [
-      '• Prazos em dias/horas/minutos',
-      '• 3 modos de contagem de prazo',
-      '• Campos customizados por etapa',
-      '• Atribuição por usuário ou departamento'
+      'Prazos em dias/horas/minutos',
+      '3 modos de contagem de prazo',
+      'Campos customizados por etapa',
+      'Atribuicao por usuario ou departamento'
     ];
     
-    yPos = 165;
+    y = 165;
     recursos2.forEach(rec => {
-      doc.text(rec, 30, yPos);
-      yPos += 12;
+      doc.text('- ' + rec, 30, y);
+      y += 12;
     });
 
-    // Slide 6 - Gamificação
+    // ========== SLIDE 6 - GAMIFICACAO ==========
     doc.addPage();
     doc.setFillColor(240, 249, 255);
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+    doc.rect(0, 0, w, h, 'F');
     
     doc.setTextColor(8, 145, 178);
     doc.setFontSize(32);
-    doc.setFont(undefined, 'bold');
-    doc.text('Gamificação e SLA', pageWidth / 2, 30, { align: 'center' });
+    doc.text('Gamificacao e SLA', w/2, 30, { align: 'center' });
     
     doc.setFontSize(18);
     doc.setTextColor(75, 85, 99);
-    doc.text('Métricas de Performance e Reconhecimento', pageWidth / 2, 45, { align: 'center' });
+    doc.text('Metricas de Performance e Reconhecimento', w/2, 45, { align: 'center' });
     
     const niveis = [
       { num: '1', nome: 'Iniciante', pts: '0-100' },
@@ -554,116 +379,104 @@ Deno.serve(async (req) => {
       { num: '5', nome: 'Comandante', pts: '1000+' }
     ];
     
-    xPos = 20;
-    niveis.forEach((nivel, idx) => {
+    x = 20;
+    niveis.forEach((nivel, i) => {
       const colors = [[6, 182, 212], [8, 145, 178], [37, 99, 235], [29, 78, 216], [30, 64, 175]];
       
-      doc.setFillColor(...colors[idx]);
-      doc.roundedRect(xPos, 65, 52, 50, 3, 3, 'F');
+      doc.setFillColor(...colors[i]);
+      doc.rect(x, 65, 52, 50, 'F');
       
       doc.setFillColor(255, 255, 255);
-      doc.setTextColor(colors[idx][0], colors[idx][1], colors[idx][2]);
-      doc.circle(xPos + 26, 82, 8, 'F');
+      doc.circle(x + 26, 82, 8, 'F');
+      
+      doc.setTextColor(...colors[i]);
+      doc.setFontSize(16);
+      doc.text(nivel.num, x + 26, 86, { align: 'center' });
       
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
-      doc.setFont(undefined, 'bold');
-      doc.text(nivel.num, xPos + 26, 86, { align: 'center' });
-      
       doc.setFontSize(12);
-      doc.setFont(undefined, 'bold');
-      doc.text(nivel.nome, xPos + 26, 100, { align: 'center' });
+      doc.text(nivel.nome, x + 26, 100, { align: 'center' });
       
       doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
-      doc.text(nivel.pts, xPos + 26, 110, { align: 'center' });
+      doc.text(nivel.pts, x + 26, 110, { align: 'center' });
       
-      xPos += 54;
+      x += 54;
     });
     
-    doc.setFillColor(37, 99, 235); // blue-600
-    doc.roundedRect(20, 130, 120, 55, 3, 3, 'F');
+    doc.setFillColor(37, 99, 235);
+    doc.rect(20, 130, 120, 55, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
-    doc.setFont(undefined, 'bold');
-    doc.text('Cálculo do SLA', 30, 145);
+    doc.text('Calculo do SLA', 30, 145);
     doc.setFontSize(12);
-    doc.setFont(undefined, 'normal');
     doc.text('60% Qualidade', 30, 158);
-    doc.text('(Ocorrências)', 30, 166);
+    doc.text('(Ocorrencias)', 30, 166);
     doc.text('40% Produtividade', 30, 176);
     doc.text('(Ordens + Etapas)', 30, 184);
     
-    doc.setFillColor(6, 182, 212); // cyan-500
-    doc.roundedRect(155, 130, 122, 55, 3, 3, 'F');
+    doc.setFillColor(6, 182, 212);
+    doc.rect(155, 130, 122, 55, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
-    doc.setFont(undefined, 'bold');
     doc.text('Rankings', 165, 145);
     doc.setFontSize(12);
-    doc.setFont(undefined, 'normal');
-    doc.text('• Ranking geral acumulado', 165, 158);
-    doc.text('• Ranking mensal', 165, 168);
-    doc.text('• Por categoria de usuário', 165, 178);
+    doc.text('- Ranking geral acumulado', 165, 158);
+    doc.text('- Ranking mensal', 165, 168);
+    doc.text('- Por categoria de usuario', 165, 178);
 
-    // Slide 7 - Resultados
+    // ========== SLIDE 7 - RESULTADOS ==========
     doc.addPage();
     doc.setFillColor(240, 249, 255);
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+    doc.rect(0, 0, w, h, 'F');
     
     doc.setTextColor(8, 145, 178);
     doc.setFontSize(32);
-    doc.setFont(undefined, 'bold');
-    doc.text('Resultados Comprovados', pageWidth / 2, 30, { align: 'center' });
+    doc.text('Resultados Comprovados', w/2, 30, { align: 'center' });
     
     doc.setFontSize(18);
     doc.setTextColor(75, 85, 99);
-    doc.text('Métricas Reais de 30 Dias de Operação', pageWidth / 2, 45, { align: 'center' });
+    doc.text('Metricas Reais de 30 Dias de Operacao', w/2, 45, { align: 'center' });
     
     const resultados = [
       { valor: '+10pp', titulo: 'SLA Entregas', desc: 'De 78% para 88%', color: [6, 182, 212] },
       { valor: '-75%', titulo: 'Tempo Cadastro', desc: 'De 18min para 4min', color: [8, 145, 178] },
-      { valor: '-70%', titulo: 'Ligações Tel', desc: 'Redução comunicação', color: [37, 99, 235] }
+      { valor: '-70%', titulo: 'Ligacoes Tel', desc: 'Reducao comunicacao', color: [37, 99, 235] }
     ];
     
-    xPos = 25;
+    x = 25;
     resultados.forEach((res) => {
       doc.setFillColor(...res.color);
-      doc.roundedRect(xPos, 70, 80, 60, 3, 3, 'F');
+      doc.rect(x, 70, 80, 60, 'F');
       
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(32);
-      doc.setFont(undefined, 'bold');
-      doc.text(res.valor, xPos + 40, 95, { align: 'center' });
+      doc.text(res.valor, x + 40, 95, { align: 'center' });
       
       doc.setFontSize(14);
-      doc.text(res.titulo, xPos + 40, 108, { align: 'center' });
+      doc.text(res.titulo, x + 40, 108, { align: 'center' });
       
       doc.setFontSize(11);
-      doc.setFont(undefined, 'normal');
-      doc.text(res.desc, xPos + 40, 120, { align: 'center' });
+      doc.text(res.desc, x + 40, 120, { align: 'center' });
       
-      xPos += 88;
+      x += 88;
     });
     
     doc.setFillColor(6, 182, 212);
-    doc.roundedRect(20, 150, 257, 30, 3, 3, 'F');
+    doc.rect(20, 150, 257, 30, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
-    doc.setFont(undefined, 'bold');
-    doc.text('Product-Market Fit Validado', pageWidth / 2, 166, { align: 'center' });
+    doc.text('Product-Market Fit Validado', w/2, 166, { align: 'center' });
     doc.setFontSize(14);
-    doc.setFont(undefined, 'normal');
-    doc.text('Todas métricas superaram metas em 30 dias', pageWidth / 2, 174, { align: 'center' });
+    doc.text('Todas metricas superaram metas em 30 dias', w/2, 174, { align: 'center' });
 
-    // Gerar PDF como arraybuffer
+    // Gerar e retornar PDF
     const pdfBytes = doc.output('arraybuffer');
 
     return new Response(pdfBytes, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': 'attachment; filename="Apresentacao_Sistema_Logistica.pdf"'
+        'Content-Disposition': 'attachment; filename="Apresentacao_LogiFlow.pdf"'
       }
     });
   } catch (error) {
