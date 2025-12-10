@@ -102,65 +102,73 @@ export default function Configuracoes() {
       subtitle: "Sistema de Gestão Logística Integrada",
       icon: Building2,
       content: (
-        <div className="min-h-[600px] flex flex-col items-center justify-center">
-          <div className="text-center mb-12">
-            {empresa?.logo_url && (
-              <div className="mb-8">
-                <img
-                  src={empresa.logo_url}
-                  alt={empresa.nome_fantasia || "Logo"}
-                  className="h-32 mx-auto object-contain"
-                />
+        <div className="min-h-[600px] flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+          <div className="text-center max-w-5xl mx-auto px-8">
+            <div className="mb-12">
+              <div className="inline-block bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-3 rounded-full mb-6 shadow-lg">
+                <p className="text-lg font-semibold">Consultoria • Tecnologia • Transformação Digital</p>
               </div>
-            )}
-            <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-cyan-600 via-blue-600 to-blue-800 bg-clip-text text-transparent">
-              {empresa?.nome_fantasia || "TRANSUL TRANSPORTE"}
-            </h1>
-            <div className="w-32 h-1 bg-gradient-to-r from-cyan-500 to-blue-600 mx-auto mb-8" />
-            <p className="text-3xl text-gray-700 font-light mb-4">
-              Sistema de Gestão Logística Integrada
-            </p>
-            <p className="text-xl text-gray-600 mb-12">
-              Processos Visuais • Métricas Objetivas • Melhoria Contínua
-            </p>
-          </div>
-
-          <div className="grid grid-cols-4 gap-6 w-full max-w-5xl">
-            <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-cyan-500 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center">
-                <Activity className="w-8 h-8 text-white" />
-              </div>
-              <p className="font-bold text-2xl text-cyan-700 mb-1">20+</p>
-              <p className="text-sm text-gray-600">Módulos Integrados</p>
+              <h1 className="text-7xl font-bold mb-4 bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 bg-clip-text text-transparent">
+                LAF LOGÍSTICA
+              </h1>
+              <div className="w-48 h-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 mx-auto mb-6" />
+              <p className="text-xl text-gray-600 font-medium mb-8">
+                CNPJ 34.579.341/0001-85
+              </p>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-blue-500 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                <Users className="w-8 h-8 text-white" />
-              </div>
-              <p className="font-bold text-2xl text-blue-700 mb-1">4</p>
-              <p className="text-sm text-gray-600">Perfis de Usuário</p>
+            <div className="mb-12">
+              <h2 className="text-5xl font-bold text-gray-800 mb-6">
+                Sistema de Gestão Logística Integrada
+              </h2>
+              <p className="text-2xl text-cyan-700 font-semibold mb-2">
+                Processos Visuais • Métricas Objetivas • Melhoria Contínua
+              </p>
+              <p className="text-lg text-gray-600">
+                Framework BPMN + PDCA + 5S + Gamificação
+              </p>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-blue-600 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                <Trophy className="w-8 h-8 text-white" />
+            <div className="grid grid-cols-4 gap-6 mb-12">
+              <div className="bg-white p-8 rounded-2xl shadow-2xl border-t-4 border-blue-500 hover:scale-105 transition-transform">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                  <Activity className="w-10 h-10 text-white" />
+                </div>
+                <p className="font-bold text-4xl text-blue-700 mb-2">20+</p>
+                <p className="text-sm text-gray-600 font-medium">Módulos Integrados</p>
               </div>
-              <p className="font-bold text-2xl text-blue-700 mb-1">100%</p>
-              <p className="text-sm text-gray-600">Gamificado</p>
+
+              <div className="bg-white p-8 rounded-2xl shadow-2xl border-t-4 border-cyan-500 hover:scale-105 transition-transform">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center">
+                  <Users className="w-10 h-10 text-white" />
+                </div>
+                <p className="font-bold text-4xl text-cyan-700 mb-2">4</p>
+                <p className="text-sm text-gray-600 font-medium">Perfis de Usuário</p>
+              </div>
+
+              <div className="bg-white p-8 rounded-2xl shadow-2xl border-t-4 border-blue-600 hover:scale-105 transition-transform">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                  <Trophy className="w-10 h-10 text-white" />
+                </div>
+                <p className="font-bold text-4xl text-blue-700 mb-2">100%</p>
+                <p className="text-sm text-gray-600 font-medium">Gamificado</p>
+              </div>
+
+              <div className="bg-white p-8 rounded-2xl shadow-2xl border-t-4 border-cyan-600 hover:scale-105 transition-transform">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                  <Target className="w-10 h-10 text-white" />
+                </div>
+                <p className="font-bold text-4xl text-cyan-700 mb-2">95%+</p>
+                <p className="text-sm text-gray-600 font-medium">Meta SLA</p>
+              </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-blue-700 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center">
-                <Target className="w-8 h-8 text-white" />
-              </div>
-              <p className="font-bold text-2xl text-blue-800 mb-1">95%+</p>
-              <p className="text-sm text-gray-600">Meta SLA</p>
+            <div className="bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 text-white p-8 rounded-2xl shadow-2xl mb-8">
+              <p className="text-2xl font-bold mb-2">Leonardo Silva Bandeira</p>
+              <p className="text-lg opacity-90">CPF 042.332.453-52 | Product Owner</p>
             </div>
-          </div>
 
-          <div className="mt-12 text-center">
-            <p className="text-gray-600 text-lg">
+            <p className="text-gray-500 text-lg font-medium">
               {new Date().toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
