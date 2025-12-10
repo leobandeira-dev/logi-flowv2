@@ -1343,89 +1343,99 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
           );
         }
 
-        // Se tem prazo de entrega
-        if (ordem.prazo_entrega) {
-          const prazoEntrega = new Date(ordem.prazo_entrega);
-          // Se chegada_destino estiver preenchida, usar ela. Caso contrário, usar data atual
-          const realizadoEntrega = ordem.chegada_destino 
-            ? new Date(ordem.chegada_destino)
-            : getDataAtualSP();
+        // Se tem prazo de entrega - validar se é uma data válida
+        if (ordem.prazo_entrega && ordem.prazo_entrega.trim() !== '') {
+          try {
+            const prazoEntrega = new Date(ordem.prazo_entrega);
+            // Validar se a data é válida
+            if (isNaN(prazoEntrega.getTime())) {
+              return <span className="text-[9px]" style={{ color: theme.grayText }}>-</span>;
+            }
 
-          const diffMs = realizadoEntrega - prazoEntrega;
-          const horasAtraso = Math.round(diffMs / (1000 * 60 * 60));
-          const noPrazoEntrega = horasAtraso <= 0;
+            // Se chegada_destino estiver preenchida, usar ela. Caso contrário, usar data atual
+            const realizadoEntrega = ordem.chegada_destino 
+              ? new Date(ordem.chegada_destino)
+              : getDataAtualSP();
 
-          // Se já foi concluído (chegada_destino preenchida)
-          if (ordem.chegada_destino) {
-            if (noPrazoEntrega) {
-              return (
-                <Badge 
-                  className="text-[9px] h-4 px-1.5 font-bold"
-                  style={{
-                    backgroundColor: isDark ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7',
-                    borderWidth: '1px',
-                    borderColor: isDark ? '#22c55e' : '#86efac',
-                    color: isDark ? '#4ade80' : '#15803d'
-                  }}
-                >
-                  ✓ NO PRAZO
-                </Badge>
-              );
-            } else {
-              return (
-                <div className="flex items-center justify-center gap-1">
+            const diffMs = realizadoEntrega - prazoEntrega;
+            const horasAtraso = Math.round(diffMs / (1000 * 60 * 60));
+            const noPrazoEntrega = horasAtraso <= 0;
+
+            // Se já foi concluído (chegada_destino preenchida)
+            if (ordem.chegada_destino) {
+              if (noPrazoEntrega) {
+                return (
                   <Badge 
                     className="text-[9px] h-4 px-1.5 font-bold"
                     style={{
-                      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+                      backgroundColor: isDark ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7',
                       borderWidth: '1px',
-                      borderColor: isDark ? '#ef4444' : '#fca5a5',
-                      color: isDark ? '#f87171' : '#dc2626'
+                      borderColor: isDark ? '#22c55e' : '#86efac',
+                      color: isDark ? '#4ade80' : '#15803d'
                     }}
                   >
-                    +{horasAtraso}h
+                    ✓ NO PRAZO
                   </Badge>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-4 w-4 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onExpurgar(ordem, "entrega");
-                    }}
-                    title="Expurgar entrega"
+                );
+              } else {
+                return (
+                  <div className="flex items-center justify-center gap-1">
+                    <Badge 
+                      className="text-[9px] h-4 px-1.5 font-bold"
+                      style={{
+                        backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+                        borderWidth: '1px',
+                        borderColor: isDark ? '#ef4444' : '#fca5a5',
+                        color: isDark ? '#f87171' : '#dc2626'
+                      }}
+                    >
+                      +{horasAtraso}h
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-4 w-4 p-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onExpurgar(ordem, "entrega");
+                      }}
+                      title="Expurgar entrega"
+                    >
+                      <AlertTriangle className="w-3 h-3 text-orange-600" />
+                    </Button>
+                  </div>
+                );
+              }
+            } else {
+              // Ainda não concluído - mostrar cronômetro em tempo real usando data atual
+              let corCronometro = "#3b82f6"; // Azul padrão
+              if (horasAtraso > 0) {
+                corCronometro = "#ef4444"; // Vermelho - já atrasado
+              } else if (Math.abs(horasAtraso) <= 6) {
+                corCronometro = "#ef4444"; // Vermelho - < 6h
+              } else if (Math.abs(horasAtraso) <= 24) {
+                corCronometro = "#eab308"; // Amarelo - < 24h
+              }
+              
+              return (
+                <div className="flex items-center justify-center gap-1.5">
+                  <div 
+                    className="w-2 h-2 rounded-full animate-pulse" 
+                    style={{ backgroundColor: corCronometro }}
+                    title="Indicador de tempo em relação ao prazo (usando data atual)"
+                  />
+                  <span 
+                    className="text-[9px] font-bold"
+                    style={{ color: corCronometro }}
                   >
-                    <AlertTriangle className="w-3 h-3 text-orange-600" />
-                  </Button>
+                    {horasAtraso > 0 ? `+${horasAtraso}h` : `${Math.abs(horasAtraso)}h`}
+                  </span>
                 </div>
               );
             }
-          } else {
-            // Ainda não concluído - mostrar cronômetro em tempo real usando data atual
-            let corCronometro = "#3b82f6"; // Azul padrão
-            if (horasAtraso > 0) {
-              corCronometro = "#ef4444"; // Vermelho - já atrasado
-            } else if (Math.abs(horasAtraso) <= 6) {
-              corCronometro = "#ef4444"; // Vermelho - < 6h
-            } else if (Math.abs(horasAtraso) <= 24) {
-              corCronometro = "#eab308"; // Amarelo - < 24h
-            }
-            
-            return (
-              <div className="flex items-center justify-center gap-1.5">
-                <div 
-                  className="w-2 h-2 rounded-full animate-pulse" 
-                  style={{ backgroundColor: corCronometro }}
-                  title="Indicador de tempo em relação ao prazo (usando data atual)"
-                />
-                <span 
-                  className="text-[9px] font-bold"
-                  style={{ color: corCronometro }}
-                >
-                  {horasAtraso > 0 ? `+${horasAtraso}h` : `${Math.abs(horasAtraso)}h`}
-                </span>
-              </div>
-            );
+          } catch (error) {
+            console.error('Erro ao calcular SLA entrega:', error);
+            return <span className="text-[9px]" style={{ color: theme.grayText }}>-</span>;
           }
         }
 
