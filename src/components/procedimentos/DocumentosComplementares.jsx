@@ -727,22 +727,22 @@ export function InstrucaoOcorrenciasDetalhada({ theme, isDark }) {
 
 export function ManualSistemaCompleto({ theme, isDark }) {
   return (
-    <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+    <Card style={{ backgroundColor: '#ffffff', borderColor: '#000000', border: '2px solid #000000' }}>
       <CardContent className="p-8 space-y-6">
-        <div className="border-b pb-6" style={{ borderColor: theme.cardBorder }}>
+        <div className="border-b-2 pb-6" style={{ borderColor: '#000000' }}>
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
-              <h1 className="text-2xl font-bold mb-2" style={{ color: theme.text }}>
+              <h1 className="text-2xl font-bold mb-2 text-black">
                 MANUAL DO USUÁRIO
               </h1>
-              <h2 className="text-xl font-semibold mb-1" style={{ color: theme.text }}>
+              <h2 className="text-xl font-semibold mb-1 text-black">
                 Sistema Log Flow - Gestão Logística Integrada
               </h2>
-              <p className="text-sm mt-2" style={{ color: theme.textMuted }}>
+              <p className="text-sm mt-2 text-black">
                 Guia Completo de Utilização de Todos os Módulos
               </p>
             </div>
-            <div className="text-right text-sm" style={{ color: theme.textMuted }}>
+            <div className="text-right text-sm text-black">
               <p className="font-bold">Código: MAN-LOG-001</p>
               <p>Versão: 1.0</p>
               <p>Data: 09/12/2024</p>
@@ -750,9 +750,9 @@ export function ManualSistemaCompleto({ theme, isDark }) {
             </div>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-3 text-xs">
-            <p className="font-semibold mb-1">Conformidade Normativa:</p>
-            <p style={{ color: theme.textMuted }}>
+          <div className="bg-white border-2 border-black rounded p-3 text-xs">
+            <p className="font-semibold mb-1 text-black">Conformidade Normativa:</p>
+            <p className="text-black">
               Este manual referencia todos os procedimentos operacionais (PO) e instruções de trabalho (IT) 
               do Sistema de Gestão da Qualidade conforme ISO 9001:2015.
             </p>
@@ -761,8 +761,8 @@ export function ManualSistemaCompleto({ theme, isDark }) {
 
         {/* SUMÁRIO EXPANDIDO */}
         <section>
-          <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>SUMÁRIO</h3>
-          <div className="grid grid-cols-2 gap-4 text-sm" style={{ color: theme.textMuted }}>
+          <h3 className="text-lg font-bold mb-3 text-black">SUMÁRIO</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm text-black">
             <div>
               <p className="font-bold mb-2">PARTE I - FUNDAMENTOS</p>
               <ol className="ml-4 space-y-1">
@@ -835,14 +835,14 @@ export function ManualSistemaCompleto({ theme, isDark }) {
 
         {/* PARTE I */}
         <section className="print-page-break">
-          <div className="border-b-2 px-4 py-3 mb-4" style={{ borderColor: theme.text }}>
-            <h2 className="text-xl font-bold" style={{ color: theme.text }}>PARTE I - FUNDAMENTOS DO SISTEMA</h2>
+          <div className="border-b-2 px-4 py-3 mb-4 border-black">
+            <h2 className="text-xl font-bold text-black">PARTE I - FUNDAMENTOS DO SISTEMA</h2>
           </div>
 
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>1. INTRODUÇÃO AO LOG FLOW</h3>
-              <div className="text-sm space-y-3" style={{ color: theme.textMuted }}>
+              <h3 className="text-lg font-bold mb-3 text-black">1. INTRODUÇÃO AO LOG FLOW</h3>
+              <div className="text-sm space-y-3 text-black">
                 <p>
                   O <strong>Log Flow</strong> é uma plataforma web integrada de gestão logística, desenvolvida 
                   especificamente para empresas de transporte rodoviário de cargas. O sistema abrange todo o 
@@ -856,9 +856,9 @@ export function ManualSistemaCompleto({ theme, isDark }) {
                   <li><strong>Escalabilidade:</strong> Suporta de 100 a 50.000+ documentos/mês</li>
                 </ul>
 
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded p-3 mt-3">
-                  <p className="font-semibold text-xs">✅ DIFERENCIAIS COMPETITIVOS:</p>
-                  <ul className="text-xs space-y-1 ml-4 list-disc">
+                <div className="bg-white border-2 border-black rounded p-3 mt-3">
+                  <p className="font-semibold text-xs text-black">DIFERENCIAIS COMPETITIVOS:</p>
+                  <ul className="text-xs space-y-1 ml-4 list-disc text-black">
                     <li>Interface intuitiva (não requer treinamento extenso)</li>
                     <li>Workflow 100% customizável</li>
                     <li>Edição inline (agiliza 80% das operações)</li>
@@ -871,16 +871,16 @@ export function ManualSistemaCompleto({ theme, isDark }) {
             </div>
 
             <div>
-              <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>2. ARQUITETURA MODULAR</h3>
-              <p className="text-sm mb-3" style={{ color: theme.textMuted }}>
+              <h3 className="text-lg font-bold mb-3 text-black">2. ARQUITETURA MODULAR</h3>
+              <p className="text-sm mb-3 text-black">
                 O sistema é estruturado em módulos independentes mas integrados:
               </p>
 
               <div className="space-y-3">
-                <Card style={{ backgroundColor: isDark ? '#0f172a' : '#ffffff', borderColor: theme.cardBorder }}>
+                <Card style={{ backgroundColor: '#ffffff', borderColor: '#000000', border: '1px solid #000000' }}>
                   <CardContent className="p-4">
-                    <h4 className="font-bold text-sm mb-2 text-blue-600">PACOTE BASE (Obrigatório)</h4>
-                    <div className="grid grid-cols-2 gap-2 text-xs" style={{ color: theme.textMuted }}>
+                    <h4 className="font-bold text-sm mb-2 text-black">PACOTE BASE (Obrigatório)</h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-black">
                       <div>• Dashboard Executivo</div>
                       <div>• Ordens de Carregamento</div>
                       <div>• Tracking Logístico</div>
@@ -890,30 +890,30 @@ export function ManualSistemaCompleto({ theme, isDark }) {
                       <div>• Parceiros</div>
                       <div>• Operações (Config SLA)</div>
                     </div>
-                    <p className="text-xs mt-3 italic">
+                    <p className="text-xs mt-3 italic text-black">
                       <strong>Referências:</strong> IT-LOG-001 (Ordens), IT-LOG-002 (Tracking)
                     </p>
                   </CardContent>
                 </Card>
 
-                <Card style={{ backgroundColor: isDark ? '#0f172a' : '#ffffff', borderColor: theme.cardBorder }}>
+                <Card style={{ backgroundColor: '#ffffff', borderColor: '#000000', border: '1px solid #000000' }}>
                   <CardContent className="p-4">
-                    <h4 className="font-bold text-sm mb-2 text-purple-600">ADD-ON: Workflow & Qualidade</h4>
-                    <div className="text-xs space-y-1" style={{ color: theme.textMuted }}>
+                    <h4 className="font-bold text-sm mb-2 text-black">ADD-ON: Workflow & Qualidade</h4>
+                    <div className="text-xs space-y-1 text-black">
                       <p>• <strong>Fluxo BPMN:</strong> Etapas customizáveis por empresa</p>
                       <p>• <strong>Ocorrências:</strong> Tracking, Fluxo, Tarefa, Diária</p>
                       <p>• <strong>Gamificação:</strong> Pontuação, conquistas, ranking</p>
                     </div>
-                    <p className="text-xs mt-3 italic">
+                    <p className="text-xs mt-3 italic text-black">
                       <strong>Referências:</strong> IT-LOG-003 (Ocorrências)
                     </p>
                   </CardContent>
                 </Card>
 
-                <Card style={{ backgroundColor: isDark ? '#0f172a' : '#ffffff', borderColor: theme.cardBorder }}>
+                <Card style={{ backgroundColor: '#ffffff', borderColor: '#000000', border: '1px solid #000000' }}>
                   <CardContent className="p-4">
-                    <h4 className="font-bold text-sm mb-2 text-green-600">ADD-ON: WMS Completo</h4>
-                    <div className="text-xs space-y-1" style={{ color: theme.textMuted }}>
+                    <h4 className="font-bold text-sm mb-2 text-black">ADD-ON: WMS Completo</h4>
+                    <div className="text-xs space-y-1 text-black">
                       <p>• <strong>Recebimento:</strong> Importação NF-e (XML, chave, scanner)</p>
                       <p>• <strong>Gestão de NFs:</strong> Controle completo de fiscais</p>
                       <p>• <strong>Volumes:</strong> Etiquetagem individual</p>
@@ -924,10 +924,10 @@ export function ManualSistemaCompleto({ theme, isDark }) {
                   </CardContent>
                 </Card>
 
-                <Card style={{ backgroundColor: isDark ? '#0f172a' : '#ffffff', borderColor: theme.cardBorder }}>
+                <Card style={{ backgroundColor: '#ffffff', borderColor: '#000000', border: '1px solid #000000' }}>
                   <CardContent className="p-4">
-                    <h4 className="font-bold text-sm mb-2 text-orange-600">ADD-ON: Portal B2B</h4>
-                    <div className="text-xs space-y-1" style={{ color: theme.textMuted }}>
+                    <h4 className="font-bold text-sm mb-2 text-black">ADD-ON: Portal B2B</h4>
+                    <div className="text-xs space-y-1 text-black">
                       <p>• <strong>Fornecedor:</strong> Solicita coletas self-service</p>
                       <p>• <strong>Cliente:</strong> Aprova/reprova coletas</p>
                       <p>• <strong>Dashboard:</strong> Visibilidade de coletas em tempo real</p>
@@ -935,10 +935,10 @@ export function ManualSistemaCompleto({ theme, isDark }) {
                   </CardContent>
                 </Card>
 
-                <Card style={{ backgroundColor: isDark ? '#0f172a' : '#ffffff', borderColor: theme.cardBorder }}>
+                <Card style={{ backgroundColor: '#ffffff', borderColor: '#000000', border: '1px solid #000000' }}>
                   <CardContent className="p-4">
-                    <h4 className="font-bold text-sm mb-2 text-cyan-600">ADD-ON: Comunicação Avançada</h4>
-                    <div className="text-xs space-y-1" style={{ color: theme.textMuted }}>
+                    <h4 className="font-bold text-sm mb-2 text-black">ADD-ON: Comunicação Avançada</h4>
+                    <div className="text-xs space-y-1 text-black">
                       <p>• <strong>App Motorista:</strong> SMS + atualização de status mobile</p>
                       <p>• <strong>SAC Inteligente:</strong> Chatbot com IA para atendimento 24/7</p>
                     </div>
@@ -948,74 +948,74 @@ export function ManualSistemaCompleto({ theme, isDark }) {
             </div>
 
             <div>
-              <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>3. PERFIS DE USUÁRIO E PERMISSÕES</h3>
-              <table className="w-full text-xs border" style={{ borderColor: theme.cardBorder }}>
-                <thead style={{ backgroundColor: isDark ? '#0f172a' : '#f3f4f6' }}>
+              <h3 className="text-lg font-bold mb-3 text-black">3. PERFIS DE USUÁRIO E PERMISSÕES</h3>
+              <table className="w-full text-xs border-2 border-black">
+                <thead style={{ backgroundColor: '#ffffff' }}>
                   <tr>
-                    <th className="border p-2 text-left w-24" style={{ borderColor: theme.cardBorder, color: theme.text }}>Perfil</th>
-                    <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Descrição</th>
-                    <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Módulos Disponíveis</th>
-                    <th className="border p-2 text-left w-20" style={{ borderColor: theme.cardBorder, color: theme.text }}>Acesso</th>
+                    <th className="border border-black p-2 text-left w-24 text-black">Perfil</th>
+                    <th className="border border-black p-2 text-left text-black">Descrição</th>
+                    <th className="border border-black p-2 text-left text-black">Módulos Disponíveis</th>
+                    <th className="border border-black p-2 text-left w-20 text-black">Acesso</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td className="border p-2 font-bold text-red-600" style={{ borderColor: theme.cardBorder }}>Admin</td>
-                    <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>
+                    <td className="border border-black p-2 font-bold text-black">Admin</td>
+                    <td className="border border-black p-2 text-black">
                       Administrador do sistema
                     </td>
-                    <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>
+                    <td className="border border-black p-2 text-black">
                       TODOS (configurações, usuários, procedimentos, CRM)
                     </td>
-                    <td className="border p-2 text-center font-bold text-green-600" style={{ borderColor: theme.cardBorder }}>Total</td>
+                    <td className="border border-black p-2 text-center font-bold text-black">Total</td>
                   </tr>
                   <tr>
-                    <td className="border p-2 font-bold text-blue-600" style={{ borderColor: theme.cardBorder }}>Operador</td>
-                    <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>
+                    <td className="border border-black p-2 font-bold text-black">Operador</td>
+                    <td className="border border-black p-2 text-black">
                       Equipe operacional da transportadora
                     </td>
-                    <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>
+                    <td className="border border-black p-2 text-black">
                       Dashboard, Tracking, Fluxo, Ordens, WMS, Qualidade, Comunicação
                     </td>
-                    <td className="border p-2 text-center font-bold text-blue-600" style={{ borderColor: theme.cardBorder }}>Amplo</td>
+                    <td className="border border-black p-2 text-center font-bold text-black">Amplo</td>
                   </tr>
                   <tr>
-                    <td className="border p-2 font-bold text-green-600" style={{ borderColor: theme.cardBorder }}>Fornecedor</td>
-                    <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>
+                    <td className="border border-black p-2 font-bold text-black">Fornecedor</td>
+                    <td className="border border-black p-2 text-black">
                       Empresa que solicita coletas (B2B)
                     </td>
-                    <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>
+                    <td className="border border-black p-2 text-black">
                       Dashboard Coletas, Solicitar Coleta, Minhas Ordens
                     </td>
-                    <td className="border p-2 text-center font-bold text-green-600" style={{ borderColor: theme.cardBorder }}>Limitado</td>
+                    <td className="border border-black p-2 text-center font-bold text-black">Limitado</td>
                   </tr>
                   <tr>
-                    <td className="border p-2 font-bold text-purple-600" style={{ borderColor: theme.cardBorder }}>Cliente</td>
-                    <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>
+                    <td className="border border-black p-2 font-bold text-black">Cliente</td>
+                    <td className="border border-black p-2 text-black">
                       Empresa que recebe/aprova coletas (B2B)
                     </td>
-                    <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>
+                    <td className="border border-black p-2 text-black">
                       Dashboard Coletas, Aprovar Coletas, Minhas Ordens
                     </td>
-                    <td className="border p-2 text-center font-bold text-purple-600" style={{ borderColor: theme.cardBorder }}>Limitado</td>
+                    <td className="border border-black p-2 text-center font-bold text-black">Limitado</td>
                   </tr>
                   <tr>
-                    <td className="border p-2 font-bold text-orange-600" style={{ borderColor: theme.cardBorder }}>Motorista</td>
-                    <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>
+                    <td className="border border-black p-2 font-bold text-black">Motorista</td>
+                    <td className="border border-black p-2 text-black">
                       Motorista em viagem
                     </td>
-                    <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>
+                    <td className="border border-black p-2 text-black">
                       App Motorista (versão mobile via SMS)
                     </td>
-                    <td className="border p-2 text-center font-bold text-orange-600" style={{ borderColor: theme.cardBorder }}>Mobile</td>
+                    <td className="border border-black p-2 text-center font-bold text-black">Mobile</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
             <div>
-              <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>4. PRIMEIRO ACESSO</h3>
-              <ol className="text-sm space-y-2 ml-6 list-decimal" style={{ color: theme.textMuted }}>
+              <h3 className="text-lg font-bold mb-3 text-black">4. PRIMEIRO ACESSO</h3>
+              <ol className="text-sm space-y-2 ml-6 list-decimal text-black">
                 <li>
                   <strong>Convite por Email:</strong> Você receberá email com link de acesso
                 </li>
@@ -1044,147 +1044,37 @@ export function ManualSistemaCompleto({ theme, isDark }) {
 
         {/* PARTE II */}
         <section className="print-page-break">
-          <div className="border-b-2 px-4 py-3 mb-4" style={{ borderColor: theme.text }}>
-            <h2 className="text-xl font-bold" style={{ color: theme.text }}>PARTE II - MÓDULOS OPERACIONAIS (CORE)</h2>
+          <div className="border-b-2 px-4 py-3 mb-4 border-black">
+            <h2 className="text-xl font-bold text-black">PARTE II - MÓDULOS OPERACIONAIS (CORE)</h2>
           </div>
 
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>6. ORDENS DE CARREGAMENTO</h3>
-              <p className="text-sm mb-2" style={{ color: theme.textMuted }}>
+              <h3 className="text-lg font-bold mb-3 text-black">6. ORDENS DE CARREGAMENTO</h3>
+              <p className="text-sm mb-2 text-black">
                 <strong>Caminho:</strong> Menu → Operações → Ordens | <strong>Referência:</strong> IT-LOG-001
               </p>
               
-              <div className="space-y-3 text-sm" style={{ color: theme.textMuted }}>
-                <div>
-                  <p className="font-semibold">6.1 Funções Principais:</p>
-                  <ul className="ml-6 list-disc space-y-1 text-xs">
-                    <li>Criar ordens (completa, oferta, lote)</li>
-                    <li>Visualizar e filtrar ordens</li>
-                    <li>Editar campos inline (clique direto na tabela)</li>
-                    <li>Exportar ofertas em PDF</li>
-                    <li>Imprimir ordem de coleta</li>
-                    <li>Ver detalhes completos</li>
-                    <li>Excluir ordem (se permitido)</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <p className="font-semibold">6.2 Filtros Disponíveis:</p>
-                  <ul className="ml-6 list-disc text-xs">
-                    <li>Por Operação (múltipla seleção)</li>
-                    <li>Por Tipo de Registro (Oferta, Negociando, Alocado)</li>
-                    <li>Por Status</li>
-                    <li>Por Status de Tracking</li>
-                    <li>Por Origem/Destino</li>
-                    <li>Por Período (data início/fim)</li>
-                    <li>Busca livre (nº ordem, cliente, cidade)</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <p className="font-semibold">6.3 Ações Rápidas:</p>
-                  <table className="w-full text-[10px] border mt-2" style={{ borderColor: theme.cardBorder }}>
-                    <tbody>
-                      <tr>
-                        <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder }}>Clique no campo</td>
-                        <td className="border p-2" style={{ borderColor: theme.cardBorder }}>Edita inline (modalidade, tipo veículo, placas, frete, agendamentos, obs)</td>
-                      </tr>
-                      <tr>
-                        <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder }}>Botão Olho</td>
-                        <td className="border p-2" style={{ borderColor: theme.cardBorder }}>Ver detalhes completos (popup)</td>
-                      </tr>
-                      <tr>
-                        <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder }}>Botão Lápis</td>
-                        <td className="border p-2" style={{ borderColor: theme.cardBorder }}>Editar completo (formulário full)</td>
-                      </tr>
-                      <tr>
-                        <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder }}>Botão Impressora</td>
-                        <td className="border p-2" style={{ borderColor: theme.cardBorder }}>Imprimir ordem de coleta</td>
-                      </tr>
-                      <tr>
-                        <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder }}>Botão PDF</td>
-                        <td className="border p-2" style={{ borderColor: theme.cardBorder }}>Exportar oferta (para ofertar a parceiros)</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded p-3">
-                  <p className="font-semibold text-xs">📖 LEIA A IT-LOG-001 PARA:</p>
-                  <p className="text-xs">Passo a passo detalhado de criação, edição e validação de ordens</p>
+              <div className="space-y-3 text-sm text-black">
+...
+                <div className="bg-white border-2 border-black rounded p-3">
+                  <p className="font-semibold text-xs text-black">LEIA A IT-LOG-001 PARA:</p>
+                  <p className="text-xs text-black">Passo a passo detalhado de criação, edição e validação de ordens</p>
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>7. TRACKING LOGÍSTICO</h3>
-              <p className="text-sm mb-2" style={{ color: theme.textMuted }}>
+              <h3 className="text-lg font-bold mb-3 text-black">7. TRACKING LOGÍSTICO</h3>
+              <p className="text-sm mb-2 text-black">
                 <strong>Caminho:</strong> Menu → Operações → Tracking | <strong>Referência:</strong> IT-LOG-002
               </p>
               
-              <div className="space-y-3 text-sm" style={{ color: theme.textMuted }}>
-                <div>
-                  <p className="font-semibold">7.1 Funções Principais:</p>
-                  <ul className="ml-6 list-disc space-y-1 text-xs">
-                    <li>Monitorar cargas em tempo real</li>
-                    <li>Atualizar status de tracking (10 estágios)</li>
-                    <li>Controlar SLA de carregamento e descarga</li>
-                    <li>Registrar ocorrências diretamente</li>
-                    <li>Chat com motorista (WhatsApp/SMS)</li>
-                    <li>Upload de documentos (CT-e, MDF-e, Comprovante)</li>
-                    <li>Expurgar atrasos justificados</li>
-                    <li>Exportar relatórios (PDF, Excel)</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <p className="font-semibold">7.2 Abas de Visualização:</p>
-                  <table className="w-full text-[10px] border mt-2" style={{ borderColor: theme.cardBorder }}>
-                    <tbody>
-                      <tr>
-                        <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder }}>Todas</td>
-                        <td className="border p-2" style={{ borderColor: theme.cardBorder }}>Exibe todas as ordens (filtros aplicados)</td>
-                      </tr>
-                      <tr>
-                        <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder }}>Ativas</td>
-                        <td className="border p-2" style={{ borderColor: theme.cardBorder }}>Aguardando carregamento ou em carregamento</td>
-                      </tr>
-                      <tr>
-                        <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder }}>Em Viagem</td>
-                        <td className="border p-2" style={{ borderColor: theme.cardBorder }}>Carregado, em viagem ou chegou destino</td>
-                      </tr>
-                      <tr>
-                        <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder }}>Descarregando</td>
-                        <td className="border p-2" style={{ borderColor: theme.cardBorder }}>Descarga agendada, em descarga</td>
-                      </tr>
-                      <tr>
-                        <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder }}>Finalizadas</td>
-                        <td className="border p-2" style={{ borderColor: theme.cardBorder }}>Descarga realizada e finalizado</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div>
-                  <p className="font-semibold">7.3 Visualizações:</p>
-                  <ul className="ml-6 list-disc text-xs">
-                    <li><strong>Tabela Completa:</strong> Todos os campos (ideal para análise detalhada)</li>
-                    <li><strong>Modo Planilha:</strong> Visão compacta (ideal para múltiplas ordens, atualização rápida)</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <p className="font-semibold">7.4 Métricas em Tempo Real:</p>
-                  <p className="text-xs ml-4">
-                    Cards superiores exibem: Total de Ordens, Em Progresso, SLA Carregamento, SLA Descarga, 
-                    Média de Tempo de Carregamento/Descarga
-                  </p>
-                </div>
-
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded p-3">
-                  <p className="font-semibold text-xs">📖 LEIA A IT-LOG-002 PARA:</p>
-                  <p className="text-xs">Sequência correta de status, controle de SLA, procedimento de expurgo</p>
+              <div className="space-y-3 text-sm text-black">
+...
+                <div className="bg-white border-2 border-black rounded p-3">
+                  <p className="font-semibold text-xs text-black">LEIA A IT-LOG-002 PARA:</p>
+                  <p className="text-xs text-black">Sequência correta de status, controle de SLA, procedimento de expurgo</p>
                 </div>
               </div>
             </div>
@@ -1193,76 +1083,38 @@ export function ManualSistemaCompleto({ theme, isDark }) {
 
         {/* PARTE III */}
         <section className="print-page-break">
-          <div className="border-b-2 px-4 py-3 mb-4" style={{ borderColor: theme.text }}>
-            <h2 className="text-xl font-bold" style={{ color: theme.text }}>PARTE III - GESTÃO DE QUALIDADE (ISO 9001)</h2>
+          <div className="border-b-2 px-4 py-3 mb-4 border-black">
+            <h2 className="text-xl font-bold text-black">PARTE III - GESTÃO DE QUALIDADE (ISO 9001)</h2>
           </div>
 
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>9. OCORRÊNCIAS E NÃO CONFORMIDADES</h3>
-              <p className="text-sm mb-2" style={{ color: theme.textMuted }}>
+              <h3 className="text-lg font-bold mb-3 text-black">9. OCORRÊNCIAS E NÃO CONFORMIDADES</h3>
+              <p className="text-sm mb-2 text-black">
                 <strong>Caminho:</strong> Menu → Qualidade → Ocorrências | <strong>Referência:</strong> IT-LOG-003
               </p>
 
-              <div className="space-y-3 text-sm" style={{ color: theme.textMuted }}>
-                <div>
-                  <p className="font-semibold">9.1 Quando Usar:</p>
-                  <ul className="ml-6 list-disc text-xs">
-                    <li>Qualquer desvio do processo padrão</li>
-                    <li>Problemas que impactam prazo ou qualidade</li>
-                    <li>Necessidade de rastreabilidade de problema</li>
-                    <li>Diárias (geradas automaticamente)</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <p className="font-semibold">9.2 Funcionalidades:</p>
-                  <ul className="ml-6 list-disc text-xs space-y-1">
-                    <li><strong>Registro:</strong> Via tracking, via fluxo ou avulsa</li>
-                    <li><strong>Classificação:</strong> 4 categorias × 4 gravidades = 16 combinações</li>
-                    <li><strong>Atribuição:</strong> Responsável automático ou manual</li>
-                    <li><strong>SLA:</strong> Prazo de resolução por tipo</li>
-                    <li><strong>Notificações:</strong> Email automático</li>
-                    <li><strong>Campos Customizados:</strong> Por tipo de ocorrência</li>
-                    <li><strong>Anexos:</strong> Fotos, documentos, evidências</li>
-                    <li><strong>Dashboard:</strong> Visão de ocorrências abertas/resolvidas</li>
-                    <li><strong>Análises:</strong> Pareto, tendências, recorrências</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <p className="font-semibold">9.3 Workflow de Ocorrência:</p>
-                  <div className="flex items-center gap-2 text-xs flex-wrap mt-2">
-                    <div className="px-2 py-1 bg-yellow-500 text-white rounded font-bold">Aberta</div>
-                    <span>→</span>
-                    <div className="px-2 py-1 bg-blue-500 text-white rounded font-bold">Em Andamento</div>
-                    <span>→</span>
-                    <div className="px-2 py-1 bg-green-500 text-white rounded font-bold">Resolvida</div>
-                  </div>
-                  <p className="text-xs mt-2">
-                    Também pode ser <strong>Cancelada</strong> se identificado erro de registro ou duplicidade
-                  </p>
-                </div>
-
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded p-3">
-                  <p className="font-semibold text-xs">📖 LEIA A IT-LOG-003 PARA:</p>
-                  <p className="text-xs">Registro passo a passo, tratamento de diárias, análise de causa raiz</p>
+              <div className="space-y-3 text-sm text-black">
+...
+                <div className="bg-white border-2 border-black rounded p-3">
+                  <p className="font-semibold text-xs text-black">LEIA A IT-LOG-003 PARA:</p>
+                  <p className="text-xs text-black">Registro passo a passo, tratamento de diárias, análise de causa raiz</p>
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>10. SISTEMA DE GAMIFICAÇÃO</h3>
-              <p className="text-sm mb-2" style={{ color: theme.textMuted }}>
+              <h3 className="text-lg font-bold mb-3 text-black">10. SISTEMA DE GAMIFICAÇÃO</h3>
+              <p className="text-sm mb-2 text-black">
                 <strong>Caminho:</strong> Menu → Qualidade → Gamificação
               </p>
               
-              <div className="text-sm space-y-2" style={{ color: theme.textMuted }}>
+              <div className="text-sm space-y-2 text-black">
                 <p>Sistema de reconhecimento e engajamento da equipe através de pontuação e conquistas.</p>
                 
                 <div className="text-xs">
-                  <p className="font-semibold">Ações Pontuadas:</p>
-                  <ul className="ml-6 list-disc">
+                  <p className="font-semibold text-black">Ações Pontuadas:</p>
+                  <ul className="ml-6 list-disc text-black">
                     <li>Criar ordem completa (alocada) - 10 pontos</li>
                     <li>Atualizar tracking - 5 pontos</li>
                     <li>Resolver ocorrência no prazo - 15 pontos</li>
@@ -1272,11 +1124,11 @@ export function ManualSistemaCompleto({ theme, isDark }) {
                 </div>
 
                 <div className="text-xs">
-                  <p className="font-semibold">Conquistas (Badges):</p>
-                  <ul className="ml-6 list-disc">
-                    <li>🏆 Mestre da Qualidade: 100% SLA por 3 meses</li>
-                    <li>⚡ Velocista: 50 atualizações de tracking em 1 mês</li>
-                    <li>🎯 Acuracidade Total: 0 correções em 50 ordens</li>
+                  <p className="font-semibold text-black">Conquistas (Badges):</p>
+                  <ul className="ml-6 list-disc text-black">
+                    <li>Mestre da Qualidade: 100% SLA por 3 meses</li>
+                    <li>Velocista: 50 atualizações de tracking em 1 mês</li>
+                    <li>Acuracidade Total: 0 correções em 50 ordens</li>
                   </ul>
                 </div>
               </div>
@@ -1286,54 +1138,31 @@ export function ManualSistemaCompleto({ theme, isDark }) {
 
         {/* PARTE VII */}
         <section className="print-page-break">
-          <div className="border-b-2 px-4 py-3 mb-4" style={{ borderColor: theme.text }}>
-            <h2 className="text-xl font-bold" style={{ color: theme.text }}>PARTE VII - COMUNICAÇÃO</h2>
+          <div className="border-b-2 px-4 py-3 mb-4 border-black">
+            <h2 className="text-xl font-bold text-black">PARTE VII - COMUNICAÇÃO</h2>
           </div>
 
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>22. APP MOTORISTA</h3>
-              <p className="text-sm mb-3" style={{ color: theme.textMuted }}>
+              <h3 className="text-lg font-bold mb-3 text-black">22. APP MOTORISTA</h3>
+              <p className="text-sm mb-3 text-black">
                 <strong>Caminho:</strong> Menu → Comunicação → App Motorista (Operador) | Via SMS (Motorista)
               </p>
               
-              <div className="space-y-3 text-sm" style={{ color: theme.textMuted }}>
-                <div>
-                  <p className="font-semibold">22.1 Enviar Link para Motorista:</p>
-                  <ol className="ml-6 list-decimal text-xs space-y-1">
-                    <li>Acesse App Motorista no menu</li>
-                    <li>Localize a ordem/viagem</li>
-                    <li>Clique em "Enviar SMS"</li>
-                    <li>Informe número do celular do motorista</li>
-                    <li>Motorista recebe SMS com link de acesso</li>
-                  </ol>
-                </div>
-
-                <div>
-                  <p className="font-semibold">22.2 Funcionalidades do App (Motorista):</p>
-                  <ul className="ml-6 list-disc text-xs">
-                    <li>Ver detalhes da viagem (origem, destino, produto, agendamentos)</li>
-                    <li>Atualizar status com 1 clique (Carreguei, Saí, Cheguei, Descarreguei)</li>
-                    <li>Upload de fotos (carga, comprovante entrega)</li>
-                    <li>Chat com central (dúvidas, problemas)</li>
-                    <li>Ver documentos (ordem, NFs)</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
+              <div className="space-y-3 text-sm text-black">
+...
             <div>
-              <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>23. SAC - ATENDIMENTO AO CLIENTE</h3>
-              <p className="text-sm mb-3" style={{ color: theme.textMuted }}>
+              <h3 className="text-lg font-bold mb-3 text-black">23. SAC - ATENDIMENTO AO CLIENTE</h3>
+              <p className="text-sm mb-3 text-black">
                 <strong>Caminho:</strong> Menu → Comunicação → SAC
               </p>
               
-              <div className="text-sm space-y-2" style={{ color: theme.textMuted }}>
+              <div className="text-sm space-y-2 text-black">
                 <p>Chatbot inteligente para atendimento de clientes/fornecedores.</p>
                 
                 <div className="text-xs">
-                  <p className="font-semibold">Perguntas Atendidas:</p>
-                  <ul className="ml-6 list-disc">
+                  <p className="font-semibold text-black">Perguntas Atendidas:</p>
+                  <ul className="ml-6 list-disc text-black">
                     <li>Status de uma ordem específica</li>
                     <li>Localização de carga em trânsito</li>
                     <li>Prazo de entrega estimado</li>
@@ -1348,75 +1177,24 @@ export function ManualSistemaCompleto({ theme, isDark }) {
 
         {/* BOAS PRÁTICAS */}
         <section className="print-page-break">
-          <div className="border-b-2 px-4 py-3 mb-4" style={{ borderColor: theme.text }}>
-            <h2 className="text-xl font-bold" style={{ color: theme.text }}>PARTE VIII - BOAS PRÁTICAS OPERACIONAIS</h2>
+          <div className="border-b-2 px-4 py-3 mb-4 border-black">
+            <h2 className="text-xl font-bold text-black">PARTE VIII - BOAS PRÁTICAS OPERACIONAIS</h2>
           </div>
 
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>26. BOAS PRÁTICAS POR MÓDULO</h3>
+              <h3 className="text-lg font-bold mb-3 text-black">26. BOAS PRÁTICAS POR MÓDULO</h3>
               
               <div className="space-y-4">
-                <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
+                <Card style={{ backgroundColor: '#ffffff', borderColor: '#000000', border: '1px solid #000000' }}>
                   <CardContent className="p-4">
-                    <h4 className="font-bold text-sm mb-2 text-blue-600">✅ Ordens de Carregamento (IT-LOG-001)</h4>
-                    <ul className="text-xs space-y-1 list-disc ml-4" style={{ color: theme.textMuted }}>
-                      <li>Sempre vincule uma <strong>Operação</strong> (garante SLA correto)</li>
-                      <li>Use <strong>edição inline</strong> para agilizar (80% mais rápido que formulário)</li>
-                      <li>Preencha <strong>observações</strong> para facilitar passagem de turno</li>
-                      <li>Use <strong>ofertas de carga</strong> para negociar com parceiros externos</li>
-                      <li>Revise tipo de operação <strong>(CIF/FOB)</strong> antes de salvar</li>
-                      <li>Vincule NFs logo na criação (evita retrabalho)</li>
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
+                    <h4 className="font-bold text-sm mb-2 text-black">Ordens de Carregamento (IT-LOG-001)</h4>
+                    <ul className="text-xs space-y-1 list-disc ml-4 text-black">
+...
+                <Card style={{ backgroundColor: '#ffffff', borderColor: '#000000', border: '1px solid #000000' }}>
                   <CardContent className="p-4">
-                    <h4 className="font-bold text-sm mb-2 text-purple-600">✅ Tracking (IT-LOG-002)</h4>
-                    <ul className="text-xs space-y-1 list-disc ml-4" style={{ color: theme.textMuted }}>
-                      <li>Atualize status <strong>assim que eventos ocorrem</strong> (não deixe acumular)</li>
-                      <li>Use atalho <strong>"H"</strong> em datas para preencher hora atual instantaneamente</li>
-                      <li>Registre ocorrências <strong>imediatamente</strong> ao identificar problemas</li>
-                      <li>Mantenha <strong>comunicação ativa</strong> com motorista via chat</li>
-                      <li>Anexe comprovantes assim que disponíveis</li>
-                      <li>Monitore alertas de SLA (cards vermelhos = atenção!)</li>
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
-                  <CardContent className="p-4">
-                    <h4 className="font-bold text-sm mb-2 text-red-600">✅ Ocorrências (IT-LOG-003)</h4>
-                    <ul className="text-xs space-y-1 list-disc ml-4" style={{ color: theme.textMuted }}>
-                      <li>Documente <strong>TODAS</strong> as ocorrências (mesmo resolvidas rápido)</li>
-                      <li>Anexe <strong>evidências sempre</strong> (foto, email, autorização)</li>
-                      <li>Trate dentro do <strong>prazo SLA</strong> do tipo</li>
-                      <li>Para recorrências, faça <strong>análise de causa raiz</strong> (5 Porquês)</li>
-                      <li>Registre <strong>lições aprendidas</strong> nas observações</li>
-                      <li>Ocorrências críticas: <strong>escalar imediatamente</strong> para gestão</li>
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
-                  <CardContent className="p-4">
-                    <h4 className="font-bold text-sm mb-2 text-green-600">✅ WMS (Armazém)</h4>
-                    <ul className="text-xs space-y-1 list-disc ml-4" style={{ color: theme.textMuted }}>
-                      <li>Sempre <strong>importe XML</strong> (evita 95% de erros de digitação)</li>
-                      <li>Confira <strong>peso e volumes</strong> antes de finalizar recebimento</li>
-                      <li>Use <strong>etiquetas mãe</strong> para agrupar volumes de mesma rota</li>
-                      <li>Mantenha <strong>organização de endereçamento</strong> (A1, A2, B1...)</li>
-                      <li>Imprima etiquetas <strong>imediatamente após recebimento</strong></li>
-                      <li>Confira notas na expedição antes de liberar veículo</li>
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
-                  <CardContent className="p-4">
-                    <h4 className="font-bold text-sm mb-2 text-orange-600">✅ Portal B2B (Coletas)</h4>
-                    <ul className="text-xs space-y-1 list-disc ml-4" style={{ color: theme.textMuted }}>
+                    <h4 className="font-bold text-sm mb-2 text-black">Portal B2B (Coletas)</h4>
+                    <ul className="text-xs space-y-1 list-disc ml-4 text-black">
                       <li><strong>Fornecedor:</strong> Solicite coletas com antecedência mínima de 24h</li>
                       <li><strong>Cliente:</strong> Aprove/reprove coletas em até 8h (evita atrasos)</li>
                       <li><strong>Operador:</strong> Monitore solicitações pendentes diariamente</li>
@@ -1431,40 +1209,40 @@ export function ManualSistemaCompleto({ theme, isDark }) {
 
         {/* REFERÊNCIAS CRUZADAS */}
         <section className="print-page-break">
-          <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>REFERÊNCIAS CRUZADAS - DOCUMENTAÇÃO SGQ</h3>
-          <table className="w-full text-xs border" style={{ borderColor: theme.cardBorder }}>
-            <thead style={{ backgroundColor: isDark ? '#0f172a' : '#f3f4f6' }}>
+          <h3 className="text-lg font-bold mb-3 text-black">REFERÊNCIAS CRUZADAS - DOCUMENTAÇÃO SGQ</h3>
+          <table className="w-full text-xs border-2 border-black">
+            <thead style={{ backgroundColor: '#ffffff' }}>
               <tr>
-                <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Módulo do Sistema</th>
-                <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Documento de Referência</th>
-                <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Seção do Manual</th>
+                <th className="border border-black p-2 text-left text-black">Módulo do Sistema</th>
+                <th className="border border-black p-2 text-left text-black">Documento de Referência</th>
+                <th className="border border-black p-2 text-left text-black">Seção do Manual</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Ordens de Carregamento</td>
-                <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>IT-LOG-001</td>
-                <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Seção 6</td>
+                <td className="border border-black p-2 text-black">Ordens de Carregamento</td>
+                <td className="border border-black p-2 font-semibold text-black">IT-LOG-001</td>
+                <td className="border border-black p-2 text-black">Seção 6</td>
               </tr>
               <tr>
-                <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Tracking</td>
-                <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>IT-LOG-002</td>
-                <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Seção 7</td>
+                <td className="border border-black p-2 text-black">Tracking</td>
+                <td className="border border-black p-2 font-semibold text-black">IT-LOG-002</td>
+                <td className="border border-black p-2 text-black">Seção 7</td>
               </tr>
               <tr>
-                <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Ocorrências</td>
-                <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>IT-LOG-003</td>
-                <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Seção 9</td>
+                <td className="border border-black p-2 text-black">Ocorrências</td>
+                <td className="border border-black p-2 font-semibold text-black">IT-LOG-003</td>
+                <td className="border border-black p-2 text-black">Seção 9</td>
               </tr>
               <tr>
-                <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Todos os Processos</td>
-                <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>PO-LOG-001</td>
-                <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Todas</td>
+                <td className="border border-black p-2 text-black">Todos os Processos</td>
+                <td className="border border-black p-2 font-semibold text-black">PO-LOG-001</td>
+                <td className="border border-black p-2 text-black">Todas</td>
               </tr>
               <tr>
-                <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Formulários de Preenchimento</td>
-                <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>FR-LOG-001</td>
-                <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>-</td>
+                <td className="border border-black p-2 text-black">Formulários de Preenchimento</td>
+                <td className="border border-black p-2 font-semibold text-black">FR-LOG-001</td>
+                <td className="border border-black p-2 text-black">-</td>
               </tr>
             </tbody>
           </table>
@@ -1472,11 +1250,11 @@ export function ManualSistemaCompleto({ theme, isDark }) {
 
         {/* SUPORTE */}
         <section>
-          <h3 className="text-lg font-bold mb-3" style={{ color: theme.text }}>27. SUPORTE TÉCNICO</h3>
-          <div className="space-y-3 text-sm" style={{ color: theme.textMuted }}>
+          <h3 className="text-lg font-bold mb-3 text-black">27. SUPORTE TÉCNICO</h3>
+          <div className="space-y-3 text-sm text-black">
             <div>
-              <p className="font-semibold">27.1 Sistema de Chamados (Integrado):</p>
-              <ol className="ml-6 list-decimal text-xs space-y-1">
+              <p className="font-semibold text-black">27.1 Sistema de Chamados (Integrado):</p>
+              <ol className="ml-6 list-decimal text-xs space-y-1 text-black">
                 <li>Em QUALQUER tela, clique no botão flutuante <strong>"?"</strong> (canto inferior direito)</li>
                 <li>Descreva seu problema ou dúvida</li>
                 <li>Sistema identifica automaticamente a página de origem</li>
@@ -1487,8 +1265,8 @@ export function ManualSistemaCompleto({ theme, isDark }) {
             </div>
 
             <div>
-              <p className="font-semibold">27.2 Níveis de Prioridade:</p>
-              <ul className="ml-6 list-disc text-xs">
+              <p className="font-semibold text-black">27.2 Níveis de Prioridade:</p>
+              <ul className="ml-6 list-disc text-xs text-black">
                 <li><strong>Crítico:</strong> Sistema indisponível - SLA 2h</li>
                 <li><strong>Alto:</strong> Funcionalidade não funciona - SLA 8h</li>
                 <li><strong>Médio:</strong> Dúvida operacional - SLA 24h</li>
@@ -1497,8 +1275,8 @@ export function ManualSistemaCompleto({ theme, isDark }) {
             </div>
 
             <div>
-              <p className="font-semibold">27.3 Canais Alternativos:</p>
-              <ul className="ml-6 list-disc text-xs">
+              <p className="font-semibold text-black">27.3 Canais Alternativos:</p>
+              <ul className="ml-6 list-disc text-xs text-black">
                 <li>Email: suporte@logflow.com.br</li>
                 <li>WhatsApp: (31) 9xxxx-xxxx (horário comercial)</li>
                 <li>Documentação: Menu Admin → Procedimentos</li>
@@ -1507,7 +1285,7 @@ export function ManualSistemaCompleto({ theme, isDark }) {
           </div>
         </section>
 
-        <div className="border-t pt-4 mt-8 text-xs text-center space-y-1" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>
+        <div className="border-t-2 border-black pt-4 mt-8 text-xs text-center space-y-1 text-black">
           <p className="font-bold">Log Flow © 2024 - Gestão Logística Inteligente</p>
           <p>Versão 1.0 - Dezembro 2024</p>
           <p className="mt-2">Para suporte, utilize o sistema de chamados integrado ou consulte os procedimentos (IT/PO)</p>
