@@ -56,7 +56,8 @@ import {
   ClipboardCheck,
   UserCog,
   Trophy,
-  Activity
+  Activity,
+  Table as TableIcon
 } from "lucide-react";
 
 export default function Configuracoes() {
