@@ -2199,51 +2199,51 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                   {(() => {
                     if (tipo === 'geral') {
                       return listaImpressao.filter(ordem => 
-                        getStatusSLA(ordem, 'carga').label === 'No Prazo' && getStatusSLA(ordem, 'entrega').label === 'No Prazo'
+                       getStatusSLA(ordem, 'carga').label === 'No Prazo' && getStatusSLA(ordem, 'entrega').label === 'No Prazo'
                       ).length;
-                    }
-                    return listaImpressao.filter(ordem => getStatusSLA(ordem, tipo).label === 'No Prazo').length;
-                  })()}
-                </div>
-              </div>
-              <div className="p-2 rounded border resumo-card" style={{ backgroundColor: '#fee2e2', borderColor: '#fca5a5' }}>
-                <div className="text-xs text-red-600 font-medium">Fora do Prazo</div>
-                <div className="text-xl font-bold text-red-900">
-                  {(() => {
-                    if (tipo === 'geral') {
+                      }
+                      return listaImpressao.filter(ordem => getStatusSLA(ordem, tipo).label === 'No Prazo').length;
+                      })()}
+                      </div>
+                      </div>
+                      <div className="p-2 rounded border resumo-card" style={{ backgroundColor: '#fee2e2', borderColor: '#fca5a5' }}>
+                      <div className="text-xs text-red-600 font-medium">Fora do Prazo</div>
+                      <div className="text-xl font-bold text-red-900">
+                      {(() => {
+                      if (tipo === 'geral') {
                       return listaImpressao.filter(ordem => 
-                        getStatusSLA(ordem, 'carga').label === 'Fora do Prazo' || getStatusSLA(ordem, 'entrega').label === 'Fora do Prazo'
+                       getStatusSLA(ordem, 'carga').label === 'Fora do Prazo' || getStatusSLA(ordem, 'entrega').label === 'Fora do Prazo'
                       ).length;
-                    }
-                    return listaImpressao.filter(ordem => getStatusSLA(ordem, tipo).label === 'Fora do Prazo').length;
-                  })()}
-                </div>
-              </div>
-              <div className="p-2 rounded border resumo-card" style={{ backgroundColor: '#f3f4f6', borderColor: '#d1d5db' }}>
-                <div className="text-xs text-gray-600 font-medium">Expurgos</div>
-                <div className="text-xl font-bold text-gray-900">
-                  {(() => {
-                    if (tipo === 'geral') {
+                      }
+                      return listaImpressao.filter(ordem => getStatusSLA(ordem, tipo).label === 'Fora do Prazo').length;
+                      })()}
+                      </div>
+                      </div>
+                      <div className="p-2 rounded border resumo-card" style={{ backgroundColor: '#f3f4f6', borderColor: '#d1d5db' }}>
+                      <div className="text-xs text-gray-600 font-medium">Expurgos</div>
+                      <div className="text-xl font-bold text-gray-900">
+                      {(() => {
+                      if (tipo === 'geral') {
                       return listaImpressao.filter(ordem => ordem.carregamento_expurgado || ordem.entrega_expurgada).length;
-                    }
-                    return listaImpressao.filter(ordem => 
+                      }
+                      return listaImpressao.filter(ordem => 
                       tipo === 'carga' ? ordem.carregamento_expurgado : ordem.entrega_expurgada
-                    ).length;
-                  })()}
-                </div>
-              </div>
-              <div className="p-2 rounded border resumo-card" style={{ backgroundColor: '#ecfdf5', borderColor: '#6ee7b7' }}>
-                <div className="text-xs text-green-700 font-medium">% no Prazo</div>
-                <div className="text-xl font-bold text-green-900">
-                  {(() => {
-                    if (tipo === 'geral') {
+                      ).length;
+                      })()}
+                      </div>
+                      </div>
+                      <div className="p-2 rounded border resumo-card" style={{ backgroundColor: '#ecfdf5', borderColor: '#6ee7b7' }}>
+                      <div className="text-xs text-green-700 font-medium">% no Prazo</div>
+                      <div className="text-xl font-bold text-green-900">
+                      {(() => {
+                      if (tipo === 'geral') {
                       // Calcular SLA de Carga
-                      const totalCarga = listaImpressao.filter(o => o.inicio_carregamento && o.carregamento_agendamento_data).length;
+                      const totalCarga = listaImpressao.filter(o => o.carregamento_agendamento_data).length;
                       const noPrazoCarga = listaImpressao.filter(o => getStatusSLA(o, 'carga').label === 'No Prazo').length;
                       const percCarga = totalCarga > 0 ? (noPrazoCarga / totalCarga) * 100 : 0;
 
                       // Calcular SLA de Descarga
-                      const totalDescarga = listaImpressao.filter(o => o.chegada_destino && o.prazo_entrega).length;
+                      const totalDescarga = listaImpressao.filter(o => o.prazo_entrega).length;
                       const noPrazoDescarga = listaImpressao.filter(o => getStatusSLA(o, 'entrega').label === 'No Prazo').length;
                       const percDescarga = totalDescarga > 0 ? (noPrazoDescarga / totalDescarga) * 100 : 0;
                       
