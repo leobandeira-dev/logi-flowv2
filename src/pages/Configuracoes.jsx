@@ -456,14 +456,12 @@ export default function Configuracoes() {
       content: (
         <div className="space-y-8">
           <div className="grid grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white p-8 rounded-2xl shadow-2xl">
+            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-500">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-white/20 rounded-xl">
-                  <FileText className="w-8 h-8" />
-                </div>
-                <h3 className="font-bold text-2xl">Ordem Completa</h3>
+                <FileText className="w-8 h-8 text-cyan-600" />
+                <h3 className="font-bold text-2xl text-gray-900">Ordem Completa</h3>
               </div>
-              <ul className="space-y-2 text-base">
+              <ul className="space-y-2 text-base text-gray-800">
                 <li>• Dados completos da carga</li>
                 <li>• Motorista e veículo alocados</li>
                 <li>• Rota definida</li>
@@ -471,14 +469,12 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-gradient-to-br from-cyan-600 to-blue-600 text-white p-8 rounded-2xl shadow-2xl">
+            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-600">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-white/20 rounded-xl">
-                  <Package className="w-8 h-8" />
-                </div>
-                <h3 className="font-bold text-2xl">Oferta de Carga</h3>
+                <Package className="w-8 h-8 text-cyan-700" />
+                <h3 className="font-bold text-2xl text-gray-900">Oferta de Carga</h3>
               </div>
-              <ul className="space-y-2 text-base">
+              <ul className="space-y-2 text-base text-gray-800">
                 <li>• Cadastro rápido</li>
                 <li>• Disponível para alocação</li>
                 <li>• Conversão em ordem</li>
@@ -486,14 +482,12 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-8 rounded-2xl shadow-2xl">
+            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-blue-600">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-white/20 rounded-xl">
-                  <FileSpreadsheet className="w-8 h-8" />
-                </div>
-                <h3 className="font-bold text-2xl">Lote/Excel</h3>
+                <FileSpreadsheet className="w-8 h-8 text-blue-700" />
+                <h3 className="font-bold text-2xl text-gray-900">Lote/Excel</h3>
               </div>
-              <ul className="space-y-2 text-base">
+              <ul className="space-y-2 text-base text-gray-800">
                 <li>• Importação em massa</li>
                 <li>• Template padronizado</li>
                 <li>• Validação automática</li>
@@ -616,20 +610,20 @@ export default function Configuracoes() {
           </div>
 
           <div className="grid grid-cols-3 gap-6 mb-8">
-            <div className="bg-gradient-to-br from-cyan-500 to-blue-600 text-white p-8 rounded-2xl shadow-2xl">
-              <MapPin className="w-12 h-12 mx-auto mb-4" />
-              <h3 className="font-bold text-2xl text-center mb-3">Localização</h3>
-              <p className="text-center opacity-90">Calculo automático KM restantes via Google Distance Matrix</p>
+            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-500">
+              <MapPin className="w-12 h-12 mx-auto mb-4 text-cyan-600" />
+              <h3 className="font-bold text-2xl text-center mb-3 text-gray-900">Localização</h3>
+              <p className="text-center text-gray-700">Calculo automático KM restantes via Google Distance Matrix</p>
             </div>
-            <div className="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-8 rounded-2xl shadow-2xl">
-              <Clock className="w-12 h-12 mx-auto mb-4" />
-              <h3 className="font-bold text-2xl text-center mb-3">SLA Entrega</h3>
-              <p className="text-center opacity-90">Alertas visuais atraso, expurgo autorizado</p>
+            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-600">
+              <Clock className="w-12 h-12 mx-auto mb-4 text-cyan-700" />
+              <h3 className="font-bold text-2xl text-center mb-3 text-gray-900">SLA Entrega</h3>
+              <p className="text-center text-gray-700">Alertas visuais atraso, expurgo autorizado</p>
             </div>
-            <div className="bg-gradient-to-br from-blue-600 to-blue-800 text-white p-8 rounded-2xl shadow-2xl">
-              <MessageCircle className="w-12 h-12 mx-auto mb-4" />
-              <h3 className="font-bold text-2xl text-center mb-3">Chat Central</h3>
-              <p className="text-center opacity-90">Comunicação bidirecional tempo real</p>
+            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-blue-600">
+              <MessageCircle className="w-12 h-12 mx-auto mb-4 text-blue-700" />
+              <h3 className="font-bold text-2xl text-center mb-3 text-gray-900">Chat Central</h3>
+              <p className="text-center text-gray-700">Comunicação bidirecional tempo real</p>
             </div>
           </div>
 
@@ -1113,10 +1107,10 @@ export default function Configuracoes() {
       content: (
         <div className="space-y-8">
           <div className="grid grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-cyan-400 to-cyan-600 text-white p-8 rounded-2xl shadow-2xl">
-              <Users className="w-12 h-12 mb-4" />
-              <h3 className="font-bold text-2xl mb-4">Motoristas</h3>
-              <ul className="space-y-2 text-base">
+            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-500">
+              <Users className="w-12 h-12 mb-4 text-cyan-600" />
+              <h3 className="font-bold text-2xl mb-4 text-gray-900">Motoristas</h3>
+              <ul className="space-y-2 text-base text-gray-800">
                 <li>• Cadastro completo com documentos</li>
                 <li>• Controle de CNH e vencimentos</li>
                 <li>• Histórico de viagens</li>
@@ -1125,10 +1119,10 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-gradient-to-br from-cyan-500 to-blue-500 text-white p-8 rounded-2xl shadow-2xl">
-              <Truck className="w-12 h-12 mb-4" />
-              <h3 className="font-bold text-2xl mb-4">Veículos</h3>
-              <ul className="space-y-2 text-base">
+            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-600">
+              <Truck className="w-12 h-12 mb-4 text-cyan-700" />
+              <h3 className="font-bold text-2xl mb-4 text-gray-900">Veículos</h3>
+              <ul className="space-y-2 text-base text-gray-800">
                 <li>• Cadastro de cavalos e implementos</li>
                 <li>• Documentação e licenciamento</li>
                 <li>• Consulta ANTT integrada</li>
@@ -1137,10 +1131,10 @@ export default function Configuracoes() {
               </ul>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-8 rounded-2xl shadow-2xl">
-              <Target className="w-12 h-12 mb-4" />
-              <h3 className="font-bold text-2xl mb-4">Operações</h3>
-              <ul className="space-y-2 text-base">
+            <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-blue-600">
+              <Target className="w-12 h-12 mb-4 text-blue-700" />
+              <h3 className="font-bold text-2xl mb-4 text-gray-900">Operações</h3>
+              <ul className="space-y-2 text-base text-gray-800">
                 <li>• Tipos de operação configuráveis</li>
                 <li>• Prioridades e modalidades</li>
                 <li>• Tolerância de diárias</li>
@@ -1254,12 +1248,12 @@ export default function Configuracoes() {
       icon: RefreshCw,
       content: (
         <div className="grid grid-cols-2 gap-8">
-          <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white p-8 rounded-2xl shadow-2xl border-4 border-cyan-700">
-            <h3 className="font-bold text-3xl mb-6 flex items-center gap-3">
-              <Target className="w-10 h-10" />
+          <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-500">
+            <h3 className="font-bold text-3xl mb-6 flex items-center gap-3 text-gray-900">
+              <Target className="w-10 h-10 text-cyan-600" />
               PLAN (Planejar)
             </h3>
-            <ul className="space-y-3 text-base">
+            <ul className="space-y-3 text-base text-gray-800">
               <li>• Configuração de etapas e prazos</li>
               <li>• Definição de metas de SLA</li>
               <li>• Campos e requisitos por etapa</li>
@@ -1267,12 +1261,12 @@ export default function Configuracoes() {
             </ul>
           </div>
 
-          <div className="bg-gradient-to-br from-cyan-600 to-blue-500 text-white p-8 rounded-2xl shadow-2xl border-4 border-blue-600">
-            <h3 className="font-bold text-3xl mb-6 flex items-center gap-3">
-              <Zap className="w-10 h-10" />
+          <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-cyan-600">
+            <h3 className="font-bold text-3xl mb-6 flex items-center gap-3 text-gray-900">
+              <Zap className="w-10 h-10 text-cyan-700" />
               DO (Fazer)
             </h3>
-            <ul className="space-y-3 text-base">
+            <ul className="space-y-3 text-base text-gray-800">
               <li>• Execução do fluxo operacional</li>
               <li>• Registro de atividades</li>
               <li>• Tracking em tempo real</li>
@@ -1280,12 +1274,12 @@ export default function Configuracoes() {
             </ul>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-8 rounded-2xl shadow-2xl border-4 border-blue-700">
-            <h3 className="font-bold text-3xl mb-6 flex items-center gap-3">
-              <BarChart3 className="w-10 h-10" />
+          <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-blue-600">
+            <h3 className="font-bold text-3xl mb-6 flex items-center gap-3 text-gray-900">
+              <BarChart3 className="w-10 h-10 text-blue-700" />
               CHECK (Verificar)
             </h3>
-            <ul className="space-y-3 text-base">
+            <ul className="space-y-3 text-base text-gray-800">
               <li>• Indicadores de SLA</li>
               <li>• Rankings e comparativos</li>
               <li>• Análise de ocorrências</li>
@@ -1293,12 +1287,12 @@ export default function Configuracoes() {
             </ul>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-8 rounded-2xl shadow-2xl border-4 border-blue-800">
-            <h3 className="font-bold text-3xl mb-6 flex items-center gap-3">
-              <TrendingUp className="w-10 h-10" />
+          <div className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-blue-700">
+            <h3 className="font-bold text-3xl mb-6 flex items-center gap-3 text-gray-900">
+              <TrendingUp className="w-10 h-10 text-blue-700" />
               ACT (Agir)
             </h3>
-            <ul className="space-y-3 text-base">
+            <ul className="space-y-3 text-base text-gray-800">
               <li>• Ajustes nas configurações</li>
               <li>• Expurgo de medições</li>
               <li>• Correção de processos</li>
@@ -1450,40 +1444,40 @@ export default function Configuracoes() {
       content: (
         <div className="min-h-[600px] flex flex-col justify-center space-y-10">
           <div className="grid grid-cols-2 gap-8">
-            <div className="bg-gradient-to-br from-cyan-400 to-cyan-600 text-white p-10 rounded-2xl shadow-2xl">
-              <Zap className="w-16 h-16 mb-4" />
-              <h3 className="font-bold text-2xl mb-4">Eficiência 10x</h3>
-              <ul className="text-base space-y-2">
+            <div className="bg-white p-10 rounded-2xl shadow-xl border-t-4 border-cyan-500">
+              <Zap className="w-16 h-16 mb-4 text-cyan-600" />
+              <h3 className="font-bold text-2xl mb-4 text-gray-900">Eficiência 10x</h3>
+              <ul className="text-base space-y-2 text-gray-800">
                 <li>• 75% menos tempo cadastro</li>
                 <li>• Processos automatizados</li>
                 <li>• Importação PDF/Excel</li>
               </ul>
             </div>
 
-            <div className="bg-gradient-to-br from-cyan-500 to-blue-500 text-white p-10 rounded-2xl shadow-2xl">
-              <CheckCircle2 className="w-16 h-16 mb-4" />
-              <h3 className="font-bold text-2xl mb-4">Qualidade Comprovada</h3>
-              <ul className="text-base space-y-2">
+            <div className="bg-white p-10 rounded-2xl shadow-xl border-t-4 border-cyan-600">
+              <CheckCircle2 className="w-16 h-16 mb-4 text-cyan-700" />
+              <h3 className="font-bold text-2xl mb-4 text-gray-900">Qualidade Comprovada</h3>
+              <ul className="text-base space-y-2 text-gray-800">
                 <li>• SLA +10 pontos percentuais</li>
                 <li>• 70% menos ocorrências</li>
                 <li>• Conformidade garantida</li>
               </ul>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-10 rounded-2xl shadow-2xl">
-              <TrendingUp className="w-16 h-16 mb-4" />
-              <h3 className="font-bold text-2xl mb-4">Crescimento Real</h3>
-              <ul className="text-base space-y-2">
+            <div className="bg-white p-10 rounded-2xl shadow-xl border-t-4 border-blue-600">
+              <TrendingUp className="w-16 h-16 mb-4 text-blue-700" />
+              <h3 className="font-bold text-2xl mb-4 text-gray-900">Crescimento Real</h3>
+              <ul className="text-base space-y-2 text-gray-800">
                 <li>• +40% produtividade operadores</li>
                 <li>• NPS 8/10</li>
                 <li>• 90% taxa de adoção</li>
               </ul>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-10 rounded-2xl shadow-2xl">
-              <Award className="w-16 h-16 mb-4" />
-              <h3 className="font-bold text-2xl mb-4">Único no Mercado</h3>
-              <ul className="text-base space-y-2">
+            <div className="bg-white p-10 rounded-2xl shadow-xl border-t-4 border-blue-700">
+              <Award className="w-16 h-16 mb-4 text-blue-700" />
+              <h3 className="font-bold text-2xl mb-4 text-gray-900">Único no Mercado</h3>
+              <ul className="text-base space-y-2 text-gray-800">
                 <li>• Gamificação integrada</li>
                 <li>• Workflow 100% customizável</li>
                 <li>• WMS + Portal B2B inclusos</li>
