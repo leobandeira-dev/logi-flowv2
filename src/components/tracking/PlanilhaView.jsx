@@ -1292,31 +1292,38 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
               );
             }
           } else {
-            // Ainda não concluído - mostrar cronômetro em tempo real
-            let corCronometro = "#3b82f6"; // Azul padrão
-            if (horasAtraso > 0) {
-              corCronometro = "#ef4444"; // Vermelho - já atrasado
-            } else if (Math.abs(horasAtraso) <= 6) {
-              corCronometro = "#ef4444"; // Vermelho - < 6h
-            } else if (Math.abs(horasAtraso) <= 24) {
-              corCronometro = "#eab308"; // Amarelo - < 24h
-            }
-            
-            return (
-              <div className="flex items-center justify-center gap-1.5">
-                <div 
-                  className="w-2 h-2 rounded-full animate-pulse" 
-                  style={{ backgroundColor: corCronometro }}
-                  title="Indicador de tempo em relação ao agendamento"
-                />
-                <span 
-                  className="text-[9px] font-bold"
-                  style={{ color: corCronometro }}
+            // Ainda não concluído - mostrar status em andamento
+            if (noPrazoCarga) {
+              return (
+                <Badge 
+                  className="text-[9px] h-4 px-1.5 font-bold"
+                  style={{
+                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#dbeafe',
+                    borderWidth: '1px',
+                    borderColor: isDark ? '#3b82f6' : '#60a5fa',
+                    color: isDark ? '#60a5fa' : '#1e40af'
+                  }}
+                  title={`Em andamento - faltam ${Math.abs(horasAtraso)}h para o agendamento`}
                 >
-                  {horasAtraso > 0 ? `+${horasAtraso}h` : `${Math.abs(horasAtraso)}h`}
-                </span>
-              </div>
-            );
+                  🕐 EM PRAZO ({Math.abs(horasAtraso)}h)
+                </Badge>
+              );
+            } else {
+              return (
+                <Badge 
+                  className="text-[9px] h-4 px-1.5 font-bold"
+                  style={{
+                    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+                    borderWidth: '1px',
+                    borderColor: isDark ? '#ef4444' : '#fca5a5',
+                    color: isDark ? '#f87171' : '#dc2626'
+                  }}
+                  title={`Atrasado em ${horasAtraso}h - ainda não chegou na carga`}
+                >
+                  ⚠️ ATRASADO (+{horasAtraso}h)
+                </Badge>
+              );
+            }
           }
         }
 
@@ -1401,31 +1408,38 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
               );
             }
           } else {
-            // Ainda não concluído - mostrar cronômetro em tempo real usando data atual
-            let corCronometro = "#3b82f6"; // Azul padrão
-            if (horasAtraso > 0) {
-              corCronometro = "#ef4444"; // Vermelho - já atrasado
-            } else if (Math.abs(horasAtraso) <= 6) {
-              corCronometro = "#ef4444"; // Vermelho - < 6h
-            } else if (Math.abs(horasAtraso) <= 24) {
-              corCronometro = "#eab308"; // Amarelo - < 24h
-            }
-            
-            return (
-              <div className="flex items-center justify-center gap-1.5">
-                <div 
-                  className="w-2 h-2 rounded-full animate-pulse" 
-                  style={{ backgroundColor: corCronometro }}
-                  title="Indicador de tempo em relação ao prazo (usando data atual)"
-                />
-                <span 
-                  className="text-[9px] font-bold"
-                  style={{ color: corCronometro }}
+            // Ainda não concluído - mostrar status em andamento usando data atual
+            if (noPrazoEntrega) {
+              return (
+                <Badge 
+                  className="text-[9px] h-4 px-1.5 font-bold"
+                  style={{
+                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#dbeafe',
+                    borderWidth: '1px',
+                    borderColor: isDark ? '#3b82f6' : '#60a5fa',
+                    color: isDark ? '#60a5fa' : '#1e40af'
+                  }}
+                  title={`Em andamento - faltam ${Math.abs(horasAtraso)}h para o prazo`}
                 >
-                  {horasAtraso > 0 ? `+${horasAtraso}h` : `${Math.abs(horasAtraso)}h`}
-                </span>
-              </div>
-            );
+                  🕐 EM PRAZO ({Math.abs(horasAtraso)}h)
+                </Badge>
+              );
+            } else {
+              return (
+                <Badge 
+                  className="text-[9px] h-4 px-1.5 font-bold"
+                  style={{
+                    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+                    borderWidth: '1px',
+                    borderColor: isDark ? '#ef4444' : '#fca5a5',
+                    color: isDark ? '#f87171' : '#dc2626'
+                  }}
+                  title={`Atrasado em ${horasAtraso}h - ainda não chegou no destino`}
+                >
+                  ⚠️ ATRASADO (+{horasAtraso}h)
+                </Badge>
+              );
+            }
           }
         }
 
