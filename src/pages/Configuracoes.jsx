@@ -1202,7 +1202,7 @@ export default function Configuracoes() {
       icon: RefreshCw,
       content: (
         <div className="grid grid-cols-2 gap-8">
-          <div className="bg-blue-600 text-white p-8 rounded-2xl shadow-2xl border-4 border-blue-700">
+          <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white p-8 rounded-2xl shadow-2xl border-4 border-cyan-700">
             <h3 className="font-bold text-3xl mb-6 flex items-center gap-3">
               <Target className="w-10 h-10" />
               PLAN (Planejar)
@@ -1215,7 +1215,7 @@ export default function Configuracoes() {
             </ul>
           </div>
 
-          <div className="bg-green-600 text-white p-8 rounded-2xl shadow-2xl border-4 border-green-700">
+          <div className="bg-gradient-to-br from-cyan-600 to-blue-500 text-white p-8 rounded-2xl shadow-2xl border-4 border-blue-600">
             <h3 className="font-bold text-3xl mb-6 flex items-center gap-3">
               <Zap className="w-10 h-10" />
               DO (Fazer)
@@ -1228,7 +1228,7 @@ export default function Configuracoes() {
             </ul>
           </div>
 
-          <div className="bg-orange-600 text-white p-8 rounded-2xl shadow-2xl border-4 border-orange-700">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-8 rounded-2xl shadow-2xl border-4 border-blue-700">
             <h3 className="font-bold text-3xl mb-6 flex items-center gap-3">
               <BarChart3 className="w-10 h-10" />
               CHECK (Verificar)
@@ -1241,7 +1241,7 @@ export default function Configuracoes() {
             </ul>
           </div>
 
-          <div className="bg-purple-600 text-white p-8 rounded-2xl shadow-2xl border-4 border-purple-700">
+          <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-8 rounded-2xl shadow-2xl border-4 border-blue-800">
             <h3 className="font-bold text-3xl mb-6 flex items-center gap-3">
               <TrendingUp className="w-10 h-10" />
               ACT (Agir)
