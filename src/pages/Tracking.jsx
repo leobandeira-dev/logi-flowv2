@@ -268,9 +268,9 @@ export default function Tracking() {
       if (o.carregamento_expurgado) return true;
       
       const agendado = new Date(o.carregamento_agendamento_data);
-      // Se inicio_carregamento vazio, usar data atual
-      const realizado = o.inicio_carregamento 
-        ? new Date(o.inicio_carregamento)
+      // Se fim_carregamento vazio, usar data atual
+      const realizado = o.fim_carregamento 
+        ? new Date(o.fim_carregamento)
         : getDataAtualSP();
       return realizado <= agendado;
     });
@@ -710,9 +710,9 @@ export default function Tracking() {
             ordensCarregamento.expurgado.push(ordem);
           } else {
             const agendado = new Date(ordem.carregamento_agendamento_data);
-            // Se inicio_carregamento vazio, usar data atual
-            const realizado = ordem.inicio_carregamento 
-              ? new Date(ordem.inicio_carregamento)
+            // Se fim_carregamento vazio, usar data atual
+            const realizado = ordem.fim_carregamento 
+              ? new Date(ordem.fim_carregamento)
               : getDataAtualSP();
             if (realizado <= agendado) {
               ordensCarregamento.noPrazo.push(ordem);
@@ -784,9 +784,9 @@ export default function Tracking() {
             ordensExpurgadas.push(ordem);
           } else {
             const agendado = new Date(ordem.carregamento_agendamento_data);
-            // Se inicio_carregamento vazio, usar data atual
-            const realizado = ordem.inicio_carregamento 
-              ? new Date(ordem.inicio_carregamento)
+            // Se fim_carregamento vazio, usar data atual
+            const realizado = ordem.fim_carregamento 
+              ? new Date(ordem.fim_carregamento)
               : getDataAtualSP();
             if (realizado <= agendado) {
               dadosPorData[data].noPrazo++;
@@ -2086,9 +2086,9 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
     if (ordem.carregamento_expurgado) return { label: 'Expurgado', color: '#64748b' };
     if (ordem.carregamento_agendamento_data) {
       const agendado = new Date(ordem.carregamento_agendamento_data);
-      // Se inicio_carregamento vazio, usar data atual
-      const realizado = ordem.inicio_carregamento 
-        ? new Date(ordem.inicio_carregamento)
+      // Se fim_carregamento vazio, usar data atual
+      const realizado = ordem.fim_carregamento 
+        ? new Date(ordem.fim_carregamento)
         : getDataAtualSP();
       return realizado <= agendado ? { label: 'No Prazo', color: '#22c55e' } : { label: 'Fora do Prazo', color: '#ef4444' };
     }
