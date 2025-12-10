@@ -2203,18 +2203,42 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                     
                     const totalConsiderado = tipo === 'geral'
                       ? listaImpressao.filter(ordem => 
-                          (ordem.fim_carregamento && ordem.carregamento_agendamento_data && !ordem.carregamento_expurgado) ||
-                          (ordem.chegada_destino && ordem.prazo_entrega && !ordem.entrega_expurgada)
+                          (ordem.fim_carregamento && ordem.carregamento_agendamento_data) ||
+                          (ordem.chegada_destino && ordem.prazo_entrega)
                         ).length
                       : listaImpressao.filter(ordem => 
                           tipo === 'carga' 
-                            ? (ordem.fim_carregamento && ordem.carregamento_agendamento_data && !ordem.carregamento_expurgado)
-                            : (ordem.chegada_destino && ordem.prazo_entrega && !ordem.entrega_expurgada)
+                            ? (ordem.fim_carregamento && ordem.carregamento_agendamento_data)
+                            : (ordem.chegada_destino && ordem.prazo_entrega)
                         ).length;
                     
                     return totalConsiderado > 0 ? ((noPrazo / totalConsiderado) * 100).toFixed(2) : '0.00';
                   })()}%
                 </div>
+                {tipo === 'geral' && (
+                  <div className="mt-2 pt-2 border-t grid grid-cols-2 gap-2" style={{ borderColor: '#86efac' }}>
+                    <div>
+                      <div className="text-[9px] text-blue-700 font-medium">SLA Carga</div>
+                      <div className="text-sm font-bold text-blue-900">
+                        {(() => {
+                          const totalCarga = listaImpressao.filter(o => o.fim_carregamento && o.carregamento_agendamento_data).length;
+                          const noPrazoCarga = listaImpressao.filter(o => getStatusSLA(o, 'carga').label === 'No Prazo').length;
+                          return totalCarga > 0 ? ((noPrazoCarga / totalCarga) * 100).toFixed(2) : '0.00';
+                        })()}%
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] text-purple-700 font-medium">SLA Descarga</div>
+                      <div className="text-sm font-bold text-purple-900">
+                        {(() => {
+                          const totalDescarga = listaImpressao.filter(o => o.chegada_destino && o.prazo_entrega).length;
+                          const noPrazoDescarga = listaImpressao.filter(o => getStatusSLA(o, 'entrega').label === 'No Prazo').length;
+                          return totalDescarga > 0 ? ((noPrazoDescarga / totalDescarga) * 100).toFixed(2) : '0.00';
+                        })()}%
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
