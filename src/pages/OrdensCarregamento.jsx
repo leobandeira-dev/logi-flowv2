@@ -43,15 +43,21 @@ export default function OrdensCarregamento() {
   const [showOfertaLote, setShowOfertaLote] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [periodoSelecionado, setPeriodoSelecionado] = useState("");
+  const [periodoSelecionado, setPeriodoSelecionado] = useState("mes_atual");
+  
+  // Calcular datas do mês atual
+  const hoje = new Date();
+  const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+  
   const [filters, setFilters] = useState({
     operacoesIds: [],
     status: "",
     tiposRegistro: [],
     origem: "",
     destino: "",
-    dataInicio: "",
-    dataFim: "",
+    dataInicio: primeiroDiaMes.toISOString().split('T')[0],
+    dataFim: ultimoDiaMes.toISOString().split('T')[0],
     tipoRegistro: "",
     statusTracking: ""
   });

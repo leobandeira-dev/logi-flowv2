@@ -72,10 +72,16 @@ export default function Fluxo() {
   const [limite, setLimite] = useState(20);
   const [filtroAtribuicao, setFiltroAtribuicao] = useState("todos");
 
-  const [periodoSelecionado, setPeriodoSelecionado] = useState("");
+  const [periodoSelecionado, setPeriodoSelecionado] = useState("mes_atual");
+  
+  // Calcular datas do mês atual
+  const hoje = new Date();
+  const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+  
   const [filters, setFilters] = useState({
-    dataInicio: "",
-    dataFim: "",
+    dataInicio: primeiroDiaMes.toISOString().split('T')[0],
+    dataFim: ultimoDiaMes.toISOString().split('T')[0],
     etapaId: "",
     status: "",
     frota: "",
@@ -778,6 +784,15 @@ export default function Fluxo() {
           </div>
 
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3 w-full lg:w-auto">
+            <FiltroDataPeriodo
+              periodoSelecionado={periodoSelecionado}
+              onPeriodoChange={setPeriodoSelecionado}
+              dataInicio={filters.dataInicio}
+              dataFim={filters.dataFim}
+              onDataInicioChange={(val) => setFilters({...filters, dataInicio: val})}
+              onDataFimChange={(val) => setFilters({...filters, dataFim: val})}
+              isDark={isDark}
+            />
             <div className="flex items-center gap-2 w-full lg:w-auto">
               <Link to={createPageUrl("ConfiguracaoEtapas")}>
                 <Button

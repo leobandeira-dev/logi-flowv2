@@ -86,13 +86,19 @@ export default function Tracking() {
   const [limite, setLimite] = useState(50);
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [exportando, setExportando] = useState(false);
-  const [periodoSelecionado, setPeriodoSelecionado] = useState("");
+  const [periodoSelecionado, setPeriodoSelecionado] = useState("mes_atual");
+  
+  // Calcular datas do mês atual
+  const hoje = new Date();
+  const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+  
   const [filters, setFilters] = useState({
     statusTracking: "",
     origem: "",
     destino: "",
-    dataInicio: "",
-    dataFim: "",
+    dataInicio: primeiroDiaMes.toISOString().split('T')[0],
+    dataFim: ultimoDiaMes.toISOString().split('T')[0],
     frota: "",
     operacoesIds: [],
     modalidadeCarga: "",
