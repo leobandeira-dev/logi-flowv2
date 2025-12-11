@@ -1234,9 +1234,21 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
           );
         }
 
-        // Se NÃO tem agendamento de carregamento, não mostrar nada
+        // Se NÃO tem agendamento de carregamento, mostrar Pendente
         if (!ordem.carregamento_agendamento_data) {
-          return <span className="text-[9px]" style={{ color: theme.grayText }}>-</span>;
+          return (
+            <Badge 
+              className="text-[9px] h-4 px-1.5 font-bold"
+              style={{
+                backgroundColor: isDark ? 'rgba(107, 114, 128, 0.2)' : '#f3f4f6',
+                borderWidth: '1px',
+                borderColor: isDark ? '#6b7280' : '#d1d5db',
+                color: isDark ? '#9ca3af' : '#6b7280'
+              }}
+            >
+              PENDENTE
+            </Badge>
+          );
         }
 
         // Tem agendamento - calcular SLA
@@ -1351,9 +1363,21 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
           );
         }
 
-        // Se NÃO tem prazo de entrega, não mostrar nada
+        // Se NÃO tem prazo de entrega, mostrar Pendente
         if (!ordem.prazo_entrega) {
-          return <span className="text-[9px]" style={{ color: theme.grayText }}>-</span>;
+          return (
+            <Badge 
+              className="text-[9px] h-4 px-1.5 font-bold"
+              style={{
+                backgroundColor: isDark ? 'rgba(107, 114, 128, 0.2)' : '#f3f4f6',
+                borderWidth: '1px',
+                borderColor: isDark ? '#6b7280' : '#d1d5db',
+                color: isDark ? '#9ca3af' : '#6b7280'
+              }}
+            >
+              PENDENTE
+            </Badge>
+          );
         }
 
         // Tem prazo de entrega - calcular SLA
