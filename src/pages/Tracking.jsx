@@ -1617,6 +1617,29 @@ export default function Tracking() {
                   </Badge>
                 )}
               </p>
+              <Button
+                size="sm"
+                onClick={async () => {
+                  toast.loading("Recalculando prazos de entrega...");
+                  try {
+                    const { data } = await base44.functions.invoke('recalcularPrazosEntrega', {});
+                    toast.dismiss();
+                    if (data.resumo.atualizadas > 0) {
+                      toast.success(`✅ ${data.resumo.atualizadas} ordens atualizadas!`);
+                      loadData();
+                    } else {
+                      toast.success(`✓ Todos os prazos já estão corretos (${data.resumo.ja_corretos} ordens)`);
+                    }
+                  } catch (error) {
+                    toast.dismiss();
+                    toast.error("Erro ao recalcular prazos");
+                  }
+                }}
+                className="h-7 bg-green-600 hover:bg-green-700 text-xs text-white"
+              >
+                <RefreshCw className="w-3 h-3 mr-1" />
+                Recalcular Prazos
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
