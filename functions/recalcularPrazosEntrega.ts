@@ -48,6 +48,7 @@ Deno.serve(async (req) => {
     });
 
     console.log(`📊 ${todasOrdens.length} ordens totais, ${ordensPrecisam.length} precisam verificação`);
+    console.log('Amostra de 3 ordens:', todasOrdens.slice(0, 3));
 
     const atualizadas = [];
     const erros = [];
