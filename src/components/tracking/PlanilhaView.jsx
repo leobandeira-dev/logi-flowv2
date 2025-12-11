@@ -1393,18 +1393,18 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
                     borderWidth: '1px',
                     borderColor: isDark ? '#ef4444' : '#fca5a5',
                     color: isDark ? '#f87171' : '#dc2626'
-                  }}
-                >
-                  +{horasAtraso}h
-                </Badge>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-4 w-4 p-0"
-                  onClick={(e) => {
+                    }}
+                    >
+                    +{horasAtrasoEntrega}h
+                    </Badge>
+                    <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-4 w-4 p-0"
+                    onClick={(e) => {
                     e.stopPropagation();
                     onExpurgar(ordem, "entrega");
-                  }}
+                    }}
                   title="Expurgar entrega"
                 >
                   <AlertTriangle className="w-3 h-3 text-orange-600" />
