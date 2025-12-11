@@ -10,16 +10,18 @@ Deno.serve(async (req) => {
     }
 
     // Buscar todas as ordens sem prazo_entrega
-    const todasOrdens = await base44.asServiceRole.entities.OrdemDeCarregamento.filter({});
-    const ordensSemPrazo = todasOrdens.filter(ordem => !ordem.prazo_entrega && ordem.operacao_id && ordem.carregamento_agendamento_data);
-
-    console.log(`📊 Total de ordens: ${todasOrdens.length}`);
+    const todasOrdens = await base44.asServiceRole.entities.OrdemDeCarregamento.filter({}, null, 10000);
+    
+    console.log(`📊 Total de ordens: ${todasOrdens?.length || 0}`);
+    console.log(`📊 Tipo de todasOrdens:`, typeof todasOrdens, Array.isArray(todasOrdens));
+    
+    const ordensSemPrazo = (todasOrdens || []).filter(ordem => !ordem.prazo_entrega && ordem.operacao_id && ordem.carregamento_agendamento_data);
     console.log(`⚠️ Ordens sem prazo_entrega: ${ordensSemPrazo.length}`);
 
     // Buscar todas as operações de uma vez
-    const operacoes = await base44.asServiceRole.entities.Operacao.filter({});
+    const operacoes = await base44.asServiceRole.entities.Operacao.filter({}, null, 1000);
     const operacoesMap = {};
-    operacoes.forEach(op => {
+    (operacoes || []).forEach(op => {
       operacoesMap[op.id] = op;
     });
 
