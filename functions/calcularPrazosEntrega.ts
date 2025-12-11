@@ -12,12 +12,25 @@ Deno.serve(async (req) => {
     // Buscar todas as ordens
     let todasOrdens = await base44.asServiceRole.entities.OrdemDeCarregamento.filter({}, null, 10000);
     
+    console.log('📊 Estrutura de todasOrdens:', {
+      tipo: typeof todasOrdens,
+      isArray: Array.isArray(todasOrdens),
+      keys: todasOrdens ? Object.keys(todasOrdens) : null,
+      length: todasOrdens?.length
+    });
+    
     // Se retornar objeto com data, extrair array
-    if (todasOrdens && todasOrdens.data && Array.isArray(todasOrdens.data)) {
-      todasOrdens = todasOrdens.data;
+    if (todasOrdens && !Array.isArray(todasOrdens)) {
+      if (todasOrdens.data && Array.isArray(todasOrdens.data)) {
+        todasOrdens = todasOrdens.data;
+      } else if (todasOrdens.items && Array.isArray(todasOrdens.items)) {
+        todasOrdens = todasOrdens.items;
+      } else {
+        todasOrdens = [];
+      }
     }
     
-    console.log(`📊 Total de ordens: ${todasOrdens?.length || 0}`);
+    console.log(`📊 Total de ordens: ${todasOrdens.length}`);
     
     const ordensSemPrazo = todasOrdens.filter(ordem => !ordem.prazo_entrega && ordem.operacao_id && ordem.carregamento_agendamento_data);
     console.log(`⚠️ Ordens sem prazo_entrega: ${ordensSemPrazo.length}`);
