@@ -1363,9 +1363,9 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
           ? new Date(ordem.chegada_destino)
           : getDataAtualSP();
 
-        const diffMs = realizadoEntrega - prazoEntrega;
-        const horasAtraso = Math.round(diffMs / (1000 * 60 * 60));
-        const noPrazoEntrega = horasAtraso <= 0;
+        const diffMsEntrega = realizadoEntrega - prazoEntrega;
+        const horasAtrasoEntrega = Math.round(diffMsEntrega / (1000 * 60 * 60));
+        const noPrazoEntrega = horasAtrasoEntrega <= 0;
 
         // Se já foi concluído (chegada_destino preenchida)
         if (ordem.chegada_destino) {
@@ -1424,9 +1424,9 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
                   borderColor: isDark ? '#3b82f6' : '#60a5fa',
                   color: isDark ? '#60a5fa' : '#1e40af'
                 }}
-                title={`Em andamento - faltam ${Math.abs(horasAtraso)}h para o prazo`}
-              >
-                🕐 EM PRAZO ({Math.abs(horasAtraso)}h)
+                title={`Em andamento - faltam ${Math.abs(horasAtrasoEntrega)}h para o prazo`}
+                >
+                🕐 EM PRAZO ({Math.abs(horasAtrasoEntrega)}h)
               </Badge>
             );
           } else {
@@ -1439,9 +1439,9 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
                   borderColor: isDark ? '#ef4444' : '#fca5a5',
                   color: isDark ? '#f87171' : '#dc2626'
                 }}
-                title={`Atrasado em ${horasAtraso}h - ainda não chegou no destino`}
-              >
-                ⚠️ ATRASADO (+{horasAtraso}h)
+                title={`Atrasado em ${horasAtrasoEntrega}h - ainda não chegou no destino`}
+                >
+                ⚠️ ATRASADO (+{horasAtrasoEntrega}h)
               </Badge>
             );
           }
