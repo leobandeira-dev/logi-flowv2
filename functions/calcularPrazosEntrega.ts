@@ -9,19 +9,29 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Buscar todas as ordens sem prazo_entrega
-    const todasOrdens = await base44.asServiceRole.entities.OrdemDeCarregamento.filter({}, null, 10000);
+    // Buscar todas as ordens
+    let todasOrdens = await base44.asServiceRole.entities.OrdemDeCarregamento.filter({}, null, 10000);
+    
+    // Se retornar objeto com data, extrair array
+    if (todasOrdens && todasOrdens.data && Array.isArray(todasOrdens.data)) {
+      todasOrdens = todasOrdens.data;
+    }
     
     console.log(`📊 Total de ordens: ${todasOrdens?.length || 0}`);
-    console.log(`📊 Tipo de todasOrdens:`, typeof todasOrdens, Array.isArray(todasOrdens));
     
-    const ordensSemPrazo = (todasOrdens || []).filter(ordem => !ordem.prazo_entrega && ordem.operacao_id && ordem.carregamento_agendamento_data);
+    const ordensSemPrazo = todasOrdens.filter(ordem => !ordem.prazo_entrega && ordem.operacao_id && ordem.carregamento_agendamento_data);
     console.log(`⚠️ Ordens sem prazo_entrega: ${ordensSemPrazo.length}`);
 
     // Buscar todas as operações de uma vez
-    const operacoes = await base44.asServiceRole.entities.Operacao.filter({}, null, 1000);
+    let operacoes = await base44.asServiceRole.entities.Operacao.filter({}, null, 1000);
+    
+    // Se retornar objeto com data, extrair array
+    if (operacoes && operacoes.data && Array.isArray(operacoes.data)) {
+      operacoes = operacoes.data;
+    }
+    
     const operacoesMap = {};
-    (operacoes || []).forEach(op => {
+    operacoes.forEach(op => {
       operacoesMap[op.id] = op;
     });
 
