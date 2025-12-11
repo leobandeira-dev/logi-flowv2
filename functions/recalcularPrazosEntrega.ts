@@ -17,7 +17,6 @@ Deno.serve(async (req) => {
       while (diasAdicionados < numeroDias) {
         resultado.setDate(resultado.getDate() + 1);
         const diaSemana = resultado.getDay();
-        // 0 = domingo, 6 = sábado - pular
         if (diaSemana !== 0 && diaSemana !== 6) {
           diasAdicionados++;
         }
@@ -26,29 +25,30 @@ Deno.serve(async (req) => {
       return resultado;
     };
 
-    // Buscar operações para ter as regras em memória
-    const operacoesData = await base44.asServiceRole.entities.Operacao.list();
-    const operacoes = Array.isArray(operacoesData) ? operacoesData : [];
+    // Buscar operações
+    const operacoes = await base44.asServiceRole.entities.Operacao.list();
+    const operacoesMap = new Map();
     
-    const operacoesMap = {};
-    operacoes.forEach(op => {
-      operacoesMap[op.id] = op;
-    });
+    for (const op of operacoes) {
+      operacoesMap.set(op.id, op);
+    }
 
     console.log(`📋 ${operacoes.length} operações carregadas`);
 
-    // Buscar TODAS as ordens
-    const ordensData = await base44.asServiceRole.entities.OrdemDeCarregamento.list();
-    const todasOrdens = Array.isArray(ordensData) ? ordensData : [];
+    // Buscar ordens - usando limit muito alto para pegar todas
+    const todasOrdens = await base44.asServiceRole.entities.OrdemDeCarregamento.list('-created_date', 1000);
     
-    // Filtrar ordens que precisam de recálculo
-    const ordensPrecisam = todasOrdens.filter(ordem => {
-      // Tem operação e data de carregamento
-      return ordem.operacao_id && ordem.carregamento_agendamento_data;
-    });
+    console.log(`📦 ${todasOrdens.length} ordens carregadas`);
 
-    console.log(`📊 ${todasOrdens.length} ordens totais, ${ordensPrecisam.length} precisam verificação`);
-    console.log('Amostra de 3 ordens:', todasOrdens.slice(0, 3));
+    // Filtrar ordens que têm operação e data de carregamento
+    const ordensPrecisam = [];
+    for (const ordem of todasOrdens) {
+      if (ordem.operacao_id && ordem.carregamento_agendamento_data) {
+        ordensPrecisam.push(ordem);
+      }
+    }
+
+    console.log(`🎯 ${ordensPrecisam.length} ordens com operação e data de carregamento`);
 
     const atualizadas = [];
     const erros = [];
@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
 
     for (const ordem of ordensPrecisam) {
       try {
-        const operacao = operacoesMap[ordem.operacao_id];
+        const operacao = operacoesMap.get(ordem.operacao_id);
         
         if (!operacao) {
           erros.push({
@@ -86,10 +86,8 @@ Deno.serve(async (req) => {
           const dataCarregamento = new Date(ordem.carregamento_agendamento_data);
           
           if (operacao.prazo_entrega_dias_uteis === true) {
-            // Calcular dias úteis
             prazoCalculado = adicionarDiasUteis(dataCarregamento, operacao.prazo_entrega_dias);
           } else {
-            // Calcular dias corridos
             prazoCalculado = new Date(dataCarregamento);
             prazoCalculado.setDate(prazoCalculado.getDate() + operacao.prazo_entrega_dias);
           }
@@ -101,7 +99,7 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Se calculou prazo e é diferente do atual, atualizar
+        // Verificar se precisa atualizar
         const prazoCalculadoISO = prazoCalculado.toISOString();
         const prazoAtual = ordem.prazo_entrega;
 
@@ -135,6 +133,8 @@ Deno.serve(async (req) => {
       }
     }
 
+    console.log(`✅ Processamento concluído: ${atualizadas.length} atualizadas, ${jaCorretos.length} já corretos`);
+
     return Response.json({
       success: true,
       resumo: {
@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
       },
       detalhes: {
         atualizadas,
-        ja_corretos: jaCorretos.slice(0, 5),
+        ja_corretos: jaCorretos.slice(0, 10),
         aguardando_dados: semAlteracao,
         erros
       }
