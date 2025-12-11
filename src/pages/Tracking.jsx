@@ -1402,26 +1402,23 @@ export default function Tracking() {
             >
               {showInsights ? (
                 <>
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  Ocultar Insights
+                  <BarChart3 className="w-3 h-3 mr-1" />
+                  Ocultar Análise Detalhada
                 </>
               ) : (
                 <>
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  Mostrar Insights
+                  <BarChart3 className="w-3 h-3 mr-1" />
+                  Ver Análise Detalhada
                 </>
               )}
             </Button>
-            {showInsights && (
-              <p className="text-xs" style={{ color: theme.textMuted }}>
-                Análise detalhada das operações
-              </p>
-            )}
           </div>
 
           {showInsights && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
-              {Object.entries(insights.distribuicaoPorStatus).map(([status, count]) => {
+            <Card className="mt-2" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
+              <CardContent className="p-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
+                  {Object.entries(insights.distribuicaoPorStatus).map(([status, count]) => {
                 const config = statusTrackingConfig[status];
                 if (!config || count === 0) return null;
 
@@ -1581,7 +1578,9 @@ export default function Tracking() {
                   </CardContent>
                 </Card>
               )}
-            </div>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
 
