@@ -27,7 +27,8 @@ Deno.serve(async (req) => {
     };
 
     // Buscar operações para ter as regras em memória
-    const operacoes = await base44.asServiceRole.entities.Operacao.list();
+    const operacoesData = await base44.asServiceRole.entities.Operacao.list();
+    const operacoes = Array.isArray(operacoesData) ? operacoesData : [];
     
     const operacoesMap = {};
     operacoes.forEach(op => {
@@ -37,11 +38,12 @@ Deno.serve(async (req) => {
     console.log(`📋 ${operacoes.length} operações carregadas`);
 
     // Buscar TODAS as ordens
-    const todasOrdens = await base44.asServiceRole.entities.OrdemDeCarregamento.list();
+    const ordensData = await base44.asServiceRole.entities.OrdemDeCarregamento.list();
+    const todasOrdens = Array.isArray(ordensData) ? ordensData : [];
     
     // Filtrar ordens que precisam de recálculo
     const ordensPrecisam = todasOrdens.filter(ordem => {
-      // Tem operação e data de carregamento, mas não tem prazo OU prazo diferente do calculado
+      // Tem operação e data de carregamento
       return ordem.operacao_id && ordem.carregamento_agendamento_data;
     });
 
