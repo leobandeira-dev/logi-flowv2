@@ -1214,7 +1214,7 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
         );
 
       case "sla_carregamento":
-        // Se expurgado
+        // Se expurgado, sempre mostrar badge de expurgado
         if (ordem.carregamento_expurgado) {
           return (
             <div className="flex items-center justify-center gap-1">
@@ -1234,82 +1234,41 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
           );
         }
 
-        // Se tem agendamento de carregamento
-        if (ordem.carregamento_agendamento_data) {
-          const agendadoCarga = new Date(ordem.carregamento_agendamento_data);
-          // Se entrada_galpao estiver preenchida, usar ela. Caso contrário, usar data atual
-          const realizadoCarga = ordem.entrada_galpao 
-            ? new Date(ordem.entrada_galpao)
-            : getDataAtualSP();
+        // Se NÃO tem agendamento de carregamento, não mostrar nada
+        if (!ordem.carregamento_agendamento_data) {
+          return <span className="text-[9px]" style={{ color: theme.grayText }}>-</span>;
+        }
 
-          const diffMs = realizadoCarga - agendadoCarga;
-          const horasAtraso = Math.round(diffMs / (1000 * 60 * 60));
-          const noPrazoCarga = horasAtraso <= 0;
+        // Tem agendamento - calcular SLA
+        const agendadoCarga = new Date(ordem.carregamento_agendamento_data);
+        // Se entrada_galpao estiver preenchida, usar ela. Caso contrário, usar data atual
+        const realizadoCarga = ordem.entrada_galpao 
+          ? new Date(ordem.entrada_galpao)
+          : getDataAtualSP();
 
-          // Se já foi concluído (entrada_galpao preenchida)
-          if (ordem.entrada_galpao) {
-            if (noPrazoCarga) {
-              return (
-                <Badge 
-                  className="text-[9px] h-4 px-1.5 font-bold"
-                  style={{
-                    backgroundColor: isDark ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7',
-                    borderWidth: '1px',
-                    borderColor: isDark ? '#22c55e' : '#86efac',
-                    color: isDark ? '#4ade80' : '#15803d'
-                  }}
-                >
-                  ✓ NO PRAZO
-                </Badge>
-              );
-            } else {
-              return (
-                <div className="flex items-center justify-center gap-1">
-                  <Badge 
-                    className="text-[9px] h-4 px-1.5 font-bold"
-                    style={{
-                      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
-                      borderWidth: '1px',
-                      borderColor: isDark ? '#ef4444' : '#fca5a5',
-                      color: isDark ? '#f87171' : '#dc2626'
-                    }}
-                  >
-                    +{horasAtraso}h
-                  </Badge>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-4 w-4 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onExpurgar(ordem, "carregamento");
-                    }}
-                    title="Expurgar carregamento"
-                  >
-                    <AlertTriangle className="w-3 h-3 text-orange-600" />
-                  </Button>
-                </div>
-              );
-            }
+        const diffMs = realizadoCarga - agendadoCarga;
+        const horasAtraso = Math.round(diffMs / (1000 * 60 * 60));
+        const noPrazoCarga = horasAtraso <= 0;
+
+        // Se já foi concluído (entrada_galpao preenchida)
+        if (ordem.entrada_galpao) {
+          if (noPrazoCarga) {
+            return (
+              <Badge 
+                className="text-[9px] h-4 px-1.5 font-bold"
+                style={{
+                  backgroundColor: isDark ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7',
+                  borderWidth: '1px',
+                  borderColor: isDark ? '#22c55e' : '#86efac',
+                  color: isDark ? '#4ade80' : '#15803d'
+                }}
+              >
+                ✓ NO PRAZO
+              </Badge>
+            );
           } else {
-            // Ainda não concluído - mostrar status em andamento
-            if (noPrazoCarga) {
-              return (
-                <Badge 
-                  className="text-[9px] h-4 px-1.5 font-bold"
-                  style={{
-                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#dbeafe',
-                    borderWidth: '1px',
-                    borderColor: isDark ? '#3b82f6' : '#60a5fa',
-                    color: isDark ? '#60a5fa' : '#1e40af'
-                  }}
-                  title={`Em andamento - faltam ${Math.abs(horasAtraso)}h para o agendamento`}
-                >
-                  🕐 EM PRAZO ({Math.abs(horasAtraso)}h)
-                </Badge>
-              );
-            } else {
-              return (
+            return (
+              <div className="flex items-center justify-center gap-1">
                 <Badge 
                   className="text-[9px] h-4 px-1.5 font-bold"
                   style={{
@@ -1318,19 +1277,61 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
                     borderColor: isDark ? '#ef4444' : '#fca5a5',
                     color: isDark ? '#f87171' : '#dc2626'
                   }}
-                  title={`Atrasado em ${horasAtraso}h - ainda não chegou na carga`}
                 >
-                  ⚠️ ATRASADO (+{horasAtraso}h)
+                  +{horasAtraso}h
                 </Badge>
-              );
-            }
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-4 w-4 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onExpurgar(ordem, "carregamento");
+                  }}
+                  title="Expurgar carregamento"
+                >
+                  <AlertTriangle className="w-3 h-3 text-orange-600" />
+                </Button>
+              </div>
+            );
+          }
+        } else {
+          // Ainda não concluído - mostrar status em andamento
+          if (noPrazoCarga) {
+            return (
+              <Badge 
+                className="text-[9px] h-4 px-1.5 font-bold"
+                style={{
+                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#dbeafe',
+                  borderWidth: '1px',
+                  borderColor: isDark ? '#3b82f6' : '#60a5fa',
+                  color: isDark ? '#60a5fa' : '#1e40af'
+                }}
+                title={`Em andamento - faltam ${Math.abs(horasAtraso)}h para o agendamento`}
+              >
+                🕐 EM PRAZO ({Math.abs(horasAtraso)}h)
+              </Badge>
+            );
+          } else {
+            return (
+              <Badge 
+                className="text-[9px] h-4 px-1.5 font-bold"
+                style={{
+                  backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+                  borderWidth: '1px',
+                  borderColor: isDark ? '#ef4444' : '#fca5a5',
+                  color: isDark ? '#f87171' : '#dc2626'
+                }}
+                title={`Atrasado em ${horasAtraso}h - ainda não chegou na carga`}
+              >
+                ⚠️ ATRASADO (+{horasAtraso}h)
+              </Badge>
+            );
           }
         }
 
-        return <span className="text-[9px]" style={{ color: theme.grayText }}>-</span>;
-
       case "sla_entrega":
-        // Se expurgado
+        // Se expurgado, sempre mostrar badge de expurgado
         if (ordem.entrega_expurgada) {
           return (
             <div className="flex items-center justify-center gap-1">
@@ -1350,82 +1351,41 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
           );
         }
 
-        // Se tem prazo de entrega
-        if (ordem.prazo_entrega) {
-          const prazoEntrega = new Date(ordem.prazo_entrega);
-          // Se chegada_destino estiver preenchida, usar ela. Caso contrário, usar data atual
-          const realizadoEntrega = ordem.chegada_destino 
-            ? new Date(ordem.chegada_destino)
-            : getDataAtualSP();
+        // Se NÃO tem prazo de entrega, não mostrar nada
+        if (!ordem.prazo_entrega) {
+          return <span className="text-[9px]" style={{ color: theme.grayText }}>-</span>;
+        }
 
-          const diffMs = realizadoEntrega - prazoEntrega;
-          const horasAtraso = Math.round(diffMs / (1000 * 60 * 60));
-          const noPrazoEntrega = horasAtraso <= 0;
+        // Tem prazo de entrega - calcular SLA
+        const prazoEntrega = new Date(ordem.prazo_entrega);
+        // Se chegada_destino estiver preenchida, usar ela. Caso contrário, usar data atual
+        const realizadoEntrega = ordem.chegada_destino 
+          ? new Date(ordem.chegada_destino)
+          : getDataAtualSP();
 
-          // Se já foi concluído (chegada_destino preenchida)
-          if (ordem.chegada_destino) {
-            if (noPrazoEntrega) {
-              return (
-                <Badge 
-                  className="text-[9px] h-4 px-1.5 font-bold"
-                  style={{
-                    backgroundColor: isDark ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7',
-                    borderWidth: '1px',
-                    borderColor: isDark ? '#22c55e' : '#86efac',
-                    color: isDark ? '#4ade80' : '#15803d'
-                  }}
-                >
-                  ✓ NO PRAZO
-                </Badge>
-              );
-            } else {
-              return (
-                <div className="flex items-center justify-center gap-1">
-                  <Badge 
-                    className="text-[9px] h-4 px-1.5 font-bold"
-                    style={{
-                      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
-                      borderWidth: '1px',
-                      borderColor: isDark ? '#ef4444' : '#fca5a5',
-                      color: isDark ? '#f87171' : '#dc2626'
-                    }}
-                  >
-                    +{horasAtraso}h
-                  </Badge>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-4 w-4 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onExpurgar(ordem, "entrega");
-                    }}
-                    title="Expurgar entrega"
-                  >
-                    <AlertTriangle className="w-3 h-3 text-orange-600" />
-                  </Button>
-                </div>
-              );
-            }
+        const diffMs = realizadoEntrega - prazoEntrega;
+        const horasAtraso = Math.round(diffMs / (1000 * 60 * 60));
+        const noPrazoEntrega = horasAtraso <= 0;
+
+        // Se já foi concluído (chegada_destino preenchida)
+        if (ordem.chegada_destino) {
+          if (noPrazoEntrega) {
+            return (
+              <Badge 
+                className="text-[9px] h-4 px-1.5 font-bold"
+                style={{
+                  backgroundColor: isDark ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7',
+                  borderWidth: '1px',
+                  borderColor: isDark ? '#22c55e' : '#86efac',
+                  color: isDark ? '#4ade80' : '#15803d'
+                }}
+              >
+                ✓ NO PRAZO
+              </Badge>
+            );
           } else {
-            // Ainda não concluído - mostrar status em andamento usando data atual
-            if (noPrazoEntrega) {
-              return (
-                <Badge 
-                  className="text-[9px] h-4 px-1.5 font-bold"
-                  style={{
-                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#dbeafe',
-                    borderWidth: '1px',
-                    borderColor: isDark ? '#3b82f6' : '#60a5fa',
-                    color: isDark ? '#60a5fa' : '#1e40af'
-                  }}
-                  title={`Em andamento - faltam ${Math.abs(horasAtraso)}h para o prazo`}
-                >
-                  🕐 EM PRAZO ({Math.abs(horasAtraso)}h)
-                </Badge>
-              );
-            } else {
-              return (
+            return (
+              <div className="flex items-center justify-center gap-1">
                 <Badge 
                   className="text-[9px] h-4 px-1.5 font-bold"
                   style={{
@@ -1434,16 +1394,58 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
                     borderColor: isDark ? '#ef4444' : '#fca5a5',
                     color: isDark ? '#f87171' : '#dc2626'
                   }}
-                  title={`Atrasado em ${horasAtraso}h - ainda não chegou no destino`}
                 >
-                  ⚠️ ATRASADO (+{horasAtraso}h)
+                  +{horasAtraso}h
                 </Badge>
-              );
-            }
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-4 w-4 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onExpurgar(ordem, "entrega");
+                  }}
+                  title="Expurgar entrega"
+                >
+                  <AlertTriangle className="w-3 h-3 text-orange-600" />
+                </Button>
+              </div>
+            );
+          }
+        } else {
+          // Ainda não concluído - mostrar status em andamento usando data atual
+          if (noPrazoEntrega) {
+            return (
+              <Badge 
+                className="text-[9px] h-4 px-1.5 font-bold"
+                style={{
+                  backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#dbeafe',
+                  borderWidth: '1px',
+                  borderColor: isDark ? '#3b82f6' : '#60a5fa',
+                  color: isDark ? '#60a5fa' : '#1e40af'
+                }}
+                title={`Em andamento - faltam ${Math.abs(horasAtraso)}h para o prazo`}
+              >
+                🕐 EM PRAZO ({Math.abs(horasAtraso)}h)
+              </Badge>
+            );
+          } else {
+            return (
+              <Badge 
+                className="text-[9px] h-4 px-1.5 font-bold"
+                style={{
+                  backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2',
+                  borderWidth: '1px',
+                  borderColor: isDark ? '#ef4444' : '#fca5a5',
+                  color: isDark ? '#f87171' : '#dc2626'
+                }}
+                title={`Atrasado em ${horasAtraso}h - ainda não chegou no destino`}
+              >
+                ⚠️ ATRASADO (+{horasAtraso}h)
+              </Badge>
+            );
           }
         }
-
-        return <span className="text-[9px]" style={{ color: theme.grayText }}>-</span>;
 
       default:
         return null;
