@@ -1820,14 +1820,15 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
 
           <div 
             ref={scrollContainerRef}
-            className="overflow-x-auto"
+            className="overflow-x-auto overflow-y-auto"
             style={{
               scrollbarWidth: 'thin',
-              scrollbarColor: `${theme.primaryBlue} ${theme.border}`
+              scrollbarColor: `${theme.primaryBlue} ${theme.border}`,
+              maxHeight: 'calc(100vh - 300px)'
             }}
           >
             <table className="w-full border-collapse text-[10px]">
-              <thead className="sticky top-0 z-10">
+              <thead className="sticky top-0 z-20" style={{ position: 'sticky', top: 0 }}>
                 <tr style={{ borderBottom: `1px solid ${theme.border}` }}>
                   <th 
                     className="h-8 px-2 text-center w-8 sticky left-0 z-20" 
