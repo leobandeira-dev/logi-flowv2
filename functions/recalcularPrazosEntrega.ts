@@ -52,6 +52,7 @@ Deno.serve(async (req) => {
     const atualizadas = [];
     const erros = [];
     const semAlteracao = [];
+    const jaCorretos = [];
 
     for (const ordem of ordensPrecisam) {
       try {
@@ -119,9 +120,9 @@ Deno.serve(async (req) => {
               : `${operacao.prazo_entrega_dias} dias ${operacao.prazo_entrega_dias_uteis ? 'úteis' : 'corridos'}`
           });
         } else {
-          semAlteracao.push({
+          jaCorretos.push({
             ordem: ordem.numero_carga || ordem.id.slice(-6),
-            motivo: 'Prazo já está correto'
+            prazo: prazoAtual
           });
         }
 
@@ -138,12 +139,14 @@ Deno.serve(async (req) => {
       resumo: {
         total_verificadas: ordensPrecisam.length,
         atualizadas: atualizadas.length,
-        sem_alteracao: semAlteracao.length,
+        ja_corretos: jaCorretos.length,
+        aguardando_dados: semAlteracao.length,
         erros: erros.length
       },
       detalhes: {
         atualizadas,
-        sem_alteracao,
+        ja_corretos: jaCorretos.slice(0, 5),
+        aguardando_dados: semAlteracao,
         erros
       }
     });
