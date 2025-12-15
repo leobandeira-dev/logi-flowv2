@@ -11,7 +11,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Eye, Edit, MoreVertical, MessageSquare, Upload, MapPin, User, Truck, Package, FileText, ChevronDown, Table as TableIcon, CalendarDays, CheckCircle, XCircle, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { Eye, Edit, MoreVertical, MessageSquare, Upload, MapPin, User, Truck, Package, FileText, ChevronDown, Table as TableIcon, CalendarDays, CheckCircle, XCircle, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, Settings, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -28,6 +38,36 @@ const statusTrackingConfig = {
   descarga_realizada: { label: "Descarregado", color: "bg-green-700 text-white", textColor: "text-green-700 dark:text-green-300" },
   finalizado: { label: "Finalizado", color: "bg-gray-700 text-white", textColor: "text-gray-700 dark:text-gray-300" }
 };
+
+const COLUNAS_TABELA_DISPONIVEIS = [
+  { id: "tipo", label: "Tipo", enabled: true, fixed: true },
+  { id: "numero_carga", label: "Ordem", enabled: true, fixed: true },
+  { id: "data_solicitacao", label: "Data Solic.", enabled: true },
+  { id: "operacao", label: "Operação", enabled: true },
+  { id: "asn", label: "ASN", enabled: true },
+  { id: "origem_destino", label: "Origem — Destino", enabled: true },
+  { id: "produto", label: "Produto", enabled: true },
+  { id: "motorista", label: "Motorista Principal", enabled: true },
+  { id: "motorista_reserva", label: "Motorista Reserva", enabled: true },
+  { id: "cavalo", label: "Cavalo", enabled: true },
+  { id: "implementos", label: "Implementos", enabled: true },
+  { id: "carregamento", label: "Carregamento", enabled: false },
+  { id: "agenda_carga", label: "Agenda Carga", enabled: true },
+  { id: "agenda_descarga", label: "Agenda Descarga", enabled: true },
+  { id: "chegada_destino", label: "Chegada Destino", enabled: true },
+  { id: "descarga_realizada", label: "Descarga Realiz.", enabled: true },
+  { id: "status", label: "Status", enabled: true },
+  { id: "distancia", label: "Distância", enabled: true },
+  { id: "km_faltam", label: "KM Faltantes", enabled: true },
+  { id: "tempo", label: "Tempo", enabled: true },
+  { id: "sla_carga", label: "SLA Carga", enabled: true },
+  { id: "sla_entrega", label: "SLA Entrega", enabled: true },
+  { id: "diaria_carga", label: "Diária Carga", enabled: true },
+  { id: "diaria_desc", label: "Diária Desc.", enabled: true },
+  { id: "info", label: "Info", enabled: true, fixed: true },
+  { id: "editar", label: "Editar", enabled: true, fixed: true },
+  { id: "acoes", label: "Ações", enabled: true, fixed: true }
+];
 
 export default function TrackingTable({
   ordens,
@@ -52,6 +92,8 @@ export default function TrackingTable({
   const scrollLeftRef = useRef(0);
   const [sortField, setSortField] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
+  const [colunas, setColunas] = useState(COLUNAS_TABELA_DISPONIVEIS);
+  const [showColumnConfig, setShowColumnConfig] = useState(false);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -67,6 +109,22 @@ export default function TrackingTable({
     });
     
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const savedConfig = localStorage.getItem('tabela_colunas_config');
+    if (savedConfig) {
+      try {
+        const parsedConfig = JSON.parse(savedConfig);
+        setColunas(parsedConfig);
+      } catch (error) {
+        console.error("Erro ao carregar configuração de colunas:", error);
+        setColunas(COLUNAS_TABELA_DISPONIVEIS);
+        localStorage.setItem('tabela_colunas_config', JSON.stringify(COLUNAS_TABELA_DISPONIVEIS));
+      }
+    } else {
+      localStorage.setItem('tabela_colunas_config', JSON.stringify(COLUNAS_TABELA_DISPONIVEIS));
+    }
   }, []);
 
   // Calcular distâncias para ordens em viagem
@@ -362,6 +420,34 @@ export default function TrackingTable({
     </TableHead>
   );
 
+  const toggleColuna = (colunaId) => {
+    const newColunas = colunas.map(col =>
+      col.id === colunaId ? { ...col, enabled: !col.enabled } : col
+    );
+    setColunas(newColunas);
+    localStorage.setItem('tabela_colunas_config', JSON.stringify(newColunas));
+  };
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const items = Array.from(colunas);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setColunas(items);
+    localStorage.setItem('tabela_colunas_config', JSON.stringify(items));
+    toast.success("Ordem das colunas atualizada!");
+  };
+
+  const resetColunas = () => {
+    setColunas(COLUNAS_TABELA_DISPONIVEIS);
+    localStorage.setItem('tabela_colunas_config', JSON.stringify(COLUNAS_TABELA_DISPONIVEIS));
+    toast.success("Configuração de colunas restaurada!");
+  };
+
+  const colunasVisiveis = colunas.filter(col => col.enabled);
+
   const exportarPDF = async (tipoVisao) => {
     try {
       const ordensParaExportar = ordens.map(ordem => {
@@ -450,7 +536,22 @@ export default function TrackingTable({
             <Package className="w-4 h-4" />
             Tabela - Tracking ({ordens.length})
           </CardTitle>
-          <DropdownMenu>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowColumnConfig(true)}
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              style={{
+                borderColor: theme.border,
+                color: theme.textMuted,
+                backgroundColor: 'transparent',
+              }}
+            >
+              <Settings className="w-3 h-3 mr-1" />
+              Colunas
+            </Button>
+            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 disabled={loading || ordens.length === 0}
@@ -501,6 +602,7 @@ export default function TrackingTable({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -508,39 +610,96 @@ export default function TrackingTable({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent" style={{ borderBottomColor: theme.border }}>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Tipo</TableHead>
-                <SortableHeader field="numero_carga">Ordem</SortableHeader>
-                <SortableHeader field="data_solicitacao">Data Solic.</SortableHeader>
-                <SortableHeader field="operacao">Operação</SortableHeader>
-                <SortableHeader field="asn">ASN</SortableHeader>
-                <SortableHeader field="origem">Origem — Destino</SortableHeader>
-                <SortableHeader field="produto">Produto</SortableHeader>
-                <SortableHeader field="motorista">Motorista Principal</SortableHeader>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Motorista Reserva</TableHead>
-                <SortableHeader field="cavalo">Cavalo</SortableHeader>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Implementos</TableHead>
-                <SortableHeader field="carregamento">Carregamento</SortableHeader>
-                <SortableHeader field="agenda_carga">Agenda Carga</SortableHeader>
-                <SortableHeader field="agenda_descarga">Agenda Descarga</SortableHeader>
-                <SortableHeader field="chegada_destino">Chegada Destino</SortableHeader>
-                <SortableHeader field="descarga_realizada">Descarga Realiz.</SortableHeader>
-                <SortableHeader field="status">Status</SortableHeader>
-                <SortableHeader field="distancia">Distância</SortableHeader>
-                <SortableHeader field="km_faltam">KM Faltantes</SortableHeader>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Tempo</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>SLA Carga</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>SLA Entrega</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Diária Carga</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Diária Desc.</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Info</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Editar</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase text-right" style={{ color: theme.textMuted }}>Ações</TableHead>
+                {colunasVisiveis.map((coluna) => {
+                  if (coluna.id === "tipo") {
+                    return <TableHead key={coluna.id} className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Tipo</TableHead>;
+                  }
+                  if (coluna.id === "numero_carga") {
+                    return <SortableHeader key={coluna.id} field="numero_carga">Ordem</SortableHeader>;
+                  }
+                  if (coluna.id === "data_solicitacao") {
+                    return <SortableHeader key={coluna.id} field="data_solicitacao">Data Solic.</SortableHeader>;
+                  }
+                  if (coluna.id === "operacao") {
+                    return <SortableHeader key={coluna.id} field="operacao">Operação</SortableHeader>;
+                  }
+                  if (coluna.id === "asn") {
+                    return <SortableHeader key={coluna.id} field="asn">ASN</SortableHeader>;
+                  }
+                  if (coluna.id === "origem_destino") {
+                    return <SortableHeader key={coluna.id} field="origem">Origem — Destino</SortableHeader>;
+                  }
+                  if (coluna.id === "produto") {
+                    return <SortableHeader key={coluna.id} field="produto">Produto</SortableHeader>;
+                  }
+                  if (coluna.id === "motorista") {
+                    return <SortableHeader key={coluna.id} field="motorista">Motorista Principal</SortableHeader>;
+                  }
+                  if (coluna.id === "motorista_reserva") {
+                    return <TableHead key={coluna.id} className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Motorista Reserva</TableHead>;
+                  }
+                  if (coluna.id === "cavalo") {
+                    return <SortableHeader key={coluna.id} field="cavalo">Cavalo</SortableHeader>;
+                  }
+                  if (coluna.id === "implementos") {
+                    return <TableHead key={coluna.id} className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Implementos</TableHead>;
+                  }
+                  if (coluna.id === "carregamento") {
+                    return <SortableHeader key={coluna.id} field="carregamento">Carregamento</SortableHeader>;
+                  }
+                  if (coluna.id === "agenda_carga") {
+                    return <SortableHeader key={coluna.id} field="agenda_carga">Agenda Carga</SortableHeader>;
+                  }
+                  if (coluna.id === "agenda_descarga") {
+                    return <SortableHeader key={coluna.id} field="agenda_descarga">Agenda Descarga</SortableHeader>;
+                  }
+                  if (coluna.id === "chegada_destino") {
+                    return <SortableHeader key={coluna.id} field="chegada_destino">Chegada Destino</SortableHeader>;
+                  }
+                  if (coluna.id === "descarga_realizada") {
+                    return <SortableHeader key={coluna.id} field="descarga_realizada">Descarga Realiz.</SortableHeader>;
+                  }
+                  if (coluna.id === "status") {
+                    return <SortableHeader key={coluna.id} field="status">Status</SortableHeader>;
+                  }
+                  if (coluna.id === "distancia") {
+                    return <SortableHeader key={coluna.id} field="distancia">Distância</SortableHeader>;
+                  }
+                  if (coluna.id === "km_faltam") {
+                    return <SortableHeader key={coluna.id} field="km_faltam">KM Faltantes</SortableHeader>;
+                  }
+                  if (coluna.id === "tempo") {
+                    return <TableHead key={coluna.id} className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Tempo</TableHead>;
+                  }
+                  if (coluna.id === "sla_carga") {
+                    return <TableHead key={coluna.id} className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>SLA Carga</TableHead>;
+                  }
+                  if (coluna.id === "sla_entrega") {
+                    return <TableHead key={coluna.id} className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>SLA Entrega</TableHead>;
+                  }
+                  if (coluna.id === "diaria_carga") {
+                    return <TableHead key={coluna.id} className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Diária Carga</TableHead>;
+                  }
+                  if (coluna.id === "diaria_desc") {
+                    return <TableHead key={coluna.id} className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Diária Desc.</TableHead>;
+                  }
+                  if (coluna.id === "info") {
+                    return <TableHead key={coluna.id} className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Info</TableHead>;
+                  }
+                  if (coluna.id === "editar") {
+                    return <TableHead key={coluna.id} className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Editar</TableHead>;
+                  }
+                  if (coluna.id === "acoes") {
+                    return <TableHead key={coluna.id} className="h-8 text-[10px] font-bold uppercase text-right" style={{ color: theme.textMuted }}>Ações</TableHead>;
+                  }
+                  return null;
+                })}
               </TableRow>
             </TableHeader>
             <TableBody>
               {ordensSorted.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={25} className="text-center py-12 text-xs" style={{ color: theme.textMuted }}>
+                  <TableCell colSpan={colunasVisiveis.length} className="text-center py-12 text-xs" style={{ color: theme.textMuted }}>
                     Nenhuma ordem encontrada
                   </TableCell>
                 </TableRow>
@@ -574,7 +733,10 @@ export default function TrackingTable({
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? theme.rowBg : theme.rowBgAlt}
                       onClick={() => onOrdemClick(ordem)}
                     >
-                      <TableCell className="py-1 px-2 align-middle" onClick={(e) => e.stopPropagation()}>
+                      {colunasVisiveis.map((coluna) => {
+                        if (coluna.id === "tipo") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle" onClick={(e) => e.stopPropagation()}>
                         <Badge
                           className="font-bold text-[9px] h-5 px-2 whitespace-nowrap"
                           style={{
@@ -594,18 +756,27 @@ export default function TrackingTable({
                           {isOferta ? "🟢 Oferta" : "🔵 Alocado"}
                         </Badge>
                       </TableCell>
-                      
-                      <TableCell className="py-1 px-2 align-middle">
+                          );
+                        }
+                        if (coluna.id === "numero_carga") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle">
                         <p className="font-bold text-[10px] truncate max-w-[80px]" style={{ color: isDark ? '#60a5fa' : '#1d4ed8' }}>
                           {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
                         </p>
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                          );
+                        }
+                        if (coluna.id === "data_solicitacao") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
                         {formatDate(ordem.data_solicitacao)}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle">
+                          );
+                        }
+                        if (coluna.id === "operacao") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle">
                         {operacao ? (
                           <p 
                             className="text-[10px] font-semibold truncate max-w-[100px]" 
@@ -618,22 +789,34 @@ export default function TrackingTable({
                           <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
                         )}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-[10px] font-medium" style={{ color: theme.text }}>
+                          );
+                        }
+                        if (coluna.id === "asn") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px] font-medium" style={{ color: theme.text }}>
                         {ordem.asn || "-"}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                          );
+                        }
+                        if (coluna.id === "origem_destino") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
                         <span className="truncate max-w-[140px] inline-block">
                           {ordem.origem_cidade || ordem.origem} → {ordem.destino_cidade || ordem.destino}
                         </span>
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                          );
+                        }
+                        if (coluna.id === "produto") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
                         <span className="truncate max-w-[100px] inline-block">{ordem.produto || "-"}</span>
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle">
+                          );
+                        }
+                        if (coluna.id === "motorista") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle">
                         {motoristaPrincipal ? (
                           <div className="flex items-center gap-1">
                             <User className="w-3 h-3 text-blue-600" />
@@ -645,8 +828,11 @@ export default function TrackingTable({
                           <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
                         )}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle">
+                          );
+                        }
+                        if (coluna.id === "motorista_reserva") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle">
                         {motoristaReserva ? (
                           <div className="flex items-center gap-1">
                             <User className="w-3 h-3 text-orange-600" />
@@ -658,8 +844,11 @@ export default function TrackingTable({
                           <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
                         )}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle">
+                          );
+                        }
+                        if (coluna.id === "cavalo") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle">
                         {cavalo ? (
                           <span className="text-[10px] font-mono font-bold" style={{ color: theme.text }}>
                             {cavalo.placa}
@@ -668,8 +857,11 @@ export default function TrackingTable({
                           <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
                         )}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle">
+                          );
+                        }
+                        if (coluna.id === "implementos") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle">
                         {impl1 || impl2 || impl3 ? (
                           <div className="flex flex-col gap-0.5">
                             {impl1 && <span className="text-[10px] font-mono font-bold" style={{ color: theme.text }}>{impl1.placa}</span>}
@@ -680,34 +872,55 @@ export default function TrackingTable({
                           <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
                         )}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                          );
+                        }
+                        if (coluna.id === "carregamento") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
                         {formatDate(ordem.data_carregamento)}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                          );
+                        }
+                        if (coluna.id === "agenda_carga") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
                         {formatDate(ordem.carregamento_agendamento_data)}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                          );
+                        }
+                        if (coluna.id === "agenda_descarga") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
                         {formatDate(ordem.descarga_agendamento_data)}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                          );
+                        }
+                        if (coluna.id === "chegada_destino") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
                         {formatDate(ordem.chegada_destino)}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                          );
+                        }
+                        if (coluna.id === "descarga_realizada") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
                         {formatDate(ordem.descarga_realizada_data)}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle" onClick={(e) => e.stopPropagation()}>
+                          );
+                        }
+                        if (coluna.id === "status") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle" onClick={(e) => e.stopPropagation()}>
                         <Badge className={`${statusInfo.color} text-[9px] h-4 px-1.5 font-medium whitespace-nowrap`}>
                           {statusInfo.label}
                         </Badge>
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-center">
+                          );
+                        }
+                        if (coluna.id === "distancia") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-center">
                         {ordem.status_tracking === "em_viagem" && ordem.localizacao_atual ? (
                           distancias[ordem.id] ? (
                             <div className="flex flex-col items-center">
@@ -729,12 +942,18 @@ export default function TrackingTable({
                           <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
                         )}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-[10px] text-center font-medium" style={{ color: theme.text }}>
+                          );
+                        }
+                        if (coluna.id === "km_faltam") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px] text-center font-medium" style={{ color: theme.text }}>
                         {ordem.km_faltam ? `${ordem.km_faltam} km` : "-"}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-center">
+                          );
+                        }
+                        if (coluna.id === "tempo") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-center">
                         {ordem.inicio_carregamento && !ordem.descarga_realizada_data ? (
                           <Badge 
                             className="text-[9px] h-4 px-1.5 font-semibold"
@@ -751,8 +970,11 @@ export default function TrackingTable({
                           <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
                         )}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-center" onClick={(e) => e.stopPropagation()}>
+                          );
+                        }
+                        if (coluna.id === "sla_carga") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-center" onClick={(e) => e.stopPropagation()}>
                         {(() => {
                           // Verifica se tem carregamento_agendamento_data e fim_carregamento
                           if (!ordem.carregamento_agendamento_data || !ordem.fim_carregamento) {
@@ -830,8 +1052,11 @@ export default function TrackingTable({
                           }
                         })()}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-center" onClick={(e) => e.stopPropagation()}>
+                          );
+                        }
+                        if (coluna.id === "sla_entrega") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-center" onClick={(e) => e.stopPropagation()}>
                         {(() => {
                           // Verifica se tem prazo_entrega e chegada_destino
                           if (!ordem.prazo_entrega || !ordem.chegada_destino) {
@@ -909,8 +1134,11 @@ export default function TrackingTable({
                           }
                         })()}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-center">
+                          );
+                        }
+                        if (coluna.id === "diaria_carga") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-center">
                         {diariaCarregamento !== null && diariaCarregamento > 0 ? (
                           <Badge 
                             className="text-[9px] h-4 px-1.5 font-bold"
@@ -927,8 +1155,11 @@ export default function TrackingTable({
                           <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
                         )}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-center">
+                          );
+                        }
+                        if (coluna.id === "diaria_desc") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-center">
                         {diariaDescarga !== null && diariaDescarga > 0 ? (
                           <Badge 
                             className="text-[9px] h-4 px-1.5 font-bold"
@@ -945,8 +1176,11 @@ export default function TrackingTable({
                           <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
                         )}
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle" onClick={(e) => e.stopPropagation()}>
+                          );
+                        }
+                        if (coluna.id === "info") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle" onClick={(e) => e.stopPropagation()}>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -956,8 +1190,11 @@ export default function TrackingTable({
                           <Eye className="w-3 h-3" style={{ color: theme.textMuted }} />
                         </Button>
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle" onClick={(e) => e.stopPropagation()}>
+                          );
+                        }
+                        if (coluna.id === "editar") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle" onClick={(e) => e.stopPropagation()}>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -968,8 +1205,11 @@ export default function TrackingTable({
                           <Edit className="w-3 h-3" style={{ color: theme.textMuted }} />
                         </Button>
                       </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-right" onClick={(e) => e.stopPropagation()}>
+                          );
+                        }
+                        if (coluna.id === "acoes") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button 
@@ -1015,6 +1255,10 @@ export default function TrackingTable({
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
+                          );
+                        }
+                        return null;
+                      })}
                     </TableRow>
                   );
                 })
@@ -1023,6 +1267,106 @@ export default function TrackingTable({
           </Table>
         </div>
       </CardContent>
+
+      <Dialog open={showColumnConfig} onOpenChange={setShowColumnConfig}>
+        <DialogContent
+          className="max-w-2xl max-h-[80vh] overflow-y-auto"
+          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+        >
+          <DialogHeader>
+            <DialogTitle style={{ color: theme.text }}>Configurar Colunas da Tabela</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div
+              className="border rounded-lg p-3"
+              style={{
+                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff',
+                borderColor: isDark ? '#3b82f6' : '#bfdbfe'
+              }}
+            >
+              <p className="text-sm" style={{ color: isDark ? '#cbd5e1' : '#374151' }}>
+                <strong>Dica:</strong> Arraste as colunas para reorganizá-las. Desmarque para ocultar na tabela.
+              </p>
+            </div>
+
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="colunas">
+                {(provided) => (
+                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-2">
+                    {colunas.map((coluna, index) => (
+                      <Draggable
+                        key={coluna.id}
+                        draggableId={coluna.id}
+                        index={index}
+                        isDragDisabled={coluna.fixed}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={`flex items-center gap-3 p-3 border rounded-lg ${
+                              snapshot.isDragging ? 'shadow-lg' : ''
+                            } ${coluna.fixed ? 'opacity-60' : ''}`}
+                            style={{
+                              ...provided.draggableProps.style,
+                              backgroundColor: theme.rowBg,
+                              borderColor: theme.border
+                            }}
+                          >
+                            <div {...provided.dragHandleProps} className={coluna.fixed ? 'cursor-not-allowed' : 'cursor-grab'}>
+                              <GripVertical className="w-4 h-4" style={{ color: theme.textMuted }} />
+                            </div>
+
+                            <Checkbox
+                              checked={coluna.enabled}
+                              onCheckedChange={() => toggleColuna(coluna.id)}
+                              disabled={coluna.fixed}
+                              style={{ borderColor: theme.border }}
+                            />
+
+                            <div className="flex-1">
+                              <Label className="text-sm font-medium" style={{ color: theme.text }}>
+                                {coluna.label}
+                              </Label>
+                              {coluna.fixed && (
+                                <p className="text-xs" style={{ color: theme.textMuted }}>
+                                  Coluna fixa (sempre visível)
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={resetColunas}
+              style={{
+                borderColor: theme.border,
+                color: theme.textMuted,
+                backgroundColor: 'transparent'
+              }}
+            >
+              Restaurar Padrão
+            </Button>
+            <Button
+              onClick={() => setShowColumnConfig(false)}
+              style={{ backgroundColor: theme.primaryBlue, color: 'white' }}
+            >
+              Concluído
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
