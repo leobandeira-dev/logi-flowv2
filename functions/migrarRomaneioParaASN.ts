@@ -39,22 +39,35 @@ Deno.serve(async (req) => {
       ordemEtapaMap[oe.id] = oe.ordem_id;
     });
 
-    // Para cada valor, atualizar a ordem correspondente
+    // Agrupar por ordem_id para fazer updates em batch
+    const updatesPorOrdem = {};
+    
     for (const valorCampo of valoresRomaneio) {
+      const ordemId = ordemEtapaMap[valorCampo.ordem_etapa_id];
+      if (ordemId && valorCampo.valor) {
+        updatesPorOrdem[ordemId] = valorCampo.valor;
+      }
+    }
+
+    // Fazer updates com delay para evitar rate limit
+    const ordemIds = Object.keys(updatesPorOrdem);
+    
+    for (let i = 0; i < ordemIds.length; i++) {
       try {
-        const ordemId = ordemEtapaMap[valorCampo.ordem_etapa_id];
+        const ordemId = ordemIds[i];
+        await base44.asServiceRole.entities.OrdemDeCarregamento.update(ordemId, {
+          asn: updatesPorOrdem[ordemId]
+        });
         
-        if (ordemId) {
-          // Atualizar a ordem com o valor no campo ASN
-          await base44.asServiceRole.entities.OrdemDeCarregamento.update(ordemId, {
-            asn: valorCampo.valor
-          });
-          
-          migrados++;
+        migrados++;
+        
+        // Delay a cada 10 requisições para evitar rate limit
+        if ((i + 1) % 10 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       } catch (error) {
         erros.push({
-          ordem_etapa_id: valorCampo.ordem_etapa_id,
+          ordem_id: ordemIds[i],
           erro: error.message
         });
       }
