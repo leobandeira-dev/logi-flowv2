@@ -1994,19 +1994,31 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 )}
               </div>
             ) : (
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
-                <Input
-                  placeholder={
-                    filtroTipo === "volume" ? "Pesquisar por volume..." :
-                    "Pesquisar etiqueta mãe..."
-                  }
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 h-9 text-sm"
-                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                />
-              </div>
+              <>
+                <div className="mb-3">
+                  <Button
+                    onClick={() => setShowCamera(true)}
+                    className="bg-blue-600 hover:bg-blue-700 w-full h-9"
+                    size="sm"
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    Escanear QR Code do Volume
+                  </Button>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
+                  <Input
+                    placeholder={
+                      filtroTipo === "volume" ? "Pesquisar por volume..." :
+                      "Pesquisar etiqueta mãe..."
+                    }
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-9 text-sm"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  />
+                </div>
+              </>
             )}
 
             {volumesSelecionados.length > 0 && (
