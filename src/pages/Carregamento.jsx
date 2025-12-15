@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, RefreshCw, Truck, Package, CheckCircle, X, Plus, Minus, Scan, Grid3x3, Filter, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -553,7 +553,7 @@ export default function Carregamento() {
   }
 
   return (
-    <div className="min-h-screen p-6" style={{ backgroundColor: theme.bg }}>
+    <div className="min-h-screen p-6 pb-32 lg:pb-6" style={{ backgroundColor: theme.bg }}>
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -1118,9 +1118,9 @@ export default function Carregamento() {
           </Card>
         </div>
 
-        {/* Área de Ação */}
+        {/* Área de Ação - Desktop */}
         {ordemSelecionada && abaAtiva === "carregamento" && (
-          <Card className="mt-6" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <Card className="mt-6 hidden lg:block" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
             <CardContent className="p-4">
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <div className="flex-1">
@@ -1200,9 +1200,71 @@ export default function Carregamento() {
           </Card>
         )}
 
-        {/* Quick Actions para Conferência e Endereçamento */}
+        {/* Barra de Ação Fixa Mobile - Carregamento */}
+        {ordemSelecionada && abaAtiva === "carregamento" && (
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t shadow-lg pb-safe" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+            <div className="p-3 space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm truncate" style={{ color: theme.text }}>
+                    {ordemSelecionada.numero_carga}
+                  </p>
+                  <p className="text-xs truncate" style={{ color: theme.textMuted }}>
+                    {ordemSelecionada.notas_fiscais_ids?.length || 0} NF | {ordemSelecionada.volumes_total_consolidado || 0}v | {ordemSelecionada.peso_total_consolidado?.toLocaleString() || 0}kg
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setOrdemSelecionada(null);
+                    setNotasSelecionadas([]);
+                  }}
+                  className="h-7 w-7 p-0"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {ordemSelecionada.tipo_ordem !== "ordem_filha" && (
+                  <Button
+                    onClick={() => setShowOrdemFilhaForm(true)}
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700 text-xs h-9"
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Criar Ordem Filha
+                  </Button>
+                )}
+                {ordemSelecionada.notas_fiscais_ids?.length > 0 && (
+                  <>
+                    <Button
+                      onClick={() => setShowConferencia(true)}
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-xs h-9"
+                    >
+                      <Scan className="w-3 h-3 mr-1" />
+                      Abrir Conferência
+                    </Button>
+                  </>
+                )}
+                <Button
+                  onClick={handleVincularNotas}
+                  disabled={vincularNotasMutation.isPending || notasSelecionadas.length === 0}
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700 text-xs h-9"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Vincular {notasSelecionadas.length > 0 && `(${notasSelecionadas.length})`}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Actions para Conferência e Endereçamento - Desktop */}
         {ordemSelecionada && (abaAtiva === "conferencia" || abaAtiva === "enderecamento") && (
-          <Card className="mt-6" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <Card className="mt-6 hidden lg:block" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -1246,6 +1308,64 @@ export default function Carregamento() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Barra de Ação Fixa Mobile - Conferência/Endereçamento */}
+        {ordemSelecionada && (abaAtiva === "conferencia" || abaAtiva === "enderecamento") && (
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t shadow-lg pb-safe" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+            <div className="p-3 space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm truncate" style={{ color: theme.text }}>
+                    {ordemSelecionada.numero_carga}
+                  </p>
+                  <p className="text-xs truncate" style={{ color: theme.textMuted }}>
+                    {ordemSelecionada.cliente}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setOrdemSelecionada(null)}
+                  className="h-7 w-7 p-0"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {ordemSelecionada.tipo_ordem !== "ordem_filha" && (
+                  <Button
+                    onClick={() => setShowOrdemFilhaForm(true)}
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700 text-xs h-9"
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Criar Ordem Filha
+                  </Button>
+                )}
+                {abaAtiva === "conferencia" && (
+                  <Button
+                    onClick={() => setShowConferencia(true)}
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-xs h-9"
+                  >
+                    <Scan className="w-3 h-3 mr-1" />
+                    Abrir Conferência
+                  </Button>
+                )}
+                {abaAtiva === "enderecamento" && (
+                  <Button
+                    onClick={() => setShowEnderecamento(true)}
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700 text-xs h-9"
+                  >
+                    <Grid3x3 className="w-3 h-3 mr-1" />
+                    Abrir Endereçamento
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Notas Vinculadas */}
