@@ -101,6 +101,8 @@ export default function TrackingTable({
   const [colunas, setColunas] = useState(COLUNAS_TABELA_DISPONIVEIS);
   const [showColumnConfig, setShowColumnConfig] = useState(false);
   const [user, setUser] = useState(null);
+  const [showLeftShadow, setShowLeftShadow] = useState(false);
+  const [showRightShadow, setShowRightShadow] = useState(true);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -192,14 +194,21 @@ export default function TrackingTable({
     }
   }, [ordens]);
 
-  // Drag to scroll functionality
+  // Drag to scroll functionality + Shadow indicators
   useEffect(() => {
     const container = tableContainerRef.current;
     if (!container) return;
 
+    const updateShadows = () => {
+      const scrollLeft = container.scrollLeft;
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      
+      setShowLeftShadow(scrollLeft > 10);
+      setShowRightShadow(scrollLeft < maxScroll - 10);
+    };
+
     const handleMouseDown = (e) => {
-      // Ignore if clicking on button or interactive elements
-      if (e.target.closest('button, a, [role="button"], [role="menuitem"]')) {
+      if (e.target.closest('button, a, [role="button"], [role="menuitem"], input, select')) {
         return;
       }
       
@@ -230,18 +239,25 @@ export default function TrackingTable({
       container.style.userSelect = '';
     };
 
+    const handleScroll = () => {
+      updateShadows();
+    };
+
     container.addEventListener('mousedown', handleMouseDown);
     container.addEventListener('mousemove', handleMouseMove);
     container.addEventListener('mouseup', handleMouseUp);
     container.addEventListener('mouseleave', handleMouseLeave);
+    container.addEventListener('scroll', handleScroll);
 
     container.style.cursor = 'grab';
+    updateShadows();
 
     return () => {
       container.removeEventListener('mousedown', handleMouseDown);
       container.removeEventListener('mousemove', handleMouseMove);
       container.removeEventListener('mouseup', handleMouseUp);
       container.removeEventListener('mouseleave', handleMouseLeave);
+      container.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
@@ -670,8 +686,35 @@ export default function TrackingTable({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto" ref={tableContainerRef}>
+      <CardContent className="p-0 relative">
+        <div 
+          className="overflow-x-auto scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-200 dark:scrollbar-track-slate-700 relative" 
+          ref={tableContainerRef}
+          style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: isDark ? '#3b82f6 #334155' : '#3b82f6 #e5e7eb'
+          }}
+        >
+          {showLeftShadow && (
+            <div 
+              className="absolute left-0 top-0 bottom-0 w-8 pointer-events-none z-10"
+              style={{
+                background: isDark 
+                  ? 'linear-gradient(to right, rgba(15, 23, 42, 0.95), transparent)'
+                  : 'linear-gradient(to right, rgba(255, 255, 255, 0.95), transparent)'
+              }}
+            />
+          )}
+          {showRightShadow && (
+            <div 
+              className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none z-10"
+              style={{
+                background: isDark 
+                  ? 'linear-gradient(to left, rgba(15, 23, 42, 0.95), transparent)'
+                  : 'linear-gradient(to left, rgba(255, 255, 255, 0.95), transparent)'
+              }}
+            />
+          )}
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent" style={{ borderBottomColor: theme.border }}>
