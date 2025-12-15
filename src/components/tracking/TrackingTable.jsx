@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Eye, Edit, MoreVertical, MessageSquare, Upload, Package, FileText, ChevronDown, Table as TableIcon, CalendarDays, AlertTriangle } from "lucide-react";
+import { Eye, Edit, MoreVertical, MessageSquare, Upload, MapPin, User, Truck, Package, FileText, ChevronDown, Table as TableIcon, CalendarDays, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -388,8 +388,10 @@ export default function TrackingTable({
                 <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>ASN</TableHead>
                 <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Origem — Destino</TableHead>
                 <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Produto</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Motorista</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Placas</TableHead>
+                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Motorista Principal</TableHead>
+                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Motorista Reserva</TableHead>
+                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Cavalo</TableHead>
+                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Implementos</TableHead>
                 <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Carregamento</TableHead>
                 <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Descarga Prog.</TableHead>
                 <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Status</TableHead>
@@ -414,10 +416,12 @@ export default function TrackingTable({
                 </TableRow>
               ) : (
                 ordens.map((ordem, idx) => {
-                  const motorista = getMotorista(ordem.motorista_id);
+                  const motoristaPrincipal = getMotorista(ordem.motorista_id);
+                  const motoristaReserva = getMotorista(ordem.motorista_reserva_id);
                   const cavalo = getVeiculo(ordem.cavalo_id);
                   const impl1 = getVeiculo(ordem.implemento1_id);
                   const impl2 = getVeiculo(ordem.implemento2_id);
+                  const impl3 = getVeiculo(ordem.implemento3_id);
                   const operacao = getOperacao(ordem.operacao_id);
                   const statusInfo = statusTrackingConfig[ordem.status_tracking] || statusTrackingConfig.aguardando_agendamento;
                   
@@ -500,10 +504,26 @@ export default function TrackingTable({
                       </TableCell>
 
                       <TableCell className="py-1 px-2 align-middle">
-                        {motorista ? (
-                          <span className="text-[10px] truncate max-w-[100px] inline-block" style={{ color: theme.text }}>
-                            {motorista.nome.split(' ')[0]}
-                          </span>
+                        {motoristaPrincipal ? (
+                          <div className="flex items-center gap-1">
+                            <User className="w-3 h-3 text-blue-600" />
+                            <span className="text-[10px] truncate max-w-[100px] inline-block font-medium" style={{ color: theme.text }}>
+                              {motoristaPrincipal.nome.split(' ')[0]}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
+                        )}
+                      </TableCell>
+
+                      <TableCell className="py-1 px-2 align-middle">
+                        {motoristaReserva ? (
+                          <div className="flex items-center gap-1">
+                            <User className="w-3 h-3 text-orange-600" />
+                            <span className="text-[10px] truncate max-w-[100px] inline-block font-medium" style={{ color: theme.text }}>
+                              {motoristaReserva.nome.split(' ')[0]}
+                            </span>
+                          </div>
                         ) : (
                           <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
                         )}
@@ -511,9 +531,21 @@ export default function TrackingTable({
 
                       <TableCell className="py-1 px-2 align-middle">
                         {cavalo ? (
-                          <span className="text-[10px] font-mono font-bold truncate max-w-[100px] inline-block" style={{ color: theme.text }}>
-                            {cavalo.placa}{impl1 ? `, ${impl1.placa}` : ''}
+                          <span className="text-[10px] font-mono font-bold" style={{ color: theme.text }}>
+                            {cavalo.placa}
                           </span>
+                        ) : (
+                          <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
+                        )}
+                      </TableCell>
+
+                      <TableCell className="py-1 px-2 align-middle">
+                        {impl1 || impl2 || impl3 ? (
+                          <div className="flex flex-col gap-0.5">
+                            {impl1 && <span className="text-[10px] font-mono font-bold" style={{ color: theme.text }}>{impl1.placa}</span>}
+                            {impl2 && <span className="text-[10px] font-mono" style={{ color: theme.textMuted }}>{impl2.placa}</span>}
+                            {impl3 && <span className="text-[10px] font-mono" style={{ color: theme.textMuted }}>{impl3.placa}</span>}
+                          </div>
                         ) : (
                           <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
                         )}
