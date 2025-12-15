@@ -96,6 +96,7 @@ export default function TrackingTable({
   const isDraggingRef = useRef(false);
   const startXRef = useRef(0);
   const scrollLeftRef = useRef(0);
+  const hasDraggedRef = useRef(false);
   const [sortField, setSortField] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
   const [colunas, setColunas] = useState(COLUNAS_TABELA_DISPONIVEIS);
@@ -208,12 +209,14 @@ export default function TrackingTable({
     };
 
     const handleMouseDown = (e) => {
+      // Não interceptar cliques em elementos interativos
       if (e.target.closest('button, a, input, select, [role="button"], [role="menuitem"]')) {
         return;
       }
       
       isDraggingRef.current = true;
-      startXRef.current = e.pageX;
+      hasDraggedRef.current = false;
+      startXRef.current = e.clientX;
       scrollLeftRef.current = container.scrollLeft;
       container.style.cursor = 'grabbing';
       container.style.userSelect = 'none';
@@ -222,26 +225,35 @@ export default function TrackingTable({
 
     const handleMouseMove = (e) => {
       if (!isDraggingRef.current) return;
+      
       e.preventDefault();
-      const x = e.pageX;
-      const walk = (x - startXRef.current) * 2;
-      container.scrollLeft = scrollLeftRef.current - walk;
+      const dx = e.clientX - startXRef.current;
+      
+      // Se moveu mais de 5 pixels, considera como drag
+      if (Math.abs(dx) > 5) {
+        hasDraggedRef.current = true;
+      }
+      
+      container.scrollLeft = scrollLeftRef.current - dx;
     };
 
     const handleMouseUp = () => {
-      if (isDraggingRef.current) {
-        setTimeout(() => {
-          isDraggingRef.current = false;
-        }, 50);
-      }
-      container.style.cursor = 'grab';
-      container.style.userSelect = '';
-    };
-
-    const handleMouseLeave = () => {
       isDraggingRef.current = false;
       container.style.cursor = 'grab';
       container.style.userSelect = '';
+      
+      // Reset hasDragged após um pequeno delay
+      setTimeout(() => {
+        hasDraggedRef.current = false;
+      }, 100);
+    };
+
+    const handleMouseLeave = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        container.style.cursor = 'grab';
+        container.style.userSelect = '';
+      }
     };
 
     const handleScroll = () => {
@@ -880,7 +892,7 @@ export default function TrackingTable({
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.rowHover}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? theme.rowBg : theme.rowBgAlt}
                       onClick={(e) => {
-                        if (!isDraggingRef.current) {
+                        if (!hasDraggedRef.current) {
                           onOrdemClick(ordem);
                         }
                       }}
