@@ -522,6 +522,8 @@ export default function TrackingTable({
                 <SortableHeader field="carregamento">Carregamento</SortableHeader>
                 <SortableHeader field="agenda_carga">Agenda Carga</SortableHeader>
                 <SortableHeader field="agenda_descarga">Agenda Descarga</SortableHeader>
+                <SortableHeader field="chegada_destino">Chegada Destino</SortableHeader>
+                <SortableHeader field="descarga_realizada">Descarga Realiz.</SortableHeader>
                 <SortableHeader field="status">Status</SortableHeader>
                 <SortableHeader field="distancia">Distância</SortableHeader>
                 <SortableHeader field="km_faltam">KM Faltantes</SortableHeader>
@@ -538,7 +540,7 @@ export default function TrackingTable({
             <TableBody>
               {ordensSorted.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={23} className="text-center py-12 text-xs" style={{ color: theme.textMuted }}>
+                  <TableCell colSpan={25} className="text-center py-12 text-xs" style={{ color: theme.textMuted }}>
                     Nenhuma ordem encontrada
                   </TableCell>
                 </TableRow>
@@ -689,6 +691,14 @@ export default function TrackingTable({
 
                       <TableCell className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
                         {formatDate(ordem.descarga_agendamento_data)}
+                      </TableCell>
+
+                      <TableCell className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                        {formatDate(ordem.chegada_destino)}
+                      </TableCell>
+
+                      <TableCell className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                        {formatDate(ordem.descarga_realizada_data)}
                       </TableCell>
 
                       <TableCell className="py-1 px-2 align-middle" onClick={(e) => e.stopPropagation()}>
