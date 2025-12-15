@@ -1030,7 +1030,18 @@ export default function Tracking() {
             <p className="text-xs" style={{ color: theme.textMuted }}>Acompanhamento em tempo real das cargas em operação</p>
           </div>
 
-          <div className="flex gap-2 w-full lg:w-auto flex-wrap">
+          <div className="flex gap-2 w-full lg:w-auto flex-wrap items-end">
+            <FiltroDataSimples
+              tipoCampoData={filters.tipoCampoData}
+              onTipoCampoDataChange={(val) => setFilters({...filters, tipoCampoData: val})}
+              periodoSelecionado={filters.periodoSelecionado}
+              onPeriodoChange={(val) => setFilters({...filters, periodoSelecionado: val})}
+              anoSelecionado={filters.anoSelecionado}
+              onAnoChange={(val) => setFilters({...filters, anoSelecionado: val})}
+              mesSelecionado={filters.mesSelecionado}
+              onMesChange={(val) => setFilters({...filters, mesSelecionado: val})}
+              isDark={isDark}
+            />
             <div className="relative flex-1 lg:w-52">
               <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5" style={{ color: theme.textMuted }} />
               <Input
@@ -1269,20 +1280,6 @@ export default function Tracking() {
           <Card className="mb-4 mx-3" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
             <CardContent className="pt-4 pb-4">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="md:col-span-4">
-                  <FiltroDataSimples
-                    tipoCampoData={filters.tipoCampoData}
-                    onTipoCampoDataChange={(val) => setFilters({...filters, tipoCampoData: val})}
-                    periodoSelecionado={filters.periodoSelecionado}
-                    onPeriodoChange={(val) => setFilters({...filters, periodoSelecionado: val})}
-                    anoSelecionado={filters.anoSelecionado}
-                    onAnoChange={(val) => setFilters({...filters, anoSelecionado: val})}
-                    mesSelecionado={filters.mesSelecionado}
-                    onMesChange={(val) => setFilters({...filters, mesSelecionado: val})}
-                    isDark={isDark}
-                  />
-                </div>
-
                 <div className="md:col-span-4">
                   <Label className="text-xs mb-2 block" style={{ color: theme.textMuted }}>Tipos de Ordem (múltiplos)</Label>
                   <div className="flex flex-wrap gap-2">
