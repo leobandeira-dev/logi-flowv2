@@ -829,8 +829,9 @@ export default function TrackingTable({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onEditTracking(ordem)}
+                          onClick={() => onEditOrdemCompleta(ordem)}
                           className="h-6 w-6 p-0 rounded-full hover:bg-blue-100 dark:hover:bg-slate-700"
+                          title="Editar Ordem Completa"
                         >
                           <Edit className="w-3 h-3" style={{ color: theme.textMuted }} />
                         </Button>
