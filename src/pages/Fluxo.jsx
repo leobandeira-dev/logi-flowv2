@@ -29,6 +29,7 @@ import QuickStatusPopover from "../components/fluxo/QuickStatusPopover";
 import FiltrosPredefinidos from "../components/filtros/FiltrosPredefinidos";
 import PaginacaoControles from "../components/filtros/PaginacaoControles";
 import FiltroDataPeriodo from "../components/filtros/FiltroDataPeriodo";
+import { toast } from "sonner";
 import {
   Search,
   Filter,
@@ -212,44 +213,152 @@ export default function Fluxo() {
     }
   };
 
-  const updateOrdemEtapa = async (ordemEtapaId, data) => {
+  const updateOrdemEtapa = async (ordemEtapaId, data, retryCount = 0) => {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 1000;
+
     try {
+      // Caso especial: apenas recarregar dados
       if (ordemEtapaId === null) {
         const ordensEtapasAtualizadas = await base44.entities.OrdemEtapa.list();
         setOrdensEtapas(ordensEtapasAtualizadas);
         return;
       }
 
-      if (!ordemEtapaId || !data) {
-        throw new Error("Dados inválidos para atualização");
+      // Validação rigorosa de entrada
+      if (!ordemEtapaId || typeof ordemEtapaId !== 'string') {
+        console.error("❌ FLUXO - ID inválido:", ordemEtapaId);
+        throw new Error("ID da etapa é obrigatório");
       }
 
+      if (!data || typeof data !== 'object') {
+        console.error("❌ FLUXO - Dados inválidos:", data);
+        throw new Error("Dados para atualização são obrigatórios");
+      }
+
+      // Log detalhado antes da atualização
+      console.log(`🔄 FLUXO - Atualizando OrdemEtapa:`, {
+        ordemEtapaId: ordemEtapaId.slice(-6),
+        dados: data,
+        tentativa: retryCount + 1
+      });
+
+      // Verificar se o registro ainda existe antes de atualizar (prevenir race conditions)
+      const registroAtual = ordensetapas.find(oe => oe.id === ordemEtapaId);
+      if (!registroAtual) {
+        console.warn("⚠️ FLUXO - Registro não encontrado localmente, recarregando...");
+        await loadData();
+        throw new Error("Registro não encontrado. Dados recarregados, tente novamente.");
+      }
+
+      // Executar a atualização
       await base44.entities.OrdemEtapa.update(ordemEtapaId, data);
 
+      console.log(`✅ FLUXO - OrdemEtapa atualizada com sucesso:`, ordemEtapaId.slice(-6));
+
+      // Recarregar apenas OrdemEtapa ao invés de tudo
       const ordensEtapasAtualizadas = await base44.entities.OrdemEtapa.list();
       setOrdensEtapas(ordensEtapasAtualizadas);
+
+      // Verificar se a atualização foi persistida
+      const registroAtualizado = ordensEtapasAtualizadas.find(oe => oe.id === ordemEtapaId);
+      if (!registroAtualizado) {
+        throw new Error("Registro não encontrado após atualização");
+      }
+
+      // Validar se os dados foram salvos corretamente
+      if (data.status && registroAtualizado.status !== data.status) {
+        console.warn("⚠️ FLUXO - Status não foi atualizado corretamente, retry necessário");
+        throw new Error("Dados não foram salvos corretamente");
+      }
+
+      return registroAtualizado;
+
     } catch (error) {
-      console.error("Erro ao atualizar ordem etapa:", error);
-      alert(`Erro ao atualizar: ${error.message || 'Erro desconhecido'}`);
+      console.error(`❌ FLUXO - Erro ao atualizar (tentativa ${retryCount + 1}/${MAX_RETRIES}):`, error);
+
+      // Retry automático em caso de falha
+      if (retryCount < MAX_RETRIES) {
+        console.log(`🔄 FLUXO - Tentando novamente em ${RETRY_DELAY}ms...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)));
+        return updateOrdemEtapa(ordemEtapaId, data, retryCount + 1);
+      }
+
+      // Após 3 tentativas, mostrar erro ao usuário
+      const mensagemErro = `Erro ao atualizar etapa: ${error.message || 'Erro desconhecido'}. Tente novamente.`;
+      toast.error(mensagemErro);
       throw error;
     }
   };
 
-  const createOrdemEtapa = async (data) => {
+  const createOrdemEtapa = async (data, retryCount = 0) => {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 1000;
+
     try {
-      if (!data || !data.ordem_id || !data.etapa_id) {
-        throw new Error("Dados obrigatórios faltando (ordem_id ou etapa_id)");
+      // Validação rigorosa de entrada
+      if (!data || typeof data !== 'object') {
+        console.error("❌ FLUXO - Dados inválidos para criação:", data);
+        throw new Error("Dados são obrigatórios");
       }
 
+      if (!data.ordem_id || !data.etapa_id) {
+        console.error("❌ FLUXO - Faltam campos obrigatórios:", data);
+        throw new Error("ordem_id e etapa_id são obrigatórios");
+      }
+
+      // Verificar se já existe esta combinação (prevenir duplicatas)
+      const jaExiste = ordensetapas.find(
+        oe => oe.ordem_id === data.ordem_id && oe.etapa_id === data.etapa_id
+      );
+
+      if (jaExiste) {
+        console.warn("⚠️ FLUXO - OrdemEtapa já existe, atualizando ao invés de criar:", {
+          ordemEtapaId: jaExiste.id.slice(-6),
+          ordem_id: data.ordem_id.slice(-6),
+          etapa_id: data.etapa_id.slice(-6)
+        });
+        return updateOrdemEtapa(jaExiste.id, data);
+      }
+
+      // Log detalhado antes da criação
+      console.log(`➕ FLUXO - Criando nova OrdemEtapa:`, {
+        ordem_id: data.ordem_id.slice(-6),
+        etapa_id: data.etapa_id.slice(-6),
+        status: data.status,
+        tentativa: retryCount + 1
+      });
+
+      // Criar o registro
       const novaOrdemEtapa = await base44.entities.OrdemEtapa.create(data);
 
+      console.log(`✅ FLUXO - OrdemEtapa criada com sucesso:`, novaOrdemEtapa.id.slice(-6));
+
+      // Recarregar apenas OrdemEtapa
       const ordensEtapasAtualizadas = await base44.entities.OrdemEtapa.list();
       setOrdensEtapas(ordensEtapasAtualizadas);
 
+      // Verificar se foi criada corretamente
+      const registroCriado = ordensEtapasAtualizadas.find(oe => oe.id === novaOrdemEtapa.id);
+      if (!registroCriado) {
+        throw new Error("Registro não encontrado após criação");
+      }
+
       return novaOrdemEtapa;
+
     } catch (error) {
-      console.error("Erro ao criar ordem etapa:", error);
-      alert(`Erro ao criar: ${error.message || 'Erro desconhecido'}`);
+      console.error(`❌ FLUXO - Erro ao criar (tentativa ${retryCount + 1}/${MAX_RETRIES}):`, error);
+
+      // Retry automático em caso de falha
+      if (retryCount < MAX_RETRIES) {
+        console.log(`🔄 FLUXO - Tentando novamente em ${RETRY_DELAY}ms...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)));
+        return createOrdemEtapa(data, retryCount + 1);
+      }
+
+      // Após 3 tentativas, mostrar erro ao usuário
+      const mensagemErro = `Erro ao criar etapa: ${error.message || 'Erro desconhecido'}. Tente novamente.`;
+      toast.error(mensagemErro);
       throw error;
     }
   };
