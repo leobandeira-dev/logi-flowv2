@@ -725,7 +725,16 @@ export default function TrackingTable({
           className="overflow-x-auto relative tracking-table-scroll" 
           ref={tableContainerRef}
           style={{
-            paddingBottom: '4px'
+            paddingBottom: '4px',
+            cursor: 'grab',
+            userSelect: 'none'
+          }}
+          onMouseDown={(e) => {
+            if (e.target.closest('button, a, input, select')) return;
+            e.currentTarget.style.cursor = 'grabbing';
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.cursor = 'grab';
           }}
         >
           {showLeftShadow && (
