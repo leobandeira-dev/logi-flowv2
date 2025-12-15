@@ -565,7 +565,15 @@ export default function Tracking() {
       } else {
         dataOrdem = ordem.data_solicitacao || ordem.created_date;
       }
-      if (dataOrdem && new Date(dataOrdem) < new Date(filters.dataInicio)) return false;
+      
+      if (!dataOrdem) return false;
+      
+      const dataOrdemObj = new Date(dataOrdem);
+      dataOrdemObj.setHours(0, 0, 0, 0);
+      const dataInicioObj = new Date(filters.dataInicio);
+      dataInicioObj.setHours(0, 0, 0, 0);
+      
+      if (dataOrdemObj < dataInicioObj) return false;
     }
 
     if (filters.dataFim) {
@@ -577,11 +585,15 @@ export default function Tracking() {
       } else {
         dataOrdem = ordem.data_solicitacao || ordem.created_date;
       }
-      if (dataOrdem) {
-        const dataFim = new Date(filters.dataFim);
-        dataFim.setHours(23, 59, 59, 999);
-        if (new Date(dataOrdem) > dataFim) return false;
-      }
+      
+      if (!dataOrdem) return false;
+      
+      const dataOrdemObj = new Date(dataOrdem);
+      dataOrdemObj.setHours(0, 0, 0, 0);
+      const dataFimObj = new Date(filters.dataFim);
+      dataFimObj.setHours(23, 59, 59, 999);
+      
+      if (dataOrdemObj > dataFimObj) return false;
     }
 
     if (viewMode !== "all") {
