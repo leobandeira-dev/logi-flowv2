@@ -462,6 +462,18 @@ export default function Tracking() {
       return false;
     }
 
+    // DEBUG: Log detalhado para primeiras 3 ordens
+    const isFirstThree = ordens.indexOf(ordem) < 3;
+    if (isFirstThree && filters.dataInicio) {
+      console.log(`🔍 DEBUG Ordem ${ordem.numero_carga}:`, {
+        created_date: ordem.created_date,
+        data_solicitacao: ordem.data_solicitacao,
+        tipoCampoData: filters.tipoCampoData,
+        dataInicio: filters.dataInicio,
+        dataFim: filters.dataFim
+      });
+    }
+
     // Filtro por tipo de ordem (carregamento, coleta, recebimento, entrega)
     if (filters.tiposOrdemFiltro && filters.tiposOrdemFiltro.length > 0) {
       // Determinar o tipo da ordem (prioridade: tipo_ordem > inferência por padrões)
