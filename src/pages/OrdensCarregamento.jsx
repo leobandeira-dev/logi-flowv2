@@ -169,6 +169,12 @@ export default function OrdensCarregamento() {
   };
 
   const handleSubmit = async (data, notasFiscaisData = []) => {
+    console.log(`💾 ORDENS - Iniciando salvamento:`, {
+      editando: !!editingOrdem,
+      temNotas: notasFiscaisData?.length > 0,
+      notasQtd: notasFiscaisData?.length
+    });
+
     try {
       const user = await base44.auth.me();
 
@@ -226,8 +232,10 @@ export default function OrdensCarregamento() {
       };
 
       let ordemId;
+      let ordemSalva;
 
       if (editingOrdem) {
+        console.log(`📝 ORDENS - Atualizando ordem existente:`, editingOrdem.id.slice(-6));
         await base44.entities.OrdemDeCarregamento.update(editingOrdem.id, ordemData);
         ordemId = editingOrdem.id;
         
@@ -238,24 +246,33 @@ export default function OrdensCarregamento() {
           toast.success("Ordem de carregamento atualizada com sucesso!");
         }
       } else {
-        const novaOrdem = await base44.entities.OrdemDeCarregamento.create(ordemData);
-        ordemId = novaOrdem.id;
+        console.log(`➕ ORDENS - Criando nova ordem`);
+        ordemSalva = await base44.entities.OrdemDeCarregamento.create(ordemData);
+        ordemId = ordemSalva.id;
+
+        console.log(`✅ ORDENS - Ordem criada:`, ordemId.slice(-6));
 
         await vincularPrimeiraEtapa(ordemId);
         toast.success("Ordem de carregamento criada com sucesso!");
       }
 
+      // Aguardar um momento para garantir persistência
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       // Processar e vincular notas fiscais
       if (notasFiscaisData && notasFiscaisData.length > 0) {
+        console.log(`📋 ORDENS - Processando ${notasFiscaisData.length} notas fiscais`);
+
         const notasIds = [];
         let pesoTotal = 0;
-        let valorTotal = 0;
+        let valorTotalNotas = 0;
         let volumesTotal = 0;
 
         for (const nf of notasFiscaisData) {
           let notaId;
           
           if (nf.nota_id_existente) {
+            console.log(`📝 ORDENS - Vinculando nota existente:`, nf.nota_id_existente.slice(-6));
             // Nota já existe na base, apenas atualizar o vínculo
             await base44.entities.NotaFiscal.update(nf.nota_id_existente, {
               ordem_id: ordemId,
@@ -263,6 +280,7 @@ export default function OrdensCarregamento() {
             });
             notaId = nf.nota_id_existente;
           } else {
+            console.log(`➕ ORDENS - Criando nova nota fiscal:`, nf.numero_nota);
             // Criar nova nota fiscal
             const notaData = {
               ordem_id: ordemId,
@@ -298,32 +316,53 @@ export default function OrdensCarregamento() {
 
             const notaCriada = await base44.entities.NotaFiscal.create(notaData);
             notaId = notaCriada.id;
+            console.log(`✅ ORDENS - Nota criada:`, notaId.slice(-6));
           }
 
           // Acumular IDs e totais
           notasIds.push(notaId);
           pesoTotal += nf.peso_nf || 0;
-          valorTotal += nf.valor_nf || 0;
+          valorTotalNotas += nf.valor_nf || 0;
           volumesTotal += nf.volumes_nf || 0;
         }
+
+        console.log(`📊 ORDENS - Totais consolidados:`, {
+          notas: notasIds.length,
+          peso: pesoTotal,
+          valor: valorTotalNotas,
+          volumes: volumesTotal
+        });
 
         // Atualizar ordem com array de IDs e totais consolidados
         await base44.entities.OrdemDeCarregamento.update(ordemId, {
           notas_fiscais_ids: notasIds,
           peso_total_consolidado: pesoTotal,
-          valor_total_consolidado: valorTotal,
+          valor_total_consolidado: valorTotalNotas,
           volumes_total_consolidado: volumesTotal,
           peso: pesoTotal,
           volumes: volumesTotal
         });
+
+        console.log(`✅ ORDENS - Ordem atualizada com totais consolidados`);
       }
+
+      // Aguardar persistência completa antes de fechar modal
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      console.log(`🎉 ORDENS - Salvamento concluído, fechando modal e recarregando dados`);
 
       setShowForm(false);
       setEditingOrdem(null);
-      loadData();
+      
+      // Recarregar dados com loading para mostrar progresso
+      await loadData();
+
+      console.log(`✅ ORDENS - Página atualizada com sucesso`);
+
     } catch (error) {
-      console.error("Erro ao salvar ordem:", error);
-      toast.error("Erro ao salvar ordem de carregamento");
+      console.error("❌ ORDENS - Erro ao salvar ordem:", error);
+      toast.error(`Erro ao salvar ordem: ${error.message || 'Tente novamente'}`);
+      throw error;
     }
   };
 
