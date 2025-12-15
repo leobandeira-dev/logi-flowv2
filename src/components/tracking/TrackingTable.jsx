@@ -724,54 +724,50 @@ export default function TrackingTable({
       <CardContent className="p-0 relative">
         <style>{`
           .tracking-table-scroll::-webkit-scrollbar {
-            height: 12px;
+            height: 8px;
           }
           .tracking-table-scroll::-webkit-scrollbar-track {
             background: ${isDark ? '#1e293b' : '#f3f4f6'};
-            border-radius: 6px;
           }
           .tracking-table-scroll::-webkit-scrollbar-thumb {
             background: ${isDark ? '#3b82f6' : '#60a5fa'};
-            border-radius: 6px;
-            border: 2px solid ${isDark ? '#1e293b' : '#f3f4f6'};
+            border-radius: 4px;
           }
           .tracking-table-scroll::-webkit-scrollbar-thumb:hover {
             background: ${isDark ? '#2563eb' : '#3b82f6'};
           }
           .top-scroll::-webkit-scrollbar {
-            height: 12px;
+            height: 8px;
           }
           .top-scroll::-webkit-scrollbar-track {
             background: ${isDark ? '#0f172a' : '#f9fafb'};
-            border-radius: 6px;
           }
           .top-scroll::-webkit-scrollbar-thumb {
             background: ${isDark ? '#3b82f6' : '#60a5fa'};
-            border-radius: 6px;
-            border: 2px solid ${isDark ? '#0f172a' : '#f9fafb'};
+            border-radius: 4px;
           }
           .top-scroll::-webkit-scrollbar-thumb:hover {
             background: ${isDark ? '#2563eb' : '#3b82f6'};
           }
         `}</style>
         
-        {/* Barra de rolagem superior */}
+        {/* Barra de rolagem superior integrada */}
         <div 
           ref={topScrollRef}
-          className="overflow-x-auto top-scroll"
+          className="overflow-x-auto top-scroll sticky top-0 z-10"
           style={{
-            height: '20px',
-            borderBottom: `1px solid ${theme.border}`,
-            backgroundColor: theme.headerBg
+            height: '14px',
+            backgroundColor: theme.headerBg,
+            borderBottom: `1px solid ${theme.border}`
           }}
         >
-          <div style={{ width: tableContainerRef.current?.scrollWidth || '100%', height: '1px' }} />
+          <div style={{ width: tableContainerRef.current?.scrollWidth || '5000px', height: '1px' }} />
         </div>
+        
         <div 
           className="overflow-x-auto relative tracking-table-scroll" 
           ref={tableContainerRef}
           style={{
-            paddingBottom: '4px',
             cursor: 'grab',
             userSelect: 'none'
           }}
