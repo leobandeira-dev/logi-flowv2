@@ -78,7 +78,7 @@ export default function Tracking() {
   const [usuarios, setUsuarios] = useState([]); // Added state for users
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("todas");
+  const [viewMode, setViewMode] = useState("all");
   const [viewType, setViewType] = useState("table");
   const [selectedOrdem, setSelectedOrdem] = useState(null);
   const [editingOrdem, setEditingOrdem] = useState(null);
@@ -1826,80 +1826,50 @@ export default function Tracking() {
                   className="mb-2 h-8 inline-flex min-w-max"
                   style={{ backgroundColor: theme.tabsBg, borderColor: theme.border }}
                 >
-                  <TabsTrigger
-                    value="todas"
-                    className="text-xs h-7 whitespace-nowrap"
-                    style={{
-                      color: viewMode === 'todas' ? theme.text : theme.textMuted,
-                      backgroundColor: viewMode === 'todas' ? theme.cardBg : 'transparent'
-                    }}
-                  >
-                    Todas as Ordens ({filteredOrdens.length})
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="agenda_carregamento"
-                    className="text-xs h-7 whitespace-nowrap"
-                    style={{
-                      color: viewMode === 'agenda_carregamento' ? theme.text : theme.textMuted,
-                      backgroundColor: viewMode === 'agenda_carregamento' ? theme.cardBg : 'transparent'
-                    }}
-                  >
-                    Agenda de Carregamento ({filteredOrdens.filter(o => o.carregamento_agendamento_data).length})
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="agenda_descarga"
-                    className="text-xs h-7 whitespace-nowrap"
-                    style={{
-                      color: viewMode === 'agenda_descarga' ? theme.text : theme.textMuted,
-                      backgroundColor: viewMode === 'agenda_descarga' ? theme.cardBg : 'transparent'
-                    }}
-                  >
-                    Agenda de Descarga ({filteredOrdens.filter(o => o.descarga_agendamento_data).length})
-                  </TabsTrigger>
+                  {[
+                    { value: "all", label: `Todas (${filteredOrdens.length})` },
+                    { value: "em_andamento", label: `Em Andamento (${filteredOrdens.filter(o => o.status_tracking !== 'finalizado').length})` },
+                    { value: "aguardando_agendamento", label: `Aguardando (${getOrdensCountByStatus('aguardando_agendamento')})` },
+                    { value: "carregamento_agendado", label: `Agendado (${getOrdensCountByStatus('carregamento_agendado')})` },
+                    { value: "em_carregamento", label: `Carregando (${getOrdensCountByStatus('em_carregamento')})` },
+                    { value: "carregado", label: `Carregado (${getOrdensCountByStatus('carregado')})` },
+                    { value: "em_viagem", label: `Em Viagem (${getOrdensCountByStatus('em_viagem')})` },
+                    { value: "chegada_destino", label: `No Destino (${getOrdensCountByStatus('chegada_destino')})` },
+                    { value: "descarga_agendada", label: `Desc. Agendada (${getOrdensCountByStatus('descarga_agendada')})` },
+                    { value: "em_descarga", label: `Descarregando (${getOrdensCountByStatus('em_descarga')})` },
+                    { value: "descarga_realizada", label: `Descarregado (${getOrdensCountByStatus('descarga_realizada')})` },
+                    { value: "finalizado", label: `Finalizado (${getOrdensCountByStatus('finalizado')})` }
+                  ].map(tab => (
+                    <TabsTrigger
+                      key={tab.value}
+                      value={tab.value}
+                      className="text-xs h-7 whitespace-nowrap"
+                      style={{
+                        color: viewMode === tab.value ? theme.text : theme.textMuted,
+                        backgroundColor: viewMode === tab.value ? theme.cardBg : 'transparent'
+                      }}
+                    >
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
                 </TabsList>
               </div>
 
-              <TabsContent value="todas" className="mt-0">
-                <PlanilhaView
-                  ordens={ordensLimitadas}
-                  motoristas={motoristas}
-                  veiculos={veiculos}
-                  onUpdate={loadData}
-                  onExpurgar={(ordem, tipo) => {
-                    setSelectedOrdemForExpurgo(ordem);
-                    setTipoExpurgo(tipo);
-                    setShowExpurgoModal(true);
-                  }}
-                />
-              </TabsContent>
-
-              <TabsContent value="agenda_carregamento" className="mt-0">
-                <PlanilhaView
-                  ordens={ordensLimitadas.filter(o => o.carregamento_agendamento_data)}
-                  motoristas={motoristas}
-                  veiculos={veiculos}
-                  onUpdate={loadData}
-                  onExpurgar={(ordem, tipo) => {
-                    setSelectedOrdemForExpurgo(ordem);
-                    setTipoExpurgo(tipo);
-                    setShowExpurgoModal(true);
-                  }}
-                />
-              </TabsContent>
-              
-              <TabsContent value="agenda_descarga" className="mt-0">
-                <PlanilhaView
-                  ordens={ordensLimitadas.filter(o => o.descarga_agendamento_data)}
-                  motoristas={motoristas}
-                  veiculos={veiculos}
-                  onUpdate={loadData}
-                  onExpurgar={(ordem, tipo) => {
-                    setSelectedOrdemForExpurgo(ordem);
-                    setTipoExpurgo(tipo);
-                    setShowExpurgoModal(true);
-                  }}
-                />
-              </TabsContent>
+              {["all", "em_andamento", "aguardando_agendamento", "carregamento_agendado", "em_carregamento", "carregado", "em_viagem", "chegada_destino", "descarga_agendada", "em_descarga", "descarga_realizada", "finalizado"].map(status => (
+                <TabsContent key={status} value={status} className="mt-0">
+                  <PlanilhaView
+                    ordens={status === "all" ? ordensLimitadas : status === "em_andamento" ? ordensLimitadas.filter(o => o.status_tracking !== 'finalizado') : ordensLimitadas.filter(o => o.status_tracking === status)}
+                    motoristas={motoristas}
+                    veiculos={veiculos}
+                    onUpdate={loadData}
+                    onExpurgar={(ordem, tipo) => {
+                      setSelectedOrdemForExpurgo(ordem);
+                      setTipoExpurgo(tipo);
+                      setShowExpurgoModal(true);
+                    }}
+                  />
+                </TabsContent>
+              ))}
             </Tabs>
           </div>
         )}
@@ -1912,110 +1882,60 @@ export default function Tracking() {
                   className="mb-2 h-8 inline-flex min-w-max"
                   style={{ backgroundColor: theme.tabsBg, borderColor: theme.border }}
                 >
-                  <TabsTrigger
-                    value="todas"
-                    className="text-xs h-7 whitespace-nowrap"
-                    style={{
-                      color: viewMode === 'todas' ? theme.text : theme.textMuted,
-                      backgroundColor: viewMode === 'todas' ? theme.cardBg : 'transparent'
-                    }}
-                  >
-                    Todas as Ordens ({filteredOrdens.length})
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="agenda_carregamento"
-                    className="text-xs h-7 whitespace-nowrap"
-                    style={{
-                      color: viewMode === 'agenda_carregamento' ? theme.text : theme.textMuted,
-                      backgroundColor: viewMode === 'agenda_carregamento' ? theme.cardBg : 'transparent'
-                    }}
-                  >
-                    Agenda de Carregamento ({filteredOrdens.filter(o => o.carregamento_agendamento_data).length})
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="agenda_descarga"
-                    className="text-xs h-7 whitespace-nowrap"
-                    style={{
-                      color: viewMode === 'agenda_descarga' ? theme.text : theme.textMuted,
-                      backgroundColor: viewMode === 'agenda_descarga' ? theme.cardBg : 'transparent'
-                    }}
-                  >
-                    Agenda de Descarga ({filteredOrdens.filter(o => o.descarga_agendamento_data).length})
-                  </TabsTrigger>
+                  {[
+                    { value: "all", label: `Todas (${filteredOrdens.length})` },
+                    { value: "em_andamento", label: `Em Andamento (${filteredOrdens.filter(o => o.status_tracking !== 'finalizado').length})` },
+                    { value: "aguardando_agendamento", label: `Aguardando (${getOrdensCountByStatus('aguardando_agendamento')})` },
+                    { value: "carregamento_agendado", label: `Agendado (${getOrdensCountByStatus('carregamento_agendado')})` },
+                    { value: "em_carregamento", label: `Carregando (${getOrdensCountByStatus('em_carregamento')})` },
+                    { value: "carregado", label: `Carregado (${getOrdensCountByStatus('carregado')})` },
+                    { value: "em_viagem", label: `Em Viagem (${getOrdensCountByStatus('em_viagem')})` },
+                    { value: "chegada_destino", label: `No Destino (${getOrdensCountByStatus('chegada_destino')})` },
+                    { value: "descarga_agendada", label: `Desc. Agendada (${getOrdensCountByStatus('descarga_agendada')})` },
+                    { value: "em_descarga", label: `Descarregando (${getOrdensCountByStatus('em_descarga')})` },
+                    { value: "descarga_realizada", label: `Descarregado (${getOrdensCountByStatus('descarga_realizada')})` },
+                    { value: "finalizado", label: `Finalizado (${getOrdensCountByStatus('finalizado')})` }
+                  ].map(tab => (
+                    <TabsTrigger
+                      key={tab.value}
+                      value={tab.value}
+                      className="text-xs h-7 whitespace-nowrap"
+                      style={{
+                        color: viewMode === tab.value ? theme.text : theme.textMuted,
+                        backgroundColor: viewMode === tab.value ? theme.cardBg : 'transparent'
+                      }}
+                    >
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
                 </TabsList>
               </div>
 
-              <TabsContent value="todas" className="mt-0">
-                <TrackingTable
-                  ordens={ordensLimitadas}
-                  motoristas={motoristas}
-                  veiculos={veiculos}
-                  operacoes={operacoes}
-                  loading={loading}
-                  onOrdemClick={(ordem) => {
-                    setSelectedOrdem(ordem);
-                    setShowTrackingModal(true);
-                  }}
-                  onUpdate={loadData}
-                  onEditTracking={(ordem) => setEditingOrdem(ordem)}
-                  onEditOrdemCompleta={(ordem) => setEditingOrdemCompleta(ordem)}
-                  onAbrirChat={handleAbrirChat}
-                  onAbrirUpload={handleAbrirUpload}
-                  onExpurgar={(ordem, tipo) => {
-                    setSelectedOrdemForExpurgo(ordem);
-                    setTipoExpurgo(tipo);
-                    setShowExpurgoModal(true);
-                  }}
-                />
-              </TabsContent>
-
-              <TabsContent value="agenda_carregamento" className="mt-0">
-                <TrackingTable
-                  ordens={ordensLimitadas.filter(o => o.carregamento_agendamento_data)}
-                  motoristas={motoristas}
-                  veiculos={veiculos}
-                  operacoes={operacoes}
-                  loading={loading}
-                  onOrdemClick={(ordem) => {
-                    setSelectedOrdem(ordem);
-                    setShowTrackingModal(true);
-                  }}
-                  onUpdate={loadData}
-                  onEditTracking={(ordem) => setEditingOrdem(ordem)}
-                  onEditOrdemCompleta={(ordem) => setEditingOrdemCompleta(ordem)}
-                  onAbrirChat={handleAbrirChat}
-                  onAbrirUpload={handleAbrirUpload}
-                  onExpurgar={(ordem, tipo) => {
-                    setSelectedOrdemForExpurgo(ordem);
-                    setTipoExpurgo(tipo);
-                    setShowExpurgoModal(true);
-                  }}
-                />
-              </TabsContent>
-              
-              <TabsContent value="agenda_descarga" className="mt-0">
-                <TrackingTable
-                  ordens={ordensLimitadas.filter(o => o.descarga_agendamento_data)}
-                  motoristas={motoristas}
-                  veiculos={veiculos}
-                  operacoes={operacoes}
-                  loading={loading}
-                  onOrdemClick={(ordem) => {
-                    setSelectedOrdem(ordem);
-                    setShowTrackingModal(true);
-                  }}
-                  onUpdate={loadData}
-                  onEditTracking={(ordem) => setEditingOrdem(ordem)}
-                  onEditOrdemCompleta={(ordem) => setEditingOrdemCompleta(ordem)}
-                  onAbrirChat={handleAbrirChat}
-                  onAbrirUpload={handleAbrirUpload}
-                  onExpurgar={(ordem, tipo) => {
-                    setSelectedOrdemForExpurgo(ordem);
-                    setTipoExpurgo(tipo);
-                    setShowExpurgoModal(true);
-                  }}
-                />
-              </TabsContent>
+              {["all", "em_andamento", "aguardando_agendamento", "carregamento_agendado", "em_carregamento", "carregado", "em_viagem", "chegada_destino", "descarga_agendada", "em_descarga", "descarga_realizada", "finalizado"].map(status => (
+                <TabsContent key={status} value={status} className="mt-0">
+                  <TrackingTable
+                    ordens={status === "all" ? ordensLimitadas : status === "em_andamento" ? ordensLimitadas.filter(o => o.status_tracking !== 'finalizado') : ordensLimitadas.filter(o => o.status_tracking === status)}
+                    motoristas={motoristas}
+                    veiculos={veiculos}
+                    operacoes={operacoes}
+                    loading={loading}
+                    onOrdemClick={(ordem) => {
+                      setSelectedOrdem(ordem);
+                      setShowTrackingModal(true); // Open the modal when an order is clicked
+                    }}
+                    onUpdate={loadData}
+                    onEditTracking={(ordem) => setEditingOrdem(ordem)}
+                    onEditOrdemCompleta={(ordem) => setEditingOrdemCompleta(ordem)}
+                    onAbrirChat={handleAbrirChat}
+                    onAbrirUpload={handleAbrirUpload}
+                    onExpurgar={(ordem, tipo) => {
+                      setSelectedOrdemForExpurgo(ordem);
+                      setTipoExpurgo(tipo);
+                      setShowExpurgoModal(true);
+                    }}
+                  />
+                </TabsContent>
+              ))}
             </Tabs>
           </div>
         )}
