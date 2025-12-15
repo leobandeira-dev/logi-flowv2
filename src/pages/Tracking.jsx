@@ -78,7 +78,7 @@ export default function Tracking() {
   const [usuarios, setUsuarios] = useState([]); // Added state for users
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("agenda_carregamento");
+  const [viewMode, setViewMode] = useState("todas");
   const [viewType, setViewType] = useState("table");
   const [selectedOrdem, setSelectedOrdem] = useState(null);
   const [editingOrdem, setEditingOrdem] = useState(null);
@@ -1827,6 +1827,16 @@ export default function Tracking() {
                   style={{ backgroundColor: theme.tabsBg, borderColor: theme.border }}
                 >
                   <TabsTrigger
+                    value="todas"
+                    className="text-xs h-7 whitespace-nowrap"
+                    style={{
+                      color: viewMode === 'todas' ? theme.text : theme.textMuted,
+                      backgroundColor: viewMode === 'todas' ? theme.cardBg : 'transparent'
+                    }}
+                  >
+                    Todas as Ordens ({filteredOrdens.length})
+                  </TabsTrigger>
+                  <TabsTrigger
                     value="agenda_carregamento"
                     className="text-xs h-7 whitespace-nowrap"
                     style={{
@@ -1848,6 +1858,20 @@ export default function Tracking() {
                   </TabsTrigger>
                 </TabsList>
               </div>
+
+              <TabsContent value="todas" className="mt-0">
+                <PlanilhaView
+                  ordens={ordensLimitadas}
+                  motoristas={motoristas}
+                  veiculos={veiculos}
+                  onUpdate={loadData}
+                  onExpurgar={(ordem, tipo) => {
+                    setSelectedOrdemForExpurgo(ordem);
+                    setTipoExpurgo(tipo);
+                    setShowExpurgoModal(true);
+                  }}
+                />
+              </TabsContent>
 
               <TabsContent value="agenda_carregamento" className="mt-0">
                 <PlanilhaView
@@ -1889,6 +1913,16 @@ export default function Tracking() {
                   style={{ backgroundColor: theme.tabsBg, borderColor: theme.border }}
                 >
                   <TabsTrigger
+                    value="todas"
+                    className="text-xs h-7 whitespace-nowrap"
+                    style={{
+                      color: viewMode === 'todas' ? theme.text : theme.textMuted,
+                      backgroundColor: viewMode === 'todas' ? theme.cardBg : 'transparent'
+                    }}
+                  >
+                    Todas as Ordens ({filteredOrdens.length})
+                  </TabsTrigger>
+                  <TabsTrigger
                     value="agenda_carregamento"
                     className="text-xs h-7 whitespace-nowrap"
                     style={{
@@ -1910,6 +1944,30 @@ export default function Tracking() {
                   </TabsTrigger>
                 </TabsList>
               </div>
+
+              <TabsContent value="todas" className="mt-0">
+                <TrackingTable
+                  ordens={ordensLimitadas}
+                  motoristas={motoristas}
+                  veiculos={veiculos}
+                  operacoes={operacoes}
+                  loading={loading}
+                  onOrdemClick={(ordem) => {
+                    setSelectedOrdem(ordem);
+                    setShowTrackingModal(true);
+                  }}
+                  onUpdate={loadData}
+                  onEditTracking={(ordem) => setEditingOrdem(ordem)}
+                  onEditOrdemCompleta={(ordem) => setEditingOrdemCompleta(ordem)}
+                  onAbrirChat={handleAbrirChat}
+                  onAbrirUpload={handleAbrirUpload}
+                  onExpurgar={(ordem, tipo) => {
+                    setSelectedOrdemForExpurgo(ordem);
+                    setTipoExpurgo(tipo);
+                    setShowExpurgoModal(true);
+                  }}
+                />
+              </TabsContent>
 
               <TabsContent value="agenda_carregamento" className="mt-0">
                 <TrackingTable
