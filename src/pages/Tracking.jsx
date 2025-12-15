@@ -463,38 +463,52 @@ export default function Tracking() {
       return false;
     }
 
-    // DEBUG: Log detalhado para primeiras 3 ordens
-    const isFirstThree = ordens.indexOf(ordem) < 3;
-    if (isFirstThree && filters.dataInicio) {
-      console.log(`🔍 DEBUG Ordem ${ordem.numero_carga}:`, {
-        created_date: ordem.created_date,
-        data_solicitacao: ordem.data_solicitacao,
-        tipoCampoData: filters.tipoCampoData,
-        dataInicio: filters.dataInicio,
-        dataFim: filters.dataFim
-      });
+    // Filtrar por período de datas usando a estrutura simplificada (igual ao Dashboard/Fluxo)
+    let dataOrdem = null;
+    
+    if (filters.tipoCampoData === "criacao") {
+      dataOrdem = ordem.created_date ? new Date(ordem.created_date) : null;
+    } else if (filters.tipoCampoData === "agenda_carga") {
+      dataOrdem = ordem.carregamento_agendamento_data ? new Date(ordem.carregamento_agendamento_data) : null;
+    } else if (filters.tipoCampoData === "agenda_descarga") {
+      dataOrdem = ordem.descarga_agendamento_data ? new Date(ordem.descarga_agendamento_data) : null;
+    }
+
+    if (dataOrdem && filters.periodoSelecionado) {
+      const hoje = new Date();
+      
+      if (filters.periodoSelecionado === "mes_atual") {
+        const mesAtual = hoje.getMonth();
+        const anoAtual = hoje.getFullYear();
+        if (dataOrdem.getMonth() !== mesAtual || dataOrdem.getFullYear() !== anoAtual) {
+          return false;
+        }
+      } else if (filters.periodoSelecionado === "ano_atual") {
+        if (dataOrdem.getFullYear() !== filters.anoSelecionado) {
+          return false;
+        }
+      } else if (filters.periodoSelecionado === "mes_especifico") {
+        if (dataOrdem.getFullYear() !== filters.anoSelecionado || 
+            dataOrdem.getMonth() + 1 !== filters.mesSelecionado) {
+          return false;
+        }
+      }
     }
 
     // Filtro por tipo de ordem (carregamento, coleta, recebimento, entrega)
     if (filters.tiposOrdemFiltro && filters.tiposOrdemFiltro.length > 0) {
-      // Determinar o tipo da ordem (prioridade: tipo_ordem > inferência por padrões)
       let tipoFinal = ordem.tipo_ordem;
       
-      // Se não tem tipo_ordem preenchido, inferir baseado em regras
       if (!tipoFinal) {
-        // Regra 1: Se tem numero_coleta, é coleta
         if (ordem.numero_coleta && ordem.numero_coleta.startsWith("COL-")) {
           tipoFinal = "coleta";
         }
-        // Regra 2: Se numero_carga começa com REC-, é recebimento
         else if (ordem.numero_carga?.startsWith("REC-")) {
           tipoFinal = "recebimento";
         }
-        // Regra 3: Se numero_carga começa com ENT-, é entrega
         else if (ordem.numero_carga?.startsWith("ENT-")) {
           tipoFinal = "entrega";
         }
-        // Regra 4: Verificar tipo_registro legado
         else if (ordem.tipo_registro === "coleta_solicitada" || ordem.tipo_registro === "coleta_aprovada" || ordem.tipo_registro === "coleta_reprovada") {
           tipoFinal = "coleta";
         }
@@ -504,19 +518,16 @@ export default function Tracking() {
         else if (ordem.tipo_registro === "ordem_entrega") {
           tipoFinal = "entrega";
         }
-        // Regra 5: Default é carregamento (ordens normais)
         else {
           tipoFinal = "carregamento";
         }
       }
       
-      // Verificar se o tipo final está no filtro selecionado
       if (!filters.tiposOrdemFiltro.includes(tipoFinal)) {
         return false;
       }
     }
 
-    // Filtro tipo: coleta ou ordem de carga (DEPRECADO - mantido para compatibilidade)
     if (filters.tipoRegistro && filters.tipoRegistro !== "") {
       if (filters.tipoRegistro === "coleta" && ordem.tipo_registro !== "coleta_aprovada") {
         return false;
@@ -568,46 +579,6 @@ export default function Tracking() {
     if (filters.modalidadeCarga && ordem.modalidade_carga !== filters.modalidadeCarga) return false;
     if (filters.origem && !ordem.origem?.toLowerCase().includes(filters.origem.toLowerCase())) return false;
     if (filters.destino && !ordem.destino?.toLowerCase().includes(filters.destino.toLowerCase())) return false;
-
-    if (filters.dataInicio) {
-      let dataOrdem;
-      if (filters.tipoCampoData === "agenda_carga") {
-        dataOrdem = ordem.carregamento_agendamento_data;
-      } else if (filters.tipoCampoData === "agenda_descarga") {
-        dataOrdem = ordem.descarga_agendamento_data;
-      } else {
-        dataOrdem = ordem.created_date;
-      }
-      
-      if (!dataOrdem) return false;
-      
-      const dataOrdemObj = new Date(dataOrdem);
-      dataOrdemObj.setHours(0, 0, 0, 0);
-      const dataInicioObj = new Date(filters.dataInicio);
-      dataInicioObj.setHours(0, 0, 0, 0);
-      
-      if (dataOrdemObj < dataInicioObj) return false;
-    }
-
-    if (filters.dataFim) {
-      let dataOrdem;
-      if (filters.tipoCampoData === "agenda_carga") {
-        dataOrdem = ordem.carregamento_agendamento_data;
-      } else if (filters.tipoCampoData === "agenda_descarga") {
-        dataOrdem = ordem.descarga_agendamento_data;
-      } else {
-        dataOrdem = ordem.created_date;
-      }
-      
-      if (!dataOrdem) return false;
-      
-      const dataOrdemObj = new Date(dataOrdem);
-      dataOrdemObj.setHours(0, 0, 0, 0);
-      const dataFimObj = new Date(filters.dataFim);
-      dataFimObj.setHours(23, 59, 59, 999);
-      
-      if (dataOrdemObj > dataFimObj) return false;
-    }
 
     if (viewMode !== "all") {
       if (viewMode === "em_andamento") {
@@ -1280,11 +1251,6 @@ export default function Tracking() {
           <Card className="mb-4 mx-3" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
             <CardContent className="pt-4 pb-4">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div className="md:col-span-4">
-                  <Label className="text-xs mb-2 block font-semibold" style={{ color: theme.text }}>
-                    📊 DEBUG: Total de ordens carregadas = {ordens.length} | Após filtros = {filteredOrdens.length}
-                  </Label>
-                </div>
                 <div className="md:col-span-4">
                   <Label className="text-xs mb-2 block" style={{ color: theme.textMuted }}>Tipos de Ordem (múltiplos)</Label>
                   <div className="flex flex-wrap gap-2">
