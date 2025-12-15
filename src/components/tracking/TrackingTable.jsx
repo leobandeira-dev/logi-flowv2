@@ -53,9 +53,15 @@ const COLUNAS_TABELA_DISPONIVEIS = [
   { id: "implementos", label: "Implementos", enabled: true },
   { id: "carregamento", label: "Carregamento", enabled: false },
   { id: "agenda_carga", label: "Agenda Carga", enabled: true },
-  { id: "agenda_descarga", label: "Agenda Descarga", enabled: true },
+  { id: "entrada_galpao", label: "Chegada Carga", enabled: false },
+  { id: "inicio_carregamento", label: "Início Carga", enabled: false },
+  { id: "fim_carregamento", label: "Fim Carga", enabled: false },
+  { id: "saida_unidade", label: "Inicio Viagem", enabled: false },
   { id: "chegada_destino", label: "Chegada Destino", enabled: true },
+  { id: "agenda_descarga", label: "Agenda Descarga", enabled: true },
+  { id: "agendamento_checklist_data", label: "Agenda Checklist", enabled: false },
   { id: "descarga_realizada", label: "Descarga Realiz.", enabled: true },
+  { id: "prazo_entrega", label: "Prazo Entrega (SLA)", enabled: false },
   { id: "status", label: "Status", enabled: true },
   { id: "distancia", label: "Distância", enabled: true },
   { id: "km_faltam", label: "KM Faltantes", enabled: true },
@@ -366,9 +372,29 @@ export default function TrackingTable({
         aVal = a.carregamento_agendamento_data ? new Date(a.carregamento_agendamento_data) : new Date(0);
         bVal = b.carregamento_agendamento_data ? new Date(b.carregamento_agendamento_data) : new Date(0);
         break;
+      case 'entrada_galpao':
+        aVal = a.entrada_galpao ? new Date(a.entrada_galpao) : new Date(0);
+        bVal = b.entrada_galpao ? new Date(b.entrada_galpao) : new Date(0);
+        break;
+      case 'inicio_carregamento':
+        aVal = a.inicio_carregamento ? new Date(a.inicio_carregamento) : new Date(0);
+        bVal = b.inicio_carregamento ? new Date(b.inicio_carregamento) : new Date(0);
+        break;
+      case 'fim_carregamento':
+        aVal = a.fim_carregamento ? new Date(a.fim_carregamento) : new Date(0);
+        bVal = b.fim_carregamento ? new Date(b.fim_carregamento) : new Date(0);
+        break;
+      case 'saida_unidade':
+        aVal = a.saida_unidade ? new Date(a.saida_unidade) : new Date(0);
+        bVal = b.saida_unidade ? new Date(b.saida_unidade) : new Date(0);
+        break;
       case 'agenda_descarga':
         aVal = a.descarga_agendamento_data ? new Date(a.descarga_agendamento_data) : new Date(0);
         bVal = b.descarga_agendamento_data ? new Date(b.descarga_agendamento_data) : new Date(0);
+        break;
+      case 'agendamento_checklist_data':
+        aVal = a.agendamento_checklist_data ? new Date(a.agendamento_checklist_data) : new Date(0);
+        bVal = b.agendamento_checklist_data ? new Date(b.agendamento_checklist_data) : new Date(0);
         break;
       case 'chegada_destino':
         aVal = a.chegada_destino ? new Date(a.chegada_destino) : new Date(0);
@@ -377,6 +403,10 @@ export default function TrackingTable({
       case 'descarga_realizada':
         aVal = a.descarga_realizada_data ? new Date(a.descarga_realizada_data) : new Date(0);
         bVal = b.descarga_realizada_data ? new Date(b.descarga_realizada_data) : new Date(0);
+        break;
+      case 'prazo_entrega':
+        aVal = a.prazo_entrega ? new Date(a.prazo_entrega) : new Date(0);
+        bVal = b.prazo_entrega ? new Date(b.prazo_entrega) : new Date(0);
         break;
       case 'status':
         aVal = a.status_tracking || '';
@@ -650,14 +680,32 @@ export default function TrackingTable({
                   if (coluna.id === "agenda_carga") {
                     return <SortableHeader key={coluna.id} field="agenda_carga">Agenda Carga</SortableHeader>;
                   }
-                  if (coluna.id === "agenda_descarga") {
-                    return <SortableHeader key={coluna.id} field="agenda_descarga">Agenda Descarga</SortableHeader>;
+                  if (coluna.id === "entrada_galpao") {
+                    return <SortableHeader key={coluna.id} field="entrada_galpao">Chegada Carga</SortableHeader>;
+                  }
+                  if (coluna.id === "inicio_carregamento") {
+                    return <SortableHeader key={coluna.id} field="inicio_carregamento">Início Carga</SortableHeader>;
+                  }
+                  if (coluna.id === "fim_carregamento") {
+                    return <SortableHeader key={coluna.id} field="fim_carregamento">Fim Carga</SortableHeader>;
+                  }
+                  if (coluna.id === "saida_unidade") {
+                    return <SortableHeader key={coluna.id} field="saida_unidade">Inicio Viagem</SortableHeader>;
                   }
                   if (coluna.id === "chegada_destino") {
                     return <SortableHeader key={coluna.id} field="chegada_destino">Chegada Destino</SortableHeader>;
                   }
+                  if (coluna.id === "agenda_descarga") {
+                    return <SortableHeader key={coluna.id} field="agenda_descarga">Agenda Descarga</SortableHeader>;
+                  }
+                  if (coluna.id === "agendamento_checklist_data") {
+                    return <SortableHeader key={coluna.id} field="agendamento_checklist_data">Agenda Checklist</SortableHeader>;
+                  }
                   if (coluna.id === "descarga_realizada") {
                     return <SortableHeader key={coluna.id} field="descarga_realizada">Descarga Realiz.</SortableHeader>;
+                  }
+                  if (coluna.id === "prazo_entrega") {
+                    return <SortableHeader key={coluna.id} field="prazo_entrega">Prazo Entrega (SLA)</SortableHeader>;
                   }
                   if (coluna.id === "status") {
                     return <SortableHeader key={coluna.id} field="status">Status</SortableHeader>;
@@ -888,10 +936,31 @@ export default function TrackingTable({
                       </TableCell>
                           );
                         }
-                        if (coluna.id === "agenda_descarga") {
+                        if (coluna.id === "entrada_galpao") {
                           return (
                             <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
-                        {formatDate(ordem.descarga_agendamento_data)}
+                        {formatDate(ordem.entrada_galpao)}
+                      </TableCell>
+                          );
+                        }
+                        if (coluna.id === "inicio_carregamento") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                        {formatDate(ordem.inicio_carregamento)}
+                      </TableCell>
+                          );
+                        }
+                        if (coluna.id === "fim_carregamento") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                        {formatDate(ordem.fim_carregamento)}
+                      </TableCell>
+                          );
+                        }
+                        if (coluna.id === "saida_unidade") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                        {formatDate(ordem.saida_unidade)}
                       </TableCell>
                           );
                         }
@@ -902,10 +971,31 @@ export default function TrackingTable({
                       </TableCell>
                           );
                         }
+                        if (coluna.id === "agenda_descarga") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                        {formatDate(ordem.descarga_agendamento_data)}
+                      </TableCell>
+                          );
+                        }
+                        if (coluna.id === "agendamento_checklist_data") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                        {formatDate(ordem.agendamento_checklist_data)}
+                      </TableCell>
+                          );
+                        }
                         if (coluna.id === "descarga_realizada") {
                           return (
                             <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
                         {formatDate(ordem.descarga_realizada_data)}
+                      </TableCell>
+                          );
+                        }
+                        if (coluna.id === "prazo_entrega") {
+                          return (
+                            <TableCell key={coluna.id} className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
+                        {formatDate(ordem.prazo_entrega)}
                       </TableCell>
                           );
                         }
