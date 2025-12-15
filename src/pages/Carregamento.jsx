@@ -553,7 +553,7 @@ export default function Carregamento() {
   }
 
   return (
-    <div className="min-h-screen p-3 md:p-6 pb-40 md:pb-6" style={{ backgroundColor: theme.bg }}>
+    <div className="min-h-screen p-3 lg:p-6 pb-40 lg:pb-6" style={{ backgroundColor: theme.bg }}>
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -1118,9 +1118,9 @@ export default function Carregamento() {
           </Card>
         </div>
 
-        {/* Área de Ação - Desktop */}
+        {/* Área de Ação - Desktop e Tablet */}
         {ordemSelecionada && abaAtiva === "carregamento" && (
-          <Card className="mt-6 hidden md:block" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <Card className="mt-6 hidden lg:block" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
             <CardContent className="p-4">
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <div className="flex-1">
@@ -1200,10 +1200,10 @@ export default function Carregamento() {
           </Card>
         )}
 
-        {/* Barra de Ação Fixa Mobile - Carregamento */}
+        {/* Barra de Ação Fixa Mobile e Tablet */}
         {ordemSelecionada && abaAtiva === "carregamento" && (
           <div 
-            className="md:hidden fixed bottom-0 left-0 right-0 border-t shadow-2xl"
+            className="lg:hidden fixed bottom-0 left-0 right-0 border-t shadow-2xl"
             style={{ 
               backgroundColor: theme.cardBg, 
               borderColor: theme.cardBorder,
@@ -1280,9 +1280,9 @@ export default function Carregamento() {
           </div>
         )}
 
-        {/* Quick Actions para Conferência e Endereçamento - Desktop */}
+        {/* Quick Actions para Conferência e Endereçamento - Desktop e Tablet */}
         {ordemSelecionada && (abaAtiva === "conferencia" || abaAtiva === "enderecamento") && (
-          <Card className="mt-6 hidden md:block" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <Card className="mt-6 hidden lg:block" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -1328,10 +1328,10 @@ export default function Carregamento() {
           </Card>
         )}
 
-        {/* Barra de Ação Fixa Mobile - Conferência/Endereçamento */}
+        {/* Barra de Ação Fixa Mobile e Tablet - Conferência/Endereçamento */}
         {ordemSelecionada && (abaAtiva === "conferencia" || abaAtiva === "enderecamento") && (
           <div 
-            className="md:hidden fixed bottom-0 left-0 right-0 border-t shadow-2xl"
+            className="lg:hidden fixed bottom-0 left-0 right-0 border-t shadow-2xl"
             style={{ 
               backgroundColor: theme.cardBg, 
               borderColor: theme.cardBorder,
