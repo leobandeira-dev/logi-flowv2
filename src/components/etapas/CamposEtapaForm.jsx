@@ -19,15 +19,17 @@ export default function CamposEtapaForm({
   ordemId,
   onValidationChange,
   onValuesChange,
-  onTrackingUpdate
+  onTrackingUpdate,
+  onUnsavedChanges
 }) {
   const [campos, setCampos] = useState([]);
   const [valores, setValores] = useState({});
+  const [valoresOriginais, setValoresOriginais] = useState({});
   const [naAplicavel, setNaAplicavel] = useState({});
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState({});
   const [errors, setErrors] = useState({});
-  const [savingTracking, setSavingTracking] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     loadCamposEValores();
@@ -35,7 +37,16 @@ export default function CamposEtapaForm({
 
   useEffect(() => {
     validateForm();
+    checkForUnsavedChanges();
   }, [valores, naAplicavel, campos]);
+
+  const checkForUnsavedChanges = () => {
+    const hasChanges = JSON.stringify(valores) !== JSON.stringify(valoresOriginais);
+    setHasUnsavedChanges(hasChanges);
+    if (onUnsavedChanges) {
+      onUnsavedChanges(hasChanges);
+    }
+  };
 
   const loadCamposEValores = async () => {
     setLoading(true);
@@ -89,7 +100,9 @@ export default function CamposEtapaForm({
       }
 
       setValores(valoresMap);
+      setValoresOriginais(valoresMap);
       setNaAplicavel(naAplicavelMap);
+      setHasUnsavedChanges(false);
     } catch (error) {
       console.error("Erro ao carregar campos:", error);
     } finally {
@@ -172,82 +185,9 @@ export default function CamposEtapaForm({
     return mapeamento[statusTracking] || "recebida";
   };
 
-  const handleValueChange = async (campoId, value) => {
+  const handleValueChange = (campoId, value) => {
     setValores(prev => ({ ...prev, [campoId]: value }));
     setNaAplicavel(prev => ({ ...prev, [campoId]: false }));
-
-    const campo = campos.find(c => c.id === campoId);
-    
-    // Se for campo de data_tracking e temos ordemId, salvar imediatamente no tracking
-    if (campo && campo.tipo === "data_tracking" && campo.campo_tracking && ordemId) {
-      setSavingTracking(true);
-      try {
-        // Buscar ordem atual
-        const ordemAtual = await base44.entities.OrdemDeCarregamento.get(ordemId);
-        
-        const trackingUpdate = {};
-        let valorISO = null;
-        
-        if (value) {
-          // Converter datetime-local para ISO
-          valorISO = new Date(value).toISOString();
-          trackingUpdate[campo.campo_tracking] = valorISO;
-        } else {
-          // Se valor vazio, limpar o campo no tracking
-          trackingUpdate[campo.campo_tracking] = null;
-        }
-        
-        // Determinar novo status automaticamente
-        const novoStatusTracking = determinarStatusTracking(ordemAtual, campo.campo_tracking, valorISO);
-        trackingUpdate.status_tracking = novoStatusTracking;
-        
-        // Atualizar ordem
-        await base44.entities.OrdemDeCarregamento.update(ordemId, trackingUpdate);
-        
-        // Atualizar status das notas fiscais vinculadas
-        if (ordemAtual.notas_fiscais_ids && ordemAtual.notas_fiscais_ids.length > 0) {
-          const novoStatusNF = determinarStatusNF(novoStatusTracking);
-          
-          for (const notaId of ordemAtual.notas_fiscais_ids) {
-            try {
-              await base44.entities.NotaFiscal.update(notaId, {
-                status_nf: novoStatusNF
-              });
-            } catch (error) {
-              console.error(`Erro ao atualizar nota ${notaId}:`, error);
-            }
-          }
-        }
-        
-        if (onTrackingUpdate) {
-          onTrackingUpdate();
-        }
-      } catch (error) {
-        console.error("Erro ao atualizar tracking:", error);
-      } finally {
-        setSavingTracking(false);
-      }
-    }
-    
-    // Se for campo_ordem e temos ordemId, salvar imediatamente na ordem
-    if (campo && campo.tipo === "campo_ordem" && campo.campo_ordem && ordemId) {
-      setSavingTracking(true);
-      try {
-        const ordemUpdate = {
-          [campo.campo_ordem]: value || null
-        };
-        
-        await base44.entities.OrdemDeCarregamento.update(ordemId, ordemUpdate);
-        
-        if (onTrackingUpdate) {
-          onTrackingUpdate();
-        }
-      } catch (error) {
-        console.error("Erro ao atualizar ordem:", error);
-      } finally {
-        setSavingTracking(false);
-      }
-    }
   };
 
   const handleNaAplicavelChange = (campoId, checked) => {
@@ -502,36 +442,22 @@ export default function CamposEtapaForm({
                   onChange={(e) => handleValueChange(campo.id, e.target.value)}
                   onKeyDown={(e) => handleKeyDownDate(e, campo.id)}
                   className={error ? "border-red-500" : ""}
-                  disabled={savingTracking}
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   💡 Pressione <kbd className="px-1.5 py-0.5 bg-gray-200 rounded text-xs font-bold">H</kbd> para preencher com data/hora atual
-                  {savingTracking && (
-                    <span className="ml-2 text-blue-600 font-semibold">
-                      Sincronizando...
-                    </span>
-                  )}
                 </p>
               </div>
             )}
 
             {campo.tipo === "campo_ordem" && (
-              <div>
-                <Input
-                  id={campo.id}
-                  type="text"
-                  value={valor}
-                  onChange={(e) => handleValueChange(campo.id, e.target.value)}
-                  placeholder={`Digite ${campo.nome.toLowerCase()}`}
-                  className={error ? "border-red-500" : ""}
-                  disabled={savingTracking}
-                />
-                {savingTracking && (
-                  <p className="text-xs text-blue-600 mt-1 font-semibold">
-                    Sincronizando com a ordem...
-                  </p>
-                )}
-              </div>
+              <Input
+                id={campo.id}
+                type="text"
+                value={valor}
+                onChange={(e) => handleValueChange(campo.id, e.target.value)}
+                placeholder={`Digite ${campo.nome.toLowerCase()}`}
+                className={error ? "border-red-500" : ""}
+              />
             )}
           </>
         )}
