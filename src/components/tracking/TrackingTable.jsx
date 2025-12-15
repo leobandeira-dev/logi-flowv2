@@ -190,6 +190,16 @@ export default function TrackingTable({
     }
   };
 
+  const abreviarNome = (nomeCompleto) => {
+    if (!nomeCompleto) return "-";
+    const partes = nomeCompleto.trim().split(/\s+/);
+    if (partes.length <= 2) return nomeCompleto;
+    
+    const primeiros = partes.slice(0, 2).join(' ');
+    const abreviados = partes.slice(2).map(p => p.charAt(0).toUpperCase() + '.').join(' ');
+    return `${primeiros} ${abreviados}`;
+  };
+
   const calcularAtraso = (ordem) => {
     if (!ordem.data_programacao_descarga || ordem.descarga_realizada_data) return null;
     
@@ -507,8 +517,8 @@ export default function TrackingTable({
                         {motoristaPrincipal ? (
                           <div className="flex items-center gap-1">
                             <User className="w-3 h-3 text-blue-600" />
-                            <span className="text-[10px] truncate max-w-[100px] inline-block font-medium" style={{ color: theme.text }}>
-                              {motoristaPrincipal.nome.split(' ')[0]}
+                            <span className="text-[10px] truncate max-w-[140px] inline-block font-medium" style={{ color: theme.text }} title={motoristaPrincipal.nome}>
+                              {abreviarNome(motoristaPrincipal.nome)}
                             </span>
                           </div>
                         ) : (
@@ -520,8 +530,8 @@ export default function TrackingTable({
                         {motoristaReserva ? (
                           <div className="flex items-center gap-1">
                             <User className="w-3 h-3 text-orange-600" />
-                            <span className="text-[10px] truncate max-w-[100px] inline-block font-medium" style={{ color: theme.text }}>
-                              {motoristaReserva.nome.split(' ')[0]}
+                            <span className="text-[10px] truncate max-w-[140px] inline-block font-medium" style={{ color: theme.text }} title={motoristaReserva.nome}>
+                              {abreviarNome(motoristaReserva.nome)}
                             </span>
                           </div>
                         ) : (
