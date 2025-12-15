@@ -1958,12 +1958,14 @@ export default function Tracking() {
 
       {editingOrdemCompleta && (
         <OrdemUnificadaForm
+          tipo_ordem={editingOrdemCompleta.tipo_ordem || "carregamento"}
           open={!!editingOrdemCompleta}
           onClose={() => setEditingOrdemCompleta(null)}
           onSubmit={handleSubmitOrdemCompleta}
           motoristas={motoristas}
           veiculos={veiculos}
           editingOrdem={editingOrdemCompleta}
+          isDark={isDark}
         />
       )}
 
