@@ -2075,6 +2075,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>#</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Ordem</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Pedido</th>
+            <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Data Emissão</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Cliente</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Origem - Destino</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Agendado</th>
@@ -2094,6 +2095,9 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                   {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
                 </td>
                 <td className="p-2" style={{ color: theme.textMuted }}>{ordem.viagem_pedido || '-'}</td>
+                <td className="p-2" style={{ color: theme.textMuted }}>
+                  {ordem.created_date ? new Date(ordem.created_date).toLocaleDateString('pt-BR') : '-'}
+                </td>
                 <td className="p-2" style={{ color: theme.textMuted }}>{ordem.cliente || '-'}</td>
                 <td className="p-2" style={{ color: theme.textMuted }}>
                   {(ordem.origem_cidade || ordem.origem || '-')} - {(ordem.destino_cidade || ordem.destino || '-')}
@@ -2119,6 +2123,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>#</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Ordem</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Pedido</th>
+            <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Data Emissão</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Cliente</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Origem - Destino</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Motivo</th>
@@ -2135,6 +2140,9 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                   {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
                 </td>
                 <td className="p-2" style={{ color: theme.textMuted }}>{ordem.viagem_pedido || '-'}</td>
+                <td className="p-2" style={{ color: theme.textMuted }}>
+                  {ordem.created_date ? new Date(ordem.created_date).toLocaleDateString('pt-BR') : '-'}
+                </td>
                 <td className="p-2" style={{ color: theme.textMuted }}>{ordem.cliente || '-'}</td>
                 <td className="p-2" style={{ color: theme.textMuted }}>
                   {(ordem.origem_cidade || ordem.origem || '-')} - {(ordem.destino_cidade || ordem.destino || '-')}
@@ -2411,6 +2419,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                   <th className="text-left p-2 font-semibold" style={{ width: '3%' }}>#</th>
                   <th className="text-left p-2 font-semibold" style={{ width: '6%' }}>Ordem</th>
                   <th className="text-left p-2 font-semibold" style={{ width: '6%' }}>Pedido</th>
+                  <th className="text-left p-2 font-semibold" style={{ width: '7%' }}>Data Emissão</th>
                   <th className="text-left p-2 font-semibold" style={{ width: '10%' }}>Cliente</th>
                   <th className="text-left p-2 font-semibold" style={{ width: '12%' }}>Origem - Destino</th>
                   {tipo === 'geral' && <th className="text-left p-2 font-semibold" style={{ width: '9%' }}>Agenda Carga</th>}
@@ -2446,6 +2455,9 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                       <td className="p-2 font-semibold" style={{ color: theme.textMuted }}>{idx + 1}</td>
                       <td className="p-2 font-mono font-bold">{ordem.numero_carga || `#${ordem.id.slice(-6)}`}</td>
                       <td className="p-2">{ordem.viagem_pedido || '-'}</td>
+                      <td className="p-2" style={{ color: theme.textMuted }}>
+                        {ordem.created_date ? new Date(ordem.created_date).toLocaleDateString('pt-BR') : '-'}
+                      </td>
                       <td className="p-2">{ordem.cliente || '-'}</td>
                       <td className="p-2">
                         {(ordem.origem_cidade || ordem.origem || '-')} - {(ordem.destino_cidade || ordem.destino || '-')}
