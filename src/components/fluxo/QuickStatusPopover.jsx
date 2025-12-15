@@ -56,6 +56,9 @@ export default function QuickStatusPopover({
   // Estado para o modal de ocorrências
   const [showOcorrenciaModal, setShowOcorrenciaModal] = useState(false);
   const [showTratarOcorrenciaModal, setShowTratarOcorrenciaModal] = useState(false);
+  
+  const [motoristaPrincipal, setMotoristaPrincipal] = useState(null);
+  const [motoristaReserva, setMotoristaReserva] = useState(null);
 
   // Detectar dark mode
   useEffect(() => {
@@ -68,12 +71,30 @@ export default function QuickStatusPopover({
     return () => observer.disconnect();
   }, []);
 
-  // Carregar ocorrências abertas ao abrir o popover
+  // Carregar ocorrências abertas e motoristas ao abrir o dialog de conclusão
   useEffect(() => {
-    if (open) { // Condition changed from 'open && ordemEtapa' to 'open'
+    if (open) {
       loadOcorrenciasAbertas();
     }
-  }, [open, ordemEtapa]);
+    if (showConclusaoDialog) {
+      loadMotoristas();
+    }
+  }, [open, ordemEtapa, showConclusaoDialog]);
+
+  const loadMotoristas = async () => {
+    try {
+      if (ordem.motorista_id) {
+        const motorista = await base44.entities.Motorista.get(ordem.motorista_id);
+        setMotoristaPrincipal(motorista);
+      }
+      if (ordem.motorista_reserva_id) {
+        const motoristaRes = await base44.entities.Motorista.get(ordem.motorista_reserva_id);
+        setMotoristaReserva(motoristaRes);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar motoristas:", error);
+    }
+  };
 
   const loadOcorrenciasAbertas = async () => {
     try {
@@ -607,6 +628,50 @@ export default function QuickStatusPopover({
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Concluir Etapa: {etapa.nome}</DialogTitle>
+            <div className={`mt-3 pt-3 border-t space-y-2 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <span className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Ordem:
+                  </span>
+                  <span className={`ml-2 font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                    {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
+                  </span>
+                </div>
+                {ordem.pedido_cliente && (
+                  <div>
+                    <span className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Pedido:
+                    </span>
+                    <span className={`ml-2 font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                      {ordem.pedido_cliente}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                {motoristaPrincipal && (
+                  <div>
+                    <span className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Motorista:
+                    </span>
+                    <span className={`ml-2 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                      {motoristaPrincipal.nome}
+                    </span>
+                  </div>
+                )}
+                {motoristaReserva && (
+                  <div>
+                    <span className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Reserva:
+                    </span>
+                    <span className={`ml-2 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                      {motoristaReserva.nome}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
           </DialogHeader>
 
           {changing && (
