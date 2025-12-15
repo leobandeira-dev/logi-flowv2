@@ -1434,7 +1434,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               </Button>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Label className="text-xs whitespace-nowrap" style={{ color: theme.text }}>Linhas:</Label>
               <Input
                 type="number"
@@ -1452,6 +1452,27 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               <Badge className="bg-blue-600 text-white text-xs">
                 {enderecamentos.length}/{volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length} vol.
               </Badge>
+              <Button
+                variant="outline"
+                onClick={handleImprimirLayout}
+                disabled={enderecamentos.length === 0}
+                size="sm"
+                className="h-7"
+                style={{ borderColor: theme.cardBorder, color: theme.text }}
+              >
+                <Printer className="w-3 h-3 mr-1" />
+                Layout
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleImprimirListaNotas}
+                size="sm"
+                className="h-7"
+                style={{ borderColor: theme.cardBorder, color: theme.text }}
+              >
+                <Printer className="w-3 h-3 mr-1" />
+                Notas
+              </Button>
             </div>
           </div>
 
