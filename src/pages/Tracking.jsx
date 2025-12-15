@@ -1281,6 +1281,11 @@ export default function Tracking() {
             <CardContent className="pt-4 pb-4">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="md:col-span-4">
+                  <Label className="text-xs mb-2 block font-semibold" style={{ color: theme.text }}>
+                    📊 DEBUG: Total de ordens carregadas = {ordens.length} | Após filtros = {filteredOrdens.length}
+                  </Label>
+                </div>
+                <div className="md:col-span-4">
                   <Label className="text-xs mb-2 block" style={{ color: theme.textMuted }}>Tipos de Ordem (múltiplos)</Label>
                   <div className="flex flex-wrap gap-2">
                     {[
