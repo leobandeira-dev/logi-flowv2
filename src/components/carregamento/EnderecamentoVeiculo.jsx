@@ -16,8 +16,10 @@ import {
   Package,
   FileText,
   Grid3x3,
-  CheckCircle
+  CheckCircle,
+  Camera
 } from "lucide-react";
+import CameraScanner from "../etiquetas-mae/CameraScanner";
 import {
   Dialog,
   DialogContent,
@@ -163,6 +165,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const [usarBase, setUsarBase] = useState(false);
   const [notasBaseBusca, setNotasBaseBusca] = useState("");
   const inputChaveRef = React.useRef(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [processandoQR, setProcessandoQR] = useState(false);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -661,6 +665,80 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       }
     }
   }, [notasBaseBusca, usarBase, filtroTipo]);
+
+  const handleScanQRCode = async (codigo) => {
+    setProcessandoQR(true);
+    try {
+      // 1. Tentar encontrar o volume pelo QR Code (identificador_unico)
+      const volumesEncontrados = await base44.entities.Volume.filter({ identificador_unico: codigo });
+      
+      if (volumesEncontrados.length === 0) {
+        toast.error(`Volume não encontrado: ${codigo}`);
+        setProcessandoQR(false);
+        return;
+      }
+
+      const volumeEncontrado = volumesEncontrados[0];
+
+      // 2. Verificar se o volume já está endereçado
+      const jaEnderecado = enderecamentos.some(e => e.volume_id === volumeEncontrado.id);
+      if (jaEnderecado) {
+        toast.warning(`Volume ${codigo} já foi endereçado`);
+        setProcessandoQR(false);
+        return;
+      }
+
+      // 3. Buscar a nota fiscal do volume
+      const notaDoVolume = await base44.entities.NotaFiscal.get(volumeEncontrado.nota_fiscal_id);
+
+      // 4. Verificar se a nota já está vinculada à ordem atual
+      const notaJaVinculada = notasFiscaisLocal.some(nf => nf.id === notaDoVolume.id);
+
+      if (!notaJaVinculada) {
+        // 4a. Vincular a nota à ordem
+        await base44.entities.NotaFiscal.update(notaDoVolume.id, {
+          ordem_id: ordem.id,
+          status_nf: "aguardando_expedicao"
+        });
+
+        // 4b. Atualizar ordem com nova nota
+        const notasIds = [...(ordem.notas_fiscais_ids || []), notaDoVolume.id];
+        await base44.entities.OrdemDeCarregamento.update(ordem.id, {
+          notas_fiscais_ids: notasIds
+        });
+
+        // 4c. Buscar todos os volumes da nota
+        const volumesDaNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaDoVolume.id });
+
+        // 4d. Atualizar estados locais
+        setNotasFiscaisLocal([...notasFiscaisLocal, notaDoVolume]);
+        setVolumesLocal([...volumesLocal, ...volumesDaNota]);
+        setNotasOrigem({ ...notasOrigem, [notaDoVolume.id]: "QR Code" });
+
+        // Salvar rascunho
+        localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
+          notas: [...notasFiscaisLocal, notaDoVolume],
+          volumes: [...volumesLocal, ...volumesDaNota],
+          timestamp: new Date().toISOString()
+        }));
+
+        toast.success(`NF ${notaDoVolume.numero_nota} vinculada via QR Code! ${volumesDaNota.length} volumes carregados.`);
+      }
+
+      // 5. Selecionar o volume escaneado
+      setVolumesSelecionados([volumeEncontrado.id]);
+      setFiltroTipo("volume");
+      setAbaAtiva("volumes");
+      
+      toast.success(`Volume ${codigo} selecionado!`);
+    } catch (error) {
+      console.error("Erro ao processar QR Code:", error);
+      toast.error("Erro ao processar QR Code do volume");
+    } finally {
+      setProcessandoQR(false);
+      setShowCamera(false);
+    }
+  };
 
   const handleImprimirListaNotas = async () => {
     try {
@@ -1371,6 +1449,18 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 </Tabs>
               </div>
 
+              {/* Botão de Câmera */}
+              <div className="flex justify-center mb-2">
+                <Button
+                  onClick={() => setShowCamera(true)}
+                  className="bg-blue-600 hover:bg-blue-700 w-full"
+                  size="sm"
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  Escanear QR Code do Volume
+                </Button>
+              </div>
+
               {/* Campo de Busca */}
               {filtroTipo === "nota_fiscal" ? (
                 <div className="p-2 border rounded" style={{ borderColor: theme.cardBorder, backgroundColor: isDark ? '#1e3a8a22' : '#eff6ff' }}>
@@ -1611,6 +1701,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Modal de Câmera Mobile */}
+        {showCamera && (
+          <CameraScanner
+            open={showCamera}
+            onClose={() => setShowCamera(false)}
+            onCapture={handleScanQRCode}
+            titulo="Escanear QR Code do Volume"
+          />
+        )}
 
         {/* Modal Finalizar Carregamento Mobile */}
         <Dialog open={showFinalizarModal} onOpenChange={setShowFinalizarModal}>
@@ -2327,6 +2427,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           </div>
         </div>
       </div>
+
+      {/* Modal de Câmera Desktop */}
+      {showCamera && (
+        <CameraScanner
+          open={showCamera}
+          onClose={() => setShowCamera(false)}
+          onCapture={handleScanQRCode}
+          titulo="Escanear QR Code do Volume"
+        />
+      )}
 
       {/* Modal Finalizar Carregamento Desktop */}
       <Dialog open={showFinalizarModal} onOpenChange={setShowFinalizarModal}>
