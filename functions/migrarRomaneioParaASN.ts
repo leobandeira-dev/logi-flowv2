@@ -32,15 +32,21 @@ Deno.serve(async (req) => {
     let migrados = 0;
     const erros = [];
 
+    // Buscar todas as OrdemEtapa de uma vez para otimizar
+    const todasOrdemEtapas = await base44.asServiceRole.entities.OrdemEtapa.list();
+    const ordemEtapaMap = {};
+    todasOrdemEtapas.forEach(oe => {
+      ordemEtapaMap[oe.id] = oe.ordem_id;
+    });
+
     // Para cada valor, atualizar a ordem correspondente
     for (const valorCampo of valoresRomaneio) {
       try {
-        // Buscar a OrdemEtapa para pegar o ordem_id
-        const ordemEtapa = await base44.asServiceRole.entities.OrdemEtapa.get(valorCampo.ordem_etapa_id);
+        const ordemId = ordemEtapaMap[valorCampo.ordem_etapa_id];
         
-        if (ordemEtapa && ordemEtapa.ordem_id) {
+        if (ordemId) {
           // Atualizar a ordem com o valor no campo ASN
-          await base44.asServiceRole.entities.OrdemDeCarregamento.update(ordemEtapa.ordem_id, {
+          await base44.asServiceRole.entities.OrdemDeCarregamento.update(ordemId, {
             asn: valorCampo.valor
           });
           
