@@ -677,19 +677,28 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     const { source, destination } = result;
 
     // Se soltar na lista de volumes, apenas reorganizar (não fazer nada)
-    if (destination.droppableId === "volumes-list") {
+    if (destination.droppableId === "volumes-list" || destination.droppableId === "volumes-list-mobile") {
       return;
     }
 
     // Se soltar em uma célula do layout
     if (destination.droppableId.startsWith("cell-")) {
-      const volumeId = result.draggableId;
+      const draggableId = result.draggableId;
+      const volumeId = draggableId.startsWith("allocated-") ? draggableId.replace("allocated-", "") : draggableId;
       const [_, linha, coluna] = destination.droppableId.split("-");
 
       try {
         const user = await base44.auth.me();
         const volume = volumesLocal.find(v => v.id === volumeId);
         if (!volume) return;
+
+        // Se o volume já estava alocado, remover alocação anterior
+        const alocacaoExistente = enderecamentos.find(e => e.volume_id === volumeId);
+        if (alocacaoExistente) {
+          await base44.entities.EnderecamentoVolume.delete(alocacaoExistente.id);
+          setEnderecamentos(prev => prev.filter(e => e.id !== alocacaoExistente.id));
+          toast.info("Volume realocado!");
+        }
 
         const enderecamento = {
           ordem_id: ordem.id,
@@ -703,7 +712,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         };
 
         const created = await base44.entities.EnderecamentoVolume.create(enderecamento);
-        const enderecamentosAtualizados = [...enderecamentos, created];
+        const enderecamentosAtualizados = [...enderecamentos.filter(e => e.volume_id !== volumeId), created];
         setEnderecamentos(enderecamentosAtualizados);
 
         // Salvar rascunho
@@ -712,7 +721,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           timestamp: new Date().toISOString()
         }));
 
-        toast.success("Volume posicionado!");
+        if (!alocacaoExistente) {
+          toast.success("Volume posicionado!");
+        }
       } catch (error) {
         console.error("Erro ao posicionar volume:", error);
         toast.error("Erro ao posicionar volume");
@@ -1476,117 +1487,231 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </div>
           </div>
 
-          {/* Grid do Veículo Mobile */}
-          <div className="flex-1 overflow-auto p-2">
-            <div className="border-2 rounded-lg overflow-hidden select-none" style={{ borderColor: theme.cellBorder }}>
-              {/* Cabeçalho */}
-              <div className="grid gap-0" style={{ gridTemplateColumns: `60px repeat(${layoutConfig.colunas.length}, 1fr)` }}>
-                <div className="p-2 font-bold text-center border-b border-r text-xs" style={{ backgroundColor: isDark ? '#334155' : '#f1f5f9', borderColor: theme.cellBorder, color: theme.text }}>
-                  Linha
-                </div>
-                {layoutConfig.colunas.map((coluna, idx) => (
+          <div className="flex-1 flex overflow-hidden">
+            {/* Painel Esquerdo Mobile - Volumes Não Alocados */}
+            <div className="w-32 border-r flex flex-col overflow-hidden" style={{ borderColor: theme.cellBorder, backgroundColor: theme.cardBg }}>
+              <div className="p-2 border-b" style={{ borderColor: theme.cardBorder }}>
+                <h3 className="font-semibold text-xs" style={{ color: theme.text }}>
+                  Volumes
+                </h3>
+                <p className="text-[9px]" style={{ color: theme.textMuted }}>
+                  {filteredVolumes.length} disponíveis
+                </p>
+              </div>
+              
+              <Droppable droppableId="volumes-list-mobile">
+                {(provided) => (
                   <div
-                    key={coluna}
-                    className="p-2 font-bold text-center border-b text-xs"
-                    style={{
-                      backgroundColor: isDark ? '#334155' : '#f1f5f9',
-                      borderColor: theme.cellBorder,
-                      borderRight: idx < layoutConfig.colunas.length - 1 ? `1px solid ${theme.cellBorder}` : 'none',
-                      color: theme.text
-                    }}
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className="flex-1 overflow-y-auto p-1 space-y-1"
                   >
-                    {coluna}
+                    {filteredVolumes.map((volume, index) => {
+                      const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+                      
+                      return (
+                        <Draggable key={volume.id} draggableId={volume.id} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className="p-1.5 border rounded touch-none"
+                              style={{
+                                ...provided.draggableProps.style,
+                                borderColor: snapshot.isDragging ? '#3b82f6' : theme.cardBorder,
+                                backgroundColor: snapshot.isDragging 
+                                  ? (isDark ? '#1e40af' : '#3b82f6')
+                                  : theme.cardBg,
+                                color: snapshot.isDragging ? '#ffffff' : 'inherit',
+                                opacity: snapshot.isDragging ? 0.9 : 1
+                              }}
+                            >
+                              <p 
+                                className="font-mono text-[9px] font-bold leading-tight break-all" 
+                                style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}
+                              >
+                                {volume.identificador_unico}
+                              </p>
+                              <p 
+                                className="text-[8px] leading-tight" 
+                                style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}
+                              >
+                                NF {nota?.numero_nota}
+                              </p>
+                            </div>
+                          )}
+                        </Draggable>
+                      );
+                    })}
+                    {provided.placeholder}
+                    
+                    {filteredVolumes.length === 0 && (
+                      <div className="text-center py-4" style={{ color: theme.textMuted }}>
+                        <Package className="w-6 h-6 mx-auto mb-1 opacity-20" />
+                        <p className="text-[9px]">Todos alocados</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Droppable>
+            </div>
+
+            {/* Grid do Veículo Mobile */}
+            <div className="flex-1 overflow-auto p-2">
+              <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: theme.cellBorder }}>
+                {/* Cabeçalho */}
+                <div className="grid gap-0" style={{ gridTemplateColumns: `50px repeat(${layoutConfig.colunas.length}, 1fr)` }}>
+                  <div className="p-2 font-bold text-center border-b border-r text-xs" style={{ backgroundColor: isDark ? '#334155' : '#f1f5f9', borderColor: theme.cellBorder, color: theme.text }}>
+                    Lin
+                  </div>
+                  {layoutConfig.colunas.map((coluna, idx) => (
+                    <div
+                      key={coluna}
+                      className="p-2 font-bold text-center border-b text-[9px]"
+                      style={{
+                        backgroundColor: isDark ? '#334155' : '#f1f5f9',
+                        borderColor: theme.cellBorder,
+                        borderRight: idx < layoutConfig.colunas.length - 1 ? `1px solid ${theme.cellBorder}` : 'none',
+                        color: theme.text
+                      }}
+                    >
+                      {coluna.substring(0, 3)}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Linhas do Layout */}
+                {Array.from({ length: numLinhas }, (_, i) => i + 1).map((linha) => (
+                  <div
+                    key={linha}
+                    className="grid gap-0"
+                    style={{ gridTemplateColumns: `50px repeat(${layoutConfig.colunas.length}, 1fr)` }}
+                  >
+                    <div
+                      className="p-2 font-bold text-center border-b border-r text-xs"
+                      style={{
+                        backgroundColor: isDark ? '#334155' : '#f1f5f9',
+                        borderColor: theme.cellBorder,
+                        color: theme.text
+                      }}
+                    >
+                      {linha}
+                    </div>
+                    
+                    {layoutConfig.colunas.map((coluna, idx) => {
+                      const notasNaCelula = getNotasFiscaisNaCelula(linha, coluna);
+                      const volumesNaCelula = getVolumesNaCelula(linha, coluna);
+                      const temVolumes = volumesNaCelula.length > 0;
+
+                      return (
+                        <Droppable key={`${linha}-${coluna}`} droppableId={`cell-${linha}-${coluna}`}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.droppableProps}
+                              onClick={() => handleClickCelula(linha, coluna)}
+                              className="p-1 border-b min-h-[70px] cursor-pointer active:bg-opacity-70 transition-all relative"
+                              style={{
+                                backgroundColor: snapshot.isDraggingOver 
+                                  ? (isDark ? '#1e40af44' : '#dbeafe') 
+                                  : theme.cellBg,
+                                borderColor: theme.cellBorder,
+                                borderRight: idx < layoutConfig.colunas.length - 1 ? `1px solid ${theme.cellBorder}` : 'none'
+                              }}
+                            >
+                              <div className="space-y-0.5">
+                                {notasNaCelula.map((nota) => {
+                                  const volumesNota = volumesNaCelula.filter(v => v.nota_fiscal_id === nota.id);
+                                  const fornecedorAbreviado = nota.emitente_razao_social
+                                    ?.split(' ')
+                                    .slice(0, 1)
+                                    .join(' ')
+                                    .substring(0, 10) || 'N/A';
+                                  
+                                  return (
+                                    <div
+                                      key={nota.id}
+                                      className="flex items-center justify-between gap-0.5 px-1 py-0.5 rounded text-[8px] leading-tight group"
+                                      style={{
+                                        backgroundColor: isDark ? '#1e40af' : '#bfdbfe',
+                                        color: isDark ? '#ffffff' : '#1e3a8a'
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <span className="font-bold shrink-0 text-[9px]">
+                                        {nota.numero_nota}
+                                      </span>
+                                      <span className="flex-1 truncate text-center px-0.5 text-[8px]" title={nota.emitente_razao_social}>
+                                        {fornecedorAbreviado}
+                                      </span>
+                                      <span className="font-semibold shrink-0 text-[9px]">
+                                        {volumesNota.length}
+                                      </span>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRemoverNotaDaCelula(linha, coluna, nota.id);
+                                        }}
+                                        className="shrink-0 w-4 h-4 flex items-center justify-center rounded hover:bg-red-500 transition-colors opacity-70 group-hover:opacity-100"
+                                        title="Remover"
+                                      >
+                                        <Trash2 className="w-2.5 h-2.5" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                                
+                                {/* Volumes alocados - draggable para realocar */}
+                                {volumesNaCelula.map((volume, volIdx) => {
+                                  const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+                                  return (
+                                    <Draggable 
+                                      key={volume.id} 
+                                      draggableId={`allocated-${volume.id}`} 
+                                      index={volIdx}
+                                    >
+                                      {(provided, snapshot) => (
+                                        <div
+                                          ref={provided.innerRef}
+                                          {...provided.draggableProps}
+                                          {...provided.dragHandleProps}
+                                          className="px-1 py-0.5 rounded text-[7px] leading-tight touch-none"
+                                          style={{
+                                            ...provided.draggableProps.style,
+                                            backgroundColor: snapshot.isDragging 
+                                              ? (isDark ? '#3b82f6' : '#60a5fa')
+                                              : (isDark ? '#1e3a8a44' : '#dbeafe44'),
+                                            color: snapshot.isDragging ? '#ffffff' : (isDark ? '#bfdbfe' : '#1e40af'),
+                                            opacity: snapshot.isDragging ? 0.9 : 1
+                                          }}
+                                        >
+                                          <span className="font-mono" title={volume.identificador_unico}>
+                                            {volume.identificador_unico.substring(0, 12)}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </Draggable>
+                                  );
+                                })}
+                              </div>
+
+                              {!temVolumes && (
+                                <div className="text-center text-xs" style={{ color: theme.textMuted, opacity: 0.5 }}>
+                                  {snapshot.isDraggingOver ? "Solte aqui" : "Vazio"}
+                                </div>
+                              )}
+                              {provided.placeholder}
+                            </div>
+                          )}
+                        </Droppable>
+                      );
+                    })}
                   </div>
                 ))}
               </div>
-
-              {/* Linhas do Layout */}
-              {Array.from({ length: numLinhas }, (_, i) => i + 1).map((linha) => (
-                <div
-                  key={linha}
-                  className="grid gap-0"
-                  style={{ gridTemplateColumns: `60px repeat(${layoutConfig.colunas.length}, 1fr)` }}
-                >
-                  <div
-                    className="p-2 font-bold text-center border-b border-r text-xs"
-                    style={{
-                      backgroundColor: isDark ? '#334155' : '#f1f5f9',
-                      borderColor: theme.cellBorder,
-                      color: theme.text
-                    }}
-                  >
-                    {linha}
-                  </div>
-                  
-                  {layoutConfig.colunas.map((coluna, idx) => {
-                    const notasNaCelula = getNotasFiscaisNaCelula(linha, coluna);
-                    const volumesNaCelula = getVolumesNaCelula(linha, coluna);
-                    const temVolumes = volumesNaCelula.length > 0;
-
-                    return (
-                      <Droppable key={`${linha}-${coluna}`} droppableId={`cell-${linha}-${coluna}`}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.droppableProps}
-                            onClick={() => handleClickCelula(linha, coluna)}
-                            className="p-2 border-b min-h-[80px] cursor-pointer active:bg-opacity-70 transition-all"
-                            style={{
-                              backgroundColor: snapshot.isDraggingOver 
-                                ? (isDark ? '#1e40af44' : '#dbeafe') 
-                                : theme.cellBg,
-                              borderColor: theme.cellBorder,
-                              borderRight: idx < layoutConfig.colunas.length - 1 ? `1px solid ${theme.cellBorder}` : 'none'
-                            }}
-                          >
-                        <div className="space-y-0.5">
-                          {notasNaCelula.map((nota) => {
-                            const volumesNota = volumesNaCelula.filter(v => v.nota_fiscal_id === nota.id);
-                            const fornecedorAbreviado = nota.emitente_razao_social
-                              ?.split(' ')
-                              .slice(0, 2)
-                              .join(' ')
-                              .substring(0, 15) || 'N/A';
-                            
-                            return (
-                              <div
-                                key={nota.id}
-                                className="flex items-center justify-between gap-1 px-1.5 py-0.5 rounded text-[9px] leading-tight"
-                                style={{
-                                  backgroundColor: isDark ? '#1e40af' : '#bfdbfe',
-                                  color: isDark ? '#ffffff' : '#1e3a8a'
-                                }}
-                              >
-                                <span className="font-bold shrink-0">
-                                  {nota.numero_nota}
-                                </span>
-                                <span className="flex-1 truncate text-center px-0.5" title={nota.emitente_razao_social}>
-                                  {fornecedorAbreviado}
-                                </span>
-                                <span className="font-semibold shrink-0">
-                                  {volumesNota.length}
-                                </span>
-                              </div>
-                            );
-                            })}
-                            </div>
-
-                            {!temVolumes && (
-                            <div className="text-center text-xs" style={{ color: theme.textMuted, opacity: 0.5 }}>
-                            {snapshot.isDraggingOver ? "Solte aqui" : "Vazio"}
-                            </div>
-                            )}
-                            {provided.placeholder}
-                            </div>
-                            )}
-                            </Droppable>
-                            );
-                            })}
-                            </div>
-                            ))}
-                            </div>
-                            </div>
-                            </div>
+            </div>
+          </div>
 
                             {/* Modal de Busca Mobile */}
         <Dialog open={showBuscaModal} onOpenChange={setShowBuscaModal}>
