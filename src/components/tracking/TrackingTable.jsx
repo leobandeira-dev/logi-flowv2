@@ -308,10 +308,6 @@ export default function TrackingTable({
         aVal = a.carregamento_agendamento_data ? new Date(a.carregamento_agendamento_data) : new Date(0);
         bVal = b.carregamento_agendamento_data ? new Date(b.carregamento_agendamento_data) : new Date(0);
         break;
-      case 'descarga':
-        aVal = a.data_programacao_descarga ? new Date(a.data_programacao_descarga) : new Date(0);
-        bVal = b.data_programacao_descarga ? new Date(b.data_programacao_descarga) : new Date(0);
-        break;
       case 'agenda_descarga':
         aVal = a.descarga_agendamento_data ? new Date(a.descarga_agendamento_data) : new Date(0);
         bVal = b.descarga_agendamento_data ? new Date(b.descarga_agendamento_data) : new Date(0);
@@ -517,7 +513,6 @@ export default function TrackingTable({
                 <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Implementos</TableHead>
                 <SortableHeader field="carregamento">Carregamento</SortableHeader>
                 <SortableHeader field="agenda_carga">Agenda Carga</SortableHeader>
-                <SortableHeader field="descarga">Descarga Prog.</SortableHeader>
                 <SortableHeader field="agenda_descarga">Agenda Descarga</SortableHeader>
                 <SortableHeader field="status">Status</SortableHeader>
                 <SortableHeader field="distancia">Distância</SortableHeader>
@@ -535,7 +530,7 @@ export default function TrackingTable({
             <TableBody>
               {ordensSorted.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={23} className="text-center py-12 text-xs" style={{ color: theme.textMuted }}>
+                  <TableCell colSpan={22} className="text-center py-12 text-xs" style={{ color: theme.textMuted }}>
                     Nenhuma ordem encontrada
                   </TableCell>
                 </TableRow>
@@ -682,10 +677,6 @@ export default function TrackingTable({
 
                       <TableCell className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
                         {formatDate(ordem.carregamento_agendamento_data)}
-                      </TableCell>
-
-                      <TableCell className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
-                        {formatDate(ordem.data_programacao_descarga)}
                       </TableCell>
 
                       <TableCell className="py-1 px-2 align-middle text-[10px]" style={{ color: theme.text }}>
