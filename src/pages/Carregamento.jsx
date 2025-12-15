@@ -473,31 +473,31 @@ export default function Carregamento() {
     });
   }, [ordens, debouncedSearchOrdem, filtroStatusTracking, filtroOperacao, filters, motoristas]);
 
-  const notasDisponiveisFiltered = (() => {
+  const notasDisponiveisFiltered = useMemo(() => {
     // Se houver busca, buscar em TODAS as notas fiscais (sem filtro de status)
     if (debouncedSearchNota) {
       const searchTrimmed = debouncedSearchNota.trim();
       const searchLower = searchTrimmed.toLowerCase();
       const searchClean = searchTrimmed.replace(/\s+/g, '');
-      
+
       return notasFiscais.filter(nota => {
         // Busca no número da nota (com e sem zeros à esquerda)
         const numeroNota = nota.numero_nota?.toString() || "";
         const numeroNotaLimpo = numeroNota.replace(/^0+/, ''); // Remove zeros à esquerda
-        
+
         // Busca na chave
         const chaveNota = nota.chave_nota_fiscal?.toString().replace(/\s+/g, '') || "";
-        
+
         // Busca em razões sociais
         const emitente = nota.emitente_razao_social?.toLowerCase() || "";
         const destinatario = nota.destinatario_razao_social?.toLowerCase() || "";
-        
+
         return numeroNota.includes(searchClean) ||
                numeroNotaLimpo.includes(searchClean) ||
                chaveNota.includes(searchClean) ||
                chaveNota.toLowerCase().includes(searchLower) ||
                emitente.includes(searchLower) ||
-               destinatario.includes(searchLower);
+               destinatario.includes(searchLover);
       });
     }
 
@@ -516,7 +516,7 @@ export default function Carregamento() {
     }
 
     return notasBase;
-  })();
+  }, [debouncedSearchNota, abaAtiva, notasFiscais, getNotasDisponiveis, volumes, enderecamentos]);
 
   const theme = {
     bg: isDark ? '#0f172a' : '#f9fafb',
