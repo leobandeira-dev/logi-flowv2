@@ -585,7 +585,8 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
       valor_nf: valorNF ? parseFloat(valorNF) : null,
       volumes_nf: qtdVol ? parseInt(qtdVol) : null,
       tipo_embalagem: especie || "",
-      viagem_pedido: xPed || "",
+      viagem: xPed || "",
+      pedido_cliente: xPed || "",
       xml_content: xmlString
     };
   };
@@ -1143,7 +1144,8 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
         implemento1_id: veiculosIds.implemento1 || prev.implemento1_id,
         implemento2_id: veiculosIds.implemento2 || prev.implemento2_id,
         implemento3_id: veiculosIds.implemento3_id || prev.implemento3_id,
-        viagem_pedido: dados.pedido_numero || prev.viagem_pedido,
+        viagem: dados.pedido_numero || prev.viagem,
+        pedido_cliente: dados.pedido_numero || prev.pedido_cliente,
         numero_oc: dados.numero_ordem || prev.numero_oc,
         observacao_carga: dados.observacoes || prev.observacao_carga
       }));
@@ -1876,9 +1878,9 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
                 </>
               )}
 
-              {/* Tipo Operação, Viagem, Solicitado Por */}
+              {/* Tipo Operação, Viagem, Pedido Cliente, Solicitado Por */}
               {camposVis.includes('carga_completa') && (
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-4 gap-4">
                   <div>
                     <Label>Tipo Operação</Label>
                     <Select value={formData.tipo_operacao || "FOB"} onValueChange={(value) => handleChange("tipo_operacao", value)}>
@@ -1891,8 +1893,12 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
                     </Select>
                   </div>
                   <div>
-                    <Label>Viagem/Pedido Nº</Label>
-                    <Input value={formData.viagem_pedido || ""} onChange={(e) => handleChange("viagem_pedido", e.target.value)} placeholder="Número" />
+                    <Label>Viagem</Label>
+                    <Input value={formData.viagem || ""} onChange={(e) => handleChange("viagem", e.target.value)} placeholder="Número da viagem" />
+                  </div>
+                  <div>
+                    <Label>Pedido Cliente</Label>
+                    <Input value={formData.pedido_cliente || ""} onChange={(e) => handleChange("pedido_cliente", e.target.value)} placeholder="Número do pedido" />
                   </div>
                   <div>
                     <Label>Solicitado Por</Label>
@@ -2197,25 +2203,34 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-4 gap-4">
                     <div>
-                      <Label>Viagem/Pedido Nº</Label>
-                      <Input value={formData.viagem_pedido || ""} onChange={(e) => handleChange("viagem_pedido", e.target.value)} placeholder="Número" />
+                      <Label>Viagem</Label>
+                      <Input value={formData.viagem || ""} onChange={(e) => handleChange("viagem", e.target.value)} placeholder="Número da viagem" 
+                        style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }} />
+                    </div>
+                    <div>
+                      <Label>Pedido Cliente</Label>
+                      <Input value={formData.pedido_cliente || ""} onChange={(e) => handleChange("pedido_cliente", e.target.value)} placeholder="Número do pedido" 
+                        style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }} />
                     </div>
                     <div>
                       <Label>Solicitado Por</Label>
-                      <Input value={formData.solicitado_por || ""} onChange={(e) => handleChange("solicitado_por", e.target.value)} placeholder="Nome" />
+                      <Input value={formData.solicitado_por || ""} onChange={(e) => handleChange("solicitado_por", e.target.value)} placeholder="Nome" 
+                        style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }} />
                     </div>
                     <div>
                       <Label>Meio Solicitação</Label>
                       <Select value={formData.meio_solicitacao || ""} onValueChange={(value) => handleChange("meio_solicitacao", value)}>
-                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="email">Email</SelectItem>
-                          <SelectItem value="telefone">Telefone</SelectItem>
-                          <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                          <SelectItem value="sistema">Sistema</SelectItem>
-                          <SelectItem value="presencial">Presencial</SelectItem>
+                        <SelectTrigger style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                          <SelectItem value="email" style={{ color: theme.text }}>Email</SelectItem>
+                          <SelectItem value="telefone" style={{ color: theme.text }}>Telefone</SelectItem>
+                          <SelectItem value="whatsapp" style={{ color: theme.text }}>WhatsApp</SelectItem>
+                          <SelectItem value="sistema" style={{ color: theme.text }}>Sistema</SelectItem>
+                          <SelectItem value="presencial" style={{ color: theme.text }}>Presencial</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
