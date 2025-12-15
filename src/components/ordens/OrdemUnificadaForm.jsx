@@ -17,8 +17,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { 
-  Save, X, CheckCircle, RefreshCw, AlertCircle, Plus, FileUp, 
-  CheckCircle2, Loader2, Edit, Package, Upload, Search,
+  Save, X, CheckCircle, Truck, RefreshCw, AlertCircle, Plus, FileUp, 
+  CheckCircle2, Loader2, Edit, Zap, Package, Upload, Search,
   Check, ChevronsUpDown
 } from "lucide-react";
 import { toast } from "sonner";
@@ -201,7 +201,19 @@ export default function OrdemUnificadaForm({
         const operacao = operacoes.find(op => op.id === editingOrdem.operacao_id);
         
         setMotoristaSearchTerm(motorista?.nome || "");
-        setMotoristaTelefone(motorista?.celular || "");
+        
+        // Recarregar motorista da base para garantir telefone atualizado
+        if (motorista?.id) {
+          try {
+            const motoristaAtualizado = await base44.entities.Motorista.get(motorista.id);
+            setMotoristaTelefone(motoristaAtualizado.celular || "");
+          } catch (error) {
+            console.log("Usando telefone do cache:", error);
+            setMotoristaTelefone(motorista?.celular || "");
+          }
+        } else {
+          setMotoristaTelefone("");
+        }
         setVeiculoSearchTerm({
           cavalo: cavalo?.placa || "", implemento1: impl1?.placa || "",
           implemento2: impl2?.placa || "", implemento3: impl3?.placa || ""
@@ -790,13 +802,23 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
 
   // ======= FUNÇÕES DE MOTORISTA E VEÍCULOS =======
 
-  const handleMotoristaSelect = (motoristaId) => {
+  const handleMotoristaSelect = async (motoristaId) => {
     const motorista = motoristas.find(m => m.id === motoristaId);
     if (motorista) {
       handleChange("motorista_id", motorista.id);
       setMotoristaSearchTerm(motorista.nome);
-      setMotoristaTelefone(motorista.celular || "");
-      setItemsEncontrados(prev => ({ ...prev, motorista }));
+      
+      // Recarregar motorista da base para garantir dados atualizados
+      try {
+        const motoristaAtualizado = await base44.entities.Motorista.get(motorista.id);
+        setMotoristaTelefone(motoristaAtualizado.celular || "");
+        setItemsEncontrados(prev => ({ ...prev, motorista: motoristaAtualizado }));
+      } catch (error) {
+        console.log("Usando dados do cache:", error);
+        setMotoristaTelefone(motorista.celular || "");
+        setItemsEncontrados(prev => ({ ...prev, motorista }));
+      }
+      
       setOpenMotoristaCombo(false);
 
       const cavalo = veiculos.find(v => v.id === motorista.cavalo_id);
@@ -883,12 +905,16 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
       await base44.entities.Motorista.update(formData.motorista_id, {
         celular: motoristaTelefone
       });
+      
+      // Aguardar persistência
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
       setEditandoTelefone(false);
       setItemsEncontrados(prev => ({
         ...prev,
         motorista: { ...prev.motorista, celular: motoristaTelefone }
       }));
-      toast.success("Telefone atualizado!");
+      toast.success("✓ Telefone salvo com sucesso!");
     } catch (error) {
       console.error("Erro ao atualizar telefone:", error);
       toast.error("Erro ao atualizar telefone");
@@ -1228,17 +1254,28 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
         if (!hasPriceMethod) camposFaltando.push("Valor/Tonelada ou Frete Viagem");
       }
       
+      // Toast mais visível
       toast.error(
         <div>
-          <p className="font-semibold mb-2">Campos obrigatórios faltando:</p>
-          <ul className="list-disc list-inside text-sm">
+          <p className="font-bold text-base mb-3">⚠️ Preencha os campos obrigatórios:</p>
+          <ul className="list-none space-y-1">
             {camposFaltando.map((campo, idx) => (
-              <li key={idx}>{campo}</li>
+              <li key={idx} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 bg-red-600 rounded-full"></span>
+                <span className="font-medium">{campo}</span>
+              </li>
             ))}
           </ul>
         </div>,
-        { duration: 6000 }
+        { duration: 8000, className: 'text-base' }
       );
+      
+      // Scroll para o topo do modal
+      const modalContent = document.querySelector('[role="dialog"] .overflow-y-auto');
+      if (modalContent) {
+        modalContent.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      
       return;
     }
 
@@ -2236,27 +2273,36 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
                                 }}
                                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDark ? '#334155' : '#f3f4f6'}
                                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.cardBg}
-                                onClick={() => {
-                                  handleChange("motorista_id", m.id);
-                                  setMotoristaBusca("");
-                                  
-                                  // Auto-preencher veículos do motorista
-                                  if (m.cavalo_id) {
-                                    handleChange("cavalo_id", m.cavalo_id);
-                                    setCavaloBusca("");
-                                  }
-                                  if (m.implemento1_id) {
-                                    handleChange("implemento1_id", m.implemento1_id);
-                                    setImplemento1Busca("");
-                                  }
-                                  if (m.implemento2_id) {
-                                    handleChange("implemento2_id", m.implemento2_id);
-                                    setImplemento2Busca("");
-                                  }
-                                  if (m.implemento3_id) {
-                                    handleChange("implemento3_id", m.implemento3_id);
-                                    setImplemento3Busca("");
-                                  }
+                                onClick={async () => {
+                                handleChange("motorista_id", m.id);
+                                setMotoristaBusca("");
+
+                                // Recarregar motorista para garantir telefone atualizado
+                                try {
+                                 const motoristaAtualizado = await base44.entities.Motorista.get(m.id);
+                                 setMotoristaTelefone(motoristaAtualizado.celular || "");
+                                } catch (error) {
+                                 console.log("Usando telefone do cache:", error);
+                                 setMotoristaTelefone(m.celular || "");
+                                }
+
+                                // Auto-preencher veículos do motorista
+                                if (m.cavalo_id) {
+                                 handleChange("cavalo_id", m.cavalo_id);
+                                 setCavaloBusca("");
+                                }
+                                if (m.implemento1_id) {
+                                 handleChange("implemento1_id", m.implemento1_id);
+                                 setImplemento1Busca("");
+                                }
+                                if (m.implemento2_id) {
+                                 handleChange("implemento2_id", m.implemento2_id);
+                                 setImplemento2Busca("");
+                                }
+                                if (m.implemento3_id) {
+                                 handleChange("implemento3_id", m.implemento3_id);
+                                 setImplemento3Busca("");
+                                }
                                 }}
                               >
                                 <p className="font-medium" style={{ color: theme.text }}>{m.nome}</p>
