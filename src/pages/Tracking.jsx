@@ -555,14 +555,18 @@ export default function Tracking() {
     if (filters.origem && !ordem.origem?.toLowerCase().includes(filters.origem.toLowerCase())) return false;
     if (filters.destino && !ordem.destino?.toLowerCase().includes(filters.destino.toLowerCase())) return false;
 
-    if (filters.dataInicio && ordem.data_solicitacao) {
-      if (new Date(ordem.data_solicitacao) < new Date(filters.dataInicio)) return false;
+    if (filters.dataInicio) {
+      const dataOrdem = ordem.data_solicitacao || ordem.created_date;
+      if (dataOrdem && new Date(dataOrdem) < new Date(filters.dataInicio)) return false;
     }
 
-    if (filters.dataFim && ordem.data_solicitacao) {
-      const dataFim = new Date(filters.dataFim);
-      dataFim.setHours(23, 59, 59, 999);
-      if (new Date(ordem.data_solicitacao) > dataFim) return false;
+    if (filters.dataFim) {
+      const dataOrdem = ordem.data_solicitacao || ordem.created_date;
+      if (dataOrdem) {
+        const dataFim = new Date(filters.dataFim);
+        dataFim.setHours(23, 59, 59, 999);
+        if (new Date(dataOrdem) > dataFim) return false;
+      }
     }
 
     if (viewMode !== "all") {
