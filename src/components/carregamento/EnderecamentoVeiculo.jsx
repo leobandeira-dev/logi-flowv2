@@ -182,7 +182,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 1024);
+      // Verificar se é dispositivo touch OU se largura é menor que 1024
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth <= 1024;
+      setIsMobile(isTouchDevice || isSmallScreen);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
