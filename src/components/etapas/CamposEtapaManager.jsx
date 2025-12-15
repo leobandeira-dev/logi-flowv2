@@ -393,7 +393,8 @@ export default function CamposEtapaManager({ etapaId, etapaNome }) {
                     <SelectValue placeholder="Selecione o campo da ordem" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="viagem_pedido">Viagem/Pedido Nº</SelectItem>
+                    <SelectItem value="viagem">Viagem</SelectItem>
+                    <SelectItem value="pedido_cliente">Pedido Cliente</SelectItem>
                     <SelectItem value="asn">ASN</SelectItem>
                     <SelectItem value="numero_cte">CT-e</SelectItem>
                     <SelectItem value="numero_oc">Nº OC</SelectItem>
