@@ -29,6 +29,7 @@ import {
   FileText
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 const tiposCampo = [
   { value: "texto", label: "Texto", icon: Type },
@@ -46,6 +47,7 @@ export default function CamposEtapaManager({ etapaId, etapaNome }) {
   const [showForm, setShowForm] = useState(false);
   const [editingCampo, setEditingCampo] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [reordering, setReordering] = useState(false);
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -150,6 +152,37 @@ export default function CamposEtapaManager({ etapaId, etapaNome }) {
     return tipoConfig ? tipoConfig.icon : Type;
   };
 
+  const handleDragEnd = async (result) => {
+    if (!result.destination) return;
+
+    const { source, destination } = result;
+    
+    if (source.index === destination.index) return;
+
+    setReordering(true);
+
+    try {
+      const newCampos = Array.from(campos);
+      const [removed] = newCampos.splice(source.index, 1);
+      newCampos.splice(destination.index, 0, removed);
+
+      setCampos(newCampos);
+
+      const updatePromises = newCampos.map((campo, index) => 
+        base44.entities.EtapaCampo.update(campo.id, { ordem: index + 1 })
+      );
+
+      await Promise.all(updatePromises);
+      
+      await loadCampos();
+    } catch (err) {
+      console.error("Erro ao reordenar campos:", err);
+      await loadCampos();
+    } finally {
+      setReordering(false);
+    }
+  };
+
   return (
     <Card className="mt-4">
       <CardHeader>
@@ -182,52 +215,82 @@ export default function CamposEtapaManager({ etapaId, etapaNome }) {
             <p className="text-xs mt-1">Campos personalizados aparecerão aqui</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {campos.map((campo) => {
-              const Icon = getTipoIcon(campo.tipo);
-              return (
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="campos-list">
+              {(provided, snapshot) => (
                 <div
-                  key={campo.id}
-                  className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className={`space-y-2 ${snapshot.isDraggingOver ? 'bg-blue-50 rounded-lg p-2' : ''}`}
                 >
-                  <GripVertical className="w-4 h-4 text-gray-400 cursor-move" />
-                  <Icon className="w-4 h-4 text-blue-600" />
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm">{campo.nome}</p>
-                      {campo.obrigatorio && (
-                        <Badge variant="destructive" className="text-xs px-1.5 py-0">
-                          Obrigatório
-                        </Badge>
-                      )}
-                    </div>
-                    {campo.descricao && (
-                      <p className="text-xs text-gray-500 mt-1">{campo.descricao}</p>
-                    )}
-                  </div>
+                  {campos.map((campo, index) => {
+                    const Icon = getTipoIcon(campo.tipo);
+                    return (
+                      <Draggable
+                        key={campo.id}
+                        draggableId={campo.id}
+                        index={index}
+                        isDragDisabled={reordering}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${
+                              snapshot.isDragging 
+                                ? 'shadow-lg bg-white ring-2 ring-blue-500' 
+                                : 'bg-white hover:bg-gray-50'
+                            }`}
+                          >
+                            <div
+                              {...provided.dragHandleProps}
+                              className="cursor-grab active:cursor-grabbing hover:bg-gray-100 p-1 rounded transition-colors"
+                            >
+                              <GripVertical className="w-4 h-4 text-gray-400" />
+                            </div>
+                            <Icon className="w-4 h-4 text-blue-600" />
+                            
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-sm">{campo.nome}</p>
+                                {campo.obrigatorio && (
+                                  <Badge variant="destructive" className="text-xs px-1.5 py-0">
+                                    Obrigatório
+                                  </Badge>
+                                )}
+                              </div>
+                              {campo.descricao && (
+                                <p className="text-xs text-gray-500 mt-1">{campo.descricao}</p>
+                              )}
+                            </div>
 
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(campo)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(campo.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(campo)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(campo.id)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+                  {provided.placeholder}
                 </div>
-              );
-            })}
-          </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         )}
       </CardContent>
 
