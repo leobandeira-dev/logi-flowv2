@@ -147,6 +147,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const [volumesSelecionados, setVolumesSelecionados] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filtroTipo, setFiltroTipo] = useState("volume");
+  const [processandoBusca, setProcessandoBusca] = useState(false);
   const [saving, setSaving] = useState(false);
   const [tipoImpressao, setTipoImpressao] = useState("resumido");
   const [searchChaveNF, setSearchChaveNF] = useState("");
@@ -716,78 +717,146 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     }
   };
 
-  const handleScanQRCode = async (codigo) => {
-    setProcessandoQR(true);
+  const handleBuscarVolumeOuEtiqueta = async (termo) => {
+    if (!termo.trim()) return;
+
+    setProcessandoBusca(true);
+    const termoUpper = termo.trim().toUpperCase();
+
     try {
-      // 1. Tentar encontrar o volume pelo QR Code (identificador_unico)
-      const volumesEncontrados = await base44.entities.Volume.filter({ identificador_unico: codigo });
+      // 1. Tentar encontrar como volume
+      const volumesEncontrados = await base44.entities.Volume.filter({ identificador_unico: termoUpper });
       
-      if (volumesEncontrados.length === 0) {
-        toast.error(`Volume não encontrado: ${codigo}`);
-        setProcessandoQR(false);
+      if (volumesEncontrados.length > 0) {
+        const volumeEncontrado = volumesEncontrados[0];
+
+        // Verificar se já está endereçado
+        const jaEnderecado = enderecamentos.some(e => e.volume_id === volumeEncontrado.id);
+        if (jaEnderecado) {
+          toast.warning(`Volume ${termoUpper} já foi endereçado`);
+          setSearchTerm("");
+          setProcessandoBusca(false);
+          return;
+        }
+
+        // Buscar a nota fiscal do volume
+        const notaDoVolume = await base44.entities.NotaFiscal.get(volumeEncontrado.nota_fiscal_id);
+        const notaJaVinculada = notasFiscaisLocal.some(nf => nf.id === notaDoVolume.id);
+
+        if (!notaJaVinculada) {
+          // Vincular a nota à ordem
+          await base44.entities.NotaFiscal.update(notaDoVolume.id, {
+            ordem_id: ordem.id,
+            status_nf: "aguardando_expedicao"
+          });
+
+          const notasIds = [...(ordem.notas_fiscais_ids || []), notaDoVolume.id];
+          await base44.entities.OrdemDeCarregamento.update(ordem.id, {
+            notas_fiscais_ids: notasIds
+          });
+
+          const volumesDaNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaDoVolume.id });
+
+          setNotasFiscaisLocal([...notasFiscaisLocal, notaDoVolume]);
+          setVolumesLocal([...volumesLocal, ...volumesDaNota]);
+          setNotasOrigem({ ...notasOrigem, [notaDoVolume.id]: "Auto-vinculada" });
+
+          localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
+            notas: [...notasFiscaisLocal, notaDoVolume],
+            volumes: [...volumesLocal, ...volumesDaNota],
+            timestamp: new Date().toISOString()
+          }));
+
+          toast.success(`NF ${notaDoVolume.numero_nota} vinculada! ${volumesDaNota.length} volumes carregados.`);
+        }
+
+        // Selecionar apenas este volume
+        setVolumesSelecionados([volumeEncontrado.id]);
+        setSearchTerm("");
+        toast.success(`Volume ${termoUpper} selecionado!`);
+        setProcessandoBusca(false);
         return;
       }
 
-      const volumeEncontrado = volumesEncontrados[0];
-
-      // 2. Verificar se o volume já está endereçado
-      const jaEnderecado = enderecamentos.some(e => e.volume_id === volumeEncontrado.id);
-      if (jaEnderecado) {
-        toast.warning(`Volume ${codigo} já foi endereçado`);
-        setProcessandoQR(false);
-        return;
-      }
-
-      // 3. Buscar a nota fiscal do volume
-      const notaDoVolume = await base44.entities.NotaFiscal.get(volumeEncontrado.nota_fiscal_id);
-
-      // 4. Verificar se a nota já está vinculada à ordem atual
-      const notaJaVinculada = notasFiscaisLocal.some(nf => nf.id === notaDoVolume.id);
-
-      if (!notaJaVinculada) {
-        // 4a. Vincular a nota à ordem
-        await base44.entities.NotaFiscal.update(notaDoVolume.id, {
-          ordem_id: ordem.id,
-          status_nf: "aguardando_expedicao"
-        });
-
-        // 4b. Atualizar ordem com nova nota
-        const notasIds = [...(ordem.notas_fiscais_ids || []), notaDoVolume.id];
-        await base44.entities.OrdemDeCarregamento.update(ordem.id, {
-          notas_fiscais_ids: notasIds
-        });
-
-        // 4c. Buscar todos os volumes da nota
-        const volumesDaNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaDoVolume.id });
-
-        // 4d. Atualizar estados locais
-        setNotasFiscaisLocal([...notasFiscaisLocal, notaDoVolume]);
-        setVolumesLocal([...volumesLocal, ...volumesDaNota]);
-        setNotasOrigem({ ...notasOrigem, [notaDoVolume.id]: "QR Code" });
-
-        // Salvar rascunho
-        localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-          notas: [...notasFiscaisLocal, notaDoVolume],
-          volumes: [...volumesLocal, ...volumesDaNota],
-          timestamp: new Date().toISOString()
-        }));
-
-        toast.success(`NF ${notaDoVolume.numero_nota} vinculada via QR Code! ${volumesDaNota.length} volumes carregados.`);
-      }
-
-      // 5. Selecionar o volume escaneado
-      setVolumesSelecionados([volumeEncontrado.id]);
-      setFiltroTipo("volume");
-      setAbaAtiva("volumes");
+      // 2. Se não encontrou como volume, tentar como etiqueta mãe
+      const etiquetasEncontradas = await base44.entities.EtiquetaMae.filter({ codigo: termoUpper });
       
-      toast.success(`Volume ${codigo} selecionado!`);
+      if (etiquetasEncontradas.length > 0) {
+        const etiquetaMae = etiquetasEncontradas[0];
+        
+        if (etiquetaMae.volumes_ids && etiquetaMae.volumes_ids.length > 0) {
+          // Buscar volumes da etiqueta que ainda não foram endereçados
+          const volumesDaEtiqueta = volumesLocal.filter(v => etiquetaMae.volumes_ids.includes(v.id));
+          const idsEnderecados = enderecamentos.map(e => e.volume_id);
+          const volumesNaoEnderecados = volumesDaEtiqueta.filter(v => !idsEnderecados.includes(v.id));
+          
+          if (volumesNaoEnderecados.length === 0) {
+            toast.warning(`Todos os volumes da etiqueta ${etiquetaMae.codigo} já foram endereçados`);
+            setSearchTerm("");
+            setProcessandoBusca(false);
+            return;
+          }
+
+          // Para cada volume, verificar se a nota está vinculada
+          for (const volume of volumesNaoEnderecados) {
+            const notaDoVolume = await base44.entities.NotaFiscal.get(volume.nota_fiscal_id);
+            const notaJaVinculada = notasFiscaisLocal.some(nf => nf.id === notaDoVolume.id);
+
+            if (!notaJaVinculada) {
+              // Vincular nota
+              await base44.entities.NotaFiscal.update(notaDoVolume.id, {
+                ordem_id: ordem.id,
+                status_nf: "aguardando_expedicao"
+              });
+
+              const notasIds = [...(ordem.notas_fiscais_ids || []), notaDoVolume.id];
+              await base44.entities.OrdemDeCarregamento.update(ordem.id, {
+                notas_fiscais_ids: notasIds
+              });
+
+              const volumesDaNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaDoVolume.id });
+
+              setNotasFiscaisLocal(prev => [...prev, notaDoVolume]);
+              setVolumesLocal(prev => [...prev, ...volumesDaNota]);
+              setNotasOrigem(prev => ({ ...prev, [notaDoVolume.id]: "Auto-vinculada" }));
+
+              localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
+                notas: [...notasFiscaisLocal, notaDoVolume],
+                volumes: [...volumesLocal, ...volumesDaNota],
+                timestamp: new Date().toISOString()
+              }));
+            }
+          }
+
+          // Selecionar todos os volumes não endereçados da etiqueta
+          setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
+          setSearchTerm("");
+          toast.success(`${volumesNaoEnderecados.length} volumes da etiqueta ${etiquetaMae.codigo} selecionados!`);
+          setProcessandoBusca(false);
+          return;
+        } else {
+          toast.warning(`Etiqueta ${etiquetaMae.codigo} sem volumes vinculados`);
+          setSearchTerm("");
+          setProcessandoBusca(false);
+          return;
+        }
+      }
+
+      // Não encontrou nem como volume nem como etiqueta
+      toast.error(`Não encontrado: ${termoUpper}`);
+      setSearchTerm("");
     } catch (error) {
-      console.error("Erro ao processar QR Code:", error);
-      toast.error("Erro ao processar QR Code do volume");
+      console.error("Erro ao buscar:", error);
+      toast.error("Erro ao processar busca");
+      setSearchTerm("");
     } finally {
-      setProcessandoQR(false);
-      setShowCamera(false);
+      setProcessandoBusca(false);
     }
+  };
+
+  const handleScanQRCode = async (codigo) => {
+    setShowCamera(false);
+    await handleBuscarVolumeOuEtiqueta(codigo);
   };
 
   const handleImprimirListaNotas = async () => {
@@ -1283,22 +1352,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     return html;
   };
 
-  const filteredVolumes = getVolumesNaoEnderecados().filter(volume => {
-    if (!searchTerm) return true;
-    
-    const searchUpper = searchTerm.toUpperCase();
-    const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-    
-    if (filtroTipo === "volume") {
-      return volume.identificador_unico?.toUpperCase().includes(searchUpper);
-    } else if (filtroTipo === "etiqueta_mae") {
-      return volume.identificador_unico?.toUpperCase().startsWith(searchUpper);
-    } else if (filtroTipo === "nota_fiscal") {
-      return nota?.numero_nota?.includes(searchTerm);
-    }
-    
-    return true;
-  });
+  const filteredVolumes = getVolumesNaoEnderecados();
 
   const progressoEnderecamento = volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length > 0
     ? (enderecamentos.length / volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length) * 100
@@ -1499,27 +1553,14 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               {/* Tipo de Filtro */}
               <div>
                 <Tabs value={filtroTipo} onValueChange={setFiltroTipo}>
-                  <TabsList className="grid w-full grid-cols-3 h-9">
-                    <TabsTrigger value="volume" className="text-xs">Volume</TabsTrigger>
-                    <TabsTrigger value="etiqueta_mae" className="text-xs">Etiq. Mãe</TabsTrigger>
-                    <TabsTrigger value="nota_fiscal" className="text-xs">NF</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2 h-9">
+                    <TabsTrigger value="volume" className="text-xs">Volume / Etiq. Mãe</TabsTrigger>
+                    <TabsTrigger value="nota_fiscal" className="text-xs">Nota Fiscal</TabsTrigger>
                   </TabsList>
                 </Tabs>
               </div>
 
-              {/* Botão de Câmera */}
-              <div className="flex justify-center mb-2">
-                <Button
-                  onClick={() => setShowCamera(true)}
-                  className="bg-blue-600 hover:bg-blue-700 w-full"
-                  size="sm"
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Escanear QR Code do Volume
-                </Button>
-              </div>
-
-              {/* Campo de Busca */}
+              {/* Campo de Busca Unificado */}
               {filtroTipo === "nota_fiscal" ? (
                 <div className="p-2 border rounded" style={{ borderColor: theme.cardBorder, backgroundColor: isDark ? '#1e3a8a22' : '#eff6ff' }}>
                   <div className="flex items-center justify-between mb-2">
@@ -1592,20 +1633,46 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                   )}
                 </div>
               ) : (
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
-                  <Input
-                    placeholder={
-                      filtroTipo === "volume" ? "Buscar volume..." :
-                      "Buscar etiqueta mãe..."
-                    }
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-10"
-                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                    autoFocus
-                  />
-                </div>
+                <>
+                  {/* Botão de Câmera */}
+                  <div className="flex justify-center">
+                    <Button
+                      onClick={() => setShowCamera(true)}
+                      className="bg-blue-600 hover:bg-blue-700 w-full"
+                      size="sm"
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      Escanear QR Code
+                    </Button>
+                  </div>
+
+                  {/* Campo de Busca Unificado */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
+                    <Input
+                      placeholder="Digite volume ou etiqueta mãe..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && searchTerm.trim()) {
+                          handleBuscarVolumeOuEtiqueta(searchTerm);
+                        }
+                      }}
+                      className="pl-10 h-10"
+                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                      disabled={processandoBusca}
+                      autoFocus
+                    />
+                    {processandoBusca && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[9px] mt-1 text-center" style={{ color: theme.textMuted }}>
+                    Pressione Enter ou escaneie para buscar
+                  </p>
+                </>
               )}
 
               {volumesSelecionados.length > 0 && (
@@ -1956,58 +2023,15 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             {/* Tipo de Filtro */}
             <div className="mb-3">
               <Tabs value={filtroTipo} onValueChange={setFiltroTipo}>
-                <TabsList className="grid w-full grid-cols-3 h-8">
-                  <TabsTrigger value="volume" className="text-xs">Volume</TabsTrigger>
-                  <TabsTrigger value="etiqueta_mae" className="text-xs">Etiq. Mãe</TabsTrigger>
-                  <TabsTrigger value="nota_fiscal" className="text-xs">NF</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 h-8">
+                  <TabsTrigger value="volume" className="text-xs">Volume / Etiq. Mãe</TabsTrigger>
+                  <TabsTrigger value="nota_fiscal" className="text-xs">Nota Fiscal</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
 
-            {/* Campo de Busca */}
-            {filtroTipo === "etiqueta_mae" ? (
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
-                <Input
-                  placeholder="Digite o código da etiqueta mãe..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={async (e) => {
-                    if (e.key === 'Enter' && searchTerm.trim()) {
-                      try {
-                        const etiquetasEncontradas = await base44.entities.EtiquetaMae.filter({ codigo: searchTerm.trim().toUpperCase() });
-                        
-                        if (etiquetasEncontradas.length > 0) {
-                          const etiquetaMae = etiquetasEncontradas[0];
-                          
-                          if (etiquetaMae.volumes_ids && etiquetaMae.volumes_ids.length > 0) {
-                            const volumesDaEtiqueta = volumesLocal.filter(v => etiquetaMae.volumes_ids.includes(v.id));
-                            const novosVolumes = volumesDaEtiqueta.filter(vol => !volumesSelecionados.includes(vol.id));
-                            
-                            setVolumesSelecionados(prev => [...prev, ...novosVolumes.map(v => v.id)]);
-                            toast.success(`${novosVolumes.length} volumes da etiqueta ${etiquetaMae.codigo} selecionados!`);
-                            setSearchTerm("");
-                          } else {
-                            toast.warning(`Etiqueta ${etiquetaMae.codigo} sem volumes vinculados`);
-                          }
-                        } else {
-                          toast.error("Etiqueta mãe não encontrada");
-                        }
-                      } catch (error) {
-                        console.error("Erro ao buscar etiqueta:", error);
-                        toast.error("Erro ao buscar etiqueta");
-                      }
-                    }
-                  }}
-                  className="pl-10 h-9 text-sm"
-                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                  autoFocus
-                />
-                <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
-                  Digite o código e pressione Enter
-                </p>
-              </div>
-            ) : filtroTipo === "nota_fiscal" ? (
+            {/* Campo de Busca Unificado */}
+            {filtroTipo === "nota_fiscal" ? (
               <div className="mb-3 p-2 border rounded" style={{ borderColor: theme.cardBorder, backgroundColor: isDark ? '#1e3a8a22' : '#eff6ff' }}>
                 <div className="flex items-center justify-between mb-2">
                   <Label className="text-xs font-semibold" style={{ color: theme.text }}>
@@ -2087,22 +2111,33 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     size="sm"
                   >
                     <Camera className="w-4 h-4 mr-2" />
-                    Escanear QR Code do Volume
+                    Escanear QR Code
                   </Button>
                 </div>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
                   <Input
-                    placeholder={
-                      filtroTipo === "volume" ? "Pesquisar por volume..." :
-                      "Pesquisar etiqueta mãe..."
-                    }
+                    placeholder="Digite volume ou etiqueta mãe..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && searchTerm.trim()) {
+                        handleBuscarVolumeOuEtiqueta(searchTerm);
+                      }
+                    }}
                     className="pl-10 h-9 text-sm"
                     style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                    disabled={processandoBusca}
                   />
+                  {processandoBusca && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
                 </div>
+                <p className="text-[9px] mt-1 text-center" style={{ color: theme.textMuted }}>
+                  Pressione Enter ou escaneie para buscar
+                </p>
               </>
             )}
 
