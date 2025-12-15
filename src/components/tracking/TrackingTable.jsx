@@ -208,10 +208,11 @@ export default function TrackingTable({
     };
 
     const handleMouseDown = (e) => {
-      if (e.target.closest('button, a, [role="button"], [role="menuitem"], input, select')) {
+      if (e.target.closest('button, a, [role="button"], [role="menuitem"]')) {
         return;
       }
       
+      e.preventDefault();
       isDraggingRef.current = true;
       startXRef.current = e.pageX - container.offsetLeft;
       scrollLeftRef.current = container.scrollLeft;
@@ -687,14 +688,28 @@ export default function TrackingTable({
         </div>
       </CardHeader>
       <CardContent className="p-0 relative">
+        <style>{`
+          .tracking-table-scroll::-webkit-scrollbar {
+            height: 12px;
+          }
+          .tracking-table-scroll::-webkit-scrollbar-track {
+            background: ${isDark ? '#1e293b' : '#f3f4f6'};
+            border-radius: 6px;
+          }
+          .tracking-table-scroll::-webkit-scrollbar-thumb {
+            background: ${isDark ? '#3b82f6' : '#60a5fa'};
+            border-radius: 6px;
+            border: 2px solid ${isDark ? '#1e293b' : '#f3f4f6'};
+          }
+          .tracking-table-scroll::-webkit-scrollbar-thumb:hover {
+            background: ${isDark ? '#2563eb' : '#3b82f6'};
+          }
+        `}</style>
         <div 
-          className="overflow-x-auto scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-200 dark:scrollbar-track-slate-700 relative select-none" 
+          className="overflow-x-auto relative tracking-table-scroll" 
           ref={tableContainerRef}
           style={{
-            scrollbarWidth: 'thin',
-            scrollbarColor: isDark ? '#3b82f6 #334155' : '#3b82f6 #e5e7eb',
-            cursor: 'grab',
-            scrollBehavior: 'auto'
+            paddingBottom: '4px'
           }}
         >
           {showLeftShadow && (
