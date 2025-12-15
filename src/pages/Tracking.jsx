@@ -97,8 +97,6 @@ export default function Tracking() {
     statusTracking: "",
     origem: "",
     destino: "",
-    dataInicio: primeiroDiaMes.toISOString().split('T')[0],
-    dataFim: ultimoDiaMes.toISOString().split('T')[0],
     frota: "",
     operacoesIds: [],
     modalidadeCarga: "",
@@ -107,7 +105,10 @@ export default function Tracking() {
     diariaDescarga: "",
     tipoRegistro: "",
     tiposOrdemFiltro: ["carregamento"],
-    tipoCampoData: "criacao"
+    tipoCampoData: "criacao",
+    periodoSelecionado: "mes_atual",
+    anoSelecionado: hoje.getFullYear(),
+    mesSelecionado: hoje.getMonth() + 1
   });
   const [showFilters, setShowFilters] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -1269,15 +1270,15 @@ export default function Tracking() {
             <CardContent className="pt-4 pb-4">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="md:col-span-4">
-                  <FiltroDataPeriodo
-                    periodoSelecionado={periodoSelecionado}
-                    onPeriodoChange={setPeriodoSelecionado}
-                    dataInicio={filters.dataInicio}
-                    dataFim={filters.dataFim}
-                    onDataInicioChange={(val) => setFilters({...filters, dataInicio: val})}
-                    onDataFimChange={(val) => setFilters({...filters, dataFim: val})}
+                  <FiltroDataSimples
                     tipoCampoData={filters.tipoCampoData}
                     onTipoCampoDataChange={(val) => setFilters({...filters, tipoCampoData: val})}
+                    periodoSelecionado={filters.periodoSelecionado}
+                    onPeriodoChange={(val) => setFilters({...filters, periodoSelecionado: val})}
+                    anoSelecionado={filters.anoSelecionado}
+                    onAnoChange={(val) => setFilters({...filters, anoSelecionado: val})}
+                    mesSelecionado={filters.mesSelecionado}
+                    onMesChange={(val) => setFilters({...filters, mesSelecionado: val})}
                     isDark={isDark}
                   />
                 </div>
@@ -1482,11 +1483,13 @@ export default function Tracking() {
                   onClick={() => {
                     setFilters({
                       statusTracking: "", origem: "", destino: "",
-                      dataInicio: "", dataFim: "", frota: "", operacoesIds: [], modalidadeCarga: "",
+                      frota: "", operacoesIds: [], modalidadeCarga: "",
                       tiposOrdem: [], diariaCarregamento: "", diariaDescarga: "", tipoRegistro: "",
-                      tiposOrdemFiltro: ["carregamento"], tipoCampoData: "criacao"
+                      tiposOrdemFiltro: ["carregamento"], tipoCampoData: "criacao",
+                      periodoSelecionado: "mes_atual",
+                      anoSelecionado: new Date().getFullYear(),
+                      mesSelecionado: new Date().getMonth() + 1
                     });
-                    setPeriodoSelecionado("");
                   }}
                   className="h-7 text-xs"
                   style={{
