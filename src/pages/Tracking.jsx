@@ -563,7 +563,7 @@ export default function Tracking() {
       } else if (filters.tipoCampoData === "agenda_descarga") {
         dataOrdem = ordem.descarga_agendamento_data;
       } else {
-        dataOrdem = ordem.data_solicitacao || ordem.created_date;
+        dataOrdem = ordem.created_date;
       }
       
       if (!dataOrdem) return false;
@@ -583,7 +583,7 @@ export default function Tracking() {
       } else if (filters.tipoCampoData === "agenda_descarga") {
         dataOrdem = ordem.descarga_agendamento_data;
       } else {
-        dataOrdem = ordem.data_solicitacao || ordem.created_date;
+        dataOrdem = ordem.created_date;
       }
       
       if (!dataOrdem) return false;
