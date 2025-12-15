@@ -24,6 +24,8 @@ import {
   Loader2,
   AlertTriangle
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import CamposEtapaForm from "../etapas/CamposEtapaForm";
 import OcorrenciaFluxoModal from "./OcorrenciaFluxoModal";
 import TratarOcorrenciaModal from "./TratarOcorrenciaModal";
@@ -136,35 +138,57 @@ export default function QuickStatusPopover({
 
     setChanging(true);
     try {
-      // Validações
+      // Validações rigorosas
       if (!ordem?.id || !etapa?.id) {
+        console.error("❌ POPOVER - Dados faltando:", { ordem: !!ordem, etapa: !!etapa });
         throw new Error("Dados da ordem ou etapa estão faltando");
       }
 
       if (!currentUser?.id) {
+        console.error("❌ POPOVER - Usuário não identificado");
         throw new Error("Usuário não identificado");
       }
 
+      if (!newStatus) {
+        console.error("❌ POPOVER - Status não fornecido");
+        throw new Error("Status é obrigatório");
+      }
+
+      // Preparar dados com valores padrão seguros
       const dataToSave = {
         ordem_id: ordem.id,
         etapa_id: etapa.id,
         status: newStatus,
-        observacoes: observacoes || "",
+        observacoes: observacoes?.trim() || "",
         data_inicio: ordemEtapa?.data_inicio || (newStatus === "em_andamento" ? new Date().toISOString() : null),
         data_conclusao: null,
-        responsavel_id: currentUser.id
+        responsavel_id: currentUser.id,
+        departamento_responsavel_id: etapa.departamento_responsavel_id || currentUser.departamento_id || null
       };
 
+      // Log detalhado
+      console.log(`🔄 POPOVER - Salvando status:`, {
+        ordem: ordem.numero_carga || ordem.id.slice(-6),
+        etapa: etapa.nome,
+        statusAnterior: currentStatus,
+        statusNovo: newStatus,
+        temOrdemEtapa: !!ordemEtapa,
+        dados: dataToSave
+      });
+
+      // Executar update ou create com as funções que já têm retry
       if (ordemEtapa) {
         await onStatusUpdate(ordemEtapa.id, dataToSave);
       } else {
         await onCreateOrdemEtapa(dataToSave);
       }
 
+      console.log(`✅ POPOVER - Status salvo com sucesso`);
       setOpen(false);
+
     } catch (error) {
-      console.error("Erro ao atualizar status:", error);
-      alert(`Erro ao atualizar status: ${error.message || 'Tente novamente'}`);
+      console.error("❌ POPOVER - Erro ao atualizar status:", error);
+      // Erro já tratado pelas funções de update/create com toast
     } finally {
       setChanging(false);
     }
@@ -173,89 +197,139 @@ export default function QuickStatusPopover({
   const handleConcluirComCampos = async () => {
     setChanging(true);
     try {
-      // Validações
+      // Validações rigorosas
       if (!ordem?.id || !etapa?.id) {
+        console.error("❌ POPOVER - Dados faltando na conclusão:", { ordem: !!ordem, etapa: !!etapa });
         throw new Error("Dados da ordem ou etapa estão faltando");
       }
 
       if (!currentUser?.id) {
+        console.error("❌ POPOVER - Usuário não identificado");
         throw new Error("Usuário não identificado");
       }
 
-      // Salvar ou atualizar OrdemEtapa
+      console.log(`🏁 POPOVER - Iniciando conclusão de etapa:`, {
+        ordem: ordem.numero_carga || ordem.id.slice(-6),
+        etapa: etapa.nome,
+        temOrdemEtapa: !!ordemEtapa
+      });
+
+      // Preparar dados da OrdemEtapa
       const dataToSave = {
         ordem_id: ordem.id,
         etapa_id: etapa.id,
         status: "concluida",
-        observacoes: observacoes || "",
+        observacoes: observacoes?.trim() || "",
         data_inicio: ordemEtapa?.data_inicio || new Date().toISOString(),
         data_conclusao: new Date().toISOString(),
-        responsavel_id: currentUser.id
+        responsavel_id: currentUser.id,
+        departamento_responsavel_id: etapa.departamento_responsavel_id || currentUser.departamento_id || null
       };
 
       let ordemEtapaId;
+      let ordemEtapaSalva;
 
+      // Salvar OrdemEtapa primeiro
       if (ordemEtapa) {
-        await onStatusUpdate(ordemEtapa.id, dataToSave);
+        console.log(`📝 POPOVER - Atualizando OrdemEtapa existente:`, ordemEtapa.id.slice(-6));
+        ordemEtapaSalva = await onStatusUpdate(ordemEtapa.id, dataToSave);
         ordemEtapaId = ordemEtapa.id;
       } else {
-        // Criar usando a API diretamente e pegar o ID
-        const novaOrdemEtapa = await base44.entities.OrdemEtapa.create(dataToSave);
-        ordemEtapaId = novaOrdemEtapa.id;
-        // Atualizar o estado também chamando a função (sem await porque já salvamos)
-        onCreateOrdemEtapa(dataToSave).catch(err => console.error("Erro ao atualizar estado:", err));
+        console.log(`➕ POPOVER - Criando nova OrdemEtapa`);
+        ordemEtapaSalva = await onCreateOrdemEtapa(dataToSave);
+        ordemEtapaId = ordemEtapaSalva?.id || ordemEtapaSalva;
+        
+        if (!ordemEtapaId) {
+          throw new Error("ID da OrdemEtapa não foi retornado após criação");
+        }
       }
+
+      console.log(`✅ POPOVER - OrdemEtapa salva:`, ordemEtapaId.slice?.(-6) || ordemEtapaId);
+
+      // Aguardar um momento para garantir que o registro foi persistido
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       // Salvar valores dos campos customizados
       const { valores, naAplicavel } = camposValores;
 
-      // Buscar campos para identificar os do tipo data_tracking
-      const camposData = await base44.entities.EtapaCampo.list();
-      const trackingUpdates = {};
+      if (valores && Object.keys(valores).length > 0) {
+        console.log(`💾 POPOVER - Salvando ${Object.keys(valores).length} campos customizados`);
 
-      for (const [campoId, valor] of Object.entries(valores)) {
-        if (valor || naAplicavel[campoId]) {
-          // Verificar se já existe registro
-          const registrosExistentes = await base44.entities.OrdemEtapaCampo.list();
-          const registroExistente = registrosExistentes.find(
-            r => r.ordem_etapa_id === ordemEtapaId && r.campo_id === campoId
-          );
+        // Buscar campos para identificar os do tipo data_tracking
+        const camposData = await base44.entities.EtapaCampo.list();
+        const trackingUpdates = {};
 
-          const dataValor = {
-            ordem_etapa_id: ordemEtapaId,
-            campo_id: campoId,
-            valor: valor || "",
-            nao_aplicavel: naAplicavel[campoId] || false,
-            data_preenchimento: new Date().toISOString(),
-            preenchido_por: currentUser.id
-          };
+        // Buscar registros existentes UMA VEZ
+        const registrosExistentes = await base44.entities.OrdemEtapaCampo.list();
 
-          if (registroExistente) {
-            await base44.entities.OrdemEtapaCampo.update(registroExistente.id, dataValor);
-          } else {
-            await base44.entities.OrdemEtapaCampo.create(dataValor);
-          }
+        const promises = [];
 
-          // Se for campo de data_tracking, adicionar ao tracking
-          const campo = camposData.find(c => c.id === campoId);
-          if (campo && campo.tipo === "data_tracking" && campo.campo_tracking && valor) {
-            // Converter datetime-local para ISO
-            const dataISO = new Date(valor).toISOString();
-            trackingUpdates[campo.campo_tracking] = dataISO;
+        for (const [campoId, valor] of Object.entries(valores)) {
+          if (valor || naAplicavel[campoId]) {
+            const registroExistente = registrosExistentes.find(
+              r => r.ordem_etapa_id === ordemEtapaId && r.campo_id === campoId
+            );
+
+            const dataValor = {
+              ordem_etapa_id: ordemEtapaId,
+              campo_id: campoId,
+              valor: String(valor || ""),
+              nao_aplicavel: naAplicavel[campoId] || false,
+              data_preenchimento: new Date().toISOString(),
+              preenchido_por: currentUser.id
+            };
+
+            if (registroExistente) {
+              promises.push(
+                base44.entities.OrdemEtapaCampo.update(registroExistente.id, dataValor)
+                  .catch(err => {
+                    console.error(`❌ Erro ao atualizar campo ${campoId}:`, err);
+                    throw err;
+                  })
+              );
+            } else {
+              promises.push(
+                base44.entities.OrdemEtapaCampo.create(dataValor)
+                  .catch(err => {
+                    console.error(`❌ Erro ao criar campo ${campoId}:`, err);
+                    throw err;
+                  })
+              );
+            }
+
+            // Se for campo de data_tracking, adicionar ao tracking
+            const campo = camposData.find(c => c.id === campoId);
+            if (campo && campo.tipo === "data_tracking" && campo.campo_tracking && valor) {
+              try {
+                const dataISO = new Date(valor).toISOString();
+                trackingUpdates[campo.campo_tracking] = dataISO;
+              } catch (err) {
+                console.error(`❌ Erro ao converter data tracking:`, err);
+              }
+            }
           }
         }
-      }
 
-      // Atualizar tracking se houver campos de data
-      if (Object.keys(trackingUpdates).length > 0) {
-        await base44.entities.OrdemDeCarregamento.update(ordem.id, trackingUpdates);
+        // Salvar todos os campos em paralelo
+        await Promise.all(promises);
+        console.log(`✅ POPOVER - Campos customizados salvos com sucesso`);
+
+        // Atualizar tracking se houver campos de data
+        if (Object.keys(trackingUpdates).length > 0) {
+          console.log(`📍 POPOVER - Atualizando tracking:`, trackingUpdates);
+          await base44.entities.OrdemDeCarregamento.update(ordem.id, trackingUpdates);
+          console.log(`✅ POPOVER - Tracking atualizado com sucesso`);
+        }
       }
 
       setShowConclusaoDialog(false);
       setOpen(false);
+
+      console.log(`🎉 POPOVER - Conclusão finalizada com sucesso!`);
+
     } catch (error) {
-      console.error("Erro ao concluir etapa:", error);
-      alert(`Erro ao concluir etapa: ${error.message || 'Tente novamente'}`);
+      console.error("❌ POPOVER - Erro ao concluir etapa:", error);
+      // Erro já tratado pelas funções de update/create com toast
     } finally {
       setChanging(false);
     }
