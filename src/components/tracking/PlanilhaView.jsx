@@ -99,6 +99,7 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
   const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
+  const [user, setUser] = useState(null);
   const saveTimeoutRef = useRef({});
   const initialDataRef = useRef({});
   const scrollContainerRef = useRef(null);
@@ -130,49 +131,59 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
   }, []);
 
   useEffect(() => {
-    const savedConfig = localStorage.getItem('planilha_colunas_config');
-    if (savedConfig) {
+    const loadUserConfig = async () => {
       try {
-        const parsedConfig = JSON.parse(savedConfig);
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
         
-        const filteredConfig = parsedConfig.filter(col => col.id !== "data_programacao_descarga");
-        
-        const newColumnIds = ["mdfe_baixado", "saldo_pago", "comprovante_entrega_recebido", "tolerancia", "diaria_carregamento", "diaria_descarga", "modalidade_carga", "prazo_entrega", "entrada_galpao", "agendamento_checklist_data"];
-        const hasNewColumns = newColumnIds.some(colId => !filteredConfig.some(col => col.id === colId));
-        
-        const labelsAtualizados = {
-          "carregamento_agendamento_data": "Agenda Carga",
-          "fim_carregamento": "Fim Carga",
-          "saida_unidade": "Inicio Viagem",
-          "chegada_destino": "Chegada Destino",
-          "descarga_agendamento_data": "Agenda Descarga",
-          "agendamento_checklist_data": "Agenda Checklist",
-          "origem_destino": "Origem - Destino"
-        };
-        
-        const needsLabelUpdate = filteredConfig.some(col => 
-          labelsAtualizados[col.id] && col.label !== labelsAtualizados[col.id]
-        );
+        if (currentUser.planilha_colunas_config) {
+          try {
+            const parsedConfig = JSON.parse(currentUser.planilha_colunas_config);
+            
+            const filteredConfig = parsedConfig.filter(col => col.id !== "data_programacao_descarga");
+            
+            const newColumnIds = ["mdfe_baixado", "saldo_pago", "comprovante_entrega_recebido", "tolerancia", "diaria_carregamento", "diaria_descarga", "modalidade_carga", "prazo_entrega", "entrada_galpao", "agendamento_checklist_data"];
+            const hasNewColumns = newColumnIds.some(colId => !filteredConfig.some(col => col.id === colId));
+            
+            const labelsAtualizados = {
+              "carregamento_agendamento_data": "Agenda Carga",
+              "fim_carregamento": "Fim Carga",
+              "saida_unidade": "Inicio Viagem",
+              "chegada_destino": "Chegada Destino",
+              "descarga_agendamento_data": "Agenda Descarga",
+              "agendamento_checklist_data": "Agenda Checklist",
+              "origem_destino": "Origem - Destino"
+            };
+            
+            const needsLabelUpdate = filteredConfig.some(col => 
+              labelsAtualizados[col.id] && col.label !== labelsAtualizados[col.id]
+            );
 
-        if (hasNewColumns || needsLabelUpdate) {
-          const updatedConfig = COLUNAS_DISPONIVEIS.map(defaultCol => {
-            const existingCol = filteredConfig.find(pCol => pCol.id === defaultCol.id);
-            return existingCol ? { ...defaultCol, enabled: existingCol.enabled } : defaultCol;
-          });
-          const finalConfig = updatedConfig.filter(col => COLUNAS_DISPONIVEIS.some(defaultCol => defaultCol.id === col.id));
-          setColunas(finalConfig);
-          localStorage.setItem('planilha_colunas_config', JSON.stringify(finalConfig));
+            if (hasNewColumns || needsLabelUpdate) {
+              const updatedConfig = COLUNAS_DISPONIVEIS.map(defaultCol => {
+                const existingCol = filteredConfig.find(pCol => pCol.id === defaultCol.id);
+                return existingCol ? { ...defaultCol, enabled: existingCol.enabled } : defaultCol;
+              });
+              const finalConfig = updatedConfig.filter(col => COLUNAS_DISPONIVEIS.some(defaultCol => defaultCol.id === col.id));
+              setColunas(finalConfig);
+              await base44.auth.updateMe({ planilha_colunas_config: JSON.stringify(finalConfig) });
+            } else {
+              setColunas(filteredConfig);
+            }
+          } catch (error) {
+            console.error("Erro ao parsear configuração:", error);
+            setColunas(COLUNAS_DISPONIVEIS);
+          }
         } else {
-          setColunas(filteredConfig);
+          setColunas(COLUNAS_DISPONIVEIS);
         }
       } catch (error) {
-        console.error("Erro ao carregar configuração de colunas:", error);
+        console.error("Erro ao carregar usuário:", error);
         setColunas(COLUNAS_DISPONIVEIS);
-        localStorage.setItem('planilha_colunas_config', JSON.stringify(COLUNAS_DISPONIVEIS));
       }
-    } else {
-      localStorage.setItem('planilha_colunas_config', JSON.stringify(COLUNAS_DISPONIVEIS));
-    }
+    };
+    
+    loadUserConfig();
   }, []);
 
   useEffect(() => {
@@ -671,7 +682,7 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
     }
   };
 
-  const handleDragEnd = (result) => {
+  const handleDragEnd = async (result) => {
     if (!result.destination) return;
 
     const items = Array.from(colunas);
@@ -679,22 +690,46 @@ export default function PlanilhaView({ ordens, motoristas, veiculos, onUpdate, o
     items.splice(result.destination.index, 0, reorderedItem);
 
     setColunas(items);
-    localStorage.setItem('planilha_colunas_config', JSON.stringify(items));
-    toast.success("Ordem das colunas atualizada!");
+    
+    try {
+      await base44.auth.updateMe({
+        planilha_colunas_config: JSON.stringify(items)
+      });
+      toast.success("Ordem das colunas atualizada!");
+    } catch (error) {
+      console.error("Erro ao salvar configuração:", error);
+      toast.error("Erro ao salvar configuração");
+    }
   };
 
-  const toggleColuna = (colunaId) => {
+  const toggleColuna = async (colunaId) => {
     const newColunas = colunas.map(col =>
       col.id === colunaId ? { ...col, enabled: !col.enabled } : col
     );
     setColunas(newColunas);
-    localStorage.setItem('planilha_colunas_config', JSON.stringify(newColunas));
+    
+    try {
+      await base44.auth.updateMe({
+        planilha_colunas_config: JSON.stringify(newColunas)
+      });
+    } catch (error) {
+      console.error("Erro ao salvar configuração:", error);
+      toast.error("Erro ao salvar configuração");
+    }
   };
 
-  const resetColunas = () => {
+  const resetColunas = async () => {
     setColunas(COLUNAS_DISPONIVEIS);
-    localStorage.setItem('planilha_colunas_config', JSON.stringify(COLUNAS_DISPONIVEIS));
-    toast.success("Configuração de colunas restaurada e atualizada!");
+    
+    try {
+      await base44.auth.updateMe({
+        planilha_colunas_config: JSON.stringify(COLUNAS_DISPONIVEIS)
+      });
+      toast.success("Configuração de colunas restaurada e atualizada!");
+    } catch (error) {
+      console.error("Erro ao salvar configuração:", error);
+      toast.error("Erro ao salvar configuração");
+    }
   };
 
   const theme = {

@@ -100,6 +100,7 @@ export default function TrackingTable({
   const [sortDirection, setSortDirection] = useState('asc');
   const [colunas, setColunas] = useState(COLUNAS_TABELA_DISPONIVEIS);
   const [showColumnConfig, setShowColumnConfig] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -118,19 +119,29 @@ export default function TrackingTable({
   }, []);
 
   useEffect(() => {
-    const savedConfig = localStorage.getItem('tabela_colunas_config');
-    if (savedConfig) {
+    const loadUserConfig = async () => {
       try {
-        const parsedConfig = JSON.parse(savedConfig);
-        setColunas(parsedConfig);
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+        
+        if (currentUser.tabela_colunas_config) {
+          try {
+            const parsedConfig = JSON.parse(currentUser.tabela_colunas_config);
+            setColunas(parsedConfig);
+          } catch (error) {
+            console.error("Erro ao parsear configuração:", error);
+            setColunas(COLUNAS_TABELA_DISPONIVEIS);
+          }
+        } else {
+          setColunas(COLUNAS_TABELA_DISPONIVEIS);
+        }
       } catch (error) {
-        console.error("Erro ao carregar configuração de colunas:", error);
+        console.error("Erro ao carregar usuário:", error);
         setColunas(COLUNAS_TABELA_DISPONIVEIS);
-        localStorage.setItem('tabela_colunas_config', JSON.stringify(COLUNAS_TABELA_DISPONIVEIS));
       }
-    } else {
-      localStorage.setItem('tabela_colunas_config', JSON.stringify(COLUNAS_TABELA_DISPONIVEIS));
-    }
+    };
+    
+    loadUserConfig();
   }, []);
 
   // Calcular distâncias para ordens em viagem
@@ -450,15 +461,23 @@ export default function TrackingTable({
     </TableHead>
   );
 
-  const toggleColuna = (colunaId) => {
+  const toggleColuna = async (colunaId) => {
     const newColunas = colunas.map(col =>
       col.id === colunaId ? { ...col, enabled: !col.enabled } : col
     );
     setColunas(newColunas);
-    localStorage.setItem('tabela_colunas_config', JSON.stringify(newColunas));
+    
+    try {
+      await base44.auth.updateMe({
+        tabela_colunas_config: JSON.stringify(newColunas)
+      });
+    } catch (error) {
+      console.error("Erro ao salvar configuração:", error);
+      toast.error("Erro ao salvar configuração");
+    }
   };
 
-  const handleDragEnd = (result) => {
+  const handleDragEnd = async (result) => {
     if (!result.destination) return;
 
     const items = Array.from(colunas);
@@ -466,14 +485,30 @@ export default function TrackingTable({
     items.splice(result.destination.index, 0, reorderedItem);
 
     setColunas(items);
-    localStorage.setItem('tabela_colunas_config', JSON.stringify(items));
-    toast.success("Ordem das colunas atualizada!");
+    
+    try {
+      await base44.auth.updateMe({
+        tabela_colunas_config: JSON.stringify(items)
+      });
+      toast.success("Ordem das colunas atualizada!");
+    } catch (error) {
+      console.error("Erro ao salvar configuração:", error);
+      toast.error("Erro ao salvar configuração");
+    }
   };
 
-  const resetColunas = () => {
+  const resetColunas = async () => {
     setColunas(COLUNAS_TABELA_DISPONIVEIS);
-    localStorage.setItem('tabela_colunas_config', JSON.stringify(COLUNAS_TABELA_DISPONIVEIS));
-    toast.success("Configuração de colunas restaurada!");
+    
+    try {
+      await base44.auth.updateMe({
+        tabela_colunas_config: JSON.stringify(COLUNAS_TABELA_DISPONIVEIS)
+      });
+      toast.success("Configuração de colunas restaurada!");
+    } catch (error) {
+      console.error("Erro ao salvar configuração:", error);
+      toast.error("Erro ao salvar configuração");
+    }
   };
 
   const colunasVisiveis = colunas.filter(col => col.enabled);
