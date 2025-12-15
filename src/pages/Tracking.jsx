@@ -106,7 +106,8 @@ export default function Tracking() {
     diariaCarregamento: "",
     diariaDescarga: "",
     tipoRegistro: "",
-    tiposOrdemFiltro: ["carregamento"]
+    tiposOrdemFiltro: ["carregamento"],
+    tipoCampoData: "criacao"
   });
   const [showFilters, setShowFilters] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -556,12 +557,26 @@ export default function Tracking() {
     if (filters.destino && !ordem.destino?.toLowerCase().includes(filters.destino.toLowerCase())) return false;
 
     if (filters.dataInicio) {
-      const dataOrdem = ordem.data_solicitacao || ordem.created_date;
+      let dataOrdem;
+      if (filters.tipoCampoData === "agenda_carga") {
+        dataOrdem = ordem.carregamento_agendamento_data;
+      } else if (filters.tipoCampoData === "agenda_descarga") {
+        dataOrdem = ordem.descarga_agendamento_data;
+      } else {
+        dataOrdem = ordem.data_solicitacao || ordem.created_date;
+      }
       if (dataOrdem && new Date(dataOrdem) < new Date(filters.dataInicio)) return false;
     }
 
     if (filters.dataFim) {
-      const dataOrdem = ordem.data_solicitacao || ordem.created_date;
+      let dataOrdem;
+      if (filters.tipoCampoData === "agenda_carga") {
+        dataOrdem = ordem.carregamento_agendamento_data;
+      } else if (filters.tipoCampoData === "agenda_descarga") {
+        dataOrdem = ordem.descarga_agendamento_data;
+      } else {
+        dataOrdem = ordem.data_solicitacao || ordem.created_date;
+      }
       if (dataOrdem) {
         const dataFim = new Date(filters.dataFim);
         dataFim.setHours(23, 59, 59, 999);
@@ -1237,6 +1252,8 @@ export default function Tracking() {
                     dataFim={filters.dataFim}
                     onDataInicioChange={(val) => setFilters({...filters, dataInicio: val})}
                     onDataFimChange={(val) => setFilters({...filters, dataFim: val})}
+                    tipoCampoData={filters.tipoCampoData}
+                    onTipoCampoDataChange={(val) => setFilters({...filters, tipoCampoData: val})}
                     isDark={isDark}
                   />
                 </div>
@@ -1443,7 +1460,7 @@ export default function Tracking() {
                       statusTracking: "", origem: "", destino: "",
                       dataInicio: "", dataFim: "", frota: "", operacoesIds: [], modalidadeCarga: "",
                       tiposOrdem: [], diariaCarregamento: "", diariaDescarga: "", tipoRegistro: "",
-                      tiposOrdemFiltro: ["carregamento"]
+                      tiposOrdemFiltro: ["carregamento"], tipoCampoData: "criacao"
                     });
                     setPeriodoSelecionado("");
                   }}

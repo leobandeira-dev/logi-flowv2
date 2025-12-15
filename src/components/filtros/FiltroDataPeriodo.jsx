@@ -10,7 +10,9 @@ export default function FiltroDataPeriodo({
   dataFim,
   onDataInicioChange,
   onDataFimChange,
-  isDark 
+  isDark,
+  tipoCampoData,
+  onTipoCampoDataChange
 }) {
   const getPeriodo = () => {
     const hoje = new Date();
@@ -79,6 +81,26 @@ export default function FiltroDataPeriodo({
 
   return (
     <div className="flex items-end gap-2">
+      <div className="w-36">
+        <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Tipo de Data</Label>
+        <Select value={tipoCampoData || "criacao"} onValueChange={onTipoCampoDataChange}>
+          <SelectTrigger 
+            className="h-8 text-sm"
+            style={{ 
+              backgroundColor: theme.inputBg, 
+              borderColor: theme.inputBorder, 
+              color: theme.text 
+            }}
+          >
+            <SelectValue placeholder="Selecione" />
+          </SelectTrigger>
+          <SelectContent style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}>
+            <SelectItem value="criacao" style={{ color: theme.text }}>Data de Criação</SelectItem>
+            <SelectItem value="agenda_carga" style={{ color: theme.text }}>Agenda Carregamento</SelectItem>
+            <SelectItem value="agenda_descarga" style={{ color: theme.text }}>Agenda Descarga</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <div className="w-36">
         <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Período</Label>
         <Select value={periodoSelecionado} onValueChange={handlePeriodoChange}>
