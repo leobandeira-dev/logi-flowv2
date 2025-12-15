@@ -151,25 +151,32 @@ export default function Carregamento() {
 
   // Memoizar computações pesadas
   const getNotasDisponiveis = useMemo(() => {
-    // Notas recebidas e ainda não vinculadas a nenhuma ordem de saída/carregamento
-    return notasFiscais.filter(nota => {
-      // Verifica se já está vinculada a uma ordem de carregamento/entrega (não recebimento)
-      const jaVinculadaCarregamento = ordens.some(o => 
-        (o.tipo_ordem === "carregamento" || o.tipo_ordem === "entrega" || o.tipo_registro === "ordem_completa") &&
-        o.notas_fiscais_ids?.includes(nota.id)
-      );
-      
-      // Mostra notas recebidas que não foram vinculadas a carregamento
-      return nota.status_nf === "recebida" && !jaVinculadaCarregamento;
+    if (!notasFiscais || !ordens) return [];
+    
+    // Criar um Set de IDs de notas já vinculadas para busca O(1)
+    const notasVinculadasSet = new Set();
+    ordens.forEach(o => {
+      if ((o.tipo_ordem === "carregamento" || o.tipo_ordem === "entrega" || o.tipo_registro === "ordem_completa") && o.notas_fiscais_ids) {
+        o.notas_fiscais_ids.forEach(id => notasVinculadasSet.add(id));
+      }
     });
+    
+    // Filtrar notas recebidas e não vinculadas
+    return notasFiscais.filter(nota => 
+      nota.status_nf === "recebida" && !notasVinculadasSet.has(nota.id)
+    );
   }, [notasFiscais, ordens]);
 
   const getNotasVinculadas = useMemo(() => {
-    if (!ordemSelecionada) return [];
-    return notasFiscais.filter(nota => 
-      ordemSelecionada.notas_fiscais_ids?.includes(nota.id)
-    );
-  }, [ordemSelecionada, notasFiscais]);
+    if (!ordemSelecionada?.notas_fiscais_ids || !notasFiscais) return [];
+    
+    // Criar Map para busca O(1)
+    const notasMap = new Map(notasFiscais.map(n => [n.id, n]));
+    
+    return ordemSelecionada.notas_fiscais_ids
+      .map(id => notasMap.get(id))
+      .filter(Boolean);
+  }, [ordemSelecionada?.notas_fiscais_ids, notasFiscais]);
 
   const handleSelecionarOrdem = (ordem) => {
     setOrdemSelecionada(ordem);

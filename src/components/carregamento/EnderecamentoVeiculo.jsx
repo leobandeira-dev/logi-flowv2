@@ -813,55 +813,52 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
           // Agrupar volumes por nota fiscal
           const notasIdsUnicas = [...new Set(volumesNaoEnderecados.map(v => v.nota_fiscal_id))];
-          const notasNovas = [];
-          const volumesNovos = [...volumesDaEtiquetaDB];
+          const notasParaVincular = notasIdsUnicas.filter(notaId => 
+            !notasFiscaisLocal.some(nf => nf.id === notaId)
+          );
 
-          // Buscar e vincular todas as notas dos volumes
-          for (const notaId of notasIdsUnicas) {
-            const notaJaVinculada = notasFiscaisLocal.some(nf => nf.id === notaId);
+          if (notasParaVincular.length > 0) {
+            // Buscar todas as notas de uma vez
+            const notasDB = await base44.entities.NotaFiscal.filter({
+              id: { $in: notasParaVincular }
+            });
 
-            if (!notaJaVinculada) {
-              const notaDoVolume = await base44.entities.NotaFiscal.get(notaId);
-
-              // Vincular nota à ordem
-              await base44.entities.NotaFiscal.update(notaDoVolume.id, {
+            // Atualizar notas em batch (em background)
+            const updatePromises = notasDB.map(nota =>
+              base44.entities.NotaFiscal.update(nota.id, {
                 ordem_id: ordem.id,
                 status_nf: "aguardando_expedicao"
-              });
+              })
+            );
 
-              const notasIds = [...(ordem.notas_fiscais_ids || []), notaDoVolume.id];
-              await base44.entities.OrdemDeCarregamento.update(ordem.id, {
-                notas_fiscais_ids: notasIds
-              });
+            // Atualizar ordem com todas as notas de uma vez
+            const notasIds = [...(ordem.notas_fiscais_ids || []), ...notasParaVincular];
+            const updateOrdemPromise = base44.entities.OrdemDeCarregamento.update(ordem.id, {
+              notas_fiscais_ids: notasIds
+            });
 
-              notasNovas.push(notaDoVolume);
-            }
-          }
+            // Aguardar todas as operações em paralelo
+            await Promise.all([...updatePromises, updateOrdemPromise]);
 
-          // Atualizar estados locais
-          if (notasNovas.length > 0) {
-            setNotasFiscaisLocal(prev => [...prev, ...notasNovas]);
-            setVolumesLocal(prev => [...prev, ...volumesNovos]);
-            
+            // Atualizar estados de uma vez
             const novasOrigens = {};
-            notasNovas.forEach(n => {
+            notasDB.forEach(n => {
               novasOrigens[n.id] = "Etiqueta Mãe";
             });
+
+            setNotasFiscaisLocal(prev => [...prev, ...notasDB]);
+            setVolumesLocal(prev => [...prev, ...volumesDaEtiquetaDB]);
             setNotasOrigem(prev => ({ ...prev, ...novasOrigens }));
 
-            localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-              notas: [...notasFiscaisLocal, ...notasNovas],
-              volumes: [...volumesLocal, ...volumesNovos],
-              timestamp: new Date().toISOString()
-            }));
-
-            toast.success(`${notasNovas.length} nota(s) vinculada(s) da etiqueta ${etiquetaMae.codigo}`);
+            toast.success(`${notasDB.length} nota(s) vinculada(s)`);
+          } else {
+            setVolumesLocal(prev => [...prev, ...volumesDaEtiquetaDB]);
           }
 
-          // Selecionar todos os volumes não endereçados
+          // Selecionar volumes e finalizar
           setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
           setSearchTerm("");
-          toast.success(`${volumesNaoEnderecados.length} volumes selecionados!`);
+          toast.success(`${volumesNaoEnderecados.length} volumes da etiqueta selecionados!`);
           setProcessandoBusca(false);
           return;
         } else {
