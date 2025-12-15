@@ -208,23 +208,23 @@ export default function TrackingTable({
     };
 
     const handleMouseDown = (e) => {
-      if (e.target.closest('button, a, [role="button"], [role="menuitem"]')) {
+      if (e.target.closest('button, a, input, select, [role="button"], [role="menuitem"]')) {
         return;
       }
       
-      e.preventDefault();
       isDraggingRef.current = true;
       startXRef.current = e.pageX - container.offsetLeft;
       scrollLeftRef.current = container.scrollLeft;
       container.style.cursor = 'grabbing';
       container.style.userSelect = 'none';
+      e.preventDefault();
     };
 
     const handleMouseMove = (e) => {
       if (!isDraggingRef.current) return;
       e.preventDefault();
       const x = e.pageX - container.offsetLeft;
-      const walk = (x - startXRef.current) * 1.5;
+      const walk = (x - startXRef.current) * 2;
       container.scrollLeft = scrollLeftRef.current - walk;
     };
 
@@ -867,14 +867,19 @@ export default function TrackingTable({
                   return (
                     <TableRow
                       key={ordem.id}
-                      className="transition-colors cursor-pointer h-[36px]"
+                      className="transition-colors h-[36px]"
                       style={{
                         backgroundColor: idx % 2 === 0 ? theme.rowBg : theme.rowBgAlt,
-                        borderBottomColor: theme.border
+                        borderBottomColor: theme.border,
+                        cursor: isDraggingRef.current ? 'grabbing' : 'grab'
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.rowHover}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = idx % 2 === 0 ? theme.rowBg : theme.rowBgAlt}
-                      onClick={() => onOrdemClick(ordem)}
+                      onClick={(e) => {
+                        if (!isDraggingRef.current) {
+                          onOrdemClick(ordem);
+                        }
+                      }}
                     >
                       {colunasVisiveis.map((coluna) => {
                         if (coluna.id === "tipo") {
