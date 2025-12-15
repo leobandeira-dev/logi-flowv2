@@ -55,7 +55,7 @@ import PlanilhaView from "../components/tracking/PlanilhaView";
 import FiltrosPredefinidos from "../components/filtros/FiltrosPredefinidos";
 import PaginacaoControles from "../components/filtros/PaginacaoControles";
 import ExpurgoModal from "../components/tracking/ExpurgoModal";
-import FiltroDataPeriodo from "../components/filtros/FiltroDataPeriodo";
+import FiltroDataSimples from "../components/filtros/FiltroDataSimples";
 
 const statusTrackingConfig = {
   aguardando_agendamento: { label: "Aguardando Agendamento", color: "bg-gray-500", icon: Clock },
