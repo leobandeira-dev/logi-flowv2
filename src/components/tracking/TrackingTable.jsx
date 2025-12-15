@@ -213,7 +213,7 @@ export default function TrackingTable({
       }
       
       isDraggingRef.current = true;
-      startXRef.current = e.pageX - container.offsetLeft;
+      startXRef.current = e.pageX;
       scrollLeftRef.current = container.scrollLeft;
       container.style.cursor = 'grabbing';
       container.style.userSelect = 'none';
@@ -223,13 +223,17 @@ export default function TrackingTable({
     const handleMouseMove = (e) => {
       if (!isDraggingRef.current) return;
       e.preventDefault();
-      const x = e.pageX - container.offsetLeft;
+      const x = e.pageX;
       const walk = (x - startXRef.current) * 2;
       container.scrollLeft = scrollLeftRef.current - walk;
     };
 
     const handleMouseUp = () => {
-      isDraggingRef.current = false;
+      if (isDraggingRef.current) {
+        setTimeout(() => {
+          isDraggingRef.current = false;
+        }, 50);
+      }
       container.style.cursor = 'grab';
       container.style.userSelect = '';
     };
@@ -245,8 +249,8 @@ export default function TrackingTable({
     };
 
     container.addEventListener('mousedown', handleMouseDown);
-    container.addEventListener('mousemove', handleMouseMove);
-    container.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
     container.addEventListener('mouseleave', handleMouseLeave);
     container.addEventListener('scroll', handleScroll);
 
@@ -255,8 +259,8 @@ export default function TrackingTable({
 
     return () => {
       container.removeEventListener('mousedown', handleMouseDown);
-      container.removeEventListener('mousemove', handleMouseMove);
-      container.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
       container.removeEventListener('mouseleave', handleMouseLeave);
       container.removeEventListener('scroll', handleScroll);
     };
