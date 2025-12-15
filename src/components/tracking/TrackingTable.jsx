@@ -751,17 +751,18 @@ export default function TrackingTable({
           }
         `}</style>
         
-        {/* Barra de rolagem superior integrada */}
+        {/* Barra de rolagem superior */}
         <div 
           ref={topScrollRef}
-          className="overflow-x-auto top-scroll sticky top-0 z-10"
+          className="overflow-x-auto top-scroll"
           style={{
-            height: '14px',
+            height: '16px',
+            overflowY: 'hidden',
             backgroundColor: theme.headerBg,
             borderBottom: `1px solid ${theme.border}`
           }}
         >
-          <div style={{ width: tableContainerRef.current?.scrollWidth || '5000px', height: '1px' }} />
+          <div style={{ width: '5000px', height: '1px' }} />
         </div>
         
         <div 
