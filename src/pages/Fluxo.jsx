@@ -1159,6 +1159,9 @@ export default function Fluxo() {
                       <div className="w-80 flex-shrink-0 px-1.5">
                         <p className="text-xs font-bold uppercase" style={{ color: theme.textMuted }}>Ordem / Recursos</p>
                       </div>
+                      <div className="w-20 flex-shrink-0 px-0.5">
+                        <p className="text-xs font-bold uppercase" style={{ color: theme.textMuted }}>Pedido Nº</p>
+                      </div>
                       <div className="w-14 flex-shrink-0 px-0.5">
                         <p className="text-xs font-bold uppercase" style={{ color: theme.textMuted }}>Frota</p>
                       </div>
@@ -1324,6 +1327,16 @@ export default function Fluxo() {
                                   </div>
                                 )}
                               </div>
+                            </div>
+
+                            <div className="w-20 flex-shrink-0 px-0.5">
+                              {ordem.viagem_pedido ? (
+                                <span className="text-[10px] font-semibold" style={{ color: theme.text }}>
+                                  {ordem.viagem_pedido}
+                                </span>
+                              ) : (
+                                <span className="text-[10px]" style={{ color: theme.textMuted }}>-</span>
+                              )}
                             </div>
 
                             <div className="w-14 flex-shrink-0 px-0.5">
