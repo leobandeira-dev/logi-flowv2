@@ -16,6 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Package,
   MapPin,
+  User,
+  Truck,
+  Scale,
   Calendar,
   FileText,
   Clock,
@@ -418,8 +421,7 @@ export default function OrdemDetails({
       }
 
       await loadEtapasData();
-      onUpdate();
-      
+
       // Sincronizar com ordens filhas (se houver)
       if (ordem.tipo_ordem !== "ordem_filha") {
         try {
@@ -428,6 +430,9 @@ export default function OrdemDetails({
           console.log("Erro ao sincronizar ordens filhas (ignorando):", error);
         }
       }
+
+      toast.success("✓ Status atualizado!");
+      onUpdate();
     } catch (error) {
       console.error("Erro ao salvar status da etapa:", error);
     } finally {
@@ -458,6 +463,7 @@ export default function OrdemDetails({
 
       setEditingEtapa(null);
       await loadEtapasData();
+      toast.success("✓ Etapa atualizada!");
       onUpdate();
     } catch (error) {
       console.error("Erro ao salvar etapa:", error);
@@ -534,18 +540,18 @@ export default function OrdemDetails({
           // Formato esperado: dd/mm/aaaa hh:mm
           const regex = /(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/;
           const match = localDatetime.match(regex);
-          
+
           if (match) {
             const [, day, month, year, hours, minutes] = match;
             const date = new Date(year, month - 1, day, hours, minutes);
             return date.toISOString();
           }
-          
+
           // Se já for ISO, retornar como está
           if (localDatetime.includes('T') || localDatetime.includes('Z')) {
             return localDatetime;
           }
-          
+
           return new Date(localDatetime).toISOString();
         } catch {
           return null;
@@ -558,18 +564,18 @@ export default function OrdemDetails({
           // Formato esperado: dd/mm/aaaa
           const regex = /(\d{2})\/(\d{2})\/(\d{4})/;
           const match = localDate.match(regex);
-          
+
           if (match) {
             const [, day, month, year] = match;
             const date = new Date(year, month - 1, day);
             return date.toISOString();
           }
-          
+
           // Se já for ISO, retornar como está
           if (localDate.includes('T') || localDate.includes('Z')) {
             return localDate;
           }
-          
+
           return new Date(localDate).toISOString();
         } catch {
           return null;
@@ -578,11 +584,11 @@ export default function OrdemDetails({
 
       // Calcular prazo_entrega automaticamente se não foi preenchido manualmente
       let prazoEntregaCalculado = convertLocalToISO(trackingData.prazo_entrega);
-      
+
       if (!prazoEntregaCalculado && ordem.operacao_id) {
         try {
           const operacao = await base44.entities.Operacao.get(ordem.operacao_id);
-          
+
           if (operacao.prazo_entrega_usa_agenda_descarga) {
             // Usar agenda de descarga como prazo
             prazoEntregaCalculado = convertLocalToISO(trackingData.descarga_agendamento_data);
@@ -590,7 +596,7 @@ export default function OrdemDetails({
             // Calcular prazo = carregamento + dias
             const dataCarregamento = new Date(convertLocalToISO(trackingData.carregamento_agendamento_data));
             let prazo = new Date(dataCarregamento);
-            
+
             if (operacao.prazo_entrega_dias_uteis) {
               // Adicionar dias úteis (pular sábados e domingos)
               let diasAdicionados = 0;
@@ -606,7 +612,7 @@ export default function OrdemDetails({
               // Adicionar dias corridos
               prazo.setDate(prazo.getDate() + operacao.prazo_entrega_dias);
             }
-            
+
             prazoEntregaCalculado = prazo.toISOString();
           }
         } catch (error) {
@@ -634,14 +640,14 @@ export default function OrdemDetails({
       };
 
       await base44.entities.OrdemDeCarregamento.update(ordem.id, dataToSave);
-      
+
       // Sincronizar status das notas fiscais
       try {
         await sincronizarStatusNotas({ ordemId: ordem.id });
       } catch (error) {
         console.log("Erro ao sincronizar status das notas (ignorando):", error);
       }
-      
+
       // Sincronizar com ordens filhas (se houver)
       if (ordem.tipo_ordem !== "ordem_filha") {
         try {
@@ -650,10 +656,12 @@ export default function OrdemDetails({
           console.log("Erro ao sincronizar ordens filhas (ignorando):", error);
         }
       }
-      
+
+      toast.success("✓ Tracking salvo com sucesso!");
       onUpdate();
     } catch (error) {
       console.error("Erro ao salvar tracking:", error);
+      toast.error("Erro ao salvar tracking");
     } finally {
       setSavingTracking(false);
     }
