@@ -1466,24 +1466,27 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                 </span>
                               </div>
                             );
-                          })}
-                        </div>
-                        
-                        {!temVolumes && (
-                          <div className="text-center text-xs" style={{ color: theme.textMuted, opacity: 0.5 }}>
-                            Vazio
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+                            })}
+                            </div>
 
-        {/* Modal de Busca Mobile */}
+                            {!temVolumes && (
+                            <div className="text-center text-xs" style={{ color: theme.textMuted, opacity: 0.5 }}>
+                            {snapshot.isDraggingOver ? "Solte aqui" : "Vazio"}
+                            </div>
+                            )}
+                            {provided.placeholder}
+                            </div>
+                            )}
+                            </Droppable>
+                            );
+                            })}
+                            </div>
+                            ))}
+                            </div>
+                            </div>
+                            </div>
+
+                            {/* Modal de Busca Mobile */}
         <Dialog open={showBuscaModal} onOpenChange={setShowBuscaModal}>
           <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
             <DialogHeader>
