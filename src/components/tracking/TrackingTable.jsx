@@ -312,6 +312,14 @@ export default function TrackingTable({
         aVal = a.descarga_agendamento_data ? new Date(a.descarga_agendamento_data) : new Date(0);
         bVal = b.descarga_agendamento_data ? new Date(b.descarga_agendamento_data) : new Date(0);
         break;
+      case 'chegada_destino':
+        aVal = a.chegada_destino ? new Date(a.chegada_destino) : new Date(0);
+        bVal = b.chegada_destino ? new Date(b.chegada_destino) : new Date(0);
+        break;
+      case 'descarga_realizada':
+        aVal = a.descarga_realizada_data ? new Date(a.descarga_realizada_data) : new Date(0);
+        bVal = b.descarga_realizada_data ? new Date(b.descarga_realizada_data) : new Date(0);
+        break;
       case 'status':
         aVal = a.status_tracking || '';
         bVal = b.status_tracking || '';
@@ -530,7 +538,7 @@ export default function TrackingTable({
             <TableBody>
               {ordensSorted.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={22} className="text-center py-12 text-xs" style={{ color: theme.textMuted }}>
+                  <TableCell colSpan={23} className="text-center py-12 text-xs" style={{ color: theme.textMuted }}>
                     Nenhuma ordem encontrada
                   </TableCell>
                 </TableRow>
