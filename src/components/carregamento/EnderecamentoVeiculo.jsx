@@ -1859,8 +1859,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           <CameraScanner
             open={showCamera}
             onClose={() => setShowCamera(false)}
-            onCapture={handleScanQRCode}
-            titulo="Escanear QR Code do Volume"
+            onScan={handleScanQRCode}
+            isDark={isDark}
           />
         )}
 
@@ -2565,8 +2565,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         <CameraScanner
           open={showCamera}
           onClose={() => setShowCamera(false)}
-          onCapture={handleScanQRCode}
-          titulo="Escanear QR Code do Volume"
+          onScan={handleScanQRCode}
+          isDark={isDark}
         />
       )}
 
