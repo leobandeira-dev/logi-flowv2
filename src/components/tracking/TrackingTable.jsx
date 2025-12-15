@@ -688,11 +688,13 @@ export default function TrackingTable({
       </CardHeader>
       <CardContent className="p-0 relative">
         <div 
-          className="overflow-x-auto scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-200 dark:scrollbar-track-slate-700 relative" 
+          className="overflow-x-auto scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-200 dark:scrollbar-track-slate-700 relative select-none" 
           ref={tableContainerRef}
           style={{
             scrollbarWidth: 'thin',
-            scrollbarColor: isDark ? '#3b82f6 #334155' : '#3b82f6 #e5e7eb'
+            scrollbarColor: isDark ? '#3b82f6 #334155' : '#3b82f6 #e5e7eb',
+            cursor: 'grab',
+            scrollBehavior: 'auto'
           }}
         >
           {showLeftShadow && (
