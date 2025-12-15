@@ -25,7 +25,8 @@ import {
   Paperclip,
   DollarSign,
   ToggleLeft,
-  Calendar
+  Calendar,
+  FileText
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -35,7 +36,8 @@ const tiposCampo = [
   { value: "anexo", label: "Anexo", icon: Paperclip },
   { value: "monetario", label: "R$", icon: DollarSign },
   { value: "booleano", label: "Sim/Não", icon: ToggleLeft },
-  { value: "data_tracking", label: "Data do Tracking", icon: Calendar }
+  { value: "data_tracking", label: "Data do Tracking", icon: Calendar },
+  { value: "campo_ordem", label: "Campo da Ordem", icon: FileText }
 ];
 
 export default function CamposEtapaManager({ etapaId, etapaNome }) {
@@ -51,7 +53,8 @@ export default function CamposEtapaManager({ etapaId, etapaNome }) {
     obrigatorio: false,
     descricao: "",
     opcoes: "",
-    campo_tracking: ""
+    campo_tracking: "",
+    campo_ordem: ""
   });
 
   useEffect(() => {
@@ -113,6 +116,7 @@ export default function CamposEtapaManager({ etapaId, etapaNome }) {
       descricao: campo.descricao || "",
       opcoes: campo.opcoes || "",
       campo_tracking: campo.campo_tracking || "",
+      campo_ordem: campo.campo_ordem || "",
       ordem: campo.ordem
     });
     setShowForm(true);
@@ -136,7 +140,8 @@ export default function CamposEtapaManager({ etapaId, etapaNome }) {
       obrigatorio: false,
       descricao: "",
       opcoes: "",
-      campo_tracking: ""
+      campo_tracking: "",
+      campo_ordem: ""
     });
   };
 
@@ -310,6 +315,45 @@ export default function CamposEtapaManager({ etapaId, etapaNome }) {
                 </Select>
                 <p className="text-xs text-gray-500 mt-1">
                   Este campo irá alimentar diretamente o tracking da ordem
+                </p>
+              </div>
+            )}
+
+            {formData.tipo === "campo_ordem" && (
+              <div>
+                <Label htmlFor="campo_ordem">Campo da Ordem *</Label>
+                <Select
+                  value={formData.campo_ordem}
+                  onValueChange={(value) => handleInputChange("campo_ordem", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o campo da ordem" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="viagem_pedido">Viagem/Pedido Nº</SelectItem>
+                    <SelectItem value="asn">ASN</SelectItem>
+                    <SelectItem value="numero_cte">CT-e</SelectItem>
+                    <SelectItem value="numero_oc">Nº OC</SelectItem>
+                    <SelectItem value="duv">DUV</SelectItem>
+                    <SelectItem value="infolog">Infolog</SelectItem>
+                    <SelectItem value="senha_agendamento">Senha Agendamento</SelectItem>
+                    <SelectItem value="liberacao_pamcary">Liberação Pamcary</SelectItem>
+                    <SelectItem value="ciot">CIOT</SelectItem>
+                    <SelectItem value="notas_fiscais">Notas Fiscais</SelectItem>
+                    <SelectItem value="observacao_carga">Observações da Carga</SelectItem>
+                    <SelectItem value="observacoes_internas">Observações Internas</SelectItem>
+                    <SelectItem value="ocorrencias">Ocorrências</SelectItem>
+                    <SelectItem value="tipo_veiculo">Tipo de Veículo</SelectItem>
+                    <SelectItem value="tipo_carroceria">Tipo de Carroceria</SelectItem>
+                    <SelectItem value="produto">Produto</SelectItem>
+                    <SelectItem value="peso">Peso</SelectItem>
+                    <SelectItem value="volumes">Volumes</SelectItem>
+                    <SelectItem value="embalagem">Embalagem</SelectItem>
+                    <SelectItem value="conteudo">Conteúdo</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Este campo irá atualizar diretamente um campo da ordem de carregamento
                 </p>
               </div>
             )}

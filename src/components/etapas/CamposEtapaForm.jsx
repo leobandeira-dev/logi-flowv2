@@ -59,7 +59,7 @@ export default function CamposEtapaForm({
         });
       }
 
-      // Para campos do tipo data_tracking, buscar valores da ordem
+      // Para campos do tipo data_tracking e campo_ordem, buscar valores da ordem
       if (ordemId) {
         const ordem = await base44.entities.OrdemDeCarregamento.get(ordemId);
         
@@ -75,6 +75,14 @@ export default function CamposEtapaForm({
               const hours = String(date.getHours()).padStart(2, '0');
               const minutes = String(date.getMinutes()).padStart(2, '0');
               valoresMap[campo.id] = `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
+          }
+          
+          // Para campos de ordem, buscar valores diretos da ordem
+          if (campo.tipo === "campo_ordem" && campo.campo_ordem && !valoresMap[campo.id]) {
+            const valorOrdem = ordem[campo.campo_ordem];
+            if (valorOrdem !== undefined && valorOrdem !== null) {
+              valoresMap[campo.id] = String(valorOrdem);
             }
           }
         });
@@ -168,8 +176,9 @@ export default function CamposEtapaForm({
     setValores(prev => ({ ...prev, [campoId]: value }));
     setNaAplicavel(prev => ({ ...prev, [campoId]: false }));
 
-    // Se for campo de data_tracking e temos ordemId, salvar imediatamente no tracking
     const campo = campos.find(c => c.id === campoId);
+    
+    // Se for campo de data_tracking e temos ordemId, salvar imediatamente no tracking
     if (campo && campo.tipo === "data_tracking" && campo.campo_tracking && ordemId) {
       setSavingTracking(true);
       try {
@@ -215,6 +224,26 @@ export default function CamposEtapaForm({
         }
       } catch (error) {
         console.error("Erro ao atualizar tracking:", error);
+      } finally {
+        setSavingTracking(false);
+      }
+    }
+    
+    // Se for campo_ordem e temos ordemId, salvar imediatamente na ordem
+    if (campo && campo.tipo === "campo_ordem" && campo.campo_ordem && ordemId) {
+      setSavingTracking(true);
+      try {
+        const ordemUpdate = {
+          [campo.campo_ordem]: value || null
+        };
+        
+        await base44.entities.OrdemDeCarregamento.update(ordemId, ordemUpdate);
+        
+        if (onTrackingUpdate) {
+          onTrackingUpdate();
+        }
+      } catch (error) {
+        console.error("Erro ao atualizar ordem:", error);
       } finally {
         setSavingTracking(false);
       }
@@ -483,6 +512,25 @@ export default function CamposEtapaForm({
                     </span>
                   )}
                 </p>
+              </div>
+            )}
+
+            {campo.tipo === "campo_ordem" && (
+              <div>
+                <Input
+                  id={campo.id}
+                  type="text"
+                  value={valor}
+                  onChange={(e) => handleValueChange(campo.id, e.target.value)}
+                  placeholder={`Digite ${campo.nome.toLowerCase()}`}
+                  className={error ? "border-red-500" : ""}
+                  disabled={savingTracking}
+                />
+                {savingTracking && (
+                  <p className="text-xs text-blue-600 mt-1 font-semibold">
+                    Sincronizando com a ordem...
+                  </p>
+                )}
               </div>
             )}
           </>
