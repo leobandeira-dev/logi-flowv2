@@ -788,10 +788,21 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         const etiquetaMae = etiquetasEncontradas[0];
         
         if (etiquetaMae.volumes_ids && etiquetaMae.volumes_ids.length > 0) {
-          // Buscar volumes da etiqueta que ainda não foram endereçados
-          const volumesDaEtiqueta = volumesLocal.filter(v => etiquetaMae.volumes_ids.includes(v.id));
+          // Buscar volumes do banco de dados
+          const volumesDaEtiquetaDB = await base44.entities.Volume.filter({ 
+            id: { $in: etiquetaMae.volumes_ids } 
+          });
+
+          if (volumesDaEtiquetaDB.length === 0) {
+            toast.warning(`Etiqueta ${etiquetaMae.codigo} sem volumes no sistema`);
+            setSearchTerm("");
+            setProcessandoBusca(false);
+            return;
+          }
+
+          // Verificar quais volumes ainda não foram endereçados
           const idsEnderecados = enderecamentos.map(e => e.volume_id);
-          const volumesNaoEnderecados = volumesDaEtiqueta.filter(v => !idsEnderecados.includes(v.id));
+          const volumesNaoEnderecados = volumesDaEtiquetaDB.filter(v => !idsEnderecados.includes(v.id));
           
           if (volumesNaoEnderecados.length === 0) {
             toast.warning(`Todos os volumes da etiqueta ${etiquetaMae.codigo} já foram endereçados`);
@@ -800,13 +811,19 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             return;
           }
 
-          // Para cada volume, verificar se a nota está vinculada
-          for (const volume of volumesNaoEnderecados) {
-            const notaDoVolume = await base44.entities.NotaFiscal.get(volume.nota_fiscal_id);
-            const notaJaVinculada = notasFiscaisLocal.some(nf => nf.id === notaDoVolume.id);
+          // Agrupar volumes por nota fiscal
+          const notasIdsUnicas = [...new Set(volumesNaoEnderecados.map(v => v.nota_fiscal_id))];
+          const notasNovas = [];
+          const volumesNovos = [...volumesDaEtiquetaDB];
+
+          // Buscar e vincular todas as notas dos volumes
+          for (const notaId of notasIdsUnicas) {
+            const notaJaVinculada = notasFiscaisLocal.some(nf => nf.id === notaId);
 
             if (!notaJaVinculada) {
-              // Vincular nota
+              const notaDoVolume = await base44.entities.NotaFiscal.get(notaId);
+
+              // Vincular nota à ordem
               await base44.entities.NotaFiscal.update(notaDoVolume.id, {
                 ordem_id: ordem.id,
                 status_nf: "aguardando_expedicao"
@@ -817,24 +834,34 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 notas_fiscais_ids: notasIds
               });
 
-              const volumesDaNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaDoVolume.id });
-
-              setNotasFiscaisLocal(prev => [...prev, notaDoVolume]);
-              setVolumesLocal(prev => [...prev, ...volumesDaNota]);
-              setNotasOrigem(prev => ({ ...prev, [notaDoVolume.id]: "Auto-vinculada" }));
-
-              localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-                notas: [...notasFiscaisLocal, notaDoVolume],
-                volumes: [...volumesLocal, ...volumesDaNota],
-                timestamp: new Date().toISOString()
-              }));
+              notasNovas.push(notaDoVolume);
             }
           }
 
-          // Selecionar todos os volumes não endereçados da etiqueta
+          // Atualizar estados locais
+          if (notasNovas.length > 0) {
+            setNotasFiscaisLocal(prev => [...prev, ...notasNovas]);
+            setVolumesLocal(prev => [...prev, ...volumesNovos]);
+            
+            const novasOrigens = {};
+            notasNovas.forEach(n => {
+              novasOrigens[n.id] = "Etiqueta Mãe";
+            });
+            setNotasOrigem(prev => ({ ...prev, ...novasOrigens }));
+
+            localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
+              notas: [...notasFiscaisLocal, ...notasNovas],
+              volumes: [...volumesLocal, ...volumesNovos],
+              timestamp: new Date().toISOString()
+            }));
+
+            toast.success(`${notasNovas.length} nota(s) vinculada(s) da etiqueta ${etiquetaMae.codigo}`);
+          }
+
+          // Selecionar todos os volumes não endereçados
           setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
           setSearchTerm("");
-          toast.success(`${volumesNaoEnderecados.length} volumes da etiqueta ${etiquetaMae.codigo} selecionados!`);
+          toast.success(`${volumesNaoEnderecados.length} volumes selecionados!`);
           setProcessandoBusca(false);
           return;
         } else {
