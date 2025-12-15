@@ -492,8 +492,9 @@ export default function OrdemDetails({
       }
 
       await loadEtapasData();
+      toast.success("✓ Etapa iniciada!");
       onUpdate();
-    } catch (error) {
+      } catch (error) {
       console.error("Erro ao iniciar etapa:", error);
     } finally {
       setSavingEtapaId(null);
@@ -522,8 +523,9 @@ export default function OrdemDetails({
       }
 
       await loadEtapasData();
+      toast.success("✓ Etapa concluída!");
       onUpdate();
-    } catch (error) {
+      } catch (error) {
       console.error("Erro ao concluir etapa:", error);
     } finally {
       setSavingEtapaId(null);
