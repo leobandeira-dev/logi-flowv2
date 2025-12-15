@@ -48,7 +48,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import TrackingTable from "../components/tracking/TrackingTable";
 import TrackingUpdateModal from "../components/tracking/TrackingUpdateModal";
 import OrdemDetails from "../components/ordens/OrdemDetails";
-import OrdemFormCompleto from "../components/ordens/OrdemFormCompleto";
+import OrdemUnificadaForm from "../components/ordens/OrdemUnificadaForm";
 import ChatCentral from "../components/tracking/ChatCentral";
 import UploadDocumentos from "../components/motorista-app/UploadDocumentos";
 import PlanilhaView from "../components/tracking/PlanilhaView";
@@ -611,7 +611,7 @@ export default function Tracking() {
   const metrics = calcularMetricas(filteredOrdens);
   const insights = calcularInsights();
 
-  const handleSubmitOrdemCompleta = async (data) => {
+  const handleSubmitOrdemCompleta = async (data, notasFiscaisData = []) => {
     try {
       const user = await base44.auth.me();
 
@@ -630,7 +630,77 @@ export default function Tracking() {
 
       await base44.entities.OrdemDeCarregamento.update(editingOrdemCompleta.id, ordemData);
 
+      // Processar e vincular notas fiscais se fornecidas
+      if (notasFiscaisData && notasFiscaisData.length > 0) {
+        const notasIds = [];
+        let pesoTotal = 0;
+        let valorTotalNotas = 0;
+        let volumesTotal = 0;
+
+        for (const nf of notasFiscaisData) {
+          let notaId;
+          
+          if (nf.nota_id_existente) {
+            await base44.entities.NotaFiscal.update(nf.nota_id_existente, {
+              ordem_id: editingOrdemCompleta.id,
+              status_nf: "aguardando_expedicao"
+            });
+            notaId = nf.nota_id_existente;
+          } else {
+            const notaData = {
+              ordem_id: editingOrdemCompleta.id,
+              numero_nota: nf.numero_nota,
+              serie_nota: nf.serie_nota,
+              chave_nota_fiscal: nf.chave_nota_fiscal,
+              data_hora_emissao: nf.data_emissao_nf,
+              natureza_operacao: nf.natureza_operacao,
+              emitente_razao_social: nf.emitente_razao_social,
+              emitente_cnpj: nf.emitente_cnpj,
+              emitente_telefone: nf.emitente_telefone,
+              emitente_uf: nf.emitente_uf,
+              emitente_cidade: nf.emitente_cidade,
+              emitente_bairro: nf.emitente_bairro,
+              emitente_endereco: nf.emitente_endereco,
+              emitente_numero: nf.emitente_numero,
+              emitente_cep: nf.emitente_cep,
+              destinatario_razao_social: nf.destinatario_razao_social,
+              destinatario_cnpj: nf.destinatario_cnpj,
+              destinatario_telefone: nf.destinatario_telefone,
+              destinatario_cidade: nf.destino_cidade,
+              destinatario_uf: nf.destino_uf,
+              destinatario_endereco: nf.destino_endereco,
+              destinatario_numero: nf.destino_numero,
+              destinatario_bairro: nf.destino_bairro,
+              destinatario_cep: nf.destino_cep,
+              valor_nota_fiscal: nf.valor_nf,
+              xml_content: nf.xml_content,
+              peso_total_nf: nf.peso_nf,
+              quantidade_total_volumes_nf: nf.volumes_nf,
+              status_nf: "aguardando_expedicao"
+            };
+
+            const notaCriada = await base44.entities.NotaFiscal.create(notaData);
+            notaId = notaCriada.id;
+          }
+
+          notasIds.push(notaId);
+          pesoTotal += nf.peso_nf || 0;
+          valorTotalNotas += nf.valor_nf || 0;
+          volumesTotal += nf.volumes_nf || 0;
+        }
+
+        await base44.entities.OrdemDeCarregamento.update(editingOrdemCompleta.id, {
+          notas_fiscais_ids: notasIds,
+          peso_total_consolidado: pesoTotal,
+          valor_total_consolidado: valorTotalNotas,
+          volumes_total_consolidado: volumesTotal,
+          peso: pesoTotal,
+          volumes: volumesTotal
+        });
+      }
+
       setEditingOrdemCompleta(null);
+      toast.success("Ordem atualizada com sucesso!");
       loadData();
     } catch (error) {
       console.error("Erro ao salvar ordem:", error);
@@ -1887,7 +1957,7 @@ export default function Tracking() {
       )}
 
       {editingOrdemCompleta && (
-        <OrdemFormCompleto
+        <OrdemUnificadaForm
           open={!!editingOrdemCompleta}
           onClose={() => setEditingOrdemCompleta(null)}
           onSubmit={handleSubmitOrdemCompleta}
