@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Eye, Edit, MoreVertical, MessageSquare, Upload, MapPin, User, Truck, Package, FileText, ChevronDown, Table as TableIcon, CalendarDays, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { Eye, Edit, MoreVertical, MessageSquare, Upload, MapPin, User, Truck, Package, FileText, ChevronDown, Table as TableIcon, CalendarDays, CheckCircle, XCircle, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -50,6 +50,8 @@ export default function TrackingTable({
   const isDraggingRef = useRef(false);
   const startXRef = useRef(0);
   const scrollLeftRef = useRef(0);
+  const [sortField, setSortField] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc');
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -245,6 +247,109 @@ export default function TrackingTable({
     return null;
   };
 
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const ordensSorted = [...ordens].sort((a, b) => {
+    if (!sortField) return 0;
+
+    let aVal, bVal;
+
+    switch (sortField) {
+      case 'numero_carga':
+        aVal = a.numero_carga || '';
+        bVal = b.numero_carga || '';
+        break;
+      case 'data_solicitacao':
+        aVal = a.data_solicitacao ? new Date(a.data_solicitacao) : new Date(0);
+        bVal = b.data_solicitacao ? new Date(b.data_solicitacao) : new Date(0);
+        break;
+      case 'operacao':
+        const opA = getOperacao(a.operacao_id);
+        const opB = getOperacao(b.operacao_id);
+        aVal = opA?.nome || '';
+        bVal = opB?.nome || '';
+        break;
+      case 'asn':
+        aVal = a.asn || '';
+        bVal = b.asn || '';
+        break;
+      case 'origem':
+        aVal = a.origem_cidade || a.origem || '';
+        bVal = b.origem_cidade || b.origem || '';
+        break;
+      case 'produto':
+        aVal = a.produto || '';
+        bVal = b.produto || '';
+        break;
+      case 'motorista':
+        const motA = getMotorista(a.motorista_id);
+        const motB = getMotorista(b.motorista_id);
+        aVal = motA?.nome || '';
+        bVal = motB?.nome || '';
+        break;
+      case 'cavalo':
+        const cavA = getVeiculo(a.cavalo_id);
+        const cavB = getVeiculo(b.cavalo_id);
+        aVal = cavA?.placa || '';
+        bVal = cavB?.placa || '';
+        break;
+      case 'carregamento':
+        aVal = a.data_carregamento ? new Date(a.data_carregamento) : new Date(0);
+        bVal = b.data_carregamento ? new Date(b.data_carregamento) : new Date(0);
+        break;
+      case 'descarga':
+        aVal = a.data_programacao_descarga ? new Date(a.data_programacao_descarga) : new Date(0);
+        bVal = b.data_programacao_descarga ? new Date(b.data_programacao_descarga) : new Date(0);
+        break;
+      case 'status':
+        aVal = a.status_tracking || '';
+        bVal = b.status_tracking || '';
+        break;
+      case 'distancia':
+        aVal = distancias[a.id]?.distancia_km || 0;
+        bVal = distancias[b.id]?.distancia_km || 0;
+        break;
+      case 'km_faltam':
+        aVal = a.km_faltam || 0;
+        bVal = b.km_faltam || 0;
+        break;
+      default:
+        return 0;
+    }
+
+    if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const SortableHeader = ({ field, children }) => (
+    <TableHead 
+      className="h-8 text-[10px] font-bold uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors select-none"
+      style={{ color: theme.textMuted }}
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        {sortField === field ? (
+          sortDirection === 'asc' ? (
+            <ArrowUp className="w-3 h-3" />
+          ) : (
+            <ArrowDown className="w-3 h-3" />
+          )
+        ) : (
+          <ArrowUpDown className="w-3 h-3 opacity-30" />
+        )}
+      </div>
+    </TableHead>
+  );
+
   const exportarPDF = async (tipoVisao) => {
     try {
       const ordensParaExportar = ordens.map(ordem => {
@@ -392,21 +497,21 @@ export default function TrackingTable({
             <TableHeader>
               <TableRow className="hover:bg-transparent" style={{ borderBottomColor: theme.border }}>
                 <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Tipo</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Ordem</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Data Solic.</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Operação</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>ASN</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Origem — Destino</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Produto</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Motorista Principal</TableHead>
+                <SortableHeader field="numero_carga">Ordem</SortableHeader>
+                <SortableHeader field="data_solicitacao">Data Solic.</SortableHeader>
+                <SortableHeader field="operacao">Operação</SortableHeader>
+                <SortableHeader field="asn">ASN</SortableHeader>
+                <SortableHeader field="origem">Origem — Destino</SortableHeader>
+                <SortableHeader field="produto">Produto</SortableHeader>
+                <SortableHeader field="motorista">Motorista Principal</SortableHeader>
                 <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Motorista Reserva</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Cavalo</TableHead>
+                <SortableHeader field="cavalo">Cavalo</SortableHeader>
                 <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Implementos</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Carregamento</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Descarga Prog.</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Status</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Distância</TableHead>
-                <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>KM Faltantes</TableHead>
+                <SortableHeader field="carregamento">Carregamento</SortableHeader>
+                <SortableHeader field="descarga">Descarga Prog.</SortableHeader>
+                <SortableHeader field="status">Status</SortableHeader>
+                <SortableHeader field="distancia">Distância</SortableHeader>
+                <SortableHeader field="km_faltam">KM Faltantes</SortableHeader>
                 <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Tempo</TableHead>
                 <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>SLA Carga</TableHead>
                 <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>SLA Entrega</TableHead>
@@ -418,14 +523,14 @@ export default function TrackingTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {ordens.length === 0 ? (
+              {ordensSorted.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={21} className="text-center py-12 text-xs" style={{ color: theme.textMuted }}>
                     Nenhuma ordem encontrada
                   </TableCell>
                 </TableRow>
               ) : (
-                ordens.map((ordem, idx) => {
+                ordensSorted.map((ordem, idx) => {
                   const motoristaPrincipal = getMotorista(ordem.motorista_id);
                   const motoristaReserva = getMotorista(ordem.motorista_reserva_id);
                   const cavalo = getVeiculo(ordem.cavalo_id);
