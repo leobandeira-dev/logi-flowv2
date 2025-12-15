@@ -553,7 +553,7 @@ export default function Carregamento() {
   }
 
   return (
-    <div className="min-h-screen p-6 pb-32 lg:pb-6" style={{ backgroundColor: theme.bg }}>
+    <div className="min-h-screen p-3 lg:p-6 pb-40 lg:pb-6" style={{ backgroundColor: theme.bg }}>
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
@@ -1202,7 +1202,15 @@ export default function Carregamento() {
 
         {/* Barra de Ação Fixa Mobile - Carregamento */}
         {ordemSelecionada && abaAtiva === "carregamento" && (
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t shadow-lg pb-safe" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <div 
+            className="lg:hidden fixed bottom-0 left-0 right-0 border-t shadow-2xl"
+            style={{ 
+              backgroundColor: theme.cardBg, 
+              borderColor: theme.cardBorder,
+              zIndex: 9999,
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+            }}
+          >
             <div className="p-3 space-y-2">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex-1 min-w-0">
@@ -1226,16 +1234,15 @@ export default function Carregamento() {
                 </Button>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {ordemSelecionada.tipo_ordem !== "ordem_filha" && (
-                  <Button
-                    onClick={() => setShowOrdemFilhaForm(true)}
-                    size="sm"
-                    className="bg-purple-600 hover:bg-purple-700 text-xs h-9"
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Criar Ordem Filha
-                  </Button>
-                )}
+                <Button
+                  onClick={handleVincularNotas}
+                  disabled={vincularNotasMutation.isPending || notasSelecionadas.length === 0}
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700 text-xs h-9 col-span-2"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Vincular {notasSelecionadas.length > 0 && `(${notasSelecionadas.length})`}
+                </Button>
                 {ordemSelecionada.notas_fiscais_ids?.length > 0 && (
                   <>
                     <Button
@@ -1244,19 +1251,30 @@ export default function Carregamento() {
                       className="bg-blue-600 hover:bg-blue-700 text-xs h-9"
                     >
                       <Scan className="w-3 h-3 mr-1" />
-                      Abrir Conferência
+                      Conferência
+                    </Button>
+                    <Button
+                      onClick={() => setShowEnderecamento(true)}
+                      size="sm"
+                      className="bg-purple-600 hover:bg-purple-700 text-xs h-9"
+                    >
+                      <Grid3x3 className="w-3 h-3 mr-1" />
+                      Endereçamento
                     </Button>
                   </>
                 )}
-                <Button
-                  onClick={handleVincularNotas}
-                  disabled={vincularNotasMutation.isPending || notasSelecionadas.length === 0}
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700 text-xs h-9"
-                >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Vincular {notasSelecionadas.length > 0 && `(${notasSelecionadas.length})`}
-                </Button>
+                {ordemSelecionada.tipo_ordem !== "ordem_filha" && (
+                  <Button
+                    onClick={() => setShowOrdemFilhaForm(true)}
+                    size="sm"
+                    variant="outline"
+                    className="text-xs h-9 col-span-2"
+                    style={{ borderColor: theme.cardBorder, color: theme.text }}
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Criar Ordem Filha
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -1312,7 +1330,15 @@ export default function Carregamento() {
 
         {/* Barra de Ação Fixa Mobile - Conferência/Endereçamento */}
         {ordemSelecionada && (abaAtiva === "conferencia" || abaAtiva === "enderecamento") && (
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t shadow-lg pb-safe" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <div 
+            className="lg:hidden fixed bottom-0 left-0 right-0 border-t shadow-2xl"
+            style={{ 
+              backgroundColor: theme.cardBg, 
+              borderColor: theme.cardBorder,
+              zIndex: 9999,
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+            }}
+          >
             <div className="p-3 space-y-2">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex-1 min-w-0">
@@ -1333,21 +1359,11 @@ export default function Carregamento() {
                 </Button>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {ordemSelecionada.tipo_ordem !== "ordem_filha" && (
-                  <Button
-                    onClick={() => setShowOrdemFilhaForm(true)}
-                    size="sm"
-                    className="bg-purple-600 hover:bg-purple-700 text-xs h-9"
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Criar Ordem Filha
-                  </Button>
-                )}
                 {abaAtiva === "conferencia" && (
                   <Button
                     onClick={() => setShowConferencia(true)}
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-xs h-9"
+                    className="bg-blue-600 hover:bg-blue-700 text-xs h-9 col-span-2"
                   >
                     <Scan className="w-3 h-3 mr-1" />
                     Abrir Conferência
@@ -1357,10 +1373,22 @@ export default function Carregamento() {
                   <Button
                     onClick={() => setShowEnderecamento(true)}
                     size="sm"
-                    className="bg-purple-600 hover:bg-purple-700 text-xs h-9"
+                    className="bg-purple-600 hover:bg-purple-700 text-xs h-9 col-span-2"
                   >
                     <Grid3x3 className="w-3 h-3 mr-1" />
                     Abrir Endereçamento
+                  </Button>
+                )}
+                {ordemSelecionada.tipo_ordem !== "ordem_filha" && (
+                  <Button
+                    onClick={() => setShowOrdemFilhaForm(true)}
+                    size="sm"
+                    variant="outline"
+                    className="text-xs h-9 col-span-2"
+                    style={{ borderColor: theme.cardBorder, color: theme.text }}
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Criar Ordem Filha
                   </Button>
                 )}
               </div>
