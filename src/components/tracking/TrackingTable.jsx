@@ -104,6 +104,7 @@ export default function TrackingTable({
   const [user, setUser] = useState(null);
   const [showLeftShadow, setShowLeftShadow] = useState(false);
   const [showRightShadow, setShowRightShadow] = useState(true);
+  const topScrollRef = useRef(null);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -258,6 +259,16 @@ export default function TrackingTable({
 
     const handleScroll = () => {
       updateShadows();
+      // Sincronizar barra de rolagem superior
+      if (topScrollRef.current) {
+        topScrollRef.current.scrollLeft = container.scrollLeft;
+      }
+    };
+
+    const handleTopScroll = () => {
+      if (container && topScrollRef.current) {
+        container.scrollLeft = topScrollRef.current.scrollLeft;
+      }
     };
 
     container.addEventListener('mousedown', handleMouseDown);
@@ -265,6 +276,10 @@ export default function TrackingTable({
     document.addEventListener('mouseup', handleMouseUp);
     container.addEventListener('mouseleave', handleMouseLeave);
     container.addEventListener('scroll', handleScroll);
+
+    if (topScrollRef.current) {
+      topScrollRef.current.addEventListener('scroll', handleTopScroll);
+    }
 
     container.style.cursor = 'grab';
     updateShadows();
@@ -275,6 +290,9 @@ export default function TrackingTable({
       document.removeEventListener('mouseup', handleMouseUp);
       container.removeEventListener('mouseleave', handleMouseLeave);
       container.removeEventListener('scroll', handleScroll);
+      if (topScrollRef.current) {
+        topScrollRef.current.removeEventListener('scroll', handleTopScroll);
+      }
     };
   }, []);
 
@@ -720,7 +738,35 @@ export default function TrackingTable({
           .tracking-table-scroll::-webkit-scrollbar-thumb:hover {
             background: ${isDark ? '#2563eb' : '#3b82f6'};
           }
+          .top-scroll::-webkit-scrollbar {
+            height: 12px;
+          }
+          .top-scroll::-webkit-scrollbar-track {
+            background: ${isDark ? '#0f172a' : '#f9fafb'};
+            border-radius: 6px;
+          }
+          .top-scroll::-webkit-scrollbar-thumb {
+            background: ${isDark ? '#3b82f6' : '#60a5fa'};
+            border-radius: 6px;
+            border: 2px solid ${isDark ? '#0f172a' : '#f9fafb'};
+          }
+          .top-scroll::-webkit-scrollbar-thumb:hover {
+            background: ${isDark ? '#2563eb' : '#3b82f6'};
+          }
         `}</style>
+        
+        {/* Barra de rolagem superior */}
+        <div 
+          ref={topScrollRef}
+          className="overflow-x-auto top-scroll"
+          style={{
+            height: '20px',
+            borderBottom: `1px solid ${theme.border}`,
+            backgroundColor: theme.headerBg
+          }}
+        >
+          <div style={{ width: tableContainerRef.current?.scrollWidth || '100%', height: '1px' }} />
+        </div>
         <div 
           className="overflow-x-auto relative tracking-table-scroll" 
           ref={tableContainerRef}
