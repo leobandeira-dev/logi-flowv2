@@ -2072,6 +2072,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
       <table className="w-full text-xs">
         <thead>
           <tr className="border-b" style={{ borderColor: theme.border, backgroundColor: isDark ? '#0f172a' : '#f9fafb' }}>
+            <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>#</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Ordem</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Pedido</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Cliente</th>
@@ -2088,6 +2089,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             
             return (
               <tr key={idx} className="border-b hover:bg-opacity-50" style={{ borderColor: theme.border }}>
+                <td className="p-2 font-semibold" style={{ color: theme.textMuted }}>{idx + 1}</td>
                 <td className="p-2 font-mono font-bold" style={{ color: theme.text }}>
                   {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
                 </td>
@@ -2114,6 +2116,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
       <table className="w-full text-xs">
         <thead>
           <tr className="border-b" style={{ borderColor: theme.border, backgroundColor: isDark ? '#0f172a' : '#f9fafb' }}>
+            <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>#</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Ordem</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Pedido</th>
             <th className="text-left p-2 font-semibold" style={{ color: theme.text }}>Cliente</th>
@@ -2127,6 +2130,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             
             return (
               <tr key={idx} className="border-b hover:bg-opacity-50" style={{ borderColor: theme.border }}>
+                <td className="p-2 font-semibold" style={{ color: theme.textMuted }}>{idx + 1}</td>
                 <td className="p-2 font-mono font-bold" style={{ color: theme.text }}>
                   {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
                 </td>
@@ -2404,6 +2408,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
             <table className="w-full text-xs border-collapse">
               <thead>
                 <tr style={{ borderBottom: `2px solid ${theme.border}`, backgroundColor: '#f9fafb' }}>
+                  <th className="text-left p-2 font-semibold" style={{ width: '3%' }}>#</th>
                   <th className="text-left p-2 font-semibold" style={{ width: '6%' }}>Ordem</th>
                   <th className="text-left p-2 font-semibold" style={{ width: '6%' }}>Pedido</th>
                   <th className="text-left p-2 font-semibold" style={{ width: '10%' }}>Cliente</th>
@@ -2438,6 +2443,7 @@ function RelatorioSLAModal({ tipo, dados, onClose, isDark }) {
                   
                   return (
                     <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                      <td className="p-2 font-semibold" style={{ color: theme.textMuted }}>{idx + 1}</td>
                       <td className="p-2 font-mono font-bold">{ordem.numero_carga || `#${ordem.id.slice(-6)}`}</td>
                       <td className="p-2">{ordem.viagem_pedido || '-'}</td>
                       <td className="p-2">{ordem.cliente || '-'}</td>
