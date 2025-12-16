@@ -727,7 +727,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         const volumesDisponiveis = volumesNota.filter(v => !idsEnderecados.includes(v.id));
         const volumesJaEnderecados = volumesNota.filter(v => idsEnderecados.includes(v.id));
 
-        // Se está realocando da célula (todos os volumes já estavam endereçados nesta nota)
+        // Se está realocando da célula (draggableId tem sufixo -celula-)
         const estaRealocando = draggableId.includes("-celula-");
         
         if (!estaRealocando && volumesDisponiveis.length === 0) {
@@ -735,43 +735,13 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           return;
         }
 
-        // Se está realocando, precisa remover endereçamentos anteriores dessa nota na célula origem
-        if (estaRealocando) {
-          try {
-            // Extrair célula de origem do draggableId
-            const celulaMatch = draggableId.match(/-celula-(\d+)-(.+)$/);
-            if (celulaMatch) {
-              const linhaOrigem = parseInt(celulaMatch[1]);
-              const colunaOrigem = celulaMatch[2];
-              
-              // Remover endereçamentos da célula origem
-              const endsParaRemover = enderecamentos.filter(e =>
-                e.linha === linhaOrigem && e.coluna === colunaOrigem && e.nota_fiscal_id === notaId
-              );
-
-              for (const end of endsParaRemover) {
-                await base44.entities.EnderecamentoVolume.delete(end.id);
-              }
-
-              const enderecamentosAtualizados = enderecamentos.filter(e =>
-                !(e.linha === linhaOrigem && e.coluna === colunaOrigem && e.nota_fiscal_id === notaId)
-              );
-              setEnderecamentos(enderecamentosAtualizados);
-              
-              toast.info("Realocando volumes...");
-            }
-          } catch (error) {
-            console.error("Erro ao remover endereçamentos anteriores:", error);
-            toast.error("Erro ao realocar");
-            return;
-          }
-        }
-
-        // Abrir modal para seleção de volumes
+        // Guardar informação de realocação para processar no modal
         const notaComDados = {
           ...nota,
           volumesDisponiveis: estaRealocando ? volumesNota : volumesDisponiveis,
-          volumesJaEnderecados: estaRealocando ? [] : volumesJaEnderecados
+          volumesJaEnderecados: estaRealocando ? [] : volumesJaEnderecados,
+          estaRealocando,
+          celulaOrigem: estaRealocando ? draggableId.match(/-celula-(\d+)-(.+)$/) : null
         };
         
         setNotaParaAlocar(notaComDados);
@@ -834,17 +804,36 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   };
 
   const handleConfirmarVolumes = async (volumesIds) => {
-    if (!celulaDestino || volumesIds.length === 0) return;
+    if (!celulaDestino || volumesIds.length === 0 || !notaParaAlocar) return;
 
     try {
       const user = await base44.auth.me();
       const { linha, coluna } = celulaDestino;
 
-      const novosEnderecamentos = [];
+      // Se está realocando, remover endereçamentos anteriores PRIMEIRO
+      if (notaParaAlocar.estaRealocando && notaParaAlocar.celulaOrigem) {
+        const [_, linhaOrigem, colunaOrigem] = notaParaAlocar.celulaOrigem;
+        const linhaOrigemInt = parseInt(linhaOrigem);
+        
+        const endsParaRemover = enderecamentos.filter(e =>
+          e.linha === linhaOrigemInt && 
+          e.coluna === colunaOrigem && 
+          e.nota_fiscal_id === notaParaAlocar.id &&
+          volumesIds.includes(e.volume_id) // Apenas os volumes selecionados
+        );
 
-      for (const volumeId of volumesIds) {
+        // Deletar em paralelo
+        await Promise.all(endsParaRemover.map(end => 
+          base44.entities.EnderecamentoVolume.delete(end.id)
+        ));
+
+        setEnderecamentos(prev => prev.filter(e => !endsParaRemover.some(er => er.id === e.id)));
+      }
+
+      // Criar novos endereçamentos em paralelo
+      const enderecamentosPromises = volumesIds.map(async (volumeId) => {
         const volume = volumesLocal.find(v => v.id === volumeId);
-        if (!volume) continue;
+        if (!volume) return null;
 
         // Endereçar = conferir automaticamente
         await base44.entities.Volume.update(volumeId, {
@@ -863,9 +852,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           enderecado_por: user.id
         };
 
-        const created = await base44.entities.EnderecamentoVolume.create(enderecamento);
-        novosEnderecamentos.push(created);
-      }
+        return await base44.entities.EnderecamentoVolume.create(enderecamento);
+      });
+
+      const novosEnderecamentos = (await Promise.all(enderecamentosPromises)).filter(Boolean);
 
       const enderecamentosAtualizados = [...enderecamentos, ...novosEnderecamentos];
       setEnderecamentos(enderecamentosAtualizados);
@@ -876,7 +866,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         timestamp: new Date().toISOString()
       }));
 
-      toast.success(`${volumesIds.length} volume(s) endereçado(s)!`);
+      toast.success(`${volumesIds.length} volume(s) ${notaParaAlocar.estaRealocando ? 'realocado(s)' : 'endereçado(s)'}!`);
       setShowSelecionarVolumes(false);
       setNotaParaAlocar(null);
       setCelulaDestino(null);
