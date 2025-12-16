@@ -2860,16 +2860,6 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                             <div key={notaId} className="border rounded" style={{ borderColor: theme.cardBorder }}>
                               {/* Header da Nota Fiscal - clicável para expandir/recolher */}
                               <div
-                                onClick={(e) => {
-                                  // Click no checkbox seleciona, click no resto expande/recolhe
-                                  if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
-                                    const key = `sidebar-${notaId}`;
-                                    setNotasExpandidas(prev => ({
-                                      ...prev,
-                                      [key]: prev[key] === false ? true : false
-                                    }));
-                                  }
-                                }}
                                 className="p-2 border-b cursor-pointer hover:bg-opacity-50 transition-all select-none"
                                 style={{ 
                                   borderColor: theme.cardBorder,
@@ -2889,15 +2879,22 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                         setVolumesSelecionados(prev => [...new Set([...prev, ...volumes.map(v => v.id)])]);
                                       }
                                     }}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                    }}
                                   />
-                                  <div className="flex-1 min-w-0 select-none" style={{ 
-                                    userSelect: 'none',
-                                    WebkitUserSelect: 'none',
-                                    MozUserSelect: 'none'
-                                  }}>
+                                  <div 
+                                    className="flex-1 min-w-0 select-none" 
+                                    onClick={() => {
+                                      const key = `sidebar-${notaId}`;
+                                      setNotasExpandidas(prev => ({
+                                        ...prev,
+                                        [key]: prev[key] === false ? true : false
+                                      }));
+                                    }}
+                                    style={{ 
+                                      userSelect: 'none',
+                                      WebkitUserSelect: 'none',
+                                      MozUserSelect: 'none'
+                                    }}
+                                  >
                                     <p className="font-bold text-xs" style={{ color: theme.text }}>
                                       NF {nota?.numero_nota}
                                     </p>
@@ -2905,11 +2902,30 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                       {nota?.emitente_razao_social}
                                     </p>
                                   </div>
-                                  <Badge className={`${volumesFaltam > 0 ? 'bg-orange-600' : 'bg-green-600'} text-white text-[10px] h-5 px-1.5 select-none`}>
+                                  <Badge 
+                                    className={`${volumesFaltam > 0 ? 'bg-orange-600' : 'bg-green-600'} text-white text-[10px] h-5 px-1.5 select-none`}
+                                    onClick={() => {
+                                      const key = `sidebar-${notaId}`;
+                                      setNotasExpandidas(prev => ({
+                                        ...prev,
+                                        [key]: prev[key] === false ? true : false
+                                      }));
+                                    }}
+                                  >
                                     {volumesFaltam}/{todosVolumesNota.length}
                                   </Badge>
                                 </div>
-                                <div className="flex items-center justify-between text-[10px] px-6" style={{ color: theme.textMuted }}>
+                                <div 
+                                  className="flex items-center justify-between text-[10px] px-6" 
+                                  style={{ color: theme.textMuted }}
+                                  onClick={() => {
+                                    const key = `sidebar-${notaId}`;
+                                    setNotasExpandidas(prev => ({
+                                      ...prev,
+                                      [key]: prev[key] === false ? true : false
+                                    }));
+                                  }}
+                                >
                                   <span>
                                     Alocados: <strong style={{ color: '#10b981' }}>{volumesJaEnderecados}</strong>
                                   </span>
