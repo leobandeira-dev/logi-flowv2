@@ -1357,7 +1357,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
           notasFiscaisLocal.forEach(nota => {
           const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
-          const volumesEndNota = enderecamentos.filter(e => e.nota_fiscal_id === nota.id);
+          const volumesEndNota = enderecamentos.filter(e => e.nota_fiscal_id === nota.id && e.ordem_id === ordem.id);
           const origem = notasOrigem[nota.id] || "Vinculada";
 
           totalVolumes += volumesNota.length;
@@ -3195,7 +3195,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 <div className="space-y-1.5">
                   {notasFiscaisLocal.map((nota) => {
                     const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
-                    const volumesEndNota = enderecamentos.filter(e => e.nota_fiscal_id === nota.id);
+                    const volumesEndNota = enderecamentos.filter(e => e.nota_fiscal_id === nota.id && e.ordem_id === ordem.id);
                     const origem = notasOrigem[nota.id] || "Vinculada";
                     const origemColor = origem === "Vinculada" ? (isDark ? '#3b82f6' : '#2563eb') : origem === "Adicionada" ? (isDark ? '#f59e0b' : '#d97706') : (isDark ? '#10b981' : '#059669');
 
