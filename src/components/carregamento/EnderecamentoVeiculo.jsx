@@ -2415,9 +2415,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
   // Renderização Desktop
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: theme.bg }}>
-      {/* Header */}
-      <div className="border-b p-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: theme.bg }}>
+        {/* Header */}
+        <div className="border-b p-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <Button
@@ -2652,8 +2653,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
               {/* Lista de Notas Fiscais Agrupadas */}
               <div className="flex-1 overflow-y-auto p-4">
-                <DragDropContext onDragEnd={handleDragEnd}>
-                  <Droppable droppableId="notas-list">
+                <Droppable droppableId="notas-list">
                     {(provided) => (
                       <div
                         ref={provided.innerRef}
@@ -2746,7 +2746,6 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       </div>
                     )}
                   </Droppable>
-                </DragDropContext>
               </div>
             </TabsContent>
 
@@ -3065,6 +3064,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </DragDropContext>
   );
 }
