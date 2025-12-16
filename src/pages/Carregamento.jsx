@@ -373,18 +373,31 @@ export default function Carregamento() {
       const valorTotal = notasRestantes.reduce((sum, nf) => sum + (nf.valor_nota_fiscal || 0), 0);
       const volumesTotal = notasRestantes.reduce((sum, nf) => sum + (nf.quantidade_total_volumes_nf || 0), 0);
 
-      await base44.entities.OrdemDeCarregamento.update(ordemSelecionada.id, {
-        notas_fiscais_ids: notasIds,
-        peso_total_consolidado: pesoTotal,
-        valor_total_consolidado: valorTotal,
-        volumes_total_consolidado: volumesTotal,
-        peso: pesoTotal,
-        volumes: volumesTotal
-      });
+      // Buscar volumes da nota desvinculada e resetar status
+      const volumesDaNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaId });
+      const resetVolumePromises = volumesDaNota.map(v => 
+        base44.entities.Volume.update(v.id, {
+          status_volume: "armazenado",
+          ordem_id: null,
+          localizacao_atual: `Área ${v.numero_area || 'N/A'}`
+        })
+      );
 
-      await base44.entities.NotaFiscal.update(notaId, {
-        status_nf: "recebida"
-      });
+      await Promise.all([
+        base44.entities.OrdemDeCarregamento.update(ordemSelecionada.id, {
+          notas_fiscais_ids: notasIds,
+          peso_total_consolidado: pesoTotal,
+          valor_total_consolidado: valorTotal,
+          volumes_total_consolidado: volumesTotal,
+          peso: pesoTotal,
+          volumes: volumesTotal
+        }),
+        base44.entities.NotaFiscal.update(notaId, {
+          ordem_id: null,
+          status_nf: "recebida"
+        }),
+        ...resetVolumePromises
+      ]);
 
       if (ordemSelecionada.tipo_ordem !== "ordem_filha") {
         try {

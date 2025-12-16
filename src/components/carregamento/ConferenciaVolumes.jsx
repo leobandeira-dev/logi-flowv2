@@ -107,12 +107,26 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         if (rascunho.volumesEmbarcados) {
           // Mesclar volumes do rascunho com os do banco
           const volumesRestaurados = [...new Set([...embarcados, ...rascunho.volumesEmbarcados])];
-          setVolumesEmbarcados(volumesRestaurados);
           
-          const novosDoRascunho = volumesRestaurados.length - embarcados.length;
+          // CRÍTICO: Filtrar apenas volumes que pertencem às notas atuais
+          const notasIdsAtuais = notasFiscaisLocal.map(nf => nf.id);
+          const volumesValidos = volumesRestaurados.filter(volumeId => {
+            const volume = volumesLocal.find(v => v.id === volumeId);
+            return volume && notasIdsAtuais.includes(volume.nota_fiscal_id);
+          });
+          
+          setVolumesEmbarcados(volumesValidos);
+          
+          const novosDoRascunho = volumesValidos.length - embarcados.length;
           if (novosDoRascunho > 0) {
             toast.info(`${novosDoRascunho} volume(s) embarcado(s) restaurado(s) do rascunho`);
           }
+          
+          // Atualizar rascunho com volumes limpos
+          localStorage.setItem(`conferencia_rascunho_${ordem.id}`, JSON.stringify({
+            volumesEmbarcados: volumesValidos,
+            timestamp: new Date().toISOString()
+          }));
         }
       } catch (error) {
         console.error("Erro ao carregar rascunho:", error);
@@ -120,7 +134,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
     } else {
       setVolumesEmbarcados(embarcados);
     }
-  }, [volumesLocal, ordem.id]);
+  }, [volumesLocal, ordem.id, notasFiscaisLocal]);
 
   useEffect(() => {
     return () => {
@@ -604,6 +618,25 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
     }
     setShowCamera(false);
   };
+
+  // Limpar volumes embarcados órfãos quando notas mudarem
+  useEffect(() => {
+    const notasIdsAtuais = notasFiscaisLocal.map(nf => nf.id);
+    const volumesValidos = volumesEmbarcados.filter(volumeId => {
+      const volume = volumesLocal.find(v => v.id === volumeId);
+      return volume && notasIdsAtuais.includes(volume.nota_fiscal_id);
+    });
+    
+    if (volumesValidos.length !== volumesEmbarcados.length) {
+      setVolumesEmbarcados(volumesValidos);
+      
+      // Atualizar rascunho
+      localStorage.setItem(`conferencia_rascunho_${ordem.id}`, JSON.stringify({
+        volumesEmbarcados: volumesValidos,
+        timestamp: new Date().toISOString()
+      }));
+    }
+  }, [notasFiscaisLocal, volumesLocal]);
 
   const progressoGeral = getTotalVolumes() > 0 
     ? (getVolumesEmbarcadosValidos().length / getTotalVolumes()) * 100 
