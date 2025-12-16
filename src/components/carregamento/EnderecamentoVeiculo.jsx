@@ -1783,31 +1783,34 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                   [expandKey]: !isExpanded
                                 }));
                               }}
-                              className="p-1.5 border-b cursor-pointer active:bg-opacity-70 transition-all select-none"
+                              className="p-2.5 border-b cursor-pointer active:bg-opacity-70 transition-all select-none"
                               style={{ 
                                 borderColor: theme.cardBorder,
                                 backgroundColor: isDark ? '#1e3a8a22' : '#eff6ff',
                                 userSelect: 'none',
                                 WebkitUserSelect: 'none',
-                                MozUserSelect: 'none'
+                                MozUserSelect: 'none',
+                                minHeight: '48px'
                               }}
                             >
                               <div className="flex items-center justify-between">
-                                <div className="flex-1 min-w-0 select-none" style={{ 
-                                  userSelect: 'none',
-                                  WebkitUserSelect: 'none',
-                                  MozUserSelect: 'none'
-                                }}>
-                                  <p className="font-bold text-[9px]" style={{ color: theme.text }}>
-                                    NF {nota?.numero_nota}
-                                  </p>
-                                  <p className="text-[8px] truncate" style={{ color: theme.textMuted }}>
-                                    {nota?.emitente_razao_social?.substring(0, 15)}
-                                  </p>
-                                </div>
-                                <Badge className={`${volumes.length > 0 ? 'bg-orange-600' : 'bg-green-600'} text-white text-[8px] h-3.5 px-1 select-none`}>
-                                  {volumes.length}/{volumesLocal.filter(v => v.nota_fiscal_id === notaId).length}
-                                </Badge>
+                              <div className="flex-1 min-w-0 select-none" style={{ 
+                                userSelect: 'none',
+                                WebkitUserSelect: 'none',
+                                MozUserSelect: 'none',
+                                pointerEvents: 'none'
+                              }}>
+                                <p className="font-bold text-xs" style={{ color: theme.text }}>
+                                  NF {nota?.numero_nota}
+                                </p>
+                                <p className="text-[10px] truncate" style={{ color: theme.textMuted }}>
+                                  {nota?.emitente_razao_social?.substring(0, 15)}
+                                </p>
+                              </div>
+                              <Badge className={`${volumes.length > 0 ? 'bg-orange-600' : 'bg-green-600'} text-white text-[10px] h-5 px-2 select-none`}
+                                style={{ pointerEvents: 'none' }}>
+                                {volumes.length}/{volumesLocal.filter(v => v.nota_fiscal_id === notaId).length}
+                              </Badge>
                               </div>
                             </div>
 
@@ -1829,7 +1832,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                             ref={provided.innerRef}
                                             {...provided.draggableProps}
                                             {...provided.dragHandleProps}
-                                            className="p-1.5 border rounded touch-none"
+                                            className="p-2 border rounded touch-none"
                                             style={{
                                               ...provided.draggableProps.style,
                                               borderColor: snapshot.isDragging ? '#3b82f6' : theme.cardBorder,
@@ -1837,27 +1840,33 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                                 ? (isDark ? '#1e40af' : '#3b82f6')
                                                 : theme.cardBg,
                                               color: snapshot.isDragging ? '#ffffff' : 'inherit',
-                                              opacity: snapshot.isDragging ? 0.9 : 1
+                                              opacity: snapshot.isDragging ? 0.9 : 1,
+                                              minHeight: '44px',
+                                              display: 'flex',
+                                              flexDirection: 'column',
+                                              justifyContent: 'center'
                                             }}
                                           >
                                             <p 
-                                              className="font-mono text-[9px] font-bold leading-tight break-all select-none" 
+                                              className="font-mono text-[10px] font-bold leading-tight break-all select-none" 
                                               style={{ 
                                                 color: snapshot.isDragging ? '#ffffff' : theme.text,
                                                 userSelect: 'none',
                                                 WebkitUserSelect: 'none',
-                                                MozUserSelect: 'none'
+                                                MozUserSelect: 'none',
+                                                pointerEvents: 'none'
                                               }}
                                             >
                                               {volume.identificador_unico}
                                             </p>
                                             <p 
-                                              className="text-[7px] leading-tight select-none" 
+                                              className="text-[8px] leading-tight select-none" 
                                               style={{ 
                                                 color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted,
                                                 userSelect: 'none',
                                                 WebkitUserSelect: 'none',
-                                                MozUserSelect: 'none'
+                                                MozUserSelect: 'none',
+                                                pointerEvents: 'none'
                                               }}
                                             >
                                               {volume.peso_volume} kg
@@ -2860,17 +2869,22 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                             <div key={notaId} className="border rounded" style={{ borderColor: theme.cardBorder }}>
                               {/* Header da Nota Fiscal - clicável para expandir/recolher */}
                               <div
-                                className="p-2 border-b cursor-pointer hover:bg-opacity-50 transition-all select-none"
+                                className="p-3 border-b cursor-pointer hover:bg-opacity-50 transition-all select-none"
                                 style={{ 
                                   borderColor: theme.cardBorder,
                                   backgroundColor: volumesSelecionadosNota.length > 0 ? (isDark ? '#1e3a8a22' : '#eff6ff') : 'transparent',
                                   userSelect: 'none',
                                   WebkitUserSelect: 'none',
-                                  MozUserSelect: 'none'
+                                  MozUserSelect: 'none',
+                                  minHeight: '56px'
                                 }}
                               >
-                                <div className="flex items-center gap-2 mb-1">
-                                  <div onClick={(e) => e.stopPropagation()}>
+                                <div className="flex items-center gap-3 mb-1">
+                                  <div 
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="p-1"
+                                    style={{ minWidth: '32px', minHeight: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                  >
                                     <Checkbox
                                       checked={todosNaSelecionados}
                                       onCheckedChange={() => {
@@ -2880,6 +2894,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                           setVolumesSelecionados(prev => [...new Set([...prev, ...volumes.map(v => v.id)])]);
                                         }
                                       }}
+                                      className="h-5 w-5"
                                     />
                                   </div>
                                   <div 
@@ -2894,10 +2909,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     style={{ 
                                       userSelect: 'none',
                                       WebkitUserSelect: 'none',
-                                      MozUserSelect: 'none'
+                                      MozUserSelect: 'none',
+                                      pointerEvents: 'none'
                                     }}
                                   >
-                                    <p className="font-bold text-xs" style={{ color: theme.text }}>
+                                    <p className="font-bold text-sm" style={{ color: theme.text }}>
                                       NF {nota?.numero_nota}
                                     </p>
                                     <p className="text-xs truncate" style={{ color: theme.textMuted }}>
@@ -2905,28 +2921,15 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     </p>
                                   </div>
                                   <Badge 
-                                    className={`${volumesFaltam > 0 ? 'bg-orange-600' : 'bg-green-600'} text-white text-[10px] h-5 px-1.5 select-none`}
-                                    onClick={() => {
-                                      const key = `sidebar-${notaId}`;
-                                      setNotasExpandidas(prev => ({
-                                        ...prev,
-                                        [key]: prev[key] === false ? true : false
-                                      }));
-                                    }}
+                                    className={`${volumesFaltam > 0 ? 'bg-orange-600' : 'bg-green-600'} text-white text-xs h-6 px-2 select-none`}
+                                    style={{ pointerEvents: 'none' }}
                                   >
                                     {volumesFaltam}/{todosVolumesNota.length}
                                   </Badge>
                                 </div>
                                 <div 
-                                  className="flex items-center justify-between text-[10px] px-6" 
-                                  style={{ color: theme.textMuted }}
-                                  onClick={() => {
-                                    const key = `sidebar-${notaId}`;
-                                    setNotasExpandidas(prev => ({
-                                      ...prev,
-                                      [key]: prev[key] === false ? true : false
-                                    }));
-                                  }}
+                                  className="flex items-center justify-between text-xs px-6" 
+                                  style={{ color: theme.textMuted, pointerEvents: 'none' }}
                                 >
                                   <span>
                                     Alocados: <strong style={{ color: '#10b981' }}>{volumesJaEnderecados}</strong>
