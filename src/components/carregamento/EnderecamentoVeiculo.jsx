@@ -714,9 +714,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       const draggableId = result.draggableId;
       const [_, linha, coluna] = destination.droppableId.split("-");
 
-      // Se for uma nota sendo arrastada
+      // Se for uma nota sendo arrastada (pode ter sufixo de célula para realocação)
       if (draggableId.startsWith("nota-")) {
-        const notaId = draggableId.replace("nota-", "");
+        // Extrair o ID da nota (remover prefixo e possível sufixo de célula)
+        const notaIdMatch = draggableId.match(/nota-([^-]+)/);
+        const notaId = notaIdMatch ? notaIdMatch[1] : draggableId.replace("nota-", "");
         const nota = notasFiscaisLocal.find(n => n.id === notaId);
         if (!nota) return;
 
@@ -725,13 +727,54 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         const volumesDisponiveis = volumesNota.filter(v => !idsEnderecados.includes(v.id));
         const volumesJaEnderecados = volumesNota.filter(v => idsEnderecados.includes(v.id));
 
-        if (volumesDisponiveis.length === 0) {
+        // Se está realocando da célula (todos os volumes já estavam endereçados nesta nota)
+        const estaRealocando = draggableId.includes("-celula-");
+        
+        if (!estaRealocando && volumesDisponiveis.length === 0) {
           toast.warning("Todos os volumes desta nota já foram endereçados");
           return;
         }
 
+        // Se está realocando, precisa remover endereçamentos anteriores dessa nota na célula origem
+        if (estaRealocando) {
+          try {
+            // Extrair célula de origem do draggableId
+            const celulaMatch = draggableId.match(/-celula-(\d+)-(.+)$/);
+            if (celulaMatch) {
+              const linhaOrigem = parseInt(celulaMatch[1]);
+              const colunaOrigem = celulaMatch[2];
+              
+              // Remover endereçamentos da célula origem
+              const endsParaRemover = enderecamentos.filter(e =>
+                e.linha === linhaOrigem && e.coluna === colunaOrigem && e.nota_fiscal_id === notaId
+              );
+
+              for (const end of endsParaRemover) {
+                await base44.entities.EnderecamentoVolume.delete(end.id);
+              }
+
+              const enderecamentosAtualizados = enderecamentos.filter(e =>
+                !(e.linha === linhaOrigem && e.coluna === colunaOrigem && e.nota_fiscal_id === notaId)
+              );
+              setEnderecamentos(enderecamentosAtualizados);
+              
+              toast.info("Realocando volumes...");
+            }
+          } catch (error) {
+            console.error("Erro ao remover endereçamentos anteriores:", error);
+            toast.error("Erro ao realocar");
+            return;
+          }
+        }
+
         // Abrir modal para seleção de volumes
-        setNotaParaAlocar(nota);
+        const notaComDados = {
+          ...nota,
+          volumesDisponiveis: estaRealocando ? volumesNota : volumesDisponiveis,
+          volumesJaEnderecados: estaRealocando ? [] : volumesJaEnderecados
+        };
+        
+        setNotaParaAlocar(notaComDados);
         setCelulaDestino({ linha: parseInt(linha), coluna });
         setShowSelecionarVolumes(true);
         return;
@@ -1772,7 +1815,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                               }}
                             >
                               <div className="space-y-0.5">
-                                {notasNaCelula.map((nota) => {
+                                {notasNaCelula.map((nota, notaIdx) => {
                                   const volumesNota = volumesNaCelula.filter(v => v.nota_fiscal_id === nota.id);
                                   const fornecedorAbreviado = nota.emitente_razao_social
                                     ?.split(' ')
@@ -1781,35 +1824,49 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     .substring(0, 10) || 'N/A';
                                   
                                   return (
-                                    <div
-                                      key={nota.id}
-                                      className="flex items-center justify-between gap-0.5 px-1 py-0.5 rounded text-[8px] leading-tight group"
-                                      style={{
-                                        backgroundColor: isDark ? '#1e40af' : '#bfdbfe',
-                                        color: isDark ? '#ffffff' : '#1e3a8a'
-                                      }}
-                                      onClick={(e) => e.stopPropagation()}
+                                    <Draggable 
+                                      key={nota.id} 
+                                      draggableId={`nota-${nota.id}-celula-${linha}-${coluna}`} 
+                                      index={notaIdx}
                                     >
-                                      <span className="font-bold shrink-0 text-[9px]">
-                                        {nota.numero_nota}
-                                      </span>
-                                      <span className="flex-1 truncate text-center px-0.5 text-[8px]" title={nota.emitente_razao_social}>
-                                        {fornecedorAbreviado}
-                                      </span>
-                                      <span className="font-semibold shrink-0 text-[9px]">
-                                        {volumesNota.length}
-                                      </span>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleRemoverNotaDaCelula(linha, coluna, nota.id);
-                                        }}
-                                        className="shrink-0 w-4 h-4 flex items-center justify-center rounded hover:bg-red-500 transition-colors opacity-70 group-hover:opacity-100"
-                                        title="Remover"
-                                      >
-                                        <Trash2 className="w-2.5 h-2.5" />
-                                      </button>
-                                    </div>
+                                      {(provided, snapshot) => (
+                                        <div
+                                          ref={provided.innerRef}
+                                          {...provided.draggableProps}
+                                          {...provided.dragHandleProps}
+                                          className="flex items-center justify-between gap-0.5 px-1 py-0.5 rounded text-[8px] leading-tight group touch-none"
+                                          style={{
+                                            ...provided.draggableProps.style,
+                                            backgroundColor: snapshot.isDragging 
+                                              ? (isDark ? '#3b82f6' : '#60a5fa')
+                                              : (isDark ? '#1e40af' : '#bfdbfe'),
+                                            color: isDark ? '#ffffff' : '#1e3a8a',
+                                            opacity: snapshot.isDragging ? 0.9 : 1
+                                          }}
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <span className="font-bold shrink-0 text-[9px]">
+                                            {nota.numero_nota}
+                                          </span>
+                                          <span className="flex-1 truncate text-center px-0.5 text-[8px]" title={nota.emitente_razao_social}>
+                                            {fornecedorAbreviado}
+                                          </span>
+                                          <span className="font-semibold shrink-0 text-[9px]">
+                                            {volumesNota.length}
+                                          </span>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleRemoverNotaDaCelula(linha, coluna, nota.id);
+                                            }}
+                                            className="shrink-0 w-4 h-4 flex items-center justify-center rounded hover:bg-red-500 transition-colors opacity-70 group-hover:opacity-100"
+                                            title="Remover"
+                                          >
+                                            <Trash2 className="w-2.5 h-2.5" />
+                                          </button>
+                                        </div>
+                                      )}
+                                    </Draggable>
                                   );
                                 })}
                               </div>
