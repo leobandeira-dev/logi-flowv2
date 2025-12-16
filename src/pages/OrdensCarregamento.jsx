@@ -26,6 +26,8 @@ import ExportarOfertasPDF from "../components/ordens/ExportarOfertasPDF";
 import FiltrosPredefinidos from "../components/filtros/FiltrosPredefinidos";
 import PaginacaoControles from "../components/filtros/PaginacaoControles";
 import FiltroDataPeriodo from "../components/filtros/FiltroDataPeriodo";
+import ConferenciaVolumes from "../components/carregamento/ConferenciaVolumes";
+import EnderecamentoVeiculo from "../components/carregamento/EnderecamentoVeiculo";
 
 export default function OrdensCarregamento() {
   const [ordens, setOrdens] = useState([]);
@@ -64,6 +66,11 @@ export default function OrdensCarregamento() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [limite, setLimite] = useState(50);
   const [graficoExpandido, setGraficoExpandido] = useState(false);
+  const [showConferencia, setShowConferencia] = useState(false);
+  const [showEnderecamento, setShowEnderecamento] = useState(false);
+  const [ordemParaConferencia, setOrdemParaConferencia] = useState(null);
+  const [notasFiscaisData, setNotasFiscaisData] = useState([]);
+  const [volumesData, setVolumesData] = useState([]);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -563,6 +570,42 @@ export default function OrdensCarregamento() {
     setSelectedOrdem(ordem);
   };
 
+  const handleAbrirConferencia = async (ordem) => {
+    try {
+      // Carregar notas e volumes
+      const [notasData, volumesDataAll] = await Promise.all([
+        base44.entities.NotaFiscal.list(),
+        base44.entities.Volume.list(null, 500)
+      ]);
+
+      setOrdemParaConferencia(ordem);
+      setNotasFiscaisData(notasData);
+      setVolumesData(volumesDataAll);
+      setShowConferencia(true);
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      toast.error("Erro ao carregar dados para conferência");
+    }
+  };
+
+  const handleAbrirEnderecamento = async (ordem) => {
+    try {
+      // Carregar notas e volumes
+      const [notasData, volumesDataAll] = await Promise.all([
+        base44.entities.NotaFiscal.list(),
+        base44.entities.Volume.list(null, 500)
+      ]);
+
+      setOrdemParaConferencia(ordem);
+      setNotasFiscaisData(notasData);
+      setVolumesData(volumesDataAll);
+      setShowEnderecamento(true);
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      toast.error("Erro ao carregar dados para endereçamento");
+    }
+  };
+
   const handleDelete = async (ordem) => {
     if (!confirm(`Tem certeza que deseja excluir a ordem ${ordem.numero_carga || '#' + ordem.id.slice(-6)}?`)) {
       return;
@@ -858,6 +901,8 @@ export default function OrdensCarregamento() {
           onViewDetails={handleViewDetails}
           onDelete={handleDelete}
           onUpdate={loadData}
+          onConferencia={handleAbrirConferencia}
+          onEnderecamento={handleAbrirEnderecamento}
         />
       </div>
 
@@ -910,6 +955,52 @@ export default function OrdensCarregamento() {
           onUpdate={loadData}
         />
       )}
-    </div>
-  );
-}
+
+      {/* Modal de Conferência */}
+      {showConferencia && ordemParaConferencia && (
+        <ConferenciaVolumes
+          ordem={ordemParaConferencia}
+          notasFiscais={notasFiscaisData.filter(nota => 
+            ordemParaConferencia.notas_fiscais_ids?.includes(nota.id)
+          )}
+          volumes={volumesData}
+          onClose={() => {
+            setShowConferencia(false);
+            setOrdemParaConferencia(null);
+          }}
+          onComplete={async () => {
+            setShowConferencia(false);
+            setOrdemParaConferencia(null);
+            await loadData();
+          }}
+        />
+      )}
+
+      {/* Modal de Endereçamento */}
+      {showEnderecamento && ordemParaConferencia && (
+        <EnderecamentoVeiculo
+          key={`enderecamento-${ordemParaConferencia.id}-${ordemParaConferencia.notas_fiscais_ids?.length || 0}`}
+          ordem={ordemParaConferencia}
+          notasFiscais={notasFiscaisData.filter(nota => 
+            ordemParaConferencia.notas_fiscais_ids?.includes(nota.id)
+          )}
+          volumes={volumesData.filter(v => 
+            ordemParaConferencia.notas_fiscais_ids?.some(nfId => {
+              const nf = notasFiscaisData.find(n => n.id === nfId);
+              return nf && v.nota_fiscal_id === nf.id;
+            })
+          )}
+          onClose={() => {
+            setShowEnderecamento(false);
+            setOrdemParaConferencia(null);
+          }}
+          onComplete={async () => {
+            setShowEnderecamento(false);
+            setOrdemParaConferencia(null);
+            await loadData();
+          }}
+        />
+      )}
+      </div>
+      );
+      }

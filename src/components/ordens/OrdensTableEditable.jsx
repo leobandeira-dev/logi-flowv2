@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Trash2, Eye, Package, User, Truck, FileText, Printer, Check, X } from "lucide-react";
+import { Edit, Trash2, Eye, Package, User, Truck, FileText, Printer, Check, X, Scan, Grid3x3 } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,7 +58,7 @@ const tipoVeiculoOptions = [
   "CARRETA 7EIXOS", "BITREM", "CARRETA LOC", "PRANCHA", "BI-TRUCK", "FIORINO"
 ];
 
-export default function OrdensTableEditable({ ordens, motoristas, veiculos, operacoes, loading, onEdit, onViewDetails, onDelete, onUpdate }) {
+export default function OrdensTableEditable({ ordens, motoristas, veiculos, operacoes, loading, onEdit, onViewDetails, onDelete, onUpdate, onConferencia, onEnderecamento }) {
   const [isDark, setIsDark] = useState(false);
   const [showImpressao, setShowImpressao] = useState(false);
   const [selectedOrdem, setSelectedOrdem] = useState(null);
@@ -922,6 +922,30 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                           <div className="flex items-center justify-end gap-0.5">
                             {tipoRegistro === "oferta" && (
                               <ExportarOfertaIndividual ordem={ordem} />
+                            )}
+                            {ordem.notas_fiscais_ids?.length > 0 && onConferencia && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onConferencia(ordem)}
+                                className="h-6 w-6 p-0"
+                                style={{ color: '#3b82f6' }}
+                                title="Conferência de Volumes"
+                              >
+                                <Scan className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
+                            {ordem.notas_fiscais_ids?.length > 0 && onEnderecamento && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onEnderecamento(ordem)}
+                                className="h-6 w-6 p-0"
+                                style={{ color: '#9333ea' }}
+                                title="Endereçamento de Veículo"
+                              >
+                                <Grid3x3 className="w-3.5 h-3.5" />
+                              </Button>
                             )}
                             <Button
                               variant="ghost"
