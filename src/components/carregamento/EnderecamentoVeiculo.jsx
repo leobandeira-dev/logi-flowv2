@@ -749,12 +749,14 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         setMovimentacaoNota(null);
         setQuantidadeMovimentar("");
 
-        const enderecamentosAtualizados = [...enderecamentos, ...novosEnderecamentos];
-
-        localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
-          enderecamentos: enderecamentosAtualizados,
-          timestamp: new Date().toISOString()
-        }));
+        // Salvar rascunho com estado atual (já atualizado progressivamente no loop)
+        setEnderecamentos(prev => {
+          localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
+            enderecamentos: prev,
+            timestamp: new Date().toISOString()
+          }));
+          return prev;
+        });
 
         toast.success(`${quantidade} volume(s) alocado(s)!`, { id: 'alocando' });
       } catch (error) {
