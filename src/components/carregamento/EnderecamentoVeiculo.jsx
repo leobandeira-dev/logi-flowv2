@@ -2673,13 +2673,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
                           return (
                             <div key={notaId} className="border rounded" style={{ borderColor: theme.cardBorder }}>
-                              {/* Header da Nota Fiscal */}
+                              {/* Header da Nota Fiscal - clicável para expandir/recolher */}
                               <div
-                                onClick={() => {
-                                  if (todosNaSelecionados) {
-                                    setVolumesSelecionados(prev => prev.filter(id => !volumes.map(v => v.id).includes(id)));
-                                  } else {
-                                    setVolumesSelecionados(prev => [...new Set([...prev, ...volumes.map(v => v.id)])]);
+                                onClick={(e) => {
+                                  // Click no checkbox seleciona, click no resto expande/recolhe
+                                  if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+                                    const key = `sidebar-${notaId}`;
+                                    setNotasExpandidas(prev => ({
+                                      ...prev,
+                                      [key]: prev[key] === false ? true : false
+                                    }));
                                   }
                                 }}
                                 className="p-2 border-b cursor-pointer hover:bg-opacity-50 transition-all"
@@ -2698,7 +2701,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                         setVolumesSelecionados(prev => [...new Set([...prev, ...volumes.map(v => v.id)])]);
                                       }
                                     }}
-                                    onClick={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                    }}
                                   />
                                   <div className="flex-1 min-w-0">
                                     <p className="font-bold text-xs" style={{ color: theme.text }}>
@@ -2725,48 +2730,58 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                 </div>
                               </div>
 
-                              {/* Lista de Volumes da Nota */}
-                              <div className="p-2 space-y-1">
-                                {volumes.map((volume, index) => {
-                                  const isSelected = volumesSelecionados.includes(volume.id);
+                              {/* Lista de Volumes da Nota - com expand/collapse */}
+                              <AnimatePresence>
+                                {notasExpandidas[`sidebar-${notaId}`] !== false && (
+                                  <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.2, ease: "easeInOut" }}
+                                    className="p-2 space-y-1 overflow-hidden"
+                                  >
+                                    {volumes.map((volume, index) => {
+                                      const isSelected = volumesSelecionados.includes(volume.id);
 
-                                  return (
-                                    <Draggable key={volume.id} draggableId={volume.id} index={index}>
-                                      {(provided, snapshot) => (
-                                        <div
-                                          ref={provided.innerRef}
-                                          {...provided.draggableProps}
-                                          {...provided.dragHandleProps}
-                                          onClick={() => handleToggleVolume(volume.id)}
-                                          className="p-1.5 border rounded cursor-pointer hover:shadow-sm transition-all text-xs"
-                                          style={{
-                                            ...provided.draggableProps.style,
-                                            borderColor: isSelected ? '#3b82f6' : theme.cardBorder,
-                                            backgroundColor: snapshot.isDragging 
-                                              ? (isDark ? '#1e40af' : '#3b82f6')
-                                              : (isSelected ? (isDark ? '#1e3a8a33' : '#dbeafe33') : 'transparent'),
-                                            color: snapshot.isDragging ? '#ffffff' : 'inherit'
-                                          }}
-                                        >
-                                          <div className="flex items-center gap-2">
-                                            <Checkbox
-                                              checked={isSelected}
-                                              onCheckedChange={() => handleToggleVolume(volume.id)}
-                                              onClick={(e) => e.stopPropagation()}
-                                            />
-                                            <p className="font-mono font-bold flex-1 truncate" style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}>
-                                              {volume.identificador_unico}
-                                            </p>
-                                            <p className="text-xs" style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}>
-                                              {volume.peso_volume} kg
-                                            </p>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </Draggable>
-                                  );
-                                })}
-                              </div>
+                                      return (
+                                        <Draggable key={volume.id} draggableId={volume.id} index={index}>
+                                          {(provided, snapshot) => (
+                                            <div
+                                              ref={provided.innerRef}
+                                              {...provided.draggableProps}
+                                              {...provided.dragHandleProps}
+                                              onClick={() => handleToggleVolume(volume.id)}
+                                              className="p-1.5 border rounded cursor-pointer hover:shadow-sm transition-all text-xs"
+                                              style={{
+                                                ...provided.draggableProps.style,
+                                                borderColor: isSelected ? '#3b82f6' : theme.cardBorder,
+                                                backgroundColor: snapshot.isDragging 
+                                                  ? (isDark ? '#1e40af' : '#3b82f6')
+                                                  : (isSelected ? (isDark ? '#1e3a8a33' : '#dbeafe33') : 'transparent'),
+                                                color: snapshot.isDragging ? '#ffffff' : 'inherit'
+                                              }}
+                                            >
+                                              <div className="flex items-center gap-2">
+                                                <Checkbox
+                                                  checked={isSelected}
+                                                  onCheckedChange={() => handleToggleVolume(volume.id)}
+                                                  onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <p className="font-mono font-bold flex-1 truncate" style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}>
+                                                  {volume.identificador_unico}
+                                                </p>
+                                                <p className="text-xs" style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}>
+                                                  {volume.peso_volume} kg
+                                                </p>
+                                              </div>
+                                            </div>
+                                          )}
+                                        </Draggable>
+                                      );
+                                    })}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
                           );
                         });
