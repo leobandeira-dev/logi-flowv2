@@ -1761,7 +1761,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                               >
                                 NF {nota?.numero_nota}
                               </p>
-                            </div>
+                            </motion.div>
                           )}
                         </Draggable>
                       );
@@ -1900,7 +1900,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                             >
                                               <Trash2 className="w-2.5 h-2.5" />
                                             </button>
-                                          </div>
+                                          </motion.div>
                                         )}
                                       </Draggable>
                                       
@@ -2249,7 +2249,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                   </p>
                                 </div>
                               </div>
-                            </div>
+                            </motion.div>
                           )}
                         </Draggable>
                       );
@@ -3081,7 +3081,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                           >
                                             <Trash2 className="w-2.5 h-2.5 text-red-600" />
                                           </Button>
-                                        </div>
+                                        </motion.div>
                                       )}
                                     </Draggable>
                                     
