@@ -1722,44 +1722,106 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     {...provided.droppableProps}
                     className="flex-1 overflow-y-auto p-1 space-y-1"
                   >
-                    {filteredVolumes.map((volume, index) => {
-                      const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-                      
-                      return (
-                        <Draggable key={volume.id} draggableId={volume.id} index={index}>
-                          {(provided, snapshot) => (
+                    {(() => {
+                      // Agrupar volumes por nota fiscal
+                      const volumesPorNota = {};
+                      filteredVolumes.forEach(volume => {
+                        const notaId = volume.nota_fiscal_id;
+                        if (!volumesPorNota[notaId]) {
+                          volumesPorNota[notaId] = [];
+                        }
+                        volumesPorNota[notaId].push(volume);
+                      });
+
+                      return Object.entries(volumesPorNota).map(([notaId, volumes]) => {
+                        const nota = notasFiscaisLocal.find(nf => nf.id === notaId);
+                        const expandKey = `sidebar-mobile-${notaId}`;
+                        const isExpanded = notasExpandidas[expandKey] !== false;
+                        
+                        return (
+                          <div key={notaId} className="border rounded" style={{ borderColor: theme.cardBorder }}>
+                            {/* Header da Nota - clicável para expandir/recolher */}
                             <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className="p-1.5 border rounded touch-none"
-                              style={{
-                                ...provided.draggableProps.style,
-                                borderColor: snapshot.isDragging ? '#3b82f6' : theme.cardBorder,
-                                backgroundColor: snapshot.isDragging 
-                                  ? (isDark ? '#1e40af' : '#3b82f6')
-                                  : theme.cardBg,
-                                color: snapshot.isDragging ? '#ffffff' : 'inherit',
-                                opacity: snapshot.isDragging ? 0.9 : 1
+                              onClick={() => {
+                                setNotasExpandidas(prev => ({
+                                  ...prev,
+                                  [expandKey]: !isExpanded
+                                }));
+                              }}
+                              className="p-1.5 border-b cursor-pointer active:bg-opacity-70 transition-all"
+                              style={{ 
+                                borderColor: theme.cardBorder,
+                                backgroundColor: isDark ? '#1e3a8a22' : '#eff6ff'
                               }}
                             >
-                              <p 
-                                className="font-mono text-[9px] font-bold leading-tight break-all" 
-                                style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}
-                              >
-                                {volume.identificador_unico}
-                              </p>
-                              <p 
-                                className="text-[8px] leading-tight" 
-                                style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}
-                              >
-                                NF {nota?.numero_nota}
-                              </p>
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-bold text-[9px]" style={{ color: theme.text }}>
+                                    NF {nota?.numero_nota}
+                                  </p>
+                                  <p className="text-[8px] truncate" style={{ color: theme.textMuted }}>
+                                    {nota?.emitente_razao_social?.substring(0, 15)}
+                                  </p>
+                                </div>
+                                <Badge className="bg-blue-600 text-white text-[8px] h-3.5 px-1">
+                                  {volumes.length}
+                                </Badge>
+                              </div>
                             </div>
-                          )}
-                        </Draggable>
-                      );
-                    })}
+
+                            {/* Lista de Volumes - com expand/collapse */}
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: "auto" }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                                  className="p-1 space-y-0.5 overflow-hidden"
+                                >
+                                  {volumes.map((volume, index) => {
+                                    return (
+                                      <Draggable key={volume.id} draggableId={volume.id} index={index}>
+                                        {(provided, snapshot) => (
+                                          <div
+                                            ref={provided.innerRef}
+                                            {...provided.draggableProps}
+                                            {...provided.dragHandleProps}
+                                            className="p-1.5 border rounded touch-none"
+                                            style={{
+                                              ...provided.draggableProps.style,
+                                              borderColor: snapshot.isDragging ? '#3b82f6' : theme.cardBorder,
+                                              backgroundColor: snapshot.isDragging 
+                                                ? (isDark ? '#1e40af' : '#3b82f6')
+                                                : theme.cardBg,
+                                              color: snapshot.isDragging ? '#ffffff' : 'inherit',
+                                              opacity: snapshot.isDragging ? 0.9 : 1
+                                            }}
+                                          >
+                                            <p 
+                                              className="font-mono text-[9px] font-bold leading-tight break-all" 
+                                              style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}
+                                            >
+                                              {volume.identificador_unico}
+                                            </p>
+                                            <p 
+                                              className="text-[7px] leading-tight" 
+                                              style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}
+                                            >
+                                              {volume.peso_volume} kg
+                                            </p>
+                                          </div>
+                                        )}
+                                      </Draggable>
+                                    );
+                                  })}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      });
+                    })()}
                     {provided.placeholder}
                     
                     {filteredVolumes.length === 0 && (
