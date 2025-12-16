@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +18,9 @@ import { Label } from "@/components/ui/label";
 import {
   Package,
   CheckCircle,
+  AlertCircle,
   Camera,
+  X,
   Check,
   ArrowLeft,
   FileText,
@@ -158,23 +161,92 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         const etiquetaMae = etiquetasEncontradas[0];
         
         if (etiquetaMae.volumes_ids && etiquetaMae.volumes_ids.length > 0) {
-          const volumesDaEtiqueta = volumesLocal.filter(v => etiquetaMae.volumes_ids.includes(v.id));
+          // Buscar volumes do banco de dados pela etiqueta mãe
+          const volumesDaEtiquetaDB = await base44.entities.Volume.filter({ 
+            id: { $in: etiquetaMae.volumes_ids } 
+          });
           
-          for (const volume of volumesDaEtiqueta) {
-            if (!volume.nota_fiscal_id) continue;
-            
-            const jaCarregado = volumesEmbarcados.includes(volume.id);
-            if (jaCarregado) continue;
+          if (volumesDaEtiquetaDB.length === 0) {
+            toast.warning(`Etiqueta ${etiquetaMae.codigo} sem volumes no sistema`);
+            setCodigoScanner("");
+            return;
+          }
 
-            await base44.entities.Volume.update(volume.id, {
-              status_volume: "carregado",
-              localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)}`
+          // Buscar notas fiscais únicas dos volumes
+          const notasIdsUnicas = [...new Set(volumesDaEtiquetaDB.map(v => v.nota_fiscal_id).filter(Boolean))];
+          
+          // Verificar quais notas precisam ser vinculadas à ordem
+          const notasParaVincular = [];
+          for (const notaId of notasIdsUnicas) {
+            if (!notasFiscaisLocal.some(nf => nf.id === notaId)) {
+              const nota = await base44.entities.NotaFiscal.get(notaId);
+              notasParaVincular.push(nota);
+            }
+          }
+
+          // Vincular notas em batch se necessário
+          if (notasParaVincular.length > 0) {
+            const updatePromises = notasParaVincular.map(nota =>
+              base44.entities.NotaFiscal.update(nota.id, {
+                ordem_id: ordem.id,
+                status_nf: "aguardando_expedicao"
+              })
+            );
+
+            const notasIds = [...(ordem.notas_fiscais_ids || []), ...notasParaVincular.map(n => n.id)];
+            const updateOrdemPromise = base44.entities.OrdemDeCarregamento.update(ordem.id, {
+              notas_fiscais_ids: notasIds
             });
 
-            setVolumesEmbarcados(prev => [...prev, volume.id]);
+            await Promise.all([...updatePromises, updateOrdemPromise]);
+
+            // Atualizar estados locais
+            setNotasFiscaisLocal(prev => [...prev, ...notasParaVincular]);
+            setVolumesLocal(prev => [...prev, ...volumesDaEtiquetaDB]);
+
+            toast.success(`${notasParaVincular.length} nota(s) vinculada(s) automaticamente`);
+          } else {
+            // Garantir que os volumes estão no estado local
+            const volumesIdsLocais = volumesLocal.map(v => v.id);
+            const volumesNovos = volumesDaEtiquetaDB.filter(v => !volumesIdsLocais.includes(v.id));
+            if (volumesNovos.length > 0) {
+              setVolumesLocal(prev => [...prev, ...volumesNovos]);
+            }
           }
+
+          // Filtrar volumes que ainda não foram carregados
+          const volumesParaCarregar = volumesDaEtiquetaDB.filter(v => 
+            !volumesEmbarcados.includes(v.id) && v.nota_fiscal_id
+          );
+
+          if (volumesParaCarregar.length === 0) {
+            toast.info(`Todos os volumes da etiqueta ${etiquetaMae.codigo} já foram embarcados`);
+            setCodigoScanner("");
+            return;
+          }
+
+          // Embarcar volumes em batch (paralelo)
+          const updateVolumePromises = volumesParaCarregar.map(volume =>
+            base44.entities.Volume.update(volume.id, {
+              status_volume: "carregado",
+              localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)}`
+            })
+          );
+
+          await Promise.all(updateVolumePromises);
+
+          // Atualizar estado local
+          const novosIdsEmbarcados = volumesParaCarregar.map(v => v.id);
+          const volumesAtualizados = [...volumesEmbarcados, ...novosIdsEmbarcados];
+          setVolumesEmbarcados(volumesAtualizados);
+
+          // Salvar rascunho
+          localStorage.setItem(`conferencia_rascunho_${ordem.id}`, JSON.stringify({
+            volumesEmbarcados: volumesAtualizados,
+            timestamp: new Date().toISOString()
+          }));
           
-          toast.success(`${volumesDaEtiqueta.length} volumes da etiqueta ${etiquetaMae.codigo} embarcados!`);
+          toast.success(`✅ ${volumesParaCarregar.length} volumes da etiqueta ${etiquetaMae.codigo} embarcados!`);
           setCodigoScanner("");
           return;
         } else {

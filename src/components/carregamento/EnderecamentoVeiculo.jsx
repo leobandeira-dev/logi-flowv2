@@ -822,8 +822,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             return;
           }
 
-          // Agrupar volumes por nota fiscal
-          const notasIdsUnicas = [...new Set(volumesNaoEnderecados.map(v => v.nota_fiscal_id))];
+          // Agrupar volumes por nota fiscal e buscar notas únicas
+          const notasIdsUnicas = [...new Set(volumesDaEtiquetaDB.map(v => v.nota_fiscal_id).filter(Boolean))];
           const notasParaVincular = notasIdsUnicas.filter(notaId => 
             !notasFiscaisLocal.some(nf => nf.id === notaId)
           );
@@ -834,7 +834,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               id: { $in: notasParaVincular }
             });
 
-            // Atualizar notas em batch (em background)
+            // Atualizar notas em batch (paralelo)
             const updatePromises = notasDB.map(nota =>
               base44.entities.NotaFiscal.update(nota.id, {
                 ordem_id: ordem.id,
@@ -858,18 +858,30 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             });
 
             setNotasFiscaisLocal(prev => [...prev, ...notasDB]);
-            setVolumesLocal(prev => [...prev, ...volumesDaEtiquetaDB]);
             setNotasOrigem(prev => ({ ...prev, ...novasOrigens }));
 
             toast.success(`${notasDB.length} nota(s) vinculada(s)`);
-          } else {
-            setVolumesLocal(prev => [...prev, ...volumesDaEtiquetaDB]);
           }
 
-          // Selecionar volumes e finalizar
+          // Garantir que TODOS os volumes da etiqueta estão no estado local
+          const volumesIdsLocais = volumesLocal.map(v => v.id);
+          const volumesParaAdicionar = volumesDaEtiquetaDB.filter(v => !volumesIdsLocais.includes(v.id));
+          
+          if (volumesParaAdicionar.length > 0) {
+            setVolumesLocal(prev => [...prev, ...volumesParaAdicionar]);
+            
+            // Salvar rascunho de notas e volumes
+            localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
+              notas: notasFiscaisLocal,
+              volumes: [...volumesLocal, ...volumesParaAdicionar],
+              timestamp: new Date().toISOString()
+            }));
+          }
+
+          // Selecionar volumes não endereçados e finalizar
           setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
           setSearchTerm("");
-          toast.success(`${volumesNaoEnderecados.length} volumes da etiqueta selecionados!`);
+          toast.success(`✅ ${volumesNaoEnderecados.length} volumes da etiqueta ${etiquetaMae.codigo} selecionados!`);
           setProcessandoBusca(false);
           return;
         } else {
