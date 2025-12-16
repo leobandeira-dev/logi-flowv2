@@ -145,6 +145,15 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
     ).length;
   };
 
+  const getVolumesEmbarcadosValidos = () => {
+    // Contar apenas volumes embarcados que pertencem às notas atuais
+    const notasIdsAtuais = notasFiscaisLocal.map(nf => nf.id);
+    return volumesEmbarcados.filter(volumeId => {
+      const volume = volumesLocal.find(v => v.id === volumeId);
+      return volume && notasIdsAtuais.includes(volume.nota_fiscal_id);
+    });
+  };
+
   const handleScanVolume = async (codigo) => {
     if (!codigo || !codigo.trim()) {
       toast.error("Digite ou escaneie um código de volume");
@@ -535,7 +544,8 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
     }
 
     const totalVolumes = getTotalVolumes();
-    const totalEmbarcados = volumesEmbarcados.length;
+    const volumesEmbarcadosValidos = getVolumesEmbarcadosValidos();
+    const totalEmbarcados = volumesEmbarcadosValidos.length;
 
     if (totalEmbarcados < totalVolumes) {
       const confirmar = window.confirm(
@@ -596,7 +606,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
   };
 
   const progressoGeral = getTotalVolumes() > 0 
-    ? (volumesEmbarcados.length / getTotalVolumes()) * 100 
+    ? (getVolumesEmbarcadosValidos().length / getTotalVolumes()) * 100 
     : 0;
 
   const theme = {
@@ -649,7 +659,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
             <div className="flex justify-between text-sm">
               <span style={{ color: theme.text }}>Progresso Geral</span>
               <span className="font-bold" style={{ color: theme.text }}>
-                {volumesEmbarcados.length} / {getTotalVolumes()} volumes
+                {getVolumesEmbarcadosValidos().length} / {getTotalVolumes()} volumes
               </span>
             </div>
             <Progress value={progressoGeral} className="h-3" />
