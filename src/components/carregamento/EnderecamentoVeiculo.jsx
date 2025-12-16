@@ -1864,7 +1864,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  className="p-2.5 border-b cursor-grab active:cursor-grabbing active:bg-opacity-70 transition-all select-none touch-none"
+                                  className="p-2.5 border-b cursor-grab active:cursor-grabbing select-none touch-none"
                                   style={{ 
                                     ...provided.draggableProps.style,
                                     borderColor: theme.cardBorder,
@@ -1875,7 +1875,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     WebkitUserSelect: 'none',
                                     MozUserSelect: 'none',
                                     minHeight: '48px',
-                                    opacity: snapshot.isDragging ? 0.9 : 1
+                                    opacity: snapshot.isDragging ? 0.95 : 1,
+                                    transform: snapshot.isDragging ? `${provided.draggableProps.style?.transform} scale(1.03)` : provided.draggableProps.style?.transform,
+                                    transition: snapshot.isDragging ? 'all 0.15s cubic-bezier(0.2, 0, 0, 1)' : 'background-color 0.2s ease, opacity 0.2s ease',
+                                    boxShadow: snapshot.isDragging ? '0 10px 20px rgba(0, 0, 0, 0.2)' : 'none',
+                                    borderRadius: snapshot.isDragging ? '8px' : '0'
                                   }}
                                 >
                                   <div className="flex items-center justify-between">
@@ -1939,11 +1943,14 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                                 ? (isDark ? '#1e40af' : '#3b82f6')
                                                 : theme.cardBg,
                                               color: snapshot.isDragging ? '#ffffff' : 'inherit',
-                                              opacity: snapshot.isDragging ? 0.9 : 1,
+                                              opacity: snapshot.isDragging ? 0.95 : 1,
                                               minHeight: '44px',
                                               display: 'flex',
                                               flexDirection: 'column',
-                                              justifyContent: 'center'
+                                              justifyContent: 'center',
+                                              transform: snapshot.isDragging ? `${provided.draggableProps.style?.transform} scale(1.02)` : provided.draggableProps.style?.transform,
+                                              transition: snapshot.isDragging ? 'all 0.15s cubic-bezier(0.2, 0, 0, 1)' : 'background-color 0.2s ease',
+                                              boxShadow: snapshot.isDragging ? '0 6px 12px rgba(0, 0, 0, 0.15)' : 'none'
                                             }}
                                           >
                                             <p 
@@ -2973,7 +2980,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
                                     {...provided.dragHandleProps}
-                                    className="p-3 border-b cursor-grab active:cursor-grabbing hover:bg-opacity-50 transition-all select-none"
+                                    className="p-3 border-b cursor-grab active:cursor-grabbing hover:bg-opacity-50 select-none"
                                     style={{ 
                                       ...provided.draggableProps.style,
                                       borderColor: theme.cardBorder,
@@ -2984,7 +2991,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                       WebkitUserSelect: 'none',
                                       MozUserSelect: 'none',
                                       minHeight: '56px',
-                                      opacity: snapshot.isDragging ? 0.9 : 1
+                                      opacity: snapshot.isDragging ? 0.95 : 1,
+                                      transform: snapshot.isDragging ? `${provided.draggableProps.style?.transform} scale(1.02)` : provided.draggableProps.style?.transform,
+                                      transition: snapshot.isDragging ? 'all 0.15s cubic-bezier(0.2, 0, 0, 1)' : 'background-color 0.2s ease, opacity 0.2s ease',
+                                      boxShadow: snapshot.isDragging ? '0 8px 16px rgba(0, 0, 0, 0.15)' : 'none',
+                                      borderRadius: snapshot.isDragging ? '8px' : '0'
                                     }}
                                   >
                                     <div className="flex items-center gap-3 mb-1">
