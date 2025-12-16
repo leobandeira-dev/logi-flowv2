@@ -2969,6 +2969,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </DragDropContext>
   );
 }
