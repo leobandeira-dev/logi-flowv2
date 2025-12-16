@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Filter, ChevronDown, FileText, Package, FileSpreadsheet, X } from "lucide-react";
+import { Plus, Search, Filter, ChevronDown, FileText, Package, FileSpreadsheet, X, Scan, Grid3x3, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from 'react-hot-toast';
@@ -88,17 +88,22 @@ export default function OrdensCarregamento() {
     const checkDevice = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      const isTabletSize = width >= 768 && width <= 1280;
+      // Detectar tablet: largura entre 768px e 1366px (típico de tablets 10")
+      const isTabletSize = width >= 768 && width <= 1366;
       setIsTablet(isTabletSize);
       setIsLandscape(width > height);
+      
+      console.log('Device check:', { width, height, isTabletSize, isLandscape: width > height });
     };
     
     checkDevice();
     window.addEventListener('resize', checkDevice);
     window.addEventListener('orientationchange', checkDevice);
+    screen.orientation?.addEventListener('change', checkDevice);
     return () => {
       window.removeEventListener('resize', checkDevice);
       window.removeEventListener('orientationchange', checkDevice);
+      screen.orientation?.removeEventListener('change', checkDevice);
     };
   }, []);
 
@@ -822,20 +827,18 @@ export default function OrdensCarregamento() {
                     <div className="grid grid-cols-2 gap-2">
                       <Button
                         onClick={() => handleAbrirConferencia(ordem)}
-                        disabled={!qtdNotas}
                         size="sm"
-                        className="bg-blue-600 hover:bg-blue-700 h-11 text-sm"
+                        className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed h-11 text-sm font-medium"
                       >
-                        <Scan className="w-4 h-4 mr-2" />
+                        <Scan className="w-5 h-5 mr-2" />
                         Conferir
                       </Button>
                       <Button
                         onClick={() => handleAbrirEnderecamento(ordem)}
-                        disabled={!qtdNotas}
                         size="sm"
-                        className="bg-purple-600 hover:bg-purple-700 h-11 text-sm"
+                        className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed h-11 text-sm font-medium"
                       >
-                        <Grid3x3 className="w-4 h-4 mr-2" />
+                        <Grid3x3 className="w-5 h-5 mr-2" />
                         Endereçar
                       </Button>
                     </div>
