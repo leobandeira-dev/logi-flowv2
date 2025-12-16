@@ -1728,11 +1728,14 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       return (
                         <Draggable key={volume.id} draggableId={volume.id} index={index}>
                           {(provided, snapshot) => (
-                            <div
+                            <motion.div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
                               className="p-1.5 border rounded touch-none"
+                              initial={{ opacity: 0, y: -5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.2 }}
                               style={{
                                 ...provided.draggableProps.style,
                                 borderColor: snapshot.isDragging ? '#3b82f6' : theme.cardBorder,
@@ -1740,7 +1743,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                   ? (isDark ? '#1e40af' : '#3b82f6')
                                   : theme.cardBg,
                                 color: snapshot.isDragging ? '#ffffff' : 'inherit',
-                                opacity: snapshot.isDragging ? 0.9 : 1
+                                boxShadow: snapshot.isDragging ? '0 6px 16px rgba(0,0,0,0.2)' : 'none',
+                                transform: snapshot.isDragging 
+                                  ? `${provided.draggableProps.style?.transform} scale(1.05) rotate(2deg)` 
+                                  : provided.draggableProps.style?.transform
                               }}
                             >
                               <p 
@@ -1851,7 +1857,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     <div key={nota.id} className="space-y-0.5">
                                       <Draggable draggableId={`nota-${nota.id}-${linha}-${coluna}`} index={notaIndex}>
                                         {(provided, snapshot) => (
-                                          <div
+                                          <motion.div
                                             ref={provided.innerRef}
                                             {...provided.draggableProps}
                                             {...provided.dragHandleProps}
@@ -1860,13 +1866,19 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                               toggleNotaExpandida(nota.id, linha, coluna);
                                             }}
                                             className="flex items-center justify-between gap-0.5 px-1 py-0.5 rounded text-[8px] leading-tight group cursor-pointer touch-none"
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ duration: 0.15, ease: "easeOut" }}
                                             style={{
                                               ...provided.draggableProps.style,
                                               backgroundColor: snapshot.isDragging 
                                                 ? (isDark ? '#1e40af' : '#3b82f6')
                                                 : (isDark ? '#1e40af' : '#bfdbfe'),
                                               color: isDark ? '#ffffff' : '#1e3a8a',
-                                              opacity: snapshot.isDragging ? 0.9 : 1
+                                              boxShadow: snapshot.isDragging ? '0 4px 8px rgba(0,0,0,0.15)' : 'none',
+                                              transform: snapshot.isDragging 
+                                                ? `${provided.draggableProps.style?.transform} scale(1.02)` 
+                                                : provided.draggableProps.style?.transform
                                             }}
                                           >
                                             <span className="font-bold shrink-0 text-[9px]">
@@ -1905,25 +1917,31 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                             {volumesNota.map((vol, volIndex) => (
                                               <Draggable key={vol.id} draggableId={`allocated-${vol.id}`} index={volIndex}>
                                                 {(provided, snapshot) => (
-                                                  <div
+                                                  <motion.div
                                                     ref={provided.innerRef}
                                                     {...provided.draggableProps}
                                                     {...provided.dragHandleProps}
                                                     className="px-1 py-0.5 rounded text-[8px] leading-tight cursor-move touch-none ml-2"
+                                                    initial={{ opacity: 0, x: -10 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ duration: 0.15, delay: volIndex * 0.02 }}
                                                     style={{
                                                       ...provided.draggableProps.style,
                                                       backgroundColor: snapshot.isDragging 
                                                         ? (isDark ? '#1e40af' : '#3b82f6')
                                                         : (isDark ? '#334155' : '#e2e8f0'),
                                                       color: snapshot.isDragging ? '#ffffff' : theme.text,
-                                                      opacity: snapshot.isDragging ? 0.9 : 1
+                                                      boxShadow: snapshot.isDragging ? '0 2px 6px rgba(0,0,0,0.15)' : 'none',
+                                                      transform: snapshot.isDragging 
+                                                        ? `${provided.draggableProps.style?.transform} scale(1.02)` 
+                                                        : provided.draggableProps.style?.transform
                                                     }}
                                                     title="Arraste para mover"
                                                   >
                                                     <span className="font-mono font-bold text-[8px]">
                                                       {vol.identificador_unico}
                                                     </span>
-                                                  </div>
+                                                  </motion.div>
                                                 )}
                                               </Draggable>
                                             ))}
@@ -2188,12 +2206,15 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       return (
                         <Draggable key={volume.id} draggableId={volume.id} index={index}>
                           {(provided, snapshot) => (
-                            <div
+                            <motion.div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
                               onClick={() => handleToggleVolume(volume.id)}
                               className="p-2 border rounded cursor-pointer hover:shadow-sm transition-all touch-none"
+                              initial={{ opacity: 0, y: -5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.2 }}
                               style={{
                                 ...provided.draggableProps.style,
                                 borderColor: isSelected ? '#3b82f6' : theme.cardBorder,
@@ -2201,8 +2222,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                   ? (isDark ? '#1e40af' : '#3b82f6')
                                   : (isSelected ? (isDark ? '#1e3a8a33' : '#dbeafe33') : 'transparent'),
                                 color: snapshot.isDragging ? '#ffffff' : 'inherit',
-                                opacity: snapshot.isDragging ? 0.9 : 1,
-                                transform: provided.draggableProps.style?.transform || 'none'
+                                boxShadow: snapshot.isDragging ? '0 6px 16px rgba(0,0,0,0.2)' : 'none',
+                                transform: snapshot.isDragging 
+                                  ? `${provided.draggableProps.style?.transform} scale(1.05) rotate(2deg)` 
+                                  : (provided.draggableProps.style?.transform || 'none')
                               }}
                             >
                               <div className="flex items-start gap-2">
@@ -3013,7 +3036,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                   <div key={nota.id} className="space-y-0.5">
                                     <Draggable draggableId={`nota-${nota.id}-${linha}-${coluna}`} index={notaIndex}>
                                       {(provided, snapshot) => (
-                                        <div
+                                        <motion.div
                                           ref={provided.innerRef}
                                           {...provided.draggableProps}
                                           {...provided.dragHandleProps}
@@ -3022,13 +3045,19 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                             toggleNotaExpandida(nota.id, linha, coluna);
                                           }}
                                           className="flex items-center justify-between gap-1 px-1.5 py-0.5 rounded text-[10px] leading-tight cursor-pointer"
+                                          initial={{ opacity: 0, scale: 0.95 }}
+                                          animate={{ opacity: 1, scale: 1 }}
+                                          transition={{ duration: 0.15, ease: "easeOut" }}
                                           style={{
                                             ...provided.draggableProps.style,
                                             backgroundColor: snapshot.isDragging 
                                               ? (isDark ? '#1e40af' : '#3b82f6')
                                               : (isDark ? '#1e40af' : '#bfdbfe'),
                                             color: isDark ? '#ffffff' : '#1e3a8a',
-                                            opacity: snapshot.isDragging ? 0.9 : 1
+                                            boxShadow: snapshot.isDragging ? '0 4px 12px rgba(0,0,0,0.2)' : 'none',
+                                            transform: snapshot.isDragging 
+                                              ? `${provided.draggableProps.style?.transform} scale(1.03)` 
+                                              : provided.draggableProps.style?.transform
                                           }}
                                         >
                                           <span className="font-bold shrink-0 w-12">
@@ -3069,25 +3098,31 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                           {volumesNota.map((vol, volIndex) => (
                                             <Draggable key={vol.id} draggableId={`allocated-${vol.id}`} index={volIndex}>
                                               {(provided, snapshot) => (
-                                                <div
+                                                <motion.div
                                                   ref={provided.innerRef}
                                                   {...provided.draggableProps}
                                                   {...provided.dragHandleProps}
                                                   className="px-1.5 py-0.5 rounded text-[9px] leading-tight cursor-move ml-2"
+                                                  initial={{ opacity: 0, x: -10 }}
+                                                  animate={{ opacity: 1, x: 0 }}
+                                                  transition={{ duration: 0.15, delay: volIndex * 0.02 }}
                                                   style={{
                                                     ...provided.draggableProps.style,
                                                     backgroundColor: snapshot.isDragging 
                                                       ? (isDark ? '#1e40af' : '#3b82f6')
                                                       : (isDark ? '#334155' : '#e2e8f0'),
                                                     color: snapshot.isDragging ? '#ffffff' : theme.text,
-                                                    opacity: snapshot.isDragging ? 0.9 : 1
+                                                    boxShadow: snapshot.isDragging ? '0 2px 8px rgba(0,0,0,0.18)' : 'none',
+                                                    transform: snapshot.isDragging 
+                                                      ? `${provided.draggableProps.style?.transform} scale(1.03)` 
+                                                      : provided.draggableProps.style?.transform
                                                   }}
                                                   title="Arraste para mover"
                                                 >
                                                   <span className="font-mono font-bold">
                                                     {vol.identificador_unico}
                                                   </span>
-                                                </div>
+                                                </motion.div>
                                               )}
                                             </Draggable>
                                           ))}
