@@ -285,8 +285,13 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     }
   };
 
+  // Helper para pegar apenas endereçamentos da ordem atual
+  const getEnderecamentosOrdemAtual = () => {
+    return enderecamentos.filter(e => e.ordem_id === ordem.id);
+  };
+
   const getVolumesNaoEnderecados = () => {
-    const idsEnderecados = enderecamentos.map(e => e.volume_id);
+    const idsEnderecados = getEnderecamentosOrdemAtual().map(e => e.volume_id);
     return volumesLocal.filter(v => 
       notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id) &&
       !idsEnderecados.includes(v.id)
@@ -294,7 +299,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   };
 
   const getVolumesNaCelula = (linha, coluna) => {
-    const endsNaCelula = enderecamentos.filter(e => 
+    const endsNaCelula = getEnderecamentosOrdemAtual().filter(e => 
       e.linha === linha && e.coluna === coluna
     );
     return endsNaCelula.map(e => volumesLocal.find(v => v.id === e.volume_id)).filter(Boolean);
@@ -854,7 +859,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         
         // Buscar volumes não endereçados desta nota
         const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === notaId);
-        const idsEnderecados = enderecamentos.map(e => e.volume_id);
+        const idsEnderecados = getEnderecamentosOrdemAtual().map(e => e.volume_id);
         const volumesDisponiveis = volumesNota.filter(v => !idsEnderecados.includes(v.id));
         
         if (volumesDisponiveis.length === 0) {
@@ -1079,7 +1084,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         const volumeEncontrado = volumesEncontrados[0];
 
         // Verificar se já está endereçado
-        const jaEnderecado = enderecamentos.some(e => e.volume_id === volumeEncontrado.id);
+        const jaEnderecado = getEnderecamentosOrdemAtual().some(e => e.volume_id === volumeEncontrado.id);
         if (jaEnderecado) {
           toast.warning(`Volume ${termoUpper} já foi endereçado`);
           setSearchTerm("");
@@ -1632,7 +1637,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               <div class="info-line"><strong>Motorista:</strong> ${motoristaInfo}</div>
               <div class="info-line"><strong>Placas:</strong> ${placas || 'Não alocadas'}</div>
               <div class="info-line"><strong>Tipo Veículo:</strong> ${tipoVeiculo}</div>
-              <div class="info-line"><strong>Volumes:</strong> ${volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length} total | ${enderecamentos.length} posicionados</div>
+              <div class="info-line"><strong>Volumes:</strong> ${volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length} total | ${getEnderecamentosOrdemAtual().length} posicionados</div>
             </div>
           </div>
 
@@ -1686,6 +1691,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   };
 
   const gerarHTMLImpressao = () => {
+    const enderecamentosOrdem = getEnderecamentosOrdemAtual();
     let html = `
       <html>
         <head>
@@ -1758,7 +1764,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const filteredVolumes = getVolumesNaoEnderecados();
 
   const progressoEnderecamento = volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length > 0
-    ? (enderecamentos.length / volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length) * 100
+    ? (getEnderecamentosOrdemAtual().length / volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length) * 100
     : 0;
 
   const theme = {
@@ -1826,12 +1832,12 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               />
               <div className="flex-1" />
               <Badge className="bg-blue-600 text-white text-xs">
-                {enderecamentos.length}/{volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length} vol.
+                {getEnderecamentosOrdemAtual().length}/{volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length} vol.
               </Badge>
               <Button
                 variant="outline"
                 onClick={handleImprimirLayout}
-                disabled={enderecamentos.length === 0}
+                disabled={getEnderecamentosOrdemAtual().length === 0}
                 size="sm"
                 className="h-7"
                 style={{ borderColor: theme.cardBorder, color: theme.text }}
@@ -2420,7 +2426,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         }
                         
                         const volumesNaoEnderecados = volumesNota.filter(v => {
-                          const idsEnderecados = enderecamentos.map(e => e.volume_id);
+                          const idsEnderecados = getEnderecamentosOrdemAtual().map(e => e.volume_id);
                           return !idsEnderecados.includes(v.id);
                         });
                         
@@ -2740,7 +2746,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           <div className="flex justify-between text-sm">
             <span style={{ color: theme.text }}>Progresso do Endereçamento</span>
             <span className="font-bold" style={{ color: theme.text }}>
-              {enderecamentos.length} / {volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length} volumes
+              {getEnderecamentosOrdemAtual().length} / {volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length} volumes
             </span>
           </div>
           <Progress value={progressoEnderecamento} className="h-3" />
@@ -2960,7 +2966,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                           }
                           
                           const volumesNaoEnderecados = volumesNota.filter(v => {
-                            const idsEnderecados = enderecamentos.map(e => e.volume_id);
+                            const idsEnderecados = getEnderecamentosOrdemAtual().map(e => e.volume_id);
                             return !idsEnderecados.includes(v.id);
                           });
                           
