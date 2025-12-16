@@ -682,15 +682,45 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
     const { source, destination } = result;
 
-    // Se soltar na lista de volumes, apenas reorganizar (não fazer nada)
+    const draggableId = result.draggableId;
+    const volumeId = draggableId.startsWith("allocated-") ? draggableId.replace("allocated-", "") : draggableId;
+
+    // Se soltar na lista de volumes, DESALOCAR
     if (destination.droppableId === "volumes-list" || destination.droppableId === "volumes-list-mobile") {
+      // Verificar se o volume estava alocado
+      const alocacaoExistente = enderecamentos.find(e => e.volume_id === volumeId);
+      
+      if (alocacaoExistente) {
+        try {
+          // Remover endereçamento
+          await base44.entities.EnderecamentoVolume.delete(alocacaoExistente.id);
+          
+          // Atualizar status do volume
+          await base44.entities.Volume.update(volumeId, {
+            status_volume: "criado",
+            localizacao_atual: null
+          });
+
+          const enderecamentosAtualizados = enderecamentos.filter(e => e.volume_id !== volumeId);
+          setEnderecamentos(enderecamentosAtualizados);
+
+          // Salvar rascunho
+          localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
+            enderecamentos: enderecamentosAtualizados,
+            timestamp: new Date().toISOString()
+          }));
+
+          toast.success("Volume desalocado!");
+        } catch (error) {
+          console.error("Erro ao desalocar volume:", error);
+          toast.error("Erro ao desalocar volume");
+        }
+      }
       return;
     }
 
     // Se soltar em uma célula do layout
     if (destination.droppableId.startsWith("cell-")) {
-      const draggableId = result.draggableId;
-      const volumeId = draggableId.startsWith("allocated-") ? draggableId.replace("allocated-", "") : draggableId;
       const [_, linha, coluna] = destination.droppableId.split("-");
 
       try {
@@ -2107,7 +2137,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
   // Renderização Desktop
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: theme.bg }}>
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: theme.bg }}>
       {/* Header */}
       <div className="border-b p-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
         <div className="flex items-center justify-between mb-3">
@@ -2343,15 +2374,21 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           </div>
 
               {/* Lista de Volumes Agrupados por NF ou Notas da Base */}
-              <div className="flex-1 overflow-y-auto p-4">
-                <div className="space-y-3">
-                  {usarBase && filtroTipo === "nota_fiscal" ? (
-                    // Exibir notas da base quando modo "Base" ativado
-                    <NotasBaseList
-                      notasBaseBusca={notasBaseBusca}
-                      notasFiscaisLocal={notasFiscaisLocal}
-                      volumesLocal={volumesLocal}
-                      onSelecionarNota={async (nota) => {
+              <Droppable droppableId="volumes-list">
+                {(provided) => (
+                  <div 
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className="flex-1 overflow-y-auto p-4"
+                  >
+                    <div className="space-y-3">
+                      {usarBase && filtroTipo === "nota_fiscal" ? (
+                        // Exibir notas da base quando modo "Base" ativado
+                        <NotasBaseList
+                          notasBaseBusca={notasBaseBusca}
+                          notasFiscaisLocal={notasFiscaisLocal}
+                          volumesLocal={volumesLocal}
+                          onSelecionarNota={async (nota) => {
                         try {
                           // Verificar se nota já está vinculada à ordem
                           const jaVinculada = notasFiscaisLocal.some(nf => nf.id === nota.id);
@@ -2405,24 +2442,24 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                           toast.error("Erro ao vincular nota fiscal");
                         }
                       }}
-                      theme={theme}
-                      isDark={isDark}
-                    />
-                  ) : (
-                    // Exibir volumes agrupados por nota fiscal
-                    <>
-                      {(() => {
-                        // Agrupar volumes por nota fiscal
-                        const volumesPorNota = {};
-                        filteredVolumes.forEach(volume => {
-                          const notaId = volume.nota_fiscal_id;
-                          if (!volumesPorNota[notaId]) {
-                            volumesPorNota[notaId] = [];
-                          }
-                          volumesPorNota[notaId].push(volume);
-                        });
+                          theme={theme}
+                          isDark={isDark}
+                        />
+                      ) : (
+                        // Exibir volumes agrupados por nota fiscal
+                        <>
+                          {(() => {
+                            // Agrupar volumes por nota fiscal
+                            const volumesPorNota = {};
+                            filteredVolumes.forEach(volume => {
+                              const notaId = volume.nota_fiscal_id;
+                              if (!volumesPorNota[notaId]) {
+                                volumesPorNota[notaId] = [];
+                              }
+                              volumesPorNota[notaId].push(volume);
+                            });
 
-                        return Object.entries(volumesPorNota).map(([notaId, volumes]) => {
+                            return Object.entries(volumesPorNota).map(([notaId, volumes]) => {
                           const nota = notasFiscaisLocal.find(nf => nf.id === notaId);
                           const volumesSelecionadosNota = volumes.filter(v => volumesSelecionados.includes(v.id));
                           const todosNaSelecionados = volumes.length > 0 && volumes.every(v => volumesSelecionados.includes(v.id));
@@ -2488,33 +2525,43 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
                               {/* Lista de Volumes da Nota */}
                               <div className="p-2 space-y-1">
-                                {volumes.map((volume) => {
+                                {volumes.map((volume, index) => {
                                   const isSelected = volumesSelecionados.includes(volume.id);
 
                                   return (
-                                    <div
-                                      key={volume.id}
-                                      onClick={() => handleToggleVolume(volume.id)}
-                                      className="p-1.5 border rounded cursor-pointer hover:shadow-sm transition-all text-xs"
-                                      style={{
-                                        borderColor: isSelected ? '#3b82f6' : theme.cardBorder,
-                                        backgroundColor: isSelected ? (isDark ? '#1e3a8a33' : '#dbeafe33') : 'transparent'
-                                      }}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <Checkbox
-                                          checked={isSelected}
-                                          onCheckedChange={() => handleToggleVolume(volume.id)}
-                                          onClick={(e) => e.stopPropagation()}
-                                        />
-                                        <p className="font-mono font-bold flex-1 truncate" style={{ color: theme.text }}>
-                                          {volume.identificador_unico}
-                                        </p>
-                                        <p className="text-xs" style={{ color: theme.textMuted }}>
-                                          {volume.peso_volume} kg
-                                        </p>
-                                      </div>
-                                    </div>
+                                    <Draggable key={volume.id} draggableId={volume.id} index={index}>
+                                      {(provided, snapshot) => (
+                                        <div
+                                          ref={provided.innerRef}
+                                          {...provided.draggableProps}
+                                          {...provided.dragHandleProps}
+                                          onClick={() => handleToggleVolume(volume.id)}
+                                          className="p-1.5 border rounded cursor-pointer hover:shadow-sm transition-all text-xs"
+                                          style={{
+                                            ...provided.draggableProps.style,
+                                            borderColor: isSelected ? '#3b82f6' : theme.cardBorder,
+                                            backgroundColor: snapshot.isDragging 
+                                              ? (isDark ? '#1e40af' : '#3b82f6')
+                                              : (isSelected ? (isDark ? '#1e3a8a33' : '#dbeafe33') : 'transparent'),
+                                            color: snapshot.isDragging ? '#ffffff' : 'inherit'
+                                          }}
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            <Checkbox
+                                              checked={isSelected}
+                                              onCheckedChange={() => handleToggleVolume(volume.id)}
+                                              onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <p className="font-mono font-bold flex-1 truncate" style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}>
+                                              {volume.identificador_unico}
+                                            </p>
+                                            <p className="text-xs" style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}>
+                                              {volume.peso_volume} kg
+                                            </p>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </Draggable>
                                   );
                                 })}
                               </div>
@@ -2523,20 +2570,23 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         });
                       })()}
 
-                      {filteredVolumes.length === 0 && (
-                        <div className="text-center py-8" style={{ color: theme.textMuted }}>
-                          <Package className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                          <p className="text-sm">
-                            {getVolumesNaoEnderecados().length === 0
-                              ? "Todos os volumes foram posicionados!"
-                              : "Nenhum volume encontrado"}
-                          </p>
-                        </div>
+                          {filteredVolumes.length === 0 && (
+                            <div className="text-center py-8" style={{ color: theme.textMuted }}>
+                              <Package className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                              <p className="text-sm">
+                                {getVolumesNaoEnderecados().length === 0
+                                  ? "Todos os volumes foram posicionados!"
+                                  : "Nenhum volume encontrado"}
+                              </p>
+                            </div>
+                          )}
+                        </>
                       )}
-                    </>
-                  )}
+                      {provided.placeholder}
+                    </div>
                   </div>
-                  </div>
+                )}
+              </Droppable>
             </TabsContent>
 
             {/* Aba Lista de Notas */}
@@ -2730,68 +2780,104 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     const temVolumes = volumesNaCelula.length > 0;
 
                     return (
-                      <div
-                        key={`${linha}-${coluna}`}
-                        onClick={() => handleAlocarNaCelula(linha, coluna)}
-                        className="p-2 border-b min-h-[100px] cursor-pointer hover:bg-opacity-50 transition-all"
-                        style={{
-                          backgroundColor: theme.cellBg,
-                          borderColor: theme.cellBorder,
-                          borderRight: idx < layoutConfig.colunas.length - 1 ? `1px solid ${theme.cellBorder}` : 'none'
-                        }}
-                        title="Clique para alocar volumes selecionados"
-                      >
-                        <div className="space-y-0.5">
-                          {notasNaCelula.map((nota) => {
-                            const volumesNota = volumesNaCelula.filter(v => v.nota_fiscal_id === nota.id);
-                            const fornecedorAbreviado = nota.emitente_razao_social
-                              ?.split(' ')
-                              .slice(0, 2)
-                              .join(' ')
-                              .substring(0, 18) || 'N/A';
+                      <Droppable key={`${linha}-${coluna}`} droppableId={`cell-${linha}-${coluna}`}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                            onClick={() => handleAlocarNaCelula(linha, coluna)}
+                            className="p-2 border-b min-h-[100px] cursor-pointer hover:bg-opacity-50 transition-all"
+                            style={{
+                              backgroundColor: snapshot.isDraggingOver 
+                                ? (isDark ? '#1e40af44' : '#dbeafe')
+                                : theme.cellBg,
+                              borderColor: theme.cellBorder,
+                              borderRight: idx < layoutConfig.colunas.length - 1 ? `1px solid ${theme.cellBorder}` : 'none'
+                            }}
+                            title="Clique para alocar volumes selecionados ou arraste volumes aqui"
+                          >
+                            <div className="space-y-0.5">
+                              {notasNaCelula.map((nota) => {
+                                const volumesNota = volumesNaCelula.filter(v => v.nota_fiscal_id === nota.id);
+                                const fornecedorAbreviado = nota.emitente_razao_social
+                                  ?.split(' ')
+                                  .slice(0, 2)
+                                  .join(' ')
+                                  .substring(0, 18) || 'N/A';
+                                
+                                return (
+                                  <div key={nota.id} className="space-y-0.5">
+                                    <div
+                                      className="flex items-center justify-between gap-1 px-1.5 py-0.5 rounded text-[10px] leading-tight"
+                                      style={{
+                                        backgroundColor: isDark ? '#1e40af' : '#bfdbfe',
+                                        color: isDark ? '#ffffff' : '#1e3a8a'
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <span className="font-bold shrink-0 w-12">
+                                        {nota.numero_nota}
+                                      </span>
+                                      <span className="flex-1 truncate text-center px-0.5" title={nota.emitente_razao_social}>
+                                        {fornecedorAbreviado}
+                                      </span>
+                                      <span className="font-semibold shrink-0 w-5 text-right">
+                                        {volumesNota.length}
+                                      </span>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRemoverNotaDaCelula(linha, coluna, nota.id);
+                                        }}
+                                        className="h-4 w-4 p-0 hover:bg-red-100 dark:hover:bg-red-900 flex-shrink-0"
+                                        title="Remover NF desta célula"
+                                      >
+                                        <Trash2 className="w-2.5 h-2.5 text-red-600" />
+                                      </Button>
+                                    </div>
+                                    
+                                    {/* Volumes individuais arrastáveis */}
+                                    {volumesNota.map((vol, volIndex) => (
+                                      <Draggable key={vol.id} draggableId={`allocated-${vol.id}`} index={volIndex}>
+                                        {(provided, snapshot) => (
+                                          <div
+                                            ref={provided.innerRef}
+                                            {...provided.draggableProps}
+                                            {...provided.dragHandleProps}
+                                            className="px-1.5 py-0.5 rounded text-[9px] leading-tight cursor-move"
+                                            style={{
+                                              ...provided.draggableProps.style,
+                                              backgroundColor: snapshot.isDragging 
+                                                ? (isDark ? '#1e40af' : '#3b82f6')
+                                                : (isDark ? '#334155' : '#e2e8f0'),
+                                              color: snapshot.isDragging ? '#ffffff' : theme.text,
+                                              opacity: snapshot.isDragging ? 0.9 : 1
+                                            }}
+                                            title="Arraste para mover"
+                                          >
+                                            <span className="font-mono font-bold">
+                                              {vol.identificador_unico}
+                                            </span>
+                                          </div>
+                                        )}
+                                      </Draggable>
+                                    ))}
+                                  </div>
+                                );
+                              })}
+                            </div>
                             
-                            return (
-                              <div
-                                key={nota.id}
-                                className="flex items-center justify-between gap-1 px-1.5 py-0.5 rounded text-[10px] leading-tight"
-                                style={{
-                                  backgroundColor: isDark ? '#1e40af' : '#bfdbfe',
-                                  color: isDark ? '#ffffff' : '#1e3a8a'
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <span className="font-bold shrink-0 w-12">
-                                  {nota.numero_nota}
-                                </span>
-                                <span className="flex-1 truncate text-center px-0.5" title={nota.emitente_razao_social}>
-                                  {fornecedorAbreviado}
-                                </span>
-                                <span className="font-semibold shrink-0 w-5 text-right">
-                                  {volumesNota.length}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemoverNotaDaCelula(linha, coluna, nota.id);
-                                  }}
-                                  className="h-4 w-4 p-0 hover:bg-red-100 dark:hover:bg-red-900 flex-shrink-0"
-                                  title="Remover NF desta célula"
-                                >
-                                  <Trash2 className="w-2.5 h-2.5 text-red-600" />
-                                </Button>
+                            {!temVolumes && (
+                              <div className="text-center text-xs" style={{ color: theme.textMuted, opacity: 0.5 }}>
+                                {snapshot.isDraggingOver ? "Solte aqui" : "Vazio"}
                               </div>
-                            );
-                          })}
-                        </div>
-                        
-                        {!temVolumes && (
-                          <div className="text-center text-xs" style={{ color: theme.textMuted, opacity: 0.5 }}>
-                            Vazio
+                            )}
+                            {provided.placeholder}
                           </div>
                         )}
-                      </div>
+                      </Droppable>
                     );
                   })}
                 </div>
@@ -2883,6 +2969,6 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </DragDropContext>
   );
 }
