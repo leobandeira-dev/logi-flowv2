@@ -2426,6 +2426,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                           const nota = notasFiscaisLocal.find(nf => nf.id === notaId);
                           const volumesSelecionadosNota = volumes.filter(v => volumesSelecionados.includes(v.id));
                           const todosNaSelecionados = volumes.length > 0 && volumes.every(v => volumesSelecionados.includes(v.id));
+                          
+                          // Calcular quantos volumes da nota já foram endereçados
+                          const todosVolumesNota = volumesLocal.filter(v => v.nota_fiscal_id === notaId);
+                          const volumesJaEnderecados = enderecamentos.filter(e => e.nota_fiscal_id === notaId).length;
+                          const volumesFaltam = todosVolumesNota.length - volumesJaEnderecados;
 
                           return (
                             <div key={notaId} className="border rounded" style={{ borderColor: theme.cardBorder }}>
@@ -2470,10 +2475,13 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                 </div>
                                 <div className="flex items-center justify-between text-[10px] px-6" style={{ color: theme.textMuted }}>
                                   <span>
-                                    <strong style={{ color: volumes.length > 0 ? '#10b981' : theme.text }}>{volumes.length}</strong> disponíveis
+                                    Total: <strong style={{ color: theme.text }}>{todosVolumesNota.length}</strong>
                                   </span>
                                   <span>
-                                    <strong style={{ color: theme.text }}>{volumes.length - volumesSelecionadosNota.length}</strong> faltam
+                                    Alocados: <strong style={{ color: '#10b981' }}>{volumesJaEnderecados}</strong>
+                                  </span>
+                                  <span>
+                                    Faltam: <strong style={{ color: volumesFaltam > 0 ? '#ef4444' : '#10b981' }}>{volumesFaltam}</strong>
                                   </span>
                                 </div>
                               </div>
