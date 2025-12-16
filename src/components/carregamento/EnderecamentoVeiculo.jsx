@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Componente auxiliar para exibir lista de notas da base
 const NotasBaseList = ({ notasBaseBusca, notasFiscaisLocal, volumesLocal, onSelecionarNota, theme, isDark }) => {
@@ -1847,31 +1848,43 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                       </Draggable>
                                       
                                       {/* Volumes individuais - mostrar apenas quando expandido */}
-                                      {isExpanded && volumesNota.map((vol, volIndex) => (
-                                        <Draggable key={vol.id} draggableId={`allocated-${vol.id}`} index={volIndex}>
-                                          {(provided, snapshot) => (
-                                            <div
-                                              ref={provided.innerRef}
-                                              {...provided.draggableProps}
-                                              {...provided.dragHandleProps}
-                                              className="px-1 py-0.5 rounded text-[8px] leading-tight cursor-move touch-none ml-2"
-                                              style={{
-                                                ...provided.draggableProps.style,
-                                                backgroundColor: snapshot.isDragging 
-                                                  ? (isDark ? '#1e40af' : '#3b82f6')
-                                                  : (isDark ? '#334155' : '#e2e8f0'),
-                                                color: snapshot.isDragging ? '#ffffff' : theme.text,
-                                                opacity: snapshot.isDragging ? 0.9 : 1
-                                              }}
-                                              title="Arraste para mover"
-                                            >
-                                              <span className="font-mono font-bold text-[8px]">
-                                                {vol.identificador_unico}
-                                              </span>
-                                            </div>
-                                          )}
-                                        </Draggable>
-                                      ))}
+                                      <AnimatePresence>
+                                        {isExpanded && (
+                                          <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: "auto" }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                                            className="space-y-0.5 overflow-hidden"
+                                          >
+                                            {volumesNota.map((vol, volIndex) => (
+                                              <Draggable key={vol.id} draggableId={`allocated-${vol.id}`} index={volIndex}>
+                                                {(provided, snapshot) => (
+                                                  <div
+                                                    ref={provided.innerRef}
+                                                    {...provided.draggableProps}
+                                                    {...provided.dragHandleProps}
+                                                    className="px-1 py-0.5 rounded text-[8px] leading-tight cursor-move touch-none ml-2"
+                                                    style={{
+                                                      ...provided.draggableProps.style,
+                                                      backgroundColor: snapshot.isDragging 
+                                                        ? (isDark ? '#1e40af' : '#3b82f6')
+                                                        : (isDark ? '#334155' : '#e2e8f0'),
+                                                      color: snapshot.isDragging ? '#ffffff' : theme.text,
+                                                      opacity: snapshot.isDragging ? 0.9 : 1
+                                                    }}
+                                                    title="Arraste para mover"
+                                                  >
+                                                    <span className="font-mono font-bold text-[8px]">
+                                                      {vol.identificador_unico}
+                                                    </span>
+                                                  </div>
+                                                )}
+                                              </Draggable>
+                                            ))}
+                                          </motion.div>
+                                        )}
+                                      </AnimatePresence>
                                     </div>
                                   );
                                 })}
@@ -2999,31 +3012,43 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     </Draggable>
                                     
                                     {/* Volumes individuais - mostrar apenas quando expandido */}
-                                    {isExpanded && volumesNota.map((vol, volIndex) => (
-                                      <Draggable key={vol.id} draggableId={`allocated-${vol.id}`} index={volIndex}>
-                                        {(provided, snapshot) => (
-                                          <div
-                                            ref={provided.innerRef}
-                                            {...provided.draggableProps}
-                                            {...provided.dragHandleProps}
-                                            className="px-1.5 py-0.5 rounded text-[9px] leading-tight cursor-move ml-2"
-                                            style={{
-                                              ...provided.draggableProps.style,
-                                              backgroundColor: snapshot.isDragging 
-                                                ? (isDark ? '#1e40af' : '#3b82f6')
-                                                : (isDark ? '#334155' : '#e2e8f0'),
-                                              color: snapshot.isDragging ? '#ffffff' : theme.text,
-                                              opacity: snapshot.isDragging ? 0.9 : 1
-                                            }}
-                                            title="Arraste para mover"
-                                          >
-                                            <span className="font-mono font-bold">
-                                              {vol.identificador_unico}
-                                            </span>
-                                          </div>
-                                        )}
-                                      </Draggable>
-                                    ))}
+                                    <AnimatePresence>
+                                      {isExpanded && (
+                                        <motion.div
+                                          initial={{ opacity: 0, height: 0 }}
+                                          animate={{ opacity: 1, height: "auto" }}
+                                          exit={{ opacity: 0, height: 0 }}
+                                          transition={{ duration: 0.2, ease: "easeInOut" }}
+                                          className="space-y-0.5 overflow-hidden"
+                                        >
+                                          {volumesNota.map((vol, volIndex) => (
+                                            <Draggable key={vol.id} draggableId={`allocated-${vol.id}`} index={volIndex}>
+                                              {(provided, snapshot) => (
+                                                <div
+                                                  ref={provided.innerRef}
+                                                  {...provided.draggableProps}
+                                                  {...provided.dragHandleProps}
+                                                  className="px-1.5 py-0.5 rounded text-[9px] leading-tight cursor-move ml-2"
+                                                  style={{
+                                                    ...provided.draggableProps.style,
+                                                    backgroundColor: snapshot.isDragging 
+                                                      ? (isDark ? '#1e40af' : '#3b82f6')
+                                                      : (isDark ? '#334155' : '#e2e8f0'),
+                                                    color: snapshot.isDragging ? '#ffffff' : theme.text,
+                                                    opacity: snapshot.isDragging ? 0.9 : 1
+                                                  }}
+                                                  title="Arraste para mover"
+                                                >
+                                                  <span className="font-mono font-bold">
+                                                    {vol.identificador_unico}
+                                                  </span>
+                                                </div>
+                                              )}
+                                            </Draggable>
+                                          ))}
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
                                   </div>
                                 );
                               })}
