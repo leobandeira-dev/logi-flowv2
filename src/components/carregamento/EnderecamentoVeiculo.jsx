@@ -700,7 +700,55 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       return;
     }
 
-    const { notaId, linhaOrigem, colunaOrigem, linhaDestino, colunaDestino, endsParaMover } = movimentacaoNota;
+    const { notaId, linhaOrigem, colunaOrigem, linhaDestino, colunaDestino, endsParaMover, volumesDisponiveis } = movimentacaoNota;
+    
+    // Se vem da sidebar (volumesDisponiveis), criar novos endereçamentos
+    if (volumesDisponiveis) {
+      const volumesParaAlocar = volumesDisponiveis.slice(0, quantidade);
+      
+      const user = await base44.auth.me();
+      const novosEnderecamentos = [];
+
+      setShowQuantidadeModal(false);
+      setMovimentacaoNota(null);
+      setQuantidadeMovimentar("");
+
+      try {
+        for (const volume of volumesParaAlocar) {
+          await base44.entities.Volume.update(volume.id, {
+            status_volume: "carregado",
+            localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linhaDestino}-${colunaDestino}`
+          });
+
+          const enderecamento = await base44.entities.EnderecamentoVolume.create({
+            ordem_id: ordem.id,
+            volume_id: volume.id,
+            nota_fiscal_id: notaId,
+            linha: linhaDestino,
+            coluna: colunaDestino,
+            posicao_celula: `${linhaDestino}-${colunaDestino}`,
+            data_enderecamento: new Date().toISOString(),
+            enderecado_por: user.id
+          });
+          
+          novosEnderecamentos.push(enderecamento);
+        }
+
+        const enderecamentosAtualizados = [...enderecamentos, ...novosEnderecamentos];
+        setEnderecamentos(enderecamentosAtualizados);
+
+        localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
+          enderecamentos: enderecamentosAtualizados,
+          timestamp: new Date().toISOString()
+        }));
+
+        toast.success(`${quantidade} volume(s) alocado(s)!`);
+      } catch (error) {
+        console.error("Erro ao alocar volumes:", error);
+        toast.error("Erro ao alocar volumes");
+      }
+      return;
+    }
     
     // Selecionar apenas a quantidade escolhida
     const endsParaMoverSelecionados = endsParaMover.slice(0, quantidade);
@@ -767,7 +815,41 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
     const draggableId = result.draggableId;
     
-    // Verificar se é uma nota completa sendo arrastada
+    // Verificar se é uma nota da SIDEBAR sendo arrastada
+    if (draggableId.startsWith("nota-sidebar-")) {
+      const notaId = draggableId.replace("nota-sidebar-", "").replace("mobile-", "");
+      
+      // Só pode soltar em células
+      if (destination.droppableId.startsWith("cell-")) {
+        const [__, linhaDestino, colunaDestino] = destination.droppableId.split("-");
+        
+        // Buscar volumes não endereçados desta nota
+        const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === notaId);
+        const idsEnderecados = enderecamentos.map(e => e.volume_id);
+        const volumesDisponiveis = volumesNota.filter(v => !idsEnderecados.includes(v.id));
+        
+        if (volumesDisponiveis.length === 0) {
+          toast.warning("Todos os volumes desta nota já foram endereçados");
+          return;
+        }
+        
+        // Abrir modal para perguntar quantidade
+        setMovimentacaoNota({
+          notaId,
+          linhaOrigem: null,
+          colunaOrigem: null,
+          linhaDestino: parseInt(linhaDestino),
+          colunaDestino,
+          totalVolumes: volumesDisponiveis.length,
+          volumesDisponiveis
+        });
+        setQuantidadeMovimentar(volumesDisponiveis.length.toString());
+        setShowQuantidadeModal(true);
+      }
+      return;
+    }
+    
+    // Verificar se é uma nota completa sendo arrastada de uma CÉLULA
     if (draggableId.startsWith("nota-")) {
       const [_, notaId, linhaOrigem, colunaOrigem] = draggableId.split("-");
       
@@ -1775,44 +1857,61 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         
                         return (
                           <div key={notaId} className="border rounded" style={{ borderColor: theme.cardBorder }}>
-                            {/* Header da Nota - clicável para expandir/recolher */}
-                            <div
-                              onClick={() => {
-                                setNotasExpandidas(prev => ({
-                                  ...prev,
-                                  [expandKey]: !isExpanded
-                                }));
-                              }}
-                              className="p-2.5 border-b cursor-pointer active:bg-opacity-70 transition-all select-none"
-                              style={{ 
-                                borderColor: theme.cardBorder,
-                                backgroundColor: isDark ? '#1e3a8a22' : '#eff6ff',
-                                userSelect: 'none',
-                                WebkitUserSelect: 'none',
-                                MozUserSelect: 'none',
-                                minHeight: '48px'
-                              }}
-                            >
-                              <div className="flex items-center justify-between">
-                              <div className="flex-1 min-w-0 select-none" style={{ 
-                                userSelect: 'none',
-                                WebkitUserSelect: 'none',
-                                MozUserSelect: 'none',
-                                pointerEvents: 'none'
-                              }}>
-                                <p className="font-bold text-xs" style={{ color: theme.text }}>
-                                  NF {nota?.numero_nota}
-                                </p>
-                                <p className="text-[10px] truncate" style={{ color: theme.textMuted }}>
-                                  {nota?.emitente_razao_social?.substring(0, 15)}
-                                </p>
-                              </div>
-                              <Badge className={`${volumes.length > 0 ? 'bg-orange-600' : 'bg-green-600'} text-white text-[10px] h-5 px-2 select-none`}
-                                style={{ pointerEvents: 'none' }}>
-                                {volumes.length}/{volumesLocal.filter(v => v.nota_fiscal_id === notaId).length}
-                              </Badge>
-                              </div>
-                            </div>
+                            {/* Header da Nota - arrastável */}
+                            <Draggable draggableId={`nota-sidebar-mobile-${notaId}`} index={Object.keys(volumesPorNota).indexOf(notaId)}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className="p-2.5 border-b cursor-grab active:cursor-grabbing active:bg-opacity-70 transition-all select-none touch-none"
+                                  style={{ 
+                                    ...provided.draggableProps.style,
+                                    borderColor: theme.cardBorder,
+                                    backgroundColor: snapshot.isDragging 
+                                      ? (isDark ? '#1e40af' : '#3b82f6')
+                                      : (isDark ? '#1e3a8a22' : '#eff6ff'),
+                                    userSelect: 'none',
+                                    WebkitUserSelect: 'none',
+                                    MozUserSelect: 'none',
+                                    minHeight: '48px',
+                                    opacity: snapshot.isDragging ? 0.9 : 1
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div 
+                                      className="flex-1 min-w-0 select-none" 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setNotasExpandidas(prev => ({
+                                          ...prev,
+                                          [expandKey]: !isExpanded
+                                        }));
+                                      }}
+                                      style={{ 
+                                        userSelect: 'none',
+                                        WebkitUserSelect: 'none',
+                                        MozUserSelect: 'none',
+                                        color: snapshot.isDragging ? '#ffffff' : 'inherit'
+                                      }}
+                                    >
+                                      <p className="font-bold text-xs" style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}>
+                                        NF {nota?.numero_nota}
+                                      </p>
+                                      <p className="text-[10px] truncate" style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}>
+                                        {nota?.emitente_razao_social?.substring(0, 15)}
+                                      </p>
+                                    </div>
+                                    <Badge 
+                                      className={`${snapshot.isDragging ? 'bg-white/20' : (volumes.length > 0 ? 'bg-orange-600' : 'bg-green-600')} text-white text-[10px] h-5 px-2 select-none`}
+                                      style={{ pointerEvents: 'none' }}
+                                    >
+                                      {volumes.length}/{volumesLocal.filter(v => v.nota_fiscal_id === notaId).length}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              )}
+                            </Draggable>
 
                             {/* Lista de Volumes - com expand/collapse */}
                             <AnimatePresence>
@@ -2867,78 +2966,90 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
                           return (
                             <div key={notaId} className="border rounded" style={{ borderColor: theme.cardBorder }}>
-                              {/* Header da Nota Fiscal - clicável para expandir/recolher */}
-                              <div
-                                className="p-3 border-b cursor-pointer hover:bg-opacity-50 transition-all select-none"
-                                style={{ 
-                                  borderColor: theme.cardBorder,
-                                  backgroundColor: volumesSelecionadosNota.length > 0 ? (isDark ? '#1e3a8a22' : '#eff6ff') : 'transparent',
-                                  userSelect: 'none',
-                                  WebkitUserSelect: 'none',
-                                  MozUserSelect: 'none',
-                                  minHeight: '56px'
-                                }}
-                              >
-                                <div className="flex items-center gap-3 mb-1">
-                                  <div 
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="p-1"
-                                    style={{ minWidth: '32px', minHeight: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                  >
-                                    <Checkbox
-                                      checked={todosNaSelecionados}
-                                      onCheckedChange={() => {
-                                        if (todosNaSelecionados) {
-                                          setVolumesSelecionados(prev => prev.filter(id => !volumes.map(v => v.id).includes(id)));
-                                        } else {
-                                          setVolumesSelecionados(prev => [...new Set([...prev, ...volumes.map(v => v.id)])]);
-                                        }
-                                      }}
-                                      className="h-5 w-5"
-                                    />
-                                  </div>
-                                  <div 
-                                    className="flex-1 min-w-0 select-none" 
-                                    onClick={() => {
-                                      const key = `sidebar-${notaId}`;
-                                      setNotasExpandidas(prev => ({
-                                        ...prev,
-                                        [key]: prev[key] === false ? true : false
-                                      }));
-                                    }}
+                              {/* Header da Nota Fiscal - arrastável */}
+                              <Draggable draggableId={`nota-sidebar-${notaId}`} index={Object.keys(volumesPorNota).indexOf(notaId)}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    className="p-3 border-b cursor-grab active:cursor-grabbing hover:bg-opacity-50 transition-all select-none"
                                     style={{ 
+                                      ...provided.draggableProps.style,
+                                      borderColor: theme.cardBorder,
+                                      backgroundColor: snapshot.isDragging 
+                                        ? (isDark ? '#1e40af' : '#3b82f6')
+                                        : (volumesSelecionadosNota.length > 0 ? (isDark ? '#1e3a8a22' : '#eff6ff') : 'transparent'),
                                       userSelect: 'none',
                                       WebkitUserSelect: 'none',
                                       MozUserSelect: 'none',
-                                      pointerEvents: 'none'
+                                      minHeight: '56px',
+                                      opacity: snapshot.isDragging ? 0.9 : 1
                                     }}
                                   >
-                                    <p className="font-bold text-sm" style={{ color: theme.text }}>
-                                      NF {nota?.numero_nota}
-                                    </p>
-                                    <p className="text-xs truncate" style={{ color: theme.textMuted }}>
-                                      {nota?.emitente_razao_social}
-                                    </p>
-                                  </div>
-                                  <Badge 
-                                    className={`${volumesFaltam > 0 ? 'bg-orange-600' : 'bg-green-600'} text-white text-xs h-6 px-2 select-none`}
-                                    style={{ pointerEvents: 'none' }}
-                                  >
-                                    {volumesFaltam}/{todosVolumesNota.length}
-                                  </Badge>
-                                </div>
-                                <div 
-                                  className="flex items-center justify-between text-xs px-6" 
-                                  style={{ color: theme.textMuted, pointerEvents: 'none' }}
-                                >
-                                  <span>
-                                    Alocados: <strong style={{ color: '#10b981' }}>{volumesJaEnderecados}</strong>
-                                  </span>
-                                  <span>
-                                    Pendentes: <strong style={{ color: volumesFaltam > 0 ? '#ef4444' : '#10b981' }}>{volumesFaltam}</strong>
-                                  </span>
-                                </div>
-                              </div>
+                                    <div className="flex items-center gap-3 mb-1">
+                                      <div 
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="p-1"
+                                        style={{ minWidth: '32px', minHeight: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                      >
+                                        <Checkbox
+                                          checked={todosNaSelecionados}
+                                          onCheckedChange={() => {
+                                            if (todosNaSelecionados) {
+                                              setVolumesSelecionados(prev => prev.filter(id => !volumes.map(v => v.id).includes(id)));
+                                            } else {
+                                              setVolumesSelecionados(prev => [...new Set([...prev, ...volumes.map(v => v.id)])]);
+                                            }
+                                          }}
+                                          className="h-5 w-5"
+                                        />
+                                      </div>
+                                        <div 
+                                          className="flex-1 min-w-0 select-none" 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            const key = `sidebar-${notaId}`;
+                                            setNotasExpandidas(prev => ({
+                                              ...prev,
+                                              [key]: prev[key] === false ? true : false
+                                            }));
+                                          }}
+                                          style={{ 
+                                            userSelect: 'none',
+                                            WebkitUserSelect: 'none',
+                                            MozUserSelect: 'none',
+                                            color: snapshot.isDragging ? '#ffffff' : 'inherit'
+                                          }}
+                                        >
+                                          <p className="font-bold text-sm" style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}>
+                                            NF {nota?.numero_nota}
+                                          </p>
+                                          <p className="text-xs truncate" style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}>
+                                            {nota?.emitente_razao_social}
+                                          </p>
+                                        </div>
+                                        <Badge 
+                                          className={`${snapshot.isDragging ? 'bg-white/20' : (volumesFaltam > 0 ? 'bg-orange-600' : 'bg-green-600')} text-white text-xs h-6 px-2 select-none`}
+                                          style={{ pointerEvents: 'none' }}
+                                        >
+                                          {volumesFaltam}/{todosVolumesNota.length}
+                                        </Badge>
+                                      </div>
+                                      <div 
+                                        className="flex items-center justify-between text-xs px-6" 
+                                        style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted, pointerEvents: 'none' }}
+                                      >
+                                        <span>
+                                          Alocados: <strong style={{ color: snapshot.isDragging ? '#ffffff' : '#10b981' }}>{volumesJaEnderecados}</strong>
+                                        </span>
+                                        <span>
+                                          Pendentes: <strong style={{ color: snapshot.isDragging ? '#ffffff' : (volumesFaltam > 0 ? '#ef4444' : '#10b981') }}>{volumesFaltam}</strong>
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </Draggable>
 
                               {/* Lista de Volumes da Nota - com expand/collapse */}
                               <AnimatePresence>
