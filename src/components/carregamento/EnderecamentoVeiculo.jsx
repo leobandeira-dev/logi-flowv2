@@ -769,38 +769,30 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     // Selecionar apenas a quantidade escolhida
     const endsParaMoverSelecionados = endsParaMover.slice(0, quantidade);
     
-    // Atualização otimista - criar endereçamentos temporários
     const user = await base44.auth.me();
-    const enderecamentosTempNovos = endsParaMoverSelecionados.map(end => ({
-      ...end,
-      id: `temp-${end.id}`,
-      linha: linhaDestino,
-      coluna: colunaDestino,
-      posicao_celula: `${linhaDestino}-${colunaDestino}`
-    }));
 
-    const enderecamentosAtualizados = [
-      ...enderecamentos.filter(e => 
-        !endsParaMoverSelecionados.some(end => end.id === e.id)
-      ),
-      ...enderecamentosTempNovos
-    ];
-    
-    setEnderecamentos(enderecamentosAtualizados);
+    // Fechar modal imediatamente
     setShowQuantidadeModal(false);
     setMovimentacaoNota(null);
     setQuantidadeMovimentar("");
 
+    toast.loading(`Movendo ${quantidade} volume(s)...`, { id: 'movendo' });
+
     try {
-      // Remover endereçamentos antigos e criar novos
-      for (const end of endsParaMoverSelecionados) {
+      // Mover volumes um por um com atualização progressiva do estado
+      for (let i = 0; i < endsParaMoverSelecionados.length; i++) {
+        const end = endsParaMoverSelecionados[i];
+        
+        // Deletar endereçamento antigo
         await base44.entities.EnderecamentoVolume.delete(end.id);
         
+        // Atualizar localização do volume
         await base44.entities.Volume.update(end.volume_id, {
           localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linhaDestino}-${colunaDestino}`
         });
 
-        await base44.entities.EnderecamentoVolume.create({
+        // Criar novo endereçamento
+        const novoEnd = await base44.entities.EnderecamentoVolume.create({
           ordem_id: ordem.id,
           volume_id: end.volume_id,
           nota_fiscal_id: notaId,
@@ -810,12 +802,29 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           data_enderecamento: new Date().toISOString(),
           enderecado_por: user.id
         });
+
+        // Atualizar estado imediatamente (progressivo)
+        setEnderecamentos(prev => [
+          ...prev.filter(e => e.id !== end.id),
+          novoEnd
+        ]);
+
+        // Pequeno delay para animação suave
+        if (i < endsParaMoverSelecionados.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 150));
+        }
       }
 
-      // Recarregar endereçamentos do banco
-      await loadEnderecamentos();
+      // Salvar rascunho
+      setEnderecamentos(prev => {
+        localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
+          enderecamentos: prev,
+          timestamp: new Date().toISOString()
+        }));
+        return prev;
+      });
 
-      toast.success(`${quantidade} volume(s) movido(s)!`);
+      toast.success(`${quantidade} volume(s) movido(s)!`, { id: 'movendo' });
     } catch (error) {
       console.error("Erro ao mover volumes:", error);
       // Reverter em caso de erro
