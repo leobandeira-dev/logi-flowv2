@@ -1748,14 +1748,21 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                   [expandKey]: !isExpanded
                                 }));
                               }}
-                              className="p-1.5 border-b cursor-pointer active:bg-opacity-70 transition-all"
+                              className="p-1.5 border-b cursor-pointer active:bg-opacity-70 transition-all select-none"
                               style={{ 
                                 borderColor: theme.cardBorder,
-                                backgroundColor: isDark ? '#1e3a8a22' : '#eff6ff'
+                                backgroundColor: isDark ? '#1e3a8a22' : '#eff6ff',
+                                userSelect: 'none',
+                                WebkitUserSelect: 'none',
+                                MozUserSelect: 'none'
                               }}
                             >
                               <div className="flex items-center justify-between">
-                                <div className="flex-1 min-w-0">
+                                <div className="flex-1 min-w-0 select-none" style={{ 
+                                  userSelect: 'none',
+                                  WebkitUserSelect: 'none',
+                                  MozUserSelect: 'none'
+                                }}>
                                   <p className="font-bold text-[9px]" style={{ color: theme.text }}>
                                     NF {nota?.numero_nota}
                                   </p>
@@ -1763,8 +1770,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     {nota?.emitente_razao_social?.substring(0, 15)}
                                   </p>
                                 </div>
-                                <Badge className="bg-blue-600 text-white text-[8px] h-3.5 px-1">
-                                  {volumes.length}
+                                <Badge className={`${volumes.length > 0 ? 'bg-orange-600' : 'bg-green-600'} text-white text-[8px] h-3.5 px-1 select-none`}>
+                                  {volumes.length}/{volumesLocal.filter(v => v.nota_fiscal_id === notaId).length}
                                 </Badge>
                               </div>
                             </div>
@@ -1799,14 +1806,24 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                             }}
                                           >
                                             <p 
-                                              className="font-mono text-[9px] font-bold leading-tight break-all" 
-                                              style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}
+                                              className="font-mono text-[9px] font-bold leading-tight break-all select-none" 
+                                              style={{ 
+                                                color: snapshot.isDragging ? '#ffffff' : theme.text,
+                                                userSelect: 'none',
+                                                WebkitUserSelect: 'none',
+                                                MozUserSelect: 'none'
+                                              }}
                                             >
                                               {volume.identificador_unico}
                                             </p>
                                             <p 
-                                              className="text-[7px] leading-tight" 
-                                              style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}
+                                              className="text-[7px] leading-tight select-none" 
+                                              style={{ 
+                                                color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted,
+                                                userSelect: 'none',
+                                                WebkitUserSelect: 'none',
+                                                MozUserSelect: 'none'
+                                              }}
                                             >
                                               {volume.peso_volume} kg
                                             </p>
@@ -2747,10 +2764,13 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     }));
                                   }
                                 }}
-                                className="p-2 border-b cursor-pointer hover:bg-opacity-50 transition-all"
+                                className="p-2 border-b cursor-pointer hover:bg-opacity-50 transition-all select-none"
                                 style={{ 
                                   borderColor: theme.cardBorder,
-                                  backgroundColor: volumesSelecionadosNota.length > 0 ? (isDark ? '#1e3a8a22' : '#eff6ff') : 'transparent'
+                                  backgroundColor: volumesSelecionadosNota.length > 0 ? (isDark ? '#1e3a8a22' : '#eff6ff') : 'transparent',
+                                  userSelect: 'none',
+                                  WebkitUserSelect: 'none',
+                                  MozUserSelect: 'none'
                                 }}
                               >
                                 <div className="flex items-center gap-2 mb-1">
@@ -2767,7 +2787,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                       e.stopPropagation();
                                     }}
                                   />
-                                  <div className="flex-1 min-w-0">
+                                  <div className="flex-1 min-w-0 select-none" style={{ 
+                                    userSelect: 'none',
+                                    WebkitUserSelect: 'none',
+                                    MozUserSelect: 'none'
+                                  }}>
                                     <p className="font-bold text-xs" style={{ color: theme.text }}>
                                       NF {nota?.numero_nota}
                                     </p>
@@ -2775,19 +2799,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                       {nota?.emitente_razao_social}
                                     </p>
                                   </div>
-                                  <Badge className={volumesSelecionadosNota.length > 0 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}>
-                                    {volumesSelecionadosNota.length}/{volumes.length}
+                                  <Badge className={`${volumesFaltam > 0 ? 'bg-orange-600' : 'bg-green-600'} text-white text-[10px] h-5 px-1.5 select-none`}>
+                                    {volumesFaltam}/{todosVolumesNota.length}
                                   </Badge>
                                 </div>
                                 <div className="flex items-center justify-between text-[10px] px-6" style={{ color: theme.textMuted }}>
                                   <span>
-                                    Total: <strong style={{ color: theme.text }}>{todosVolumesNota.length}</strong>
-                                  </span>
-                                  <span>
                                     Alocados: <strong style={{ color: '#10b981' }}>{volumesJaEnderecados}</strong>
                                   </span>
                                   <span>
-                                    Faltam: <strong style={{ color: volumesFaltam > 0 ? '#ef4444' : '#10b981' }}>{volumesFaltam}</strong>
+                                    Pendentes: <strong style={{ color: volumesFaltam > 0 ? '#ef4444' : '#10b981' }}>{volumesFaltam}</strong>
                                   </span>
                                 </div>
                               </div>
@@ -2829,10 +2850,20 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                                   onCheckedChange={() => handleToggleVolume(volume.id)}
                                                   onClick={(e) => e.stopPropagation()}
                                                 />
-                                                <p className="font-mono font-bold flex-1 truncate" style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}>
+                                                <p className="font-mono font-bold flex-1 truncate select-none" style={{ 
+                                                  color: snapshot.isDragging ? '#ffffff' : theme.text,
+                                                  userSelect: 'none',
+                                                  WebkitUserSelect: 'none',
+                                                  MozUserSelect: 'none'
+                                                }}>
                                                   {volume.identificador_unico}
                                                 </p>
-                                                <p className="text-xs" style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}>
+                                                <p className="text-xs select-none" style={{ 
+                                                  color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted,
+                                                  userSelect: 'none',
+                                                  WebkitUserSelect: 'none',
+                                                  MozUserSelect: 'none'
+                                                }}>
                                                   {volume.peso_volume} kg
                                                 </p>
                                               </div>
