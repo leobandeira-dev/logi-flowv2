@@ -2430,7 +2430,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                           // Calcular quantos volumes da nota já foram endereçados
                           const todosVolumesNota = volumesLocal.filter(v => v.nota_fiscal_id === notaId);
                           const volumesJaEnderecados = enderecamentos.filter(e => e.nota_fiscal_id === notaId).length;
-                          const volumesFaltam = todosVolumesNota.length - volumesJaEnderecados;
+                          const volumesFaltam = volumes.length; // Volumes não endereçados (disponíveis)
 
                           return (
                             <div key={notaId} className="border rounded" style={{ borderColor: theme.cardBorder }}>
