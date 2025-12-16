@@ -2292,7 +2292,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                   </p>
                                 </div>
                               </div>
-                            </motion.div>
+                            </div>
                           )}
                         </Draggable>
                       );
