@@ -201,16 +201,21 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     setNotasFiscaisLocal(notasFiscais);
     setVolumesLocal(volumes);
     
-    // Carregar rascunho do localStorage
+    // Carregar rascunho do localStorage - APENAS da ordem atual
     const rascunhoSalvo = localStorage.getItem(`enderecamento_rascunho_${ordem.id}`);
     if (rascunhoSalvo) {
       try {
         const rascunho = JSON.parse(rascunhoSalvo);
         if (rascunho.enderecamentos) {
-          // Mesclar endereçamentos salvos com os do banco
-          const idsExistentes = enderecamentos.map(e => e.volume_id);
-          const enderecamentosRascunho = rascunho.enderecamentos.filter(e => !idsExistentes.includes(e.volume_id));
+          // Filtrar endereçamentos do rascunho que são da ordem atual
+          const enderecamentosRascunhoOrdem = rascunho.enderecamentos.filter(e => e.ordem_id === ordem.id);
+          
+          // Mesclar apenas endereçamentos da ordem atual
+          const idsExistentes = enderecamentos.filter(e => e.ordem_id === ordem.id).map(e => e.volume_id);
+          const enderecamentosRascunho = enderecamentosRascunhoOrdem.filter(e => !idsExistentes.includes(e.volume_id));
+          
           if (enderecamentosRascunho.length > 0) {
+            // Manter endereçamentos de outras ordens + adicionar do rascunho desta ordem
             setEnderecamentos([...enderecamentos, ...enderecamentosRascunho]);
             toast.info(`${enderecamentosRascunho.length} endereçamento(s) restaurado(s) do rascunho`);
           }
@@ -287,7 +292,19 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
   // Helper para pegar apenas endereçamentos da ordem atual
   const getEnderecamentosOrdemAtual = () => {
-    return enderecamentos.filter(e => e.ordem_id === ordem.id);
+    const enderecamentosOrdem = enderecamentos.filter(e => e.ordem_id === ordem.id);
+    
+    // Debug log para identificar problema
+    if (enderecamentos.length !== enderecamentosOrdem.length) {
+      console.log('🚨 PROBLEMA DETECTADO - Endereçamentos:', {
+        total: enderecamentos.length,
+        destaOrdem: enderecamentosOrdem.length,
+        deOutrasOrdens: enderecamentos.length - enderecamentosOrdem.length,
+        ordemAtual: ordem.id.slice(-6)
+      });
+    }
+    
+    return enderecamentosOrdem;
   };
 
   const getVolumesNaoEnderecados = () => {
@@ -354,15 +371,18 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         novosEnderecamentos.push(created);
       }
 
-      const enderecamentosAtualizados = [...enderecamentos, ...novosEnderecamentos];
-      setEnderecamentos(enderecamentosAtualizados);
+      // Recarregar endereçamentos do banco para sincronizar (evitar estado inconsistente)
+      const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
+      setEnderecamentos(todosEnderecamentos);
+      
       setVolumesSelecionados([]);
       setShowBuscaModal(false);
       setCelulaAtiva(null);
       
-      // Salvar rascunho
+      // Salvar rascunho apenas com endereçamentos desta ordem
+      const enderecamentosOrdemAtual = todosEnderecamentos.filter(e => e.ordem_id === ordem.id);
       localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
-        enderecamentos: enderecamentosAtualizados,
+        enderecamentos: enderecamentosOrdemAtual,
         timestamp: new Date().toISOString()
       }));
       
@@ -751,14 +771,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           }
         }
 
-        // Salvar rascunho com estado atual (já atualizado progressivamente no loop)
-        setEnderecamentos(prev => {
-          localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
-            enderecamentos: prev,
-            timestamp: new Date().toISOString()
-          }));
-          return prev;
-        });
+        // Recarregar endereçamentos do banco para sincronizar
+        const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
+        setEnderecamentos(todosEnderecamentos);
+
+        // Salvar rascunho apenas com endereçamentos desta ordem
+        const enderecamentosOrdemAtual = todosEnderecamentos.filter(e => e.ordem_id === ordem.id);
+        localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
+          enderecamentos: enderecamentosOrdemAtual,
+          timestamp: new Date().toISOString()
+        }));
 
         toast.success(`${quantidade} volume(s) alocado(s)!`, { id: 'alocando' });
         
@@ -818,14 +840,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         }
       }
 
-      // Salvar rascunho
-      setEnderecamentos(prev => {
-        localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
-          enderecamentos: prev,
-          timestamp: new Date().toISOString()
-        }));
-        return prev;
-      });
+      // Recarregar endereçamentos do banco para sincronizar
+      const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
+      setEnderecamentos(todosEnderecamentos);
+
+      // Salvar rascunho apenas com endereçamentos desta ordem
+      const enderecamentosOrdemAtual = todosEnderecamentos.filter(e => e.ordem_id === ordem.id);
+      localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
+        enderecamentos: enderecamentosOrdemAtual,
+        timestamp: new Date().toISOString()
+      }));
 
       toast.success(`${quantidade} volume(s) movido(s)!`);
       
@@ -1047,16 +1071,14 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           enderecado_por: user.id
         });
 
-        // Substituir temporário pelo real - manter TODOS os endereçamentos
-        const enderecamentosFinal = [
-          ...enderecamentos.filter(e => e.volume_id !== volumeId || e.ordem_id !== ordem.id),
-          created
-        ];
-        setEnderecamentos(enderecamentosFinal);
+        // Recarregar endereçamentos do banco para sincronizar
+        const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
+        setEnderecamentos(todosEnderecamentos);
 
-        // Salvar rascunho
+        // Salvar rascunho apenas com endereçamentos desta ordem
+        const enderecamentosOrdemAtual = todosEnderecamentos.filter(e => e.ordem_id === ordem.id);
         localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
-          enderecamentos: enderecamentosFinal,
+          enderecamentos: enderecamentosOrdemAtual,
           timestamp: new Date().toISOString()
         }));
 
