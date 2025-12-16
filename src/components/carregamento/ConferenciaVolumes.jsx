@@ -162,10 +162,21 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
   const getVolumesEmbarcadosValidos = () => {
     // Contar apenas volumes embarcados que pertencem às notas atuais
     const notasIdsAtuais = notasFiscaisLocal.map(nf => nf.id);
-    return volumesEmbarcados.filter(volumeId => {
+    const validos = volumesEmbarcados.filter(volumeId => {
       const volume = volumesLocal.find(v => v.id === volumeId);
       return volume && notasIdsAtuais.includes(volume.nota_fiscal_id);
     });
+    
+    // Debug log
+    console.log('📊 Volumes Embarcados Debug:', {
+      totalEmbarcados: volumesEmbarcados.length,
+      volumesValidos: validos.length,
+      totalVolumes: getTotalVolumes(),
+      notasAtuais: notasFiscaisLocal.length,
+      volumesOrf: volumesEmbarcados.length - validos.length
+    });
+    
+    return validos;
   };
 
   const handleScanVolume = async (codigo) => {
