@@ -713,6 +713,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       toast.loading(`Alocando ${quantidade} volume(s)...`, { id: 'alocando' });
 
       try {
+        setSaving(true);
+        
         // Criar endereçamentos um por um com pequeno delay para animação
         for (let i = 0; i < volumesParaAlocar.length; i++) {
           const volume = volumesParaAlocar[i];
@@ -740,14 +742,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           
           // Pequeno delay para animação suave
           if (i < volumesParaAlocar.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 150));
+            await new Promise(resolve => setTimeout(resolve, 120));
           }
         }
-
-        // Fechar modal após concluir
-        setShowQuantidadeModal(false);
-        setMovimentacaoNota(null);
-        setQuantidadeMovimentar("");
 
         // Salvar rascunho com estado atual (já atualizado progressivamente no loop)
         setEnderecamentos(prev => {
@@ -759,6 +756,12 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         });
 
         toast.success(`${quantidade} volume(s) alocado(s)!`, { id: 'alocando' });
+        
+        // Fechar modal após concluir
+        setShowQuantidadeModal(false);
+        setMovimentacaoNota(null);
+        setQuantidadeMovimentar("");
+        setSaving(false);
       } catch (error) {
         console.error("Erro ao alocar volumes:", error);
         toast.error("Erro ao alocar volumes");
@@ -771,14 +774,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     
     const user = await base44.auth.me();
 
-    // Fechar modal imediatamente
-    setShowQuantidadeModal(false);
-    setMovimentacaoNota(null);
-    setQuantidadeMovimentar("");
-
-    toast.loading(`Movendo ${quantidade} volume(s)...`, { id: 'movendo' });
-
     try {
+      setSaving(true);
+      
       // Mover volumes um por um com atualização progressiva do estado
       for (let i = 0; i < endsParaMoverSelecionados.length; i++) {
         const end = endsParaMoverSelecionados[i];
@@ -811,7 +809,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
         // Pequeno delay para animação suave
         if (i < endsParaMoverSelecionados.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 150));
+          await new Promise(resolve => setTimeout(resolve, 120));
         }
       }
 
@@ -824,7 +822,13 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         return prev;
       });
 
-      toast.success(`${quantidade} volume(s) movido(s)!`, { id: 'movendo' });
+      toast.success(`${quantidade} volume(s) movido(s)!`);
+      
+      // Fechar modal após concluir
+      setShowQuantidadeModal(false);
+      setMovimentacaoNota(null);
+      setQuantidadeMovimentar("");
+      setSaving(false);
     } catch (error) {
       console.error("Erro ao mover volumes:", error);
       // Reverter em caso de erro
@@ -3589,10 +3593,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </Button>
             <Button
               onClick={handleConfirmarMovimentacao}
-              disabled={!quantidadeMovimentar || parseInt(quantidadeMovimentar) <= 0}
+              disabled={!quantidadeMovimentar || parseInt(quantidadeMovimentar) <= 0 || saving}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              Confirmar
+              {saving ? "Movimentando..." : "Confirmar"}
             </Button>
           </DialogFooter>
         </DialogContent>
