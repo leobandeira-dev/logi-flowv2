@@ -1,52 +1,72 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, RefreshCw, Truck, Package, CheckCircle, X, Plus, Minus, Scan, Grid3x3, Filter, ChevronDown } from "lucide-react";
+import { Plus, Search, Filter, ChevronDown, FileText, Package, FileSpreadsheet, X, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
+
+import OrdensTableEditable from "../components/ordens/OrdensTableEditable";
+import OrdemUnificadaForm from "../components/ordens/OrdemUnificadaForm";
+import OrdemDetails from "../components/ordens/OrdemDetails";
+import OfertaCargaForm from "../components/ordens/OfertaCargaForm";
+import OfertaCargaLote from "../components/ordens/OfertaCargaLote";
+import TipoOrdemModal from "../components/ordens/TipoOrdemModal";
+import ExportarOfertasPDF from "../components/ordens/ExportarOfertasPDF";
+import FiltrosPredefinidos from "../components/filtros/FiltrosPredefinidos";
+import PaginacaoControles from "../components/filtros/PaginacaoControles";
+import FiltroDataPeriodo from "../components/filtros/FiltroDataPeriodo";
 import ConferenciaVolumes from "../components/carregamento/ConferenciaVolumes";
 import EnderecamentoVeiculo from "../components/carregamento/EnderecamentoVeiculo";
-import OrdemFilhaForm from "../components/ordens/SubOrdemForm";
-import { sincronizarOrdemMaeParaFilhas } from "@/functions/sincronizarOrdemMaeParaFilhas";
-import { debounce } from "lodash";
 
 export default function Carregamento() {
+  const [ordens, setOrdens] = useState([]);
+  const [motoristas, setMotoristas] = useState([]);
+  const [veiculos, setVeiculos] = useState([]);
+  const [operacoes, setOperacoes] = useState([]);
+  const [notasFiscais, setNotasFiscais] = useState([]);
+  const [volumes, setVolumes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [selectedOrdem, setSelectedOrdem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [editingOrdem, setEditingOrdem] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showTipoModal, setShowTipoModal] = useState(false);
+  const [showOfertaForm, setShowOfertaForm] = useState(false);
+  const [showOfertaLote, setShowOfertaLote] = useState(false);
   const [isDark, setIsDark] = useState(false);
-  const queryClient = useQueryClient();
-  const [searchOrdem, setSearchOrdem] = useState("");
-  const [searchNota, setSearchNota] = useState("");
-  const [debouncedSearchOrdem, setDebouncedSearchOrdem] = useState("");
-  const [debouncedSearchNota, setDebouncedSearchNota] = useState("");
-  const [filtroStatusTracking, setFiltroStatusTracking] = useState("todos");
-  const [filtroOperacao, setFiltroOperacao] = useState("todos");
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    operacoesIds: [],
-    statusTracking: "",
-    origem: "",
-    destino: "",
-    dataInicio: "",
-    dataFim: ""
-  });
-  const [ordemSelecionada, setOrdemSelecionada] = useState(null);
-  const [notasSelecionadas, setNotasSelecionadas] = useState([]);
+  const [periodoSelecionado, setPeriodoSelecionado] = useState("mes_atual");
   const [showConferencia, setShowConferencia] = useState(false);
   const [showEnderecamento, setShowEnderecamento] = useState(false);
-  const [showOrdemFilhaForm, setShowOrdemFilhaForm] = useState(false);
-  const [abaAtiva, setAbaAtiva] = useState("carregamento");
-  const [processandoVinculo, setProcessandoVinculo] = useState(false);
+  const [ordemParaConferencia, setOrdemParaConferencia] = useState(null);
+  
+  const hoje = new Date();
+  const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+  
+  const [filters, setFilters] = useState({
+    operacoesIds: [],
+    status: "",
+    tiposRegistro: [],
+    origem: "",
+    destino: "",
+    dataInicio: primeiroDiaMes.toISOString().split('T')[0],
+    dataFim: ultimoDiaMes.toISOString().split('T')[0],
+    tipoRegistro: "",
+    statusTracking: ""
+  });
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [limite, setLimite] = useState(50);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -58,372 +78,372 @@ export default function Carregamento() {
     return () => observer.disconnect();
   }, []);
 
-  // Debounce das buscas
   useEffect(() => {
-    const handler = debounce(() => setDebouncedSearchOrdem(searchOrdem), 300);
-    handler();
-    return () => handler.cancel();
-  }, [searchOrdem]);
+    loadCurrentUser();
+    loadData();
+  }, []);
 
-  useEffect(() => {
-    // Se tem 44 caracteres (chave completa), processar automaticamente
-    const searchClean = searchNota.trim().replace(/\s+/g, '');
-    if (searchClean.length === 44 && /^\d+$/.test(searchClean)) {
-      handleProcessarBuscaNota(searchNota);
-      return;
+  const loadCurrentUser = async () => {
+    try {
+      const user = await base44.auth.me();
+      setCurrentUser(user);
+    } catch (error) {
+      console.error("Erro ao carregar usuário:", error);
     }
-    
-    // Debounce normal para outros casos
-    const handler = debounce(() => setDebouncedSearchNota(searchNota), 300);
-    handler();
-    return () => handler.cancel();
-  }, [searchNota]);
+  };
 
-  // Queries com React Query e cache
-  const { data: user } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
-    staleTime: 5 * 60 * 1000 // Cache por 5 minutos
-  });
-
-  const { data: ordens = [], isLoading: loadingOrdens, refetch: refetchOrdens } = useQuery({
-    queryKey: ['ordens-carregamento'],
-    queryFn: async () => {
-      const data = await base44.entities.OrdemDeCarregamento.list("-data_solicitacao", 200);
-      return data.filter(o => 
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const user = await base44.auth.me();
+      
+      const [ordensData, motoristasData, veiculosData, operacoesData, notasData, volumesData] = await Promise.all([
+        base44.entities.OrdemDeCarregamento.list("-data_solicitacao"),
+        base44.entities.Motorista.list(),
+        base44.entities.Veiculo.list(),
+        base44.entities.Operacao.list(),
+        base44.entities.NotaFiscal.list(),
+        base44.entities.Volume.list(null, 500)
+      ]);
+      
+      let ordensFiltradas = ordensData.filter(o => 
         o.tipo_ordem !== "recebimento" && 
         o.status !== "finalizado" && 
         o.status !== "cancelado"
       );
-    },
-    staleTime: 30 * 1000, // Cache por 30 segundos
-    enabled: !!user
-  });
-
-  const { data: notasFiscais = [], isLoading: loadingNotas, refetch: refetchNotas } = useQuery({
-    queryKey: ['notas-fiscais-carregamento'],
-    queryFn: () => base44.entities.NotaFiscal.list("-created_date"),
-    staleTime: 30 * 1000,
-    enabled: !!user
-  });
-
-  const { data: volumes = [] } = useQuery({
-    queryKey: ['volumes-carregamento'],
-    queryFn: () => base44.entities.Volume.list(null, 500),
-    staleTime: 30 * 1000,
-    enabled: !!user
-  });
-
-  const { data: enderecamentos = [] } = useQuery({
-    queryKey: ['enderecamentos'],
-    queryFn: () => base44.entities.EnderecamentoVolume.list(null, 300),
-    staleTime: 30 * 1000,
-    enabled: !!user
-  });
-
-  const { data: motoristas = [] } = useQuery({
-    queryKey: ['motoristas'],
-    queryFn: () => base44.entities.Motorista.list(null, 200),
-    staleTime: 2 * 60 * 1000 // Cache por 2 minutos
-  });
-
-  const { data: veiculos = [] } = useQuery({
-    queryKey: ['veiculos'],
-    queryFn: () => base44.entities.Veiculo.list(null, 300),
-    staleTime: 2 * 60 * 1000
-  });
-
-  const { data: operacoes = [] } = useQuery({
-    queryKey: ['operacoes'],
-    queryFn: () => base44.entities.Operacao.list(),
-    staleTime: 5 * 60 * 1000 // Cache por 5 minutos
-  });
-
-  const loading = loadingOrdens || loadingNotas;
-
-  const refetchAll = async () => {
-    // Invalidar apenas as queries necessárias (mais rápido que refetch completo)
-    queryClient.invalidateQueries(['ordens-carregamento']);
-    queryClient.invalidateQueries(['notas-fiscais-carregamento']);
-    queryClient.invalidateQueries(['volumes-carregamento']);
-    queryClient.invalidateQueries(['enderecamentos']);
-  };
-
-  // Memoizar computações pesadas
-  const getNotasDisponiveis = useMemo(() => {
-    if (!notasFiscais || !ordens) return [];
-    
-    // Criar um Set de IDs de notas já vinculadas para busca O(1)
-    const notasVinculadasSet = new Set();
-    ordens.forEach(o => {
-      if ((o.tipo_ordem === "carregamento" || o.tipo_ordem === "entrega" || o.tipo_registro === "ordem_completa") && o.notas_fiscais_ids) {
-        o.notas_fiscais_ids.forEach(id => notasVinculadasSet.add(id));
-      }
-    });
-    
-    // Filtrar notas recebidas e não vinculadas
-    return notasFiscais.filter(nota => 
-      nota.status_nf === "recebida" && !notasVinculadasSet.has(nota.id)
-    );
-  }, [notasFiscais, ordens]);
-
-  const getNotasVinculadas = useMemo(() => {
-    if (!ordemSelecionada?.notas_fiscais_ids || !notasFiscais) return [];
-    
-    // Criar Map para busca O(1)
-    const notasMap = new Map(notasFiscais.map(n => [n.id, n]));
-    
-    return ordemSelecionada.notas_fiscais_ids
-      .map(id => notasMap.get(id))
-      .filter(Boolean);
-  }, [ordemSelecionada?.notas_fiscais_ids, notasFiscais]);
-
-  const handleSelecionarOrdem = (ordem) => {
-    setOrdemSelecionada(ordem);
-    setNotasSelecionadas([]);
-  };
-
-  const handleToggleNota = (notaId) => {
-    setNotasSelecionadas(prev => 
-      prev.includes(notaId) 
-        ? prev.filter(id => id !== notaId)
-        : [...prev, notaId]
-    );
-  };
-
-  const vincularNotasMutation = useMutation({
-    mutationFn: async () => {
-      const notasParaVincular = notasFiscais.filter(n => notasSelecionadas.includes(n.id));
-      const notasVinculadasAtual = notasFiscais.filter(nota => 
-        ordemSelecionada.notas_fiscais_ids?.includes(nota.id)
-      );
-      const todasNotas = [...notasVinculadasAtual, ...notasParaVincular];
       
-      const pesoTotal = todasNotas.reduce((sum, nf) => sum + (nf.peso_total_nf || 0), 0);
-      const valorTotal = todasNotas.reduce((sum, nf) => sum + (nf.valor_nota_fiscal || 0), 0);
-      const volumesTotal = todasNotas.reduce((sum, nf) => sum + (nf.quantidade_total_volumes_nf || 0), 0);
-      const notasIds = [...(ordemSelecionada.notas_fiscais_ids || []), ...notasSelecionadas];
+      if (user.tipo_perfil === "fornecedor") {
+        ordensFiltradas = ordensFiltradas.filter(o => o.cliente_cnpj === user.cnpj_associado);
+      } else if (user.tipo_perfil === "cliente") {
+        ordensFiltradas = ordensFiltradas.filter(o => o.destinatario_cnpj === user.cnpj_associado);
+      } else if (user.tipo_perfil === "operador") {
+        ordensFiltradas = user.empresa_id && user.role !== "admin"
+          ? ordensFiltradas.filter(o => o.empresa_id === user.empresa_id || !o.empresa_id)
+          : ordensFiltradas;
+      }
+      
+      setOrdens(ordensFiltradas);
+      setMotoristas(motoristasData);
+      setVeiculos(veiculosData);
+      setOperacoes(operacoesData.filter(op => op.ativo));
+      setNotasFiscais(notasData);
+      setVolumes(volumesData);
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      const updateData = {
-        notas_fiscais_ids: notasIds,
-        peso_total_consolidado: pesoTotal,
-        valor_total_consolidado: valorTotal,
-        volumes_total_consolidado: volumesTotal,
-        peso: pesoTotal,
-        volumes: volumesTotal
+  const handleAbrirConferencia = async (ordem) => {
+    try {
+      setOrdemParaConferencia(ordem);
+      setShowConferencia(true);
+    } catch (error) {
+      console.error("Erro ao abrir conferência:", error);
+      toast.error("Erro ao abrir conferência");
+    }
+  };
+
+  const handleAbrirEnderecamento = async (ordem) => {
+    try {
+      setOrdemParaConferencia(ordem);
+      setShowEnderecamento(true);
+    } catch (error) {
+      console.error("Erro ao abrir endereçamento:", error);
+      toast.error("Erro ao abrir endereçamento");
+    }
+  };
+
+  const vincularPrimeiraEtapa = async (ordemId) => {
+    try {
+      const etapas = await base44.entities.Etapa.list("ordem"); 
+      const etapasAtivas = etapas.filter(e => e.ativo);
+      
+      if (etapasAtivas.length > 0) {
+        const primeiraEtapa = etapasAtivas[0];
+        
+        await base44.entities.OrdemEtapa.create({
+          ordem_id: ordemId,
+          etapa_id: primeiraEtapa.id,
+          status: "em_andamento",
+          data_inicio: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao vincular ordem à primeira etapa:", error);
+    }
+  };
+
+  const generateNumeroCarga = (offset = 0) => {
+    const year = new Date().getFullYear();
+    const sequence = (ordens.length + 1 + offset).toString().padStart(4, '0');
+    return `${year}-${sequence}`;
+  };
+
+  const handleSubmit = async (data, notasFiscaisData = []) => {
+    try {
+      const user = await base44.auth.me();
+
+      let valorTotal = 0;
+      if (data.peso && data.valor_tonelada) {
+        valorTotal = (data.peso / 1000) * data.valor_tonelada;
+      } else if (data.frete_viagem) {
+        valorTotal = data.frete_viagem;
+      }
+
+      let clienteFinalNome = data.cliente_final_nome;
+      let clienteFinalCnpj = data.cliente_final_cnpj;
+      
+      if (!clienteFinalNome || !clienteFinalCnpj) {
+        if (data.tipo_operacao === "CIF") {
+          clienteFinalNome = data.cliente;
+          clienteFinalCnpj = data.cliente_cnpj;
+        } else if (data.tipo_operacao === "FOB") {
+          clienteFinalNome = data.destinatario || data.destino;
+          clienteFinalCnpj = data.destinatario_cnpj;
+        }
+      }
+
+      const temMotorista = data.motorista_id || data.motorista_nome_temp;
+      const temVeiculo = data.cavalo_id;
+      
+      let tipoRegistro = data.tipo_registro || "ordem_completa";
+      let tipoNegociacao = data.tipo_negociacao;
+      
+      if (data.tipo_ordem !== "coleta") {
+        if (temMotorista && temVeiculo) {
+          tipoRegistro = "ordem_completa";
+          tipoNegociacao = "alocado";
+        } else if (temMotorista && !temVeiculo) {
+          tipoRegistro = "negociando";
+          tipoNegociacao = "negociando";
+        } else {
+          tipoRegistro = "oferta";
+          tipoNegociacao = "oferta";
+        }
+      }
+
+      const ordemData = {
+        ...data,
+        empresa_id: user.empresa_id,
+        valor_total_frete: valorTotal,
+        data_solicitacao: editingOrdem ? editingOrdem.data_solicitacao : new Date().toISOString(),
+        numero_carga: editingOrdem ? editingOrdem.numero_carga : generateNumeroCarga(),
+        tipo_registro: tipoRegistro,
+        tipo_negociacao: tipoNegociacao,
+        status: editingOrdem?.status || "novo",
+        cliente_final_nome: clienteFinalNome,
+        cliente_final_cnpj: clienteFinalCnpj
       };
 
-      if (!ordemSelecionada.notas_fiscais_ids || ordemSelecionada.notas_fiscais_ids.length === 0) {
-        updateData.inicio_carregamento = new Date().toISOString();
-        updateData.status_tracking = "em_carregamento";
-        updateData.status = "aguardando_carregamento";
+      let ordemId;
+      let ordemSalva;
+
+      if (editingOrdem) {
+        await base44.entities.OrdemDeCarregamento.update(editingOrdem.id, ordemData);
+        ordemId = editingOrdem.id;
+        
+        const mudouParaAlocado = tipoNegociacao === "alocado" && editingOrdem.tipo_negociacao !== "alocado";
+        if (mudouParaAlocado) {
+          toast.success("Ordem alocada com sucesso!");
+        } else {
+          toast.success("Ordem atualizada!");
+        }
+      } else {
+        ordemSalva = await base44.entities.OrdemDeCarregamento.create(ordemData);
+        ordemId = ordemSalva.id;
+        await vincularPrimeiraEtapa(ordemId);
+        toast.success("Ordem criada!");
       }
 
-      await base44.entities.OrdemDeCarregamento.update(ordemSelecionada.id, updateData);
+      await new Promise(resolve => setTimeout(resolve, 200));
 
-      for (const notaId of notasSelecionadas) {
-        await base44.entities.NotaFiscal.update(notaId, {
-          ordem_id: ordemSelecionada.id,
-          status_nf: "aguardando_expedicao"
+      if (notasFiscaisData && notasFiscaisData.length > 0) {
+        const notasIds = [];
+        let pesoTotal = 0;
+        let valorTotalNotas = 0;
+        let volumesTotal = 0;
+
+        for (const nf of notasFiscaisData) {
+          let notaId;
+          
+          if (nf.nota_id_existente) {
+            await base44.entities.NotaFiscal.update(nf.nota_id_existente, {
+              ordem_id: ordemId,
+              status_nf: "aguardando_expedicao"
+            });
+            notaId = nf.nota_id_existente;
+          } else {
+            const notaData = {
+              ordem_id: ordemId,
+              numero_nota: nf.numero_nota,
+              serie_nota: nf.serie_nota,
+              chave_nota_fiscal: nf.chave_nota_fiscal,
+              data_hora_emissao: nf.data_emissao_nf,
+              natureza_operacao: nf.natureza_operacao,
+              emitente_razao_social: nf.emitente_razao_social,
+              emitente_cnpj: nf.emitente_cnpj,
+              emitente_telefone: nf.emitente_telefone,
+              emitente_uf: nf.emitente_uf,
+              emitente_cidade: nf.emitente_cidade,
+              emitente_bairro: nf.emitente_bairro,
+              emitente_endereco: nf.emitente_endereco,
+              emitente_numero: nf.emitente_numero,
+              emitente_cep: nf.emitente_cep,
+              destinatario_razao_social: nf.destinatario_razao_social,
+              destinatario_cnpj: nf.destinatario_cnpj,
+              destinatario_telefone: nf.destinatario_telefone,
+              destinatario_cidade: nf.destino_cidade,
+              destinatario_uf: nf.destino_uf,
+              destinatario_endereco: nf.destino_endereco,
+              destinatario_numero: nf.destino_numero,
+              destinatario_bairro: nf.destino_bairro,
+              destinatario_cep: nf.destino_cep,
+              valor_nota_fiscal: nf.valor_nf,
+              xml_content: nf.xml_content,
+              peso_total_nf: nf.peso_nf,
+              quantidade_total_volumes_nf: nf.volumes_nf,
+              status_nf: "aguardando_expedicao"
+            };
+
+            const notaCriada = await base44.entities.NotaFiscal.create(notaData);
+            notaId = notaCriada.id;
+          }
+
+          notasIds.push(notaId);
+          pesoTotal += nf.peso_nf || 0;
+          valorTotalNotas += nf.valor_nf || 0;
+          volumesTotal += nf.volumes_nf || 0;
+        }
+
+        await base44.entities.OrdemDeCarregamento.update(ordemId, {
+          notas_fiscais_ids: notasIds,
+          peso_total_consolidado: pesoTotal,
+          valor_total_consolidado: valorTotalNotas,
+          volumes_total_consolidado: volumesTotal,
+          peso: pesoTotal,
+          volumes: volumesTotal
         });
       }
 
-      if (ordemSelecionada.tipo_ordem !== "ordem_filha") {
-        try {
-          await sincronizarOrdemMaeParaFilhas({ ordemMaeId: ordemSelecionada.id });
-        } catch (error) {
-          console.log("Erro ao sincronizar ordens filhas (ignorando):", error);
-        }
-      }
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      return ordemSelecionada.id;
-    },
-    onSuccess: async (ordemId) => {
-      toast.success(`${notasSelecionadas.length} nota(s) vinculada(s)!`);
-      setNotasSelecionadas([]);
-      await refetchAll();
-      const ordemAtualizada = await base44.entities.OrdemDeCarregamento.get(ordemId);
-      setOrdemSelecionada(ordemAtualizada);
-    },
-    onError: (error) => {
-      console.error("Erro ao vincular notas:", error);
-      toast.error("Erro ao vincular notas fiscais");
-    }
-  });
+      setShowForm(false);
+      setEditingOrdem(null);
+      await loadData();
 
-  const handleVincularNotas = () => {
-    if (!ordemSelecionada || notasSelecionadas.length === 0) {
-      toast.error("Selecione ao menos uma nota fiscal");
-      return;
+    } catch (error) {
+      console.error("Erro ao salvar ordem:", error);
+      toast.error(`Erro ao salvar: ${error.message || 'Tente novamente'}`);
+      throw error;
     }
-    vincularNotasMutation.mutate();
   };
 
-  const handleProcessarBuscaNota = async (valor) => {
-    if (!valor || !valor.trim() || processandoVinculo) {
-      return;
-    }
-
-    const valorLimpo = valor.trim().replace(/\s+/g, '');
-
-    // Se tem exatamente 44 dígitos, é uma chave de nota fiscal
-    if (valorLimpo.length === 44 && /^\d+$/.test(valorLimpo)) {
-      // Verificar se tem ordem selecionada para vincular
-      if (!ordemSelecionada) {
-        toast.warning("Selecione uma ordem primeiro para vincular a nota");
-        setDebouncedSearchNota(valor);
-        return;
+  const handleSubmitOferta = async (data) => {
+    try {
+      const user = await base44.auth.me();
+      
+      let valorTotal = 0;
+      if (data.peso && data.valor_tonelada) {
+        valorTotal = (data.peso / 1000) * data.valor_tonelada;
+      } else if (data.frete_viagem) {
+        valorTotal = data.frete_viagem;
       }
 
-      setProcessandoVinculo(true);
+      let clienteFinalNome = data.cliente_final_nome;
+      let clienteFinalCnpj = data.cliente_final_cnpj;
+      
+      if (!clienteFinalNome || !clienteFinalCnpj) {
+        if (data.tipo_operacao === "CIF") {
+          clienteFinalNome = data.cliente;
+          clienteFinalCnpj = data.cliente_cnpj;
+        } else if (data.tipo_operacao === "FOB") {
+          clienteFinalNome = data.destinatario || data.destino;
+          clienteFinalCnpj = data.destinatario_cnpj;
+        }
+      }
+      
+      const ofertaData = {
+        ...data,
+        empresa_id: user.empresa_id,
+        valor_total_frete: valorTotal,
+        data_solicitacao: new Date().toISOString(),
+        numero_carga: generateNumeroCarga(),
+        tipo_registro: "oferta",
+        status: "novo",
+        cliente_final_nome: clienteFinalNome,
+        cliente_final_cnpj: clienteFinalCnpj
+      };
 
-      // Buscar nota pela chave
-      const notaEncontrada = notasFiscais.find(n => {
-        const chaveNota = n.chave_nota_fiscal?.toString().replace(/\s+/g, '') || "";
-        return chaveNota === valorLimpo;
+      const novaOferta = await base44.entities.OrdemDeCarregamento.create(ofertaData);
+      await vincularPrimeiraEtapa(novaOferta.id);
+      
+      setShowOfertaForm(false);
+      loadData();
+      toast.success("Oferta criada!");
+    } catch (error) {
+      console.error("Erro ao salvar oferta:", error);
+      toast.error("Erro ao criar oferta");
+    }
+  };
+
+  const handleSubmitOfertasLote = async (ofertas) => {
+    try {
+      const user = await base44.auth.me();
+      
+      const ofertasComDados = ofertas.map((oferta, index) => {
+        let clienteFinalNome = oferta.cliente_final_nome;
+        let clienteFinalCnpj = oferta.cliente_final_cnpj;
+        
+        if (!clienteFinalNome || !clienteFinalCnpj) {
+          if (oferta.tipo_operacao === "CIF") {
+            clienteFinalNome = oferta.cliente;
+            clienteFinalCnpj = oferta.cliente_cnpj;
+          } else if (oferta.tipo_operacao === "FOB") {
+            clienteFinalNome = oferta.destinatario || oferta.destino;
+            clienteFinalCnpj = oferta.destinatario_cnpj;
+          }
+        }
+
+        return {
+          ...oferta,
+          empresa_id: user.empresa_id,
+          data_solicitacao: new Date().toISOString(),
+          numero_carga: generateNumeroCarga(index),
+          tipo_registro: "oferta",
+          status: "novo",
+          cliente_final_nome: clienteFinalNome,
+          cliente_final_cnpj: clienteFinalCnpj,
+          carregamento_agendamento_data: oferta.carregamento_agendamento_data,
+          descarga_agendamento_data: oferta.descarga_agendamento_data,
+          status_tracking: oferta.status_tracking
+        };
       });
 
-      if (!notaEncontrada) {
-        toast.error("Nota fiscal não encontrada no sistema");
-        setSearchNota("");
-        setProcessandoVinculo(false);
-        return;
+      for (const oferta of ofertasComDados) {
+        const novaOferta = await base44.entities.OrdemDeCarregamento.create(oferta);
+        await vincularPrimeiraEtapa(novaOferta.id);
       }
-
-      // Verificar se já está vinculada
-      if (ordemSelecionada.notas_fiscais_ids?.includes(notaEncontrada.id)) {
-        toast.warning("Nota fiscal já vinculada a esta ordem");
-        setSearchNota("");
-        setProcessandoVinculo(false);
-        return;
-      }
-
-      // Vincular automaticamente
-      try {
-        const notasVinculadasAtual = notasFiscais.filter(nota => 
-          ordemSelecionada.notas_fiscais_ids?.includes(nota.id)
-        );
-        const todasNotas = [...notasVinculadasAtual, notaEncontrada];
-        
-        const pesoTotal = todasNotas.reduce((sum, nf) => sum + (nf.peso_total_nf || 0), 0);
-        const valorTotal = todasNotas.reduce((sum, nf) => sum + (nf.valor_nota_fiscal || 0), 0);
-        const volumesTotal = todasNotas.reduce((sum, nf) => sum + (nf.quantidade_total_volumes_nf || 0), 0);
-        const notasIds = [...(ordemSelecionada.notas_fiscais_ids || []), notaEncontrada.id];
-
-        const updateData = {
-          notas_fiscais_ids: notasIds,
-          peso_total_consolidado: pesoTotal,
-          valor_total_consolidado: valorTotal,
-          volumes_total_consolidado: volumesTotal,
-          peso: pesoTotal,
-          volumes: volumesTotal
-        };
-
-        if (!ordemSelecionada.notas_fiscais_ids || ordemSelecionada.notas_fiscais_ids.length === 0) {
-          updateData.inicio_carregamento = new Date().toISOString();
-          updateData.status_tracking = "em_carregamento";
-          updateData.status = "aguardando_carregamento";
-        }
-
-        await base44.entities.OrdemDeCarregamento.update(ordemSelecionada.id, updateData);
-
-        await base44.entities.NotaFiscal.update(notaEncontrada.id, {
-          ordem_id: ordemSelecionada.id,
-          status_nf: "aguardando_expedicao"
-        });
-
-        // Sincronizar ordens filhas em background (não bloquear UI)
-        if (ordemSelecionada.tipo_ordem !== "ordem_filha") {
-          sincronizarOrdemMaeParaFilhas({ ordemMaeId: ordemSelecionada.id }).catch(error => {
-            console.log("Erro ao sincronizar ordens filhas (ignorando):", error);
-          });
-        }
-
-        // Atualizar cache local imediatamente (sem refetch)
-        queryClient.setQueryData(['notas-fiscais-carregamento'], (old) => {
-          return old.map(n => n.id === notaEncontrada.id ? {...n, ordem_id: ordemSelecionada.id, status_nf: "aguardando_expedicao"} : n);
-        });
-
-        const ordemAtualizada = {...ordemSelecionada, ...updateData};
-        setOrdemSelecionada(ordemAtualizada);
-
-        // Invalidar apenas queries essenciais (não refetch completo)
-        queryClient.invalidateQueries(['ordens-carregamento']);
-
-        toast.success(`NF ${notaEncontrada.numero_nota} vinculada!`);
-        setSearchNota("");
-      } catch (error) {
-        console.error("Erro ao vincular nota:", error);
-        toast.error("Erro ao vincular nota fiscal");
-        setSearchNota("");
-      } finally {
-        setProcessandoVinculo(false);
-      }
-    } else {
-      // Busca normal por número ou texto
-      setDebouncedSearchNota(valor);
+      
+      setShowOfertaLote(false);
+      loadData();
+      toast.success("Ofertas criadas!");
+    } catch (error) {
+      console.error("Erro ao salvar ofertas:", error);
+      toast.error("Erro ao criar ofertas");
     }
   };
 
-  const desvincularNotaMutation = useMutation({
-    mutationFn: async (notaId) => {
-      const notasIds = (ordemSelecionada.notas_fiscais_ids || []).filter(id => id !== notaId);
-      const notasRestantes = notasFiscais.filter(n => notasIds.includes(n.id));
-      const pesoTotal = notasRestantes.reduce((sum, nf) => sum + (nf.peso_total_nf || 0), 0);
-      const valorTotal = notasRestantes.reduce((sum, nf) => sum + (nf.valor_nota_fiscal || 0), 0);
-      const volumesTotal = notasRestantes.reduce((sum, nf) => sum + (nf.quantidade_total_volumes_nf || 0), 0);
-
-      // Buscar volumes da nota desvinculada e resetar status
-      const volumesDaNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaId });
-      const resetVolumePromises = volumesDaNota.map(v => 
-        base44.entities.Volume.update(v.id, {
-          status_volume: "armazenado",
-          ordem_id: null,
-          localizacao_atual: `Área ${v.numero_area || 'N/A'}`
-        })
-      );
-
-      await Promise.all([
-        base44.entities.OrdemDeCarregamento.update(ordemSelecionada.id, {
-          notas_fiscais_ids: notasIds,
-          peso_total_consolidado: pesoTotal,
-          valor_total_consolidado: valorTotal,
-          volumes_total_consolidado: volumesTotal,
-          peso: pesoTotal,
-          volumes: volumesTotal
-        }),
-        base44.entities.NotaFiscal.update(notaId, {
-          ordem_id: null,
-          status_nf: "recebida"
-        }),
-        ...resetVolumePromises
-      ]);
-
-      if (ordemSelecionada.tipo_ordem !== "ordem_filha") {
-        try {
-          await sincronizarOrdemMaeParaFilhas({ ordemMaeId: ordemSelecionada.id });
-        } catch (error) {
-          console.log("Erro ao sincronizar ordens filhas (ignorando):", error);
-        }
-      }
-
-      return ordemSelecionada.id;
-    },
-    onSuccess: async (ordemId) => {
-      toast.success("Nota fiscal desvinculada!");
-      await refetchAll();
-      const ordemAtualizada = await base44.entities.OrdemDeCarregamento.get(ordemId);
-      setOrdemSelecionada(ordemAtualizada);
-    },
-    onError: (error) => {
-      console.error("Erro ao desvincular nota:", error);
-      toast.error("Erro ao desvincular nota fiscal");
+  const handleSelectTipoOrdem = (tipo) => {
+    setShowTipoModal(false);
+    if (tipo === "ordem_completa") {
+      setShowForm(true);
+    } else if (tipo === "oferta_individual") {
+      setShowOfertaForm(true);
+    } else if (tipo === "oferta_lote") {
+      setShowOfertaLote(true);
     }
-  });
-
-  const handleDesvincularNota = (notaId) => {
-    if (!ordemSelecionada) return;
-    desvincularNotaMutation.mutate(notaId);
   };
 
   const toggleOperacao = (operacaoId) => {
@@ -435,200 +455,133 @@ export default function Carregamento() {
     });
   };
 
-  const ordensFiltered = useMemo(() => {
-    const searchLower = debouncedSearchOrdem.toLowerCase();
+  const filteredOrdens = ordens.filter(ordem => {
+    if (ordem.tipo_ordem === "coleta" || ordem.tipo_ordem === "recebimento" || ordem.tipo_ordem === "entrega") {
+      return false;
+    }
     
-    return ordens.filter(o => {
-      // Filtro de busca otimizado com suporte a ordem mãe
-      if (debouncedSearchOrdem) {
-        const motorista = motoristas.find(m => m.id === o.motorista_id);
-        const nomeMotorista = motorista?.nome || o.motorista_nome_temp || "";
-        
-        // Buscar ordem mãe se esta for filha
-        let ordemMae = null;
-        if (o.ordem_mae_id) {
-          ordemMae = ordens.find(om => om.id === o.ordem_mae_id);
-        }
-        
-        // Verificar se é uma ordem filha da busca
-        const ordensFilhasDaBusca = ordens.filter(of => of.ordem_mae_id === o.id);
-        const algumFilhoMatch = ordensFilhasDaBusca.some(filha => 
-          filha.numero_carga?.toLowerCase().includes(searchLower)
-        );
-        
-        const matchSearch = 
-          o.numero_carga?.toLowerCase().includes(searchLower) ||
-          o.cliente?.toLowerCase().includes(searchLower) ||
-          o.destino?.toLowerCase().includes(searchLower) ||
-          nomeMotorista.toLowerCase().includes(searchLower) ||
-          o.cavalo_placa_temp?.toLowerCase().includes(searchLower) ||
-          o.implemento1_placa_temp?.toLowerCase().includes(searchLower) ||
-          ordemMae?.numero_carga?.toLowerCase().includes(searchLower) ||
-          algumFilhoMatch;
-        
-        if (!matchSearch) return false;
-      }
-
-      // Filtros simples
-      if (filtroStatusTracking !== "todos" && o.status_tracking !== filtroStatusTracking) return false;
-      if (filtroOperacao !== "todos" && o.operacao_id !== filtroOperacao) return false;
-
-      // Filtros avançados
-      if (filters.operacoesIds.length > 0 && !filters.operacoesIds.includes(o.operacao_id)) return false;
-      if (filters.statusTracking && o.status_tracking !== filters.statusTracking) return false;
-      if (filters.origem && !o.origem?.toLowerCase().includes(filters.origem.toLowerCase())) return false;
-      if (filters.destino && !o.destino?.toLowerCase().includes(filters.destino.toLowerCase())) return false;
-
-      if (filters.dataInicio && o.data_solicitacao) {
-        if (new Date(o.data_solicitacao) < new Date(filters.dataInicio)) return false;
-      }
-
-      if (filters.dataFim && o.data_solicitacao) {
-        const dataFim = new Date(filters.dataFim);
-        dataFim.setHours(23, 59, 59, 999);
-        if (new Date(o.data_solicitacao) > dataFim) return false;
-      }
-
-      return true;
-    });
-  }, [ordens, debouncedSearchOrdem, filtroStatusTracking, filtroOperacao, filters, motoristas]);
-
-  const notasDisponiveisFiltered = useMemo(() => {
-    // Se houver busca, buscar em TODAS as notas fiscais (sem filtro de status)
-    if (debouncedSearchNota) {
-      const searchTrimmed = debouncedSearchNota.trim();
-      const searchLower = searchTrimmed.toLowerCase();
-      const searchClean = searchTrimmed.replace(/\s+/g, '');
-
-      return notasFiscais.filter(nota => {
-        // Busca no número da nota (com e sem zeros à esquerda)
-        const numeroNota = nota.numero_nota?.toString() || "";
-        const numeroNotaLimpo = numeroNota.replace(/^0+/, ''); // Remove zeros à esquerda
-
-        // Busca na chave
-        const chaveNota = nota.chave_nota_fiscal?.toString().replace(/\s+/g, '') || "";
-
-        // Busca em razões sociais
-        const emitente = nota.emitente_razao_social?.toLowerCase() || "";
-        const destinatario = nota.destinatario_razao_social?.toLowerCase() || "";
-
-        return numeroNota.includes(searchClean) ||
-               numeroNotaLimpo.includes(searchClean) ||
-               chaveNota.includes(searchClean) ||
-               chaveNota.toLowerCase().includes(searchLower) ||
-               emitente.includes(searchLower) ||
-               destinatario.includes(searchLover);
-      });
+    const tiposExcluidosLegado = ["coleta_solicitada", "coleta_aprovada", "coleta_reprovada", "recebimento", "ordem_entrega"];
+    if (tiposExcluidosLegado.includes(ordem.tipo_registro)) {
+      return false;
     }
 
-    // Sem busca, aplicar filtros por aba
-    let notasBase = abaAtiva === "carregamento" ? getNotasDisponiveis : notasFiscais;
-
-    if (abaAtiva === "conferencia") {
-      notasBase = notasBase.filter(nota => {
-        const volumesNota = volumes.filter(v => v.nota_fiscal_id === nota.id);
-        return volumesNota.some(v => v.status_volume === "carregado" || v.status_volume === "em_transito");
-      });
-    } else if (abaAtiva === "enderecamento") {
-      notasBase = notasBase.filter(nota => {
-        return enderecamentos.some(e => e.nota_fiscal_id === nota.id);
-      });
+    if (filters.operacoesIds.length > 0 && !filters.operacoesIds.includes(ordem.operacao_id)) return false;
+    if (filters.status && ordem.status !== filters.status) return false;
+    if (filters.statusTracking && ordem.status_tracking !== filters.statusTracking) return false;
+    if (filters.tiposRegistro && filters.tiposRegistro.length > 0 && !filters.tiposRegistro.includes(ordem.tipo_registro)) return false;
+    if (filters.origem && !ordem.origem?.toLowerCase().includes(filters.origem.toLowerCase())) return false;
+    if (filters.destino && !ordem.destino?.toLowerCase().includes(filters.destino.toLowerCase())) return false;
+    
+    if (filters.dataInicio && ordem.data_solicitacao) {
+      if (new Date(ordem.data_solicitacao) < new Date(filters.dataInicio)) return false;
+    }
+    
+    if (filters.dataFim && ordem.data_solicitacao) {
+      const dataFim = new Date(filters.dataFim);
+      dataFim.setHours(23, 59, 59, 999);
+      if (new Date(ordem.data_solicitacao) > dataFim) return false;
     }
 
-    return notasBase;
-  }, [debouncedSearchNota, abaAtiva, notasFiscais, getNotasDisponiveis, volumes, enderecamentos]);
+    if (!searchTerm) return true;
+
+    const term = searchTerm.toLowerCase();
+    const motorista = motoristas.find(m => m.id === ordem.motorista_id);
+    const nomeMotorista = motorista?.nome || ordem.motorista_nome_temp || "";
+
+    return (
+      ordem.numero_carga?.toLowerCase().includes(term) ||
+      ordem.cliente?.toLowerCase().includes(term) ||
+      ordem.origem?.toLowerCase().includes(term) ||
+      ordem.destino?.toLowerCase().includes(term) ||
+      ordem.produto?.toLowerCase().includes(term) ||
+      nomeMotorista.toLowerCase().includes(term)
+    );
+  });
+
+  const inicio = (paginaAtual - 1) * limite;
+  const fim = inicio + limite;
+  const ordensExibidas = filteredOrdens.slice(inicio, fim);
+
+  const handleEdit = (ordem) => {
+    setEditingOrdem(ordem);
+    setShowForm(true);
+  };
+
+  const handleViewDetails = (ordem) => {
+    setSelectedOrdem(ordem);
+  };
+
+  const handleDelete = async (ordem) => {
+    if (!confirm(`Tem certeza que deseja excluir a ordem ${ordem.numero_carga || '#' + ordem.id.slice(-6)}?`)) {
+      return;
+    }
+
+    try {
+      await base44.entities.OrdemDeCarregamento.delete(ordem.id);
+      toast.success("Ordem excluída!");
+      loadData();
+    } catch (error) {
+      console.error("Erro ao excluir ordem:", error);
+      toast.error("Erro ao excluir ordem");
+    }
+  };
 
   const theme = {
     bg: isDark ? '#0f172a' : '#f9fafb',
-    cardBg: isDark ? '#1e293b' : '#ffffff',
-    cardBorder: isDark ? '#334155' : '#e5e7eb',
-    text: isDark ? '#f1f5f9' : '#111827',
-    textMuted: isDark ? '#94a3b8' : '#6b7280',
+    text: isDark ? '#ffffff' : '#111827',
+    textMuted: isDark ? '#9ca3af' : '#6b7280',
     inputBg: isDark ? '#1e293b' : '#ffffff',
     inputBorder: isDark ? '#334155' : '#d1d5db',
+    cardBg: isDark ? '#1e293b' : '#ffffff',
+    cardBorder: isDark ? '#334155' : '#e5e7eb',
   };
 
-  // Verificação de acesso
-  if (user && user.tipo_perfil !== "operador" && user.role !== "admin") {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: theme.bg }}>
-        <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-          <CardContent className="p-6 text-center">
-            <p style={{ color: theme.text }}>Acesso negado. Esta página é apenas para operadores.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.bg }}>
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p style={{ color: theme.textMuted }}>Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen p-3 lg:p-6 pb-40 lg:pb-6" style={{ backgroundColor: theme.bg }}>
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h1 className="text-2xl font-bold mb-1" style={{ color: theme.text }}>Carregamento</h1>
-              <p className="text-sm" style={{ color: theme.textMuted }}>Gerencie o carregamento, conferência e endereçamento</p>
+    <div className="p-6 min-h-screen transition-colors" style={{ backgroundColor: theme.bg }}>
+      <div className="max-w-[1800px] mx-auto">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+          <div>
+            <h1 className="text-2xl font-bold mb-1" style={{ color: theme.text }}>Carregamento</h1>
+            <p className="text-sm" style={{ color: theme.textMuted }}>Gerencie carregamento, conferência e endereçamento</p>
+          </div>
+          
+          <div className="flex gap-2 w-full lg:w-auto">
+            <div className="relative flex-1 lg:w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
+              <Input
+                placeholder="Buscar ordens..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-9 text-sm"
+                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+              />
             </div>
+
+            <FiltrosPredefinidos
+              rota="carregamento"
+              filtrosAtuais={filters}
+              onAplicarFiltro={(novosFiltros) => {
+                setFilters(novosFiltros);
+                setPaginaAtual(1);
+              }}
+            />
+            <PaginacaoControles
+              paginaAtual={paginaAtual}
+              totalRegistros={filteredOrdens.length}
+              limite={limite}
+              onPaginaAnterior={() => setPaginaAtual(prev => Math.max(1, prev - 1))}
+              onProximaPagina={() => setPaginaAtual(prev => prev + 1)}
+              isDark={isDark}
+            />
             <Button
               variant="outline"
               size="sm"
-              onClick={refetchAll}
-              style={{ borderColor: theme.inputBorder, color: theme.text }}
+              onClick={loadData}
+              className="h-9"
+              style={{ borderColor: theme.inputBorder, backgroundColor: 'transparent', color: theme.text }}
             >
               <RefreshCw className="w-4 h-4" />
             </Button>
-          </div>
-
-          {/* Barra de Filtros Rápidos e Botão de Filtros Avançados */}
-          <div className="flex gap-2 items-end flex-wrap">
-            <div className="flex-1 min-w-[200px]">
-              <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Status Tracking</Label>
-              <select
-                value={filtroStatusTracking}
-                onChange={(e) => setFiltroStatusTracking(e.target.value)}
-                className="w-full h-9 px-3 rounded-md border text-sm"
-                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-              >
-                <option value="todos">Todos os Status</option>
-                <option value="aguardando_agendamento">Ag. Agendamento</option>
-                <option value="carregamento_agendado">Carregamento Agendado</option>
-                <option value="em_carregamento">Em Carregamento</option>
-                <option value="carregado">Carregado</option>
-                <option value="em_viagem">Em Viagem</option>
-                <option value="chegada_destino">Chegou ao Destino</option>
-                <option value="descarga_agendada">Descarga Agendada</option>
-                <option value="em_descarga">Em Descarga</option>
-                <option value="descarga_realizada">Descarga Realizada</option>
-              </select>
-            </div>
-
-            <div className="flex-1 min-w-[200px]">
-              <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Operação</Label>
-              <select
-                value={filtroOperacao}
-                onChange={(e) => setFiltroOperacao(e.target.value)}
-                className="w-full h-9 px-3 rounded-md border text-sm"
-                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-              >
-                <option value="todos">Todas as Operações</option>
-                {operacoes.map(op => (
-                  <option key={op.id} value={op.id}>{op.nome}</option>
-                ))}
-              </select>
-            </div>
-
             <Button
               variant={showFilters ? "default" : "outline"}
               size="sm"
@@ -640,918 +593,297 @@ export default function Carregamento() {
                 color: theme.text
               } : {}}
             >
-              <Filter className="w-4 h-4 mr-1" />
-              Filtros
+              <Filter className="w-4 h-4" />
             </Button>
 
-            {(filtroStatusTracking !== "todos" || filtroOperacao !== "todos" || filters.operacoesIds.length > 0 || filters.statusTracking || filters.origem || filters.destino || filters.dataInicio || filters.dataFim) && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setFiltroStatusTracking("todos");
-                  setFiltroOperacao("todos");
-                  setFilters({
-                    operacoesIds: [],
-                    statusTracking: "",
-                    origem: "",
-                    destino: "",
-                    dataInicio: "",
-                    dataFim: ""
-                  });
-                }}
-                className="h-9"
-                style={{ borderColor: theme.inputBorder, color: theme.text }}
-              >
-                <X className="w-4 h-4 mr-1" />
-                Limpar Todos
-              </Button>
-            )}
+            <ExportarOfertasPDF ordens={filteredOrdens} />
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700 h-9 text-sm flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Nova Ordem
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}>
+                <DropdownMenuItem onClick={() => setShowTipoModal(true)} style={{ color: theme.text }}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Ordem Completa
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowOfertaForm(true)} style={{ color: theme.text }}>
+                  <Package className="w-4 h-4 mr-2 text-green-600" />
+                  Oferta de Carga
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowOfertaLote(true)} style={{ color: theme.text }}>
+                  <FileSpreadsheet className="w-4 h-4 mr-2 text-purple-600" />
+                  Lançamento em Lote
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-
-          {/* Painel de Filtros Avançados */}
-          {showFilters && (
-            <Card className="mt-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-              <CardContent className="pt-4 pb-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div className="md:col-span-2">
-                    <Label className="text-xs mb-2 block" style={{ color: theme.textMuted }}>Operações (múltiplas)</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {operacoes.map((op) => (
-                        <Badge
-                          key={op.id}
-                          variant={filters.operacoesIds.includes(op.id) ? "default" : "outline"}
-                          className="cursor-pointer hover:opacity-80 transition-opacity"
-                          style={filters.operacoesIds.includes(op.id) ? {
-                            backgroundColor: '#3b82f6',
-                            color: 'white'
-                          } : {
-                            backgroundColor: 'transparent',
-                            borderColor: theme.inputBorder,
-                            color: theme.text
-                          }}
-                          onClick={() => toggleOperacao(op.id)}
-                        >
-                          {op.nome}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Status Tracking</Label>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="w-full h-8 justify-between text-sm" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}>
-                          {filters.statusTracking || 'Todos'}
-                          <ChevronDown className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                        <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: ""})} style={{ color: theme.text }}>Todos</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "aguardando_agendamento"})} style={{ color: theme.text }}>Ag. Agendamento</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "carregamento_agendado"})} style={{ color: theme.text }}>Carreg. Agendado</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "em_carregamento"})} style={{ color: theme.text }}>Em Carregamento</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "carregado"})} style={{ color: theme.text }}>Carregado</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "em_viagem"})} style={{ color: theme.text }}>Em Viagem</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "chegada_destino"})} style={{ color: theme.text }}>Chegada Destino</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "descarga_agendada"})} style={{ color: theme.text }}>Descarga Agendada</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "em_descarga"})} style={{ color: theme.text }}>Em Descarga</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "descarga_realizada"})} style={{ color: theme.text }}>Descarga Realizada</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "finalizado"})} style={{ color: theme.text }}>Finalizado</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  <div>
-                    <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Origem</Label>
-                    <Input
-                      value={filters.origem}
-                      onChange={(e) => setFilters({...filters, origem: e.target.value})}
-                      placeholder="Filtrar por origem"
-                      className="h-8 text-sm"
-                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Destino</Label>
-                    <Input
-                      value={filters.destino}
-                      onChange={(e) => setFilters({...filters, destino: e.target.value})}
-                      placeholder="Filtrar por destino"
-                      className="h-8 text-sm"
-                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Data Início</Label>
-                    <Input
-                      type="date"
-                      value={filters.dataInicio}
-                      onChange={(e) => setFilters({...filters, dataInicio: e.target.value})}
-                      className="h-8 text-sm"
-                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Data Fim</Label>
-                    <Input
-                      type="date"
-                      value={filters.dataFim}
-                      onChange={(e) => setFilters({...filters, dataFim: e.target.value})}
-                      className="h-8 text-sm"
-                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end mt-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setFilters({
-                      operacoesIds: [],
-                      statusTracking: "",
-                      origem: "",
-                      destino: "",
-                      dataInicio: "",
-                      dataFim: ""
-                    })}
-                    className="h-7 text-xs"
-                    style={{
-                      backgroundColor: 'transparent',
-                      borderColor: theme.inputBorder,
-                      color: theme.text
-                    }}
-                  >
-                    Limpar Filtros Avançados
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
-        {/* Tabs */}
-        <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="mb-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
-            <TabsTrigger value="carregamento" className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Carregamento
-            </TabsTrigger>
-            <TabsTrigger value="conferencia" className="flex items-center gap-2">
-              <Scan className="w-4 h-4" />
-              Conferência
-            </TabsTrigger>
-            <TabsTrigger value="enderecamento" className="flex items-center gap-2">
-              <Grid3x3 className="w-4 h-4" />
-              Endereçamento
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Coluna 1: Ordens de Carregamento */}
-          <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2" style={{ color: theme.text }}>
-                <Truck className="w-5 h-5 text-blue-600" />
-                {abaAtiva === "carregamento" && "Ordens de Carregamento"}
-                {abaAtiva === "conferencia" && "Ordens em Conferência"}
-                {abaAtiva === "enderecamento" && "Ordens Endereçadas"}
-              </CardTitle>
-              <div className="relative mt-3">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
-                <Input
-                  placeholder="Buscar ordem..."
-                  value={searchOrdem}
-                  onChange={(e) => setSearchOrdem(e.target.value)}
-                  className="pl-10 h-9 text-sm"
-                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="max-h-[600px] overflow-y-auto">
-              <div className="space-y-2">
-                {ordensFiltered.map(ordem => {
-                  const isSelected = ordemSelecionada?.id === ordem.id;
-                  const qtdNotas = ordem.notas_fiscais_ids?.length || 0;
-                  const motorista = motoristas.find(m => m.id === ordem.motorista_id);
-                  const operacao = operacoes.find(op => op.id === ordem.operacao_id);
-
-                  // Verificar se é ordem mãe ou filha
-                  const isOrdemMae = ordens.some(o => o.ordem_mae_id === ordem.id);
-                  const isOrdemFilha = !!ordem.ordem_mae_id;
-                  const ordemMae = isOrdemFilha ? ordens.find(o => o.id === ordem.ordem_mae_id) : null;
-
-                  // Calcular progresso específico da aba
-                  let progressoBadge = null;
-                  if (abaAtiva === "conferencia") {
-                    const volumesOrdem = volumes.filter(v => v.ordem_id === ordem.id);
-                    const volumesConferidos = volumesOrdem.filter(v => v.status_volume === "carregado" || v.status_volume === "em_transito");
-                    progressoBadge = (
-                      <Badge className="bg-blue-600 text-white text-xs">
-                        {volumesConferidos.length}/{volumesOrdem.length} conf.
+        {showFilters && (
+          <Card className="mb-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+            <CardContent className="pt-4 pb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="md:col-span-2">
+                  <Label className="text-xs mb-2 block" style={{ color: theme.textMuted }}>Operações (múltiplas)</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {operacoes.map((op) => (
+                      <Badge
+                        key={op.id}
+                        variant={filters.operacoesIds.includes(op.id) ? "default" : "outline"}
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                        style={filters.operacoesIds.includes(op.id) ? {
+                          backgroundColor: '#3b82f6',
+                          color: 'white'
+                        } : {
+                          backgroundColor: 'transparent',
+                          borderColor: theme.inputBorder,
+                          color: theme.text
+                        }}
+                        onClick={() => toggleOperacao(op.id)}
+                      >
+                        {op.nome}
                       </Badge>
-                    );
-                  } else if (abaAtiva === "enderecamento") {
-                    const volumesOrdem = volumes.filter(v => v.ordem_id === ordem.id);
-                    const volumesEnderecados = enderecamentos.filter(e => e.ordem_id === ordem.id);
-                    progressoBadge = (
-                      <Badge className="bg-purple-600 text-white text-xs">
-                        {volumesEnderecados.length}/{volumesOrdem.length} end.
-                      </Badge>
-                    );
-                  } else if (qtdNotas > 0) {
-                    progressoBadge = (
-                      <Badge className="bg-green-600 text-white text-xs">
-                        {qtdNotas} NF{qtdNotas > 1 ? 's' : ''}
-                      </Badge>
-                    );
-                  }
-
-                  // Status tracking da ordem
-                  const statusConfig = {
-                    aguardando_agendamento: { label: "Ag. Agend.", color: "bg-gray-500" },
-                    carregamento_agendado: { label: "Carreg. Agend.", color: "bg-blue-500" },
-                    em_carregamento: { label: "Em Carreg.", color: "bg-blue-600" },
-                    carregado: { label: "Carregado", color: "bg-indigo-600" },
-                    em_viagem: { label: "Em Viagem", color: "bg-purple-600" },
-                    chegada_destino: { label: "Chegou", color: "bg-yellow-600" },
-                    descarga_agendada: { label: "Desc. Agend.", color: "bg-orange-500" },
-                    em_descarga: { label: "Em Desc.", color: "bg-orange-600" },
-                    descarga_realizada: { label: "Desc. Realiz.", color: "bg-green-600" },
-                    finalizado: { label: "Finalizado", color: "bg-green-700" }
-                  };
-                  const statusInfo = statusConfig[ordem.status_tracking] || { label: "N/A", color: "bg-gray-400" };
-
-                  const nomeMotorista = motorista?.nome || ordem.motorista_nome_temp;
-
-                  return (
-                    <div
-                      key={ordem.id}
-                      onClick={() => handleSelecionarOrdem(ordem)}
-                      className="p-2 border rounded-lg cursor-pointer hover:shadow-md transition-all"
-                      style={{
-                        borderColor: isSelected ? '#3b82f6' : theme.cardBorder,
-                        backgroundColor: isSelected ? (isDark ? '#1e3a8a33' : '#dbeafe33') : 'transparent',
-                        borderWidth: isSelected ? '2px' : '1px'
-                      }}
-                    >
-                      {/* Linha 1 */}
-                      <div className="flex justify-between items-center mb-1">
-                        <div className="flex items-center gap-1 flex-1 min-w-0">
-                          <p className="font-semibold text-sm truncate" style={{ color: theme.text }}>
-                            {ordem.numero_carga}
-                          </p>
-                          {isOrdemMae && (
-                            <Badge className="text-xs bg-amber-500 text-white border-0">
-                              🔗 Mãe
-                            </Badge>
-                          )}
-                          {isOrdemFilha && (
-                            <Badge className="text-xs bg-cyan-500 text-white border-0">
-                              ↪️ Filha
-                            </Badge>
-                          )}
-                          {operacao && (
-                            <Badge variant="outline" className="text-xs" style={{ borderColor: theme.cardBorder }}>
-                              {operacao.nome}
-                            </Badge>
-                          )}
-                          {ordem.tipo_negociacao && (
-                            <Badge className="text-xs bg-blue-500 text-white border-0">
-                              {ordem.tipo_negociacao === "oferta" ? "Oferta" : ordem.tipo_negociacao === "negociando" ? "Negoc." : "Alocado"}
-                            </Badge>
-                          )}
-                          {ordem.modalidade_carga && (
-                            <Badge className="text-xs bg-purple-500 text-white border-0">
-                              {ordem.modalidade_carga === "normal" ? "Normal" : ordem.modalidade_carga === "prioridade" ? "Prior." : "Express"}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex gap-1 items-center flex-shrink-0">
-                          {progressoBadge}
-                          <Badge className={`${statusInfo.color} text-white text-xs whitespace-nowrap`}>
-                            {statusInfo.label}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      {/* Linha 2 */}
-                      <div className="text-xs mb-1" style={{ color: theme.textMuted }}>
-                        <span className="truncate block">{ordem.cliente}</span>
-                        {isOrdemFilha && ordemMae && (
-                          <span className="text-xs mt-0.5 block" style={{ color: theme.textMuted }}>
-                            Vinculada à: <strong style={{ color: theme.text }}>{ordemMae.numero_carga}</strong>
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Linha 3 - Motorista e Placas */}
-                      {(nomeMotorista || ordem.cavalo_placa_temp || ordem.implemento1_placa_temp) && (
-                        <div className="flex items-center gap-2 flex-wrap text-xs mb-1">
-                          {nomeMotorista && (
-                            <span className="font-medium" style={{ color: theme.text }}>
-                              👤 {nomeMotorista}
-                            </span>
-                          )}
-                          {ordem.cavalo_placa_temp && (
-                            <span className="font-medium" style={{ color: theme.text }}>
-                              🚛 {ordem.cavalo_placa_temp}
-                            </span>
-                          )}
-                          {ordem.implemento1_placa_temp && (
-                            <span className="font-medium" style={{ color: theme.text }}>
-                              + {ordem.implemento1_placa_temp}
-                            </span>
-                          )}
-                          {ordem.implemento2_placa_temp && (
-                            <span className="font-medium" style={{ color: theme.text }}>
-                              + {ordem.implemento2_placa_temp}
-                            </span>
-                          )}
-                          {ordem.implemento3_placa_temp && (
-                            <span className="font-medium" style={{ color: theme.text }}>
-                              + {ordem.implemento3_placa_temp}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Linha 4 - Volumes e Peso */}
-                      <div className="flex items-center justify-end text-xs" style={{ color: theme.textMuted }}>
-                        <span>
-                          📦 {ordem.volumes_total_consolidado || 0}v | {(ordem.peso_total_consolidado || 0).toLocaleString()}kg
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-                {ordensFiltered.length === 0 && (
-                  <div className="text-center py-8" style={{ color: theme.textMuted }}>
-                    <Truck className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                    <p>Nenhuma ordem encontrada</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Coluna 2: Notas Fiscais Disponíveis */}
-          <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2" style={{ color: theme.text }}>
-                <Package className="w-5 h-5 text-green-600" />
-                {abaAtiva === "carregamento" && "Notas Fiscais Disponíveis"}
-                {abaAtiva === "conferencia" && "Notas Fiscais Conferidas"}
-                {abaAtiva === "enderecamento" && "Notas Fiscais Endereçadas"}
-              </CardTitle>
-              <div className="relative mt-3">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
-                <Input
-                  placeholder="Buscar por número ou bipar chave (44 dígitos)..."
-                  value={searchNota}
-                  onChange={(e) => setSearchNota(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleProcessarBuscaNota(searchNota);
-                    }
-                  }}
-                  className="pl-10 pr-24 h-10 text-sm"
-                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                />
-                <Button
-                  onClick={() => handleProcessarBuscaNota(searchNota)}
-                  disabled={processandoVinculo}
-                  size="sm"
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 bg-blue-600 hover:bg-blue-700"
-                >
-                  {processandoVinculo ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <Search className="w-4 h-4 mr-1" />
-                      Buscar
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="max-h-[600px] overflow-y-auto">
-              {!ordemSelecionada ? (
-                <div className="text-center py-12" style={{ color: theme.textMuted }}>
-                  <Truck className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                  <p>Selecione uma ordem de carregamento</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {notasDisponiveisFiltered.map(nota => {
-                      const isSelected = notasSelecionadas.includes(nota.id);
-                      const volumesNota = volumes.filter(v => v.nota_fiscal_id === nota.id);
-
-                      // Calcular progresso específico da aba
-                      let progressoInfo = null;
-                      if (abaAtiva === "conferencia") {
-                        const volumesConferidos = volumesNota.filter(v => v.status_volume === "carregado" || v.status_volume === "em_transito");
-                        progressoInfo = (
-                          <Badge className="bg-blue-500 text-white text-xs">
-                            {volumesConferidos.length}/{volumesNota.length} conferidos
-                          </Badge>
-                        );
-                      } else if (abaAtiva === "enderecamento") {
-                        const volumesEnderecados = enderecamentos.filter(e => e.nota_fiscal_id === nota.id);
-                        progressoInfo = (
-                          <Badge className="bg-purple-500 text-white text-xs">
-                            {volumesEnderecados.length}/{volumesNota.length} endereçados
-                          </Badge>
-                        );
-                      } else {
-                        progressoInfo = (
-                          <Badge className="bg-blue-500 text-white text-xs">
-                            Área {nota.numero_area || 'N/A'}
-                          </Badge>
-                        );
-                      }
-
-                      return (
-                        <div
-                          key={nota.id}
-                          onClick={() => abaAtiva === "carregamento" && handleToggleNota(nota.id)}
-                          className="p-3 border rounded-lg cursor-pointer hover:shadow-md transition-all"
-                          style={{
-                            borderColor: isSelected ? '#10b981' : theme.cardBorder,
-                            backgroundColor: isSelected ? (isDark ? '#064e3b33' : '#d1fae533') : 'transparent',
-                            borderWidth: isSelected ? '2px' : '1px',
-                            cursor: abaAtiva === "carregamento" ? 'pointer' : 'default'
-                          }}
-                        >
-                          <div className="flex items-start gap-3">
-                            {abaAtiva === "carregamento" && (
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={() => handleToggleNota(nota.id)}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            )}
-                            <div className="flex-1">
-                              <div className="flex justify-between items-start mb-1">
-                                <p className="font-semibold text-sm" style={{ color: theme.text }}>
-                                  NF {nota.numero_nota}
-                                </p>
-                                {progressoInfo}
-                              </div>
-                              <p className="text-xs mb-1" style={{ color: theme.textMuted }}>
-                                {nota.emitente_razao_social}
-                              </p>
-                              <div className="text-xs space-y-0.5" style={{ color: theme.textMuted }}>
-                                <p>📦 {nota.quantidade_total_volumes_nf} vol. | {nota.peso_total_nf?.toLocaleString()} kg</p>
-                                <p>💰 R$ {nota.valor_nota_fiscal?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  {notasDisponiveisFiltered.length === 0 && (
-                    <div className="text-center py-8" style={{ color: theme.textMuted }}>
-                      <Package className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                      {abaAtiva === "carregamento" && (
-                        <>
-                          <p>Nenhuma nota fiscal disponível</p>
-                          <p className="text-xs mt-2">As notas aparecem aqui após serem recebidas</p>
-                        </>
-                      )}
-                      {abaAtiva === "conferencia" && (
-                        <p>Nenhuma nota fiscal conferida</p>
-                      )}
-                      {abaAtiva === "enderecamento" && (
-                        <p>Nenhuma nota fiscal endereçada</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Área de Ação - Desktop e Tablet */}
-        {ordemSelecionada && abaAtiva === "carregamento" && (
-          <Card className="mt-6 hidden lg:block" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-            <CardContent className="p-4">
-              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                <div className="flex-1">
-                  <h3 className="font-semibold mb-2" style={{ color: theme.text }}>
-                    Ordem Selecionada: {ordemSelecionada.numero_carga}
-                  </h3>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <Label className="text-xs" style={{ color: theme.textMuted }}>Notas Vinculadas</Label>
-                      <p className="font-semibold" style={{ color: theme.text }}>
-                        {ordemSelecionada.notas_fiscais_ids?.length || 0}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-xs" style={{ color: theme.textMuted }}>Total Volumes</Label>
-                      <p className="font-semibold" style={{ color: theme.text }}>
-                        {ordemSelecionada.volumes_total_consolidado || 0}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-xs" style={{ color: theme.textMuted }}>Total Peso</Label>
-                      <p className="font-semibold" style={{ color: theme.text }}>
-                        {ordemSelecionada.peso_total_consolidado?.toLocaleString() || 0} kg
-                      </p>
-                    </div>
+                    ))}
                   </div>
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                  {ordemSelecionada.tipo_ordem !== "ordem_filha" && (
-                    <Button
-                      onClick={() => setShowOrdemFilhaForm(true)}
-                      className="bg-purple-600 hover:bg-purple-700"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Criar Ordem Filha
-                    </Button>
-                  )}
-                  {ordemSelecionada.notas_fiscais_ids?.length > 0 && (
-                    <>
-                      <Button
-                        onClick={() => setShowConferencia(true)}
-                        className="bg-blue-600 hover:bg-blue-700"
+
+                <div className="md:col-span-2">
+                  <Label className="text-xs mb-2 block" style={{ color: theme.textMuted }}>Tipo de Registro (múltiplos)</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { value: "oferta", label: "Oferta", color: "green" },
+                      { value: "negociando", label: "Negociando", color: "yellow" },
+                      { value: "ordem_completa", label: "Ordem Completa", color: "blue" }
+                    ].map((tipo) => (
+                      <Badge
+                        key={tipo.value}
+                        variant={filters.tiposRegistro?.includes(tipo.value) ? "default" : "outline"}
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                        style={filters.tiposRegistro?.includes(tipo.value) ? {
+                          backgroundColor: tipo.color === "green" ? "#16a34a" : tipo.color === "yellow" ? "#ca8a04" : "#3b82f6",
+                          color: "white"
+                        } : {
+                          backgroundColor: 'transparent',
+                          borderColor: theme.inputBorder,
+                          color: theme.text
+                        }}
+                        onClick={() => {
+                          const tiposRegistro = filters.tiposRegistro?.includes(tipo.value)
+                            ? filters.tiposRegistro.filter(t => t !== tipo.value)
+                            : [...(filters.tiposRegistro || []), tipo.value];
+                          setFilters({...filters, tiposRegistro});
+                        }}
                       >
-                        <Scan className="w-4 h-4 mr-2" />
-                        Conferência
+                        {tipo.label}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Status</Label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full h-8 justify-between text-sm" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}>
+                        {filters.status || 'Todos'}
+                        <ChevronDown className="w-4 h-4" />
                       </Button>
-                      <Button
-                        onClick={() => setShowEnderecamento(true)}
-                        className="bg-purple-600 hover:bg-purple-700"
-                      >
-                        <Grid3x3 className="w-4 h-4 mr-2" />
-                        Endereçamento
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, status: ""})} style={{ color: theme.text }}>Todos</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, status: "novo"})} style={{ color: theme.text }}>Novo</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, status: "aguardando_carregamento"})} style={{ color: theme.text }}>Ag. Carregamento</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, status: "em_transito"})} style={{ color: theme.text }}>Em Trânsito</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, status: "entregue"})} style={{ color: theme.text }}>Entregue</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <div>
+                  <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Status Tracking</Label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full h-8 justify-between text-sm" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}>
+                        {filters.statusTracking || 'Todos'}
+                        <ChevronDown className="w-4 h-4" />
                       </Button>
-                    </>
-                  )}
-                  <Button
-                    onClick={handleVincularNotas}
-                    disabled={vincularNotasMutation.isPending || notasSelecionadas.length === 0}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Vincular {notasSelecionadas.length > 0 && `(${notasSelecionadas.length})`}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setOrdemSelecionada(null);
-                      setNotasSelecionadas([]);
-                    }}
-                    style={{ borderColor: theme.cardBorder, color: theme.text }}
-                  >
-                    Limpar Seleção
-                  </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: ""})} style={{ color: theme.text }}>Todos</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "em_carregamento"})} style={{ color: theme.text }}>Em Carregamento</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "carregado"})} style={{ color: theme.text }}>Carregado</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setFilters({...filters, statusTracking: "em_viagem"})} style={{ color: theme.text }}>Em Viagem</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <div>
+                  <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Origem</Label>
+                  <Input
+                    value={filters.origem}
+                    onChange={(e) => setFilters({...filters, origem: e.target.value})}
+                    placeholder="Filtrar por origem"
+                    className="h-8 text-sm"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Destino</Label>
+                  <Input
+                    value={filters.destino}
+                    onChange={(e) => setFilters({...filters, destino: e.target.value})}
+                    placeholder="Filtrar por destino"
+                    className="h-8 text-sm"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  />
+                </div>
+
+                <div className="md:col-span-3 lg:col-span-4">
+                  <FiltroDataPeriodo
+                    periodoSelecionado={periodoSelecionado}
+                    onPeriodoChange={setPeriodoSelecionado}
+                    dataInicio={filters.dataInicio}
+                    dataFim={filters.dataFim}
+                    onDataInicioChange={(val) => setFilters({...filters, dataInicio: val})}
+                    onDataFimChange={(val) => setFilters({...filters, dataFim: val})}
+                    isDark={isDark}
+                  />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Barra de Ação Fixa Mobile e Tablet */}
-        {ordemSelecionada && abaAtiva === "carregamento" && (
-          <div 
-            className="lg:hidden fixed bottom-0 left-0 right-0 border-t shadow-2xl"
-            style={{ 
-              backgroundColor: theme.cardBg, 
-              borderColor: theme.cardBorder,
-              zIndex: 9999,
-              paddingBottom: 'env(safe-area-inset-bottom, 0px)'
-            }}
-          >
-            <div className="p-3 space-y-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate" style={{ color: theme.text }}>
-                    {ordemSelecionada.numero_carga}
-                  </p>
-                  <p className="text-xs truncate" style={{ color: theme.textMuted }}>
-                    {ordemSelecionada.notas_fiscais_ids?.length || 0} NF | {ordemSelecionada.volumes_total_consolidado || 0}v | {ordemSelecionada.peso_total_consolidado?.toLocaleString() || 0}kg
-                  </p>
-                </div>
+              <div className="flex justify-end mt-3 gap-2">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setOrdemSelecionada(null);
-                    setNotasSelecionadas([]);
+                  onClick={() => setFilters({
+                    operacoesIds: [], status: "", tiposRegistro: [],
+                    origem: "", destino: "", dataInicio: "", dataFim: "", tipoRegistro: "", statusTracking: ""
+                  })}
+                  className="h-7 text-xs"
+                  style={{
+                    backgroundColor: 'transparent',
+                    borderColor: theme.inputBorder,
+                    color: theme.text
                   }}
-                  className="h-7 w-7 p-0"
                 >
-                  <X className="w-4 h-4" />
+                  Limpar Filtros
                 </Button>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  onClick={handleVincularNotas}
-                  disabled={vincularNotasMutation.isPending || notasSelecionadas.length === 0}
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700 text-xs h-9 col-span-2"
-                >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Vincular {notasSelecionadas.length > 0 && `(${notasSelecionadas.length})`}
-                </Button>
-                {ordemSelecionada.notas_fiscais_ids?.length > 0 && (
-                  <>
-                    <Button
-                      onClick={() => setShowConferencia(true)}
-                      size="sm"
-                      className="bg-blue-600 hover:bg-blue-700 text-xs h-9"
-                    >
-                      <Scan className="w-3 h-3 mr-1" />
-                      Conferência
-                    </Button>
-                    <Button
-                      onClick={() => setShowEnderecamento(true)}
-                      size="sm"
-                      className="bg-purple-600 hover:bg-purple-700 text-xs h-9"
-                    >
-                      <Grid3x3 className="w-3 h-3 mr-1" />
-                      Endereçamento
-                    </Button>
-                  </>
-                )}
-                {ordemSelecionada.tipo_ordem !== "ordem_filha" && (
-                  <Button
-                    onClick={() => setShowOrdemFilhaForm(true)}
-                    size="sm"
-                    variant="outline"
-                    className="text-xs h-9 col-span-2"
-                    style={{ borderColor: theme.cardBorder, color: theme.text }}
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Criar Ordem Filha
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Quick Actions para Conferência e Endereçamento - Desktop e Tablet */}
-        {ordemSelecionada && (abaAtiva === "conferencia" || abaAtiva === "enderecamento") && (
-          <Card className="mt-6 hidden lg:block" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold mb-1" style={{ color: theme.text }}>
-                    {ordemSelecionada.numero_carga}
-                  </h3>
-                  <p className="text-sm" style={{ color: theme.textMuted }}>
-                    {ordemSelecionada.cliente} | {ordemSelecionada.destino}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  {ordemSelecionada.tipo_ordem !== "ordem_filha" && (
-                    <Button
-                      onClick={() => setShowOrdemFilhaForm(true)}
-                      variant="outline"
-                      style={{ borderColor: theme.cardBorder, color: theme.text }}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Criar Ordem Filha
-                    </Button>
-                  )}
-                  {abaAtiva === "conferencia" && (
-                    <Button
-                      onClick={() => setShowConferencia(true)}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      <Scan className="w-4 h-4 mr-2" />
-                      Abrir Conferência
-                    </Button>
-                  )}
-                  {abaAtiva === "enderecamento" && (
-                    <Button
-                      onClick={() => setShowEnderecamento(true)}
-                      className="bg-purple-600 hover:bg-purple-700"
-                    >
-                      <Grid3x3 className="w-4 h-4 mr-2" />
-                      Abrir Endereçamento
-                    </Button>
-                  )}
-                </div>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Barra de Ação Fixa Mobile e Tablet - Conferência/Endereçamento */}
-        {ordemSelecionada && (abaAtiva === "conferencia" || abaAtiva === "enderecamento") && (
-          <div 
-            className="lg:hidden fixed bottom-0 left-0 right-0 border-t shadow-2xl"
-            style={{ 
-              backgroundColor: theme.cardBg, 
-              borderColor: theme.cardBorder,
-              zIndex: 9999,
-              paddingBottom: 'env(safe-area-inset-bottom, 0px)'
-            }}
-          >
-            <div className="p-3 space-y-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate" style={{ color: theme.text }}>
-                    {ordemSelecionada.numero_carga}
-                  </p>
-                  <p className="text-xs truncate" style={{ color: theme.textMuted }}>
-                    {ordemSelecionada.cliente}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setOrdemSelecionada(null)}
-                  className="h-7 w-7 p-0"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {abaAtiva === "conferencia" && (
-                  <Button
-                    onClick={() => setShowConferencia(true)}
-                    size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-xs h-9 col-span-2"
-                  >
-                    <Scan className="w-3 h-3 mr-1" />
-                    Abrir Conferência
-                  </Button>
-                )}
-                {abaAtiva === "enderecamento" && (
-                  <Button
-                    onClick={() => setShowEnderecamento(true)}
-                    size="sm"
-                    className="bg-purple-600 hover:bg-purple-700 text-xs h-9 col-span-2"
-                  >
-                    <Grid3x3 className="w-3 h-3 mr-1" />
-                    Abrir Endereçamento
-                  </Button>
-                )}
-                {ordemSelecionada.tipo_ordem !== "ordem_filha" && (
-                  <Button
-                    onClick={() => setShowOrdemFilhaForm(true)}
-                    size="sm"
-                    variant="outline"
-                    className="text-xs h-9 col-span-2"
-                    style={{ borderColor: theme.cardBorder, color: theme.text }}
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Criar Ordem Filha
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Notas Vinculadas */}
-        {ordemSelecionada && getNotasVinculadas.length > 0 && (
-          <Card className="mt-6" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2" style={{ color: theme.text }}>
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                Notas Fiscais Vinculadas à Ordem
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {getNotasVinculadas.map(nota => {
-                  const volumesNota = volumes.filter(v => v.nota_fiscal_id === nota.id);
-                  
-                  return (
-                    <div
-                      key={nota.id}
-                      className="p-3 border rounded-lg"
-                      style={{ borderColor: theme.cardBorder, backgroundColor: isDark ? '#064e3b22' : '#d1fae522' }}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-semibold text-sm" style={{ color: theme.text }}>
-                              NF {nota.numero_nota}
-                            </p>
-                            <Badge className="bg-green-600 text-white text-xs">
-                              Área {nota.numero_area || 'N/A'}
-                            </Badge>
-                          </div>
-                          <p className="text-xs mb-1" style={{ color: theme.textMuted }}>
-                            {nota.emitente_razao_social}
-                          </p>
-                          <div className="text-xs" style={{ color: theme.textMuted }}>
-                            📦 {nota.quantidade_total_volumes_nf} vol. | {nota.peso_total_nf?.toLocaleString()} kg | 
-                            R$ {nota.valor_nota_fiscal?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </div>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDesvincularNota(nota.id)}
-                          disabled={desvincularNotaMutation.isPending}
-                          style={{ borderColor: '#ef4444', color: '#ef4444' }}
-                          className="h-7"
-                        >
-                          <Minus className="w-3 h-3 mr-1" />
-                          Desvincular
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Totais */}
-              <div className="mt-4 pt-4 border-t grid grid-cols-3 gap-4" style={{ borderColor: theme.cardBorder }}>
-                <div>
-                  <Label className="text-xs" style={{ color: theme.textMuted }}>Total Volumes</Label>
-                  <p className="text-lg font-bold text-blue-600">
-                    {ordemSelecionada.volumes_total_consolidado || 0}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs" style={{ color: theme.textMuted }}>Total Peso</Label>
-                  <p className="text-lg font-bold text-blue-600">
-                    {ordemSelecionada.peso_total_consolidado?.toLocaleString() || 0} kg
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs" style={{ color: theme.textMuted }}>Total Valor</Label>
-                  <p className="text-lg font-bold text-green-600">
-                    R$ {ordemSelecionada.valor_total_consolidado?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <OrdensTableEditable
+          ordens={ordensExibidas}
+          motoristas={motoristas}
+          veiculos={veiculos}
+          operacoes={operacoes}
+          loading={loading}
+          onEdit={handleEdit}
+          onViewDetails={handleViewDetails}
+          onDelete={handleDelete}
+          onUpdate={loadData}
+          onConferencia={handleAbrirConferencia}
+          onEnderecamento={handleAbrirEnderecamento}
+        />
       </div>
 
-      {/* Modal de Conferência */}
-      {showConferencia && ordemSelecionada && (
+      <TipoOrdemModal
+        open={showTipoModal}
+        onClose={() => setShowTipoModal(false)}
+        onSelectTipo={handleSelectTipoOrdem}
+      />
+
+      {showForm && (
+        <OrdemUnificadaForm
+          tipo_ordem="carregamento"
+          open={showForm}
+          onClose={() => {
+            setShowForm(false);
+            setEditingOrdem(null);
+          }}
+          onSubmit={(ordemData, notasFiscaisData) => handleSubmit(ordemData, notasFiscaisData)}
+          motoristas={motoristas}
+          veiculos={veiculos}
+          editingOrdem={editingOrdem}
+          user={currentUser}
+          isDark={isDark}
+        />
+      )}
+
+      {showOfertaForm && (
+        <OfertaCargaForm
+          open={showOfertaForm}
+          onClose={() => setShowOfertaForm(false)}
+          onSubmit={handleSubmitOferta}
+        />
+      )}
+
+      {showOfertaLote && (
+        <OfertaCargaLote
+          open={showOfertaLote}
+          onClose={() => setShowOfertaLote(false)}
+          onSubmit={handleSubmitOfertasLote}
+        />
+      )}
+
+      {selectedOrdem && (
+        <OrdemDetails
+          open={!!selectedOrdem}
+          onClose={() => setSelectedOrdem(null)}
+          ordem={selectedOrdem}
+          motoristas={motoristas}
+          veiculos={veiculos}
+          onUpdate={loadData}
+        />
+      )}
+
+      {showConferencia && ordemParaConferencia && (
         <ConferenciaVolumes
-          ordem={ordemSelecionada}
+          ordem={ordemParaConferencia}
           notasFiscais={notasFiscais.filter(nota => 
-            ordemSelecionada.notas_fiscais_ids?.includes(nota.id)
+            ordemParaConferencia.notas_fiscais_ids?.includes(nota.id)
           )}
           volumes={volumes}
-          onClose={() => setShowConferencia(false)}
+          onClose={() => {
+            setShowConferencia(false);
+            setOrdemParaConferencia(null);
+          }}
           onComplete={async () => {
             setShowConferencia(false);
-            await refetchAll();
-            const ordemAtualizada = await base44.entities.OrdemDeCarregamento.get(ordemSelecionada.id);
-            setOrdemSelecionada(ordemAtualizada);
+            setOrdemParaConferencia(null);
+            await loadData();
           }}
         />
       )}
 
-      {/* Modal de Endereçamento */}
-      {showEnderecamento && ordemSelecionada && (
+      {showEnderecamento && ordemParaConferencia && (
         <EnderecamentoVeiculo
-          key={`enderecamento-${ordemSelecionada.id}-${ordemSelecionada.notas_fiscais_ids?.length || 0}`}
-          ordem={ordemSelecionada}
+          key={`enderecamento-${ordemParaConferencia.id}-${ordemParaConferencia.notas_fiscais_ids?.length || 0}`}
+          ordem={ordemParaConferencia}
           notasFiscais={notasFiscais.filter(nota => 
-            ordemSelecionada.notas_fiscais_ids?.includes(nota.id)
+            ordemParaConferencia.notas_fiscais_ids?.includes(nota.id)
           )}
           volumes={volumes.filter(v => 
-            ordemSelecionada.notas_fiscais_ids?.includes(v.ordem_id) || 
-            ordemSelecionada.notas_fiscais_ids?.some(nfId => {
+            ordemParaConferencia.notas_fiscais_ids?.some(nfId => {
               const nf = notasFiscais.find(n => n.id === nfId);
               return nf && v.nota_fiscal_id === nf.id;
             })
           )}
-          onClose={() => setShowEnderecamento(false)}
+          onClose={() => {
+            setShowEnderecamento(false);
+            setOrdemParaConferencia(null);
+          }}
           onComplete={async () => {
             setShowEnderecamento(false);
-            await refetchAll();
-            const ordemAtualizada = await base44.entities.OrdemDeCarregamento.get(ordemSelecionada.id);
-            setOrdemSelecionada(ordemAtualizada);
+            setOrdemParaConferencia(null);
+            await loadData();
           }}
-        />
-      )}
-
-      {/* Modal de Ordem Filha */}
-      {showOrdemFilhaForm && ordemSelecionada && (
-        <OrdemFilhaForm
-          open={showOrdemFilhaForm}
-          onClose={() => setShowOrdemFilhaForm(false)}
-          ordemMae={ordemSelecionada}
-          onSuccess={async () => {
-            setShowOrdemFilhaForm(false);
-            await refetchAll();
-          }}
-          motoristas={motoristas}
-          veiculos={veiculos}
         />
       )}
     </div>
