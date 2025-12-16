@@ -1680,13 +1680,13 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                       onClick={(e) => e.stopPropagation()}
                                     >
                                       <span className="font-bold shrink-0 text-[9px]">
-                                        {nota.numero_nota}
+                                        NF {nota.numero_nota}
                                       </span>
                                       <span className="flex-1 truncate text-center px-0.5 text-[8px]" title={nota.emitente_razao_social}>
                                         {fornecedorAbreviado}
                                       </span>
                                       <span className="font-semibold shrink-0 text-[9px]">
-                                        {volumesNota.length}
+                                        {volumesNota.length} vol.
                                       </span>
                                       <button
                                         onClick={(e) => {
@@ -1702,65 +1702,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                   );
                                 })}
                                 
-                                {/* Volumes alocados agrupados visualmente por NF */}
-                                {(() => {
-                                  // Agrupar volumes por nota fiscal
-                                  const volumesPorNota = {};
-                                  volumesNaCelula.forEach((volume, volIdx) => {
-                                    const notaId = volume.nota_fiscal_id;
-                                    if (!volumesPorNota[notaId]) {
-                                      volumesPorNota[notaId] = [];
-                                    }
-                                    volumesPorNota[notaId].push({ volume, volIdx });
-                                  });
 
-                                  let globalIdx = 0;
-                                  return Object.entries(volumesPorNota).map(([notaId, volumesData]) => {
-                                    const nota = notasFiscaisLocal.find(nf => nf.id === notaId);
-                                    return (
-                                      <div key={notaId} className="mb-1 pb-1 border-b" style={{ borderColor: theme.cellBorder + '44' }}>
-                                        {/* Cabeçalho da NF */}
-                                        <div className="text-[8px] font-bold mb-0.5 px-1" style={{ color: isDark ? '#93c5fd' : '#1e40af' }}>
-                                          NF {nota?.numero_nota} ({volumesData.length})
-                                        </div>
-                                        {/* Volumes da NF */}
-                                        <div className="space-y-0.5">
-                                          {volumesData.map(({ volume, volIdx }) => {
-                                            const currentIdx = globalIdx++;
-                                            return (
-                                              <Draggable 
-                                                key={volume.id} 
-                                                draggableId={`allocated-${volume.id}`} 
-                                                index={currentIdx}
-                                              >
-                                                {(provided, snapshot) => (
-                                                  <div
-                                                    ref={provided.innerRef}
-                                                    {...provided.draggableProps}
-                                                    {...provided.dragHandleProps}
-                                                    className="px-1 py-0.5 rounded text-[7px] leading-tight touch-none"
-                                                    style={{
-                                                      ...provided.draggableProps.style,
-                                                      backgroundColor: snapshot.isDragging 
-                                                        ? (isDark ? '#3b82f6' : '#60a5fa')
-                                                        : (isDark ? '#1e3a8a44' : '#dbeafe44'),
-                                                      color: snapshot.isDragging ? '#ffffff' : (isDark ? '#bfdbfe' : '#1e40af'),
-                                                      opacity: snapshot.isDragging ? 0.9 : 1
-                                                    }}
-                                                  >
-                                                    <span className="font-mono" title={volume.identificador_unico}>
-                                                      {volume.identificador_unico.substring(0, 12)}
-                                                    </span>
-                                                  </div>
-                                                )}
-                                              </Draggable>
-                                            );
-                                          })}
-                                        </div>
-                                      </div>
-                                    );
-                                  });
-                                })()}
                               </div>
 
                               {!temVolumes && (
