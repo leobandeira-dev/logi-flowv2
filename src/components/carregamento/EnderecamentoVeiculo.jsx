@@ -2373,9 +2373,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             )}
           </div>
 
-              {/* Lista de Volumes ou Notas da Base */}
+              {/* Lista de Volumes Agrupados por NF ou Notas da Base */}
               <div className="flex-1 overflow-y-auto p-4">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {usarBase && filtroTipo === "nota_fiscal" ? (
                     // Exibir notas da base quando modo "Base" ativado
                     <NotasBaseList
@@ -2440,43 +2440,101 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       isDark={isDark}
                     />
                   ) : (
-                    // Exibir volumes normalmente
+                    // Exibir volumes agrupados por nota fiscal
                     <>
-                      {filteredVolumes.map((volume) => {
-                        const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-                        const isSelected = volumesSelecionados.includes(volume.id);
+                      {(() => {
+                        // Agrupar volumes por nota fiscal
+                        const volumesPorNota = {};
+                        filteredVolumes.forEach(volume => {
+                          const notaId = volume.nota_fiscal_id;
+                          if (!volumesPorNota[notaId]) {
+                            volumesPorNota[notaId] = [];
+                          }
+                          volumesPorNota[notaId].push(volume);
+                        });
 
-                        return (
-                          <div
-                            key={volume.id}
-                            onClick={() => handleToggleVolume(volume.id)}
-                            className="p-2 border rounded cursor-pointer hover:shadow-sm transition-all"
-                            style={{
-                              borderColor: isSelected ? '#3b82f6' : theme.cardBorder,
-                              backgroundColor: isSelected ? (isDark ? '#1e3a8a33' : '#dbeafe33') : 'transparent'
-                            }}
-                          >
-                            <div className="flex items-start gap-2">
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={() => handleToggleVolume(volume.id)}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <p className="font-mono text-xs font-bold truncate" style={{ color: theme.text }}>
-                                  {volume.identificador_unico}
-                                </p>
-                                <p className="text-xs truncate" style={{ color: theme.textMuted }}>
-                                  NF {nota?.numero_nota}
-                                </p>
-                                <p className="text-xs" style={{ color: theme.textMuted }}>
-                                  {volume.peso_volume} kg
-                                </p>
+                        return Object.entries(volumesPorNota).map(([notaId, volumes]) => {
+                          const nota = notasFiscaisLocal.find(nf => nf.id === notaId);
+                          const volumesSelecionadosNota = volumes.filter(v => volumesSelecionados.includes(v.id));
+                          const todosNaSelecionados = volumes.length > 0 && volumes.every(v => volumesSelecionados.includes(v.id));
+
+                          return (
+                            <div key={notaId} className="border rounded" style={{ borderColor: theme.cardBorder }}>
+                              {/* Header da Nota Fiscal */}
+                              <div
+                                onClick={() => {
+                                  if (todosNaSelecionados) {
+                                    setVolumesSelecionados(prev => prev.filter(id => !volumes.map(v => v.id).includes(id)));
+                                  } else {
+                                    setVolumesSelecionados(prev => [...new Set([...prev, ...volumes.map(v => v.id)])]);
+                                  }
+                                }}
+                                className="p-2 border-b cursor-pointer hover:bg-opacity-50 transition-all flex items-center gap-2"
+                                style={{ 
+                                  borderColor: theme.cardBorder,
+                                  backgroundColor: volumesSelecionadosNota.length > 0 ? (isDark ? '#1e3a8a22' : '#eff6ff') : 'transparent'
+                                }}
+                              >
+                                <Checkbox
+                                  checked={todosNaSelecionados}
+                                  onCheckedChange={() => {
+                                    if (todosNaSelecionados) {
+                                      setVolumesSelecionados(prev => prev.filter(id => !volumes.map(v => v.id).includes(id)));
+                                    } else {
+                                      setVolumesSelecionados(prev => [...new Set([...prev, ...volumes.map(v => v.id)])]);
+                                    }
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-bold text-xs" style={{ color: theme.text }}>
+                                    NF {nota?.numero_nota}
+                                  </p>
+                                  <p className="text-xs truncate" style={{ color: theme.textMuted }}>
+                                    {nota?.emitente_razao_social}
+                                  </p>
+                                </div>
+                                <Badge className={volumesSelecionadosNota.length > 0 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}>
+                                  {volumesSelecionadosNota.length}/{volumes.length}
+                                </Badge>
+                              </div>
+
+                              {/* Lista de Volumes da Nota */}
+                              <div className="p-2 space-y-1">
+                                {volumes.map((volume) => {
+                                  const isSelected = volumesSelecionados.includes(volume.id);
+
+                                  return (
+                                    <div
+                                      key={volume.id}
+                                      onClick={() => handleToggleVolume(volume.id)}
+                                      className="p-1.5 border rounded cursor-pointer hover:shadow-sm transition-all text-xs"
+                                      style={{
+                                        borderColor: isSelected ? '#3b82f6' : theme.cardBorder,
+                                        backgroundColor: isSelected ? (isDark ? '#1e3a8a33' : '#dbeafe33') : 'transparent'
+                                      }}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <Checkbox
+                                          checked={isSelected}
+                                          onCheckedChange={() => handleToggleVolume(volume.id)}
+                                          onClick={(e) => e.stopPropagation()}
+                                        />
+                                        <p className="font-mono font-bold flex-1 truncate" style={{ color: theme.text }}>
+                                          {volume.identificador_unico}
+                                        </p>
+                                        <p className="text-xs" style={{ color: theme.textMuted }}>
+                                          {volume.peso_volume} kg
+                                        </p>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        });
+                      })()}
 
                       {filteredVolumes.length === 0 && (
                         <div className="text-center py-8" style={{ color: theme.textMuted }}>
@@ -2490,8 +2548,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       )}
                     </>
                   )}
-                </div>
-              </div>
+                  </div>
+                  </div>
             </TabsContent>
 
             {/* Aba Lista de Notas */}
