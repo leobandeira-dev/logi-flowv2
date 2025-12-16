@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Filter, ChevronDown, FileText, Package, FileSpreadsheet, X, RefreshCw } from "lucide-react";
+import { Plus, Search, Filter, ChevronDown, FileText, Package, FileSpreadsheet, X, RefreshCw, Scan, Grid3x3 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -67,6 +67,8 @@ export default function Carregamento() {
   });
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [limite, setLimite] = useState(50);
+  const [isTablet, setIsTablet] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -76,6 +78,24 @@ export default function Carregamento() {
     const observer = new MutationObserver(checkDarkMode);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const checkDevice = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const isTabletSize = width >= 768 && width <= 1280;
+      setIsTablet(isTabletSize);
+      setIsLandscape(width > height);
+    };
+    
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    window.addEventListener('orientationchange', checkDevice);
+    return () => {
+      window.removeEventListener('resize', checkDevice);
+      window.removeEventListener('orientationchange', checkDevice);
+    };
   }, []);
 
   useEffect(() => {
@@ -536,6 +556,250 @@ export default function Carregamento() {
     cardBorder: isDark ? '#334155' : '#e5e7eb',
   };
 
+  // Layout Tablet Otimizado
+  if (isTablet) {
+    return (
+      <div className="min-h-screen transition-colors" style={{ backgroundColor: theme.bg }}>
+        {/* Header Compacto */}
+        <div className="sticky top-0 z-10 border-b px-4 py-3" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-bold truncate" style={{ color: theme.text }}>Carregamento</h1>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={loadData} style={{ borderColor: theme.inputBorder, color: theme.text }}>
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={showFilters ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                style={!showFilters ? { backgroundColor: 'transparent', borderColor: theme.inputBorder, color: theme.text } : {}}
+              >
+                <Filter className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+          
+          {/* Busca */}
+          <div className="relative mt-3">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
+            <Input
+              placeholder="Buscar ordem..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-10 text-base"
+              style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+            />
+          </div>
+
+          {showFilters && (
+            <div className="mt-3 p-3 rounded-lg border space-y-3" style={{ backgroundColor: theme.inputBg, borderColor: theme.cardBorder }}>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Status</Label>
+                  <select
+                    value={filters.statusTracking}
+                    onChange={(e) => setFilters({...filters, statusTracking: e.target.value})}
+                    className="w-full h-9 px-2 rounded border text-sm"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  >
+                    <option value="">Todos</option>
+                    <option value="em_carregamento">Em Carregamento</option>
+                    <option value="carregado">Carregado</option>
+                    <option value="em_viagem">Em Viagem</option>
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Tipo</Label>
+                  <select
+                    value={filters.tiposRegistro?.[0] || ""}
+                    onChange={(e) => setFilters({...filters, tiposRegistro: e.target.value ? [e.target.value] : []})}
+                    className="w-full h-9 px-2 rounded border text-sm"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  >
+                    <option value="">Todos</option>
+                    <option value="oferta">Oferta</option>
+                    <option value="negociando">Negociando</option>
+                    <option value="ordem_completa">Alocado</option>
+                  </select>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFilters({ operacoesIds: [], status: "", tiposRegistro: [], origem: "", destino: "", dataInicio: "", dataFim: "", statusTracking: "" })}
+                className="w-full h-8"
+                style={{ borderColor: theme.inputBorder, color: theme.text }}
+              >
+                <X className="w-3 h-3 mr-2" />
+                Limpar Filtros
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Grid de Ordens - Otimizado para Tablet */}
+        <div className={`p-4 ${isLandscape ? 'grid grid-cols-2 gap-4' : 'space-y-3'}`}>
+          {loading ? (
+            <div className="col-span-2 flex items-center justify-center py-12">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : filteredOrdens.length === 0 ? (
+            <div className="col-span-2 text-center py-12" style={{ color: theme.textMuted }}>
+              <Package className="w-12 h-12 mx-auto mb-3 opacity-20" />
+              <p>Nenhuma ordem encontrada</p>
+            </div>
+          ) : (
+            filteredOrdens.slice(inicio, fim).map(ordem => {
+              const qtdNotas = ordem.notas_fiscais_ids?.length || 0;
+              const motorista = motoristas.find(m => m.id === ordem.motorista_id);
+              const operacao = operacoes.find(op => op.id === ordem.operacao_id);
+              
+              const statusConfig = {
+                em_carregamento: { label: "Em Carregamento", color: "bg-blue-600" },
+                carregado: { label: "Carregado", color: "bg-indigo-600" },
+                em_viagem: { label: "Em Viagem", color: "bg-purple-600" },
+                chegada_destino: { label: "Chegou", color: "bg-yellow-600" },
+                descarga_agendada: { label: "Desc. Agendada", color: "bg-orange-500" },
+              };
+              const statusInfo = statusConfig[ordem.status_tracking] || { label: "Ag. Agendamento", color: "bg-gray-500" };
+
+              return (
+                <Card key={ordem.id} style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                  <CardContent className="p-4">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-base mb-1 truncate" style={{ color: theme.text }}>
+                          {ordem.numero_carga}
+                        </h3>
+                        <p className="text-sm truncate" style={{ color: theme.textMuted }}>
+                          {ordem.cliente}
+                        </p>
+                      </div>
+                      <Badge className={`${statusInfo.color} text-white text-xs whitespace-nowrap ml-2`}>
+                        {statusInfo.label}
+                      </Badge>
+                    </div>
+
+                    {/* Info */}
+                    <div className="space-y-2 text-sm mb-4">
+                      {operacao && (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs" style={{ borderColor: theme.cardBorder, color: theme.text }}>
+                            {operacao.nome}
+                          </Badge>
+                        </div>
+                      )}
+                      {(motorista?.nome || ordem.motorista_nome_temp) && (
+                        <p style={{ color: theme.textMuted }}>
+                          👤 {motorista?.nome || ordem.motorista_nome_temp}
+                        </p>
+                      )}
+                      {ordem.cavalo_placa_temp && (
+                        <p style={{ color: theme.textMuted }}>
+                          🚛 {ordem.cavalo_placa_temp}
+                          {ordem.implemento1_placa_temp && ` + ${ordem.implemento1_placa_temp}`}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: theme.cardBorder }}>
+                        <span style={{ color: theme.textMuted }}>
+                          {qtdNotas} NF{qtdNotas !== 1 ? 's' : ''}
+                        </span>
+                        <span className="font-semibold" style={{ color: theme.text }}>
+                          {ordem.volumes_total_consolidado || 0}v | {(ordem.peso_total_consolidado || 0).toLocaleString()}kg
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        onClick={() => handleAbrirConferencia(ordem)}
+                        disabled={!qtdNotas}
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700 h-11 text-sm"
+                      >
+                        <Scan className="w-4 h-4 mr-2" />
+                        Conferência
+                      </Button>
+                      <Button
+                        onClick={() => handleAbrirEnderecamento(ordem)}
+                        disabled={!qtdNotas}
+                        size="sm"
+                        className="bg-purple-600 hover:bg-purple-700 h-11 text-sm"
+                      >
+                        <Grid3x3 className="w-4 h-4 mr-2" />
+                        Endereçamento
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </div>
+
+        {/* Paginação Fixa no Bottom */}
+        {filteredOrdens.length > limite && (
+          <div className="sticky bottom-0 border-t px-4 py-3" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+            <PaginacaoControles
+              paginaAtual={paginaAtual}
+              totalRegistros={filteredOrdens.length}
+              limite={limite}
+              onPaginaAnterior={() => setPaginaAtual(prev => Math.max(1, prev - 1))}
+              onProximaPagina={() => setPaginaAtual(prev => prev + 1)}
+              isDark={isDark}
+            />
+          </div>
+        )}
+
+        {/* Modais */}
+        {showConferencia && ordemParaConferencia && (
+          <ConferenciaVolumes
+            ordem={ordemParaConferencia}
+            notasFiscais={notasFiscais.filter(nota => ordemParaConferencia.notas_fiscais_ids?.includes(nota.id))}
+            volumes={volumes}
+            onClose={() => {
+              setShowConferencia(false);
+              setOrdemParaConferencia(null);
+            }}
+            onComplete={async () => {
+              setShowConferencia(false);
+              setOrdemParaConferencia(null);
+              await loadData();
+            }}
+          />
+        )}
+
+        {showEnderecamento && ordemParaConferencia && (
+          <EnderecamentoVeiculo
+            key={`enderecamento-${ordemParaConferencia.id}`}
+            ordem={ordemParaConferencia}
+            notasFiscais={notasFiscais.filter(nota => ordemParaConferencia.notas_fiscais_ids?.includes(nota.id))}
+            volumes={volumes.filter(v => 
+              ordemParaConferencia.notas_fiscais_ids?.some(nfId => {
+                const nf = notasFiscais.find(n => n.id === nfId);
+                return nf && v.nota_fiscal_id === nf.id;
+              })
+            )}
+            onClose={() => {
+              setShowEnderecamento(false);
+              setOrdemParaConferencia(null);
+            }}
+            onComplete={async () => {
+              setShowEnderecamento(false);
+              setOrdemParaConferencia(null);
+              await loadData();
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // Layout Desktop
   return (
     <div className="p-6 min-h-screen transition-colors" style={{ backgroundColor: theme.bg }}>
       <div className="max-w-[1800px] mx-auto">
