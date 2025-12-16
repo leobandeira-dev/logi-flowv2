@@ -2870,16 +2870,18 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                 }}
                               >
                                 <div className="flex items-center gap-2 mb-1">
-                                  <Checkbox
-                                    checked={todosNaSelecionados}
-                                    onCheckedChange={() => {
-                                      if (todosNaSelecionados) {
-                                        setVolumesSelecionados(prev => prev.filter(id => !volumes.map(v => v.id).includes(id)));
-                                      } else {
-                                        setVolumesSelecionados(prev => [...new Set([...prev, ...volumes.map(v => v.id)])]);
-                                      }
-                                    }}
-                                  />
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <Checkbox
+                                      checked={todosNaSelecionados}
+                                      onCheckedChange={() => {
+                                        if (todosNaSelecionados) {
+                                          setVolumesSelecionados(prev => prev.filter(id => !volumes.map(v => v.id).includes(id)));
+                                        } else {
+                                          setVolumesSelecionados(prev => [...new Set([...prev, ...volumes.map(v => v.id)])]);
+                                        }
+                                      }}
+                                    />
+                                  </div>
                                   <div 
                                     className="flex-1 min-w-0 select-none" 
                                     onClick={() => {
