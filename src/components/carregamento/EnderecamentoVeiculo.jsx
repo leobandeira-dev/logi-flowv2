@@ -2438,34 +2438,44 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     setVolumesSelecionados(prev => [...new Set([...prev, ...volumes.map(v => v.id)])]);
                                   }
                                 }}
-                                className="p-2 border-b cursor-pointer hover:bg-opacity-50 transition-all flex items-center gap-2"
+                                className="p-2 border-b cursor-pointer hover:bg-opacity-50 transition-all"
                                 style={{ 
                                   borderColor: theme.cardBorder,
                                   backgroundColor: volumesSelecionadosNota.length > 0 ? (isDark ? '#1e3a8a22' : '#eff6ff') : 'transparent'
                                 }}
                               >
-                                <Checkbox
-                                  checked={todosNaSelecionados}
-                                  onCheckedChange={() => {
-                                    if (todosNaSelecionados) {
-                                      setVolumesSelecionados(prev => prev.filter(id => !volumes.map(v => v.id).includes(id)));
-                                    } else {
-                                      setVolumesSelecionados(prev => [...new Set([...prev, ...volumes.map(v => v.id)])]);
-                                    }
-                                  }}
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-bold text-xs" style={{ color: theme.text }}>
-                                    NF {nota?.numero_nota}
-                                  </p>
-                                  <p className="text-xs truncate" style={{ color: theme.textMuted }}>
-                                    {nota?.emitente_razao_social}
-                                  </p>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Checkbox
+                                    checked={todosNaSelecionados}
+                                    onCheckedChange={() => {
+                                      if (todosNaSelecionados) {
+                                        setVolumesSelecionados(prev => prev.filter(id => !volumes.map(v => v.id).includes(id)));
+                                      } else {
+                                        setVolumesSelecionados(prev => [...new Set([...prev, ...volumes.map(v => v.id)])]);
+                                      }
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-xs" style={{ color: theme.text }}>
+                                      NF {nota?.numero_nota}
+                                    </p>
+                                    <p className="text-xs truncate" style={{ color: theme.textMuted }}>
+                                      {nota?.emitente_razao_social}
+                                    </p>
+                                  </div>
+                                  <Badge className={volumesSelecionadosNota.length > 0 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}>
+                                    {volumesSelecionadosNota.length}/{volumes.length}
+                                  </Badge>
                                 </div>
-                                <Badge className={volumesSelecionadosNota.length > 0 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}>
-                                  {volumesSelecionadosNota.length}/{volumes.length}
-                                </Badge>
+                                <div className="flex items-center justify-between text-[10px] px-6" style={{ color: theme.textMuted }}>
+                                  <span>
+                                    <strong style={{ color: volumes.length > 0 ? '#10b981' : theme.text }}>{volumes.length}</strong> disponíveis
+                                  </span>
+                                  <span>
+                                    <strong style={{ color: theme.text }}>{volumes.length - volumesSelecionadosNota.length}</strong> faltam
+                                  </span>
+                                </div>
                               </div>
 
                               {/* Lista de Volumes da Nota */}
