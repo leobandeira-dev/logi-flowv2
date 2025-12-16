@@ -720,12 +720,30 @@ export default function QuickStatusPopover({
                   etapaId={etapa.id}
                   ordemEtapaId={ordemEtapa.id}
                   ordemId={ordem.id}
-                  onValidationChange={() => {}}
-                  onValuesChange={() => {}}
+                  onValidationChange={setCamposValidos}
+                  onValuesChange={setCamposValores}
+                  onUnsavedChanges={setHasUnsavedChanges}
                   onTrackingUpdate={async () => {
                     await loadOcorrenciasAbertas();
                   }}
                 />
+                
+                {hasUnsavedChanges && (
+                  <Button
+                    onClick={handleSalvarCamposSemConcluir}
+                    disabled={salvandoCampos}
+                    className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                  >
+                    {salvandoCampos ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      "Salvar Alterações"
+                    )}
+                  </Button>
+                )}
               </div>
             )}
 
