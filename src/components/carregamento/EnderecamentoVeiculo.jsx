@@ -1812,39 +1812,6 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     </div>
                                   );
                                 })}
-                                
-                                {/* Volumes alocados - draggable para realocar */}
-                                {volumesNaCelula.map((volume, volIdx) => {
-                                  const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-                                  return (
-                                    <Draggable 
-                                      key={volume.id} 
-                                      draggableId={`allocated-${volume.id}`} 
-                                      index={volIdx}
-                                    >
-                                      {(provided, snapshot) => (
-                                        <div
-                                          ref={provided.innerRef}
-                                          {...provided.draggableProps}
-                                          {...provided.dragHandleProps}
-                                          className="px-1 py-0.5 rounded text-[7px] leading-tight touch-none"
-                                          style={{
-                                            ...provided.draggableProps.style,
-                                            backgroundColor: snapshot.isDragging 
-                                              ? (isDark ? '#3b82f6' : '#60a5fa')
-                                              : (isDark ? '#1e3a8a44' : '#dbeafe44'),
-                                            color: snapshot.isDragging ? '#ffffff' : (isDark ? '#bfdbfe' : '#1e40af'),
-                                            opacity: snapshot.isDragging ? 0.9 : 1
-                                          }}
-                                        >
-                                          <span className="font-mono" title={volume.identificador_unico}>
-                                            {volume.identificador_unico.substring(0, 12)}
-                                          </span>
-                                        </div>
-                                      )}
-                                    </Draggable>
-                                  );
-                                })}
                               </div>
 
                               {!temVolumes && (
