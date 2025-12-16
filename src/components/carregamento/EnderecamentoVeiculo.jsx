@@ -323,6 +323,12 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         const volume = volumesLocal.find(v => v.id === volumeId);
         if (!volume) continue;
 
+        // Endereçar = conferir automaticamente
+        await base44.entities.Volume.update(volumeId, {
+          status_volume: "carregado",
+          localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linha}-${coluna}`
+        });
+
         const enderecamento = {
           ordem_id: ordem.id,
           volume_id: volumeId,
@@ -710,6 +716,12 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           data_enderecamento: new Date().toISOString(),
           enderecado_por: user.id
         };
+
+        // Endereçar = conferir automaticamente
+        await base44.entities.Volume.update(volumeId, {
+          status_volume: "carregado",
+          localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linha}-${coluna}`
+        });
 
         const created = await base44.entities.EnderecamentoVolume.create(enderecamento);
         const enderecamentosAtualizados = [...enderecamentos.filter(e => e.volume_id !== volumeId), created];
