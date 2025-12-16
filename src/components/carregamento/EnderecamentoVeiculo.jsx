@@ -1779,16 +1779,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     {volumes.map((volume, index) => (
                                       <Draggable key={volume.id} draggableId={volume.id} index={index}>
                                         {(provided, snapshot) => (
-                                          <motion.div
+                                          <div
                                             ref={provided.innerRef}
                                             {...provided.draggableProps}
                                             {...provided.dragHandleProps}
                                             className="p-1 border rounded touch-none"
-                                            layout
-                                            initial={{ opacity: 0, x: -8 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: -8 }}
-                                            transition={{ duration: 0.15, delay: index * 0.015, layout: { duration: 0.3 } }}
                                             style={{
                                               ...provided.draggableProps.style,
                                               borderColor: snapshot.isDragging ? '#3b82f6' : theme.cardBorder,
@@ -1808,7 +1803,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                             >
                                               {volume.identificador_unico}
                                             </p>
-                                          </motion.div>
+                                          </div>
                                         )}
                                       </Draggable>
                                     ))}
@@ -1971,16 +1966,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                             {volumesNota.map((vol, volIndex) => (
                                               <Draggable key={vol.id} draggableId={`allocated-${vol.id}`} index={volIndex}>
                                                 {(provided, snapshot) => (
-                                                  <motion.div
+                                                  <div
                                                     ref={provided.innerRef}
                                                     {...provided.draggableProps}
                                                     {...provided.dragHandleProps}
                                                     className="px-1 py-0.5 rounded text-[8px] leading-tight cursor-move touch-none ml-2"
-                                                    layout
-                                                    initial={{ opacity: 0, x: -10 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    exit={{ opacity: 0, x: 10 }}
-                                                    transition={{ duration: 0.18, delay: volIndex * 0.02, layout: { duration: 0.3 } }}
                                                     style={{
                                                       ...provided.draggableProps.style,
                                                       backgroundColor: snapshot.isDragging 
@@ -1997,7 +1987,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                                     <span className="font-mono font-bold text-[8px]">
                                                       {vol.identificador_unico}
                                                     </span>
-                                                  </motion.div>
+                                                  </div>
                                                 )}
                                               </Draggable>
                                             ))}
@@ -2262,17 +2252,12 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       return (
                         <Draggable key={volume.id} draggableId={volume.id} index={index}>
                           {(provided, snapshot) => (
-                            <motion.div
+                            <div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
                               onClick={() => handleToggleVolume(volume.id)}
                               className="p-2 border rounded cursor-pointer hover:shadow-sm transition-all touch-none"
-                              layout
-                              initial={{ opacity: 0, y: -5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -5 }}
-                              transition={{ duration: 0.25, layout: { duration: 0.3 } }}
                               style={{
                                 ...provided.draggableProps.style,
                                 borderColor: isSelected ? '#3b82f6' : theme.cardBorder,
@@ -2820,17 +2805,12 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                         return (
                                           <Draggable key={volume.id} draggableId={volume.id} index={index}>
                                             {(provided, snapshot) => (
-                                              <motion.div
+                                              <div
                                                 ref={provided.innerRef}
                                                 {...provided.draggableProps}
                                                 {...provided.dragHandleProps}
                                                 onClick={() => handleToggleVolume(volume.id)}
                                                 className="p-1.5 border rounded cursor-pointer hover:shadow-sm transition-all text-xs"
-                                                layout
-                                                initial={{ opacity: 0, x: -10 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                exit={{ opacity: 0, x: -10 }}
-                                                transition={{ duration: 0.2, delay: index * 0.02, layout: { duration: 0.3 } }}
                                                 style={{
                                                   ...provided.draggableProps.style,
                                                   borderColor: isSelected ? '#3b82f6' : theme.cardBorder,
@@ -2857,7 +2837,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                                     {volume.peso_volume} kg
                                                   </p>
                                                 </div>
-                                              </motion.div>
+                                              </div>
                                             )}
                                           </Draggable>
                                         );
@@ -3174,16 +3154,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                           {volumesNota.map((vol, volIndex) => (
                                             <Draggable key={vol.id} draggableId={`allocated-${vol.id}`} index={volIndex}>
                                               {(provided, snapshot) => (
-                                                <motion.div
+                                                <div
                                                   ref={provided.innerRef}
                                                   {...provided.draggableProps}
                                                   {...provided.dragHandleProps}
                                                   className="px-1.5 py-0.5 rounded text-[9px] leading-tight cursor-move ml-2"
-                                                  layout
-                                                  initial={{ opacity: 0, x: -10 }}
-                                                  animate={{ opacity: 1, x: 0 }}
-                                                  exit={{ opacity: 0, x: 10 }}
-                                                  transition={{ duration: 0.18, delay: volIndex * 0.02, layout: { duration: 0.3 } }}
                                                   style={{
                                                     ...provided.draggableProps.style,
                                                     backgroundColor: snapshot.isDragging 
@@ -3200,7 +3175,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                                   <span className="font-mono font-bold">
                                                     {vol.identificador_unico}
                                                   </span>
-                                                </motion.div>
+                                                </div>
                                               )}
                                             </Draggable>
                                           ))}
