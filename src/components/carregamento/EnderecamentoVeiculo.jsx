@@ -20,6 +20,7 @@ import {
   Camera
 } from "lucide-react";
 import CameraScanner from "../etiquetas-mae/CameraScanner";
+import SelecionarVolumesModal from "./SelecionarVolumesModal";
 import {
   Dialog,
   DialogContent,
@@ -169,6 +170,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const inputChaveRef = React.useRef(null);
   const [showCamera, setShowCamera] = useState(false);
   const [processandoQR, setProcessandoQR] = useState(false);
+  const [showSelecionarVolumes, setShowSelecionarVolumes] = useState(false);
+  const [notaParaAlocar, setNotaParaAlocar] = useState(null);
+  const [celulaDestino, setCelulaDestino] = useState(null);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -286,6 +290,23 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id) &&
       !idsEnderecados.includes(v.id)
     );
+  };
+
+  const getNotasComVolumesNaoEnderecados = () => {
+    const idsEnderecados = enderecamentos.map(e => e.volume_id);
+    
+    return notasFiscaisLocal.map(nota => {
+      const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
+      const volumesDisponiveis = volumesNota.filter(v => !idsEnderecados.includes(v.id));
+      const volumesJaEnderecados = volumesNota.filter(v => idsEnderecados.includes(v.id));
+      
+      return {
+        ...nota,
+        volumesDisponiveis,
+        volumesJaEnderecados,
+        totalVolumes: volumesNota.length
+      };
+    }).filter(nota => nota.volumesDisponiveis.length > 0); // Apenas notas com volumes disponíveis
   };
 
   const getVolumesNaCelula = (linha, coluna) => {
@@ -682,16 +703,42 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
     const { source, destination } = result;
 
-    // Se soltar na lista de volumes, apenas reorganizar (não fazer nada)
-    if (destination.droppableId === "volumes-list" || destination.droppableId === "volumes-list-mobile") {
+    // Se soltar na lista, apenas reorganizar (não fazer nada)
+    if (destination.droppableId === "notas-list" || destination.droppableId === "notas-list-mobile" || 
+        destination.droppableId === "volumes-list" || destination.droppableId === "volumes-list-mobile") {
       return;
     }
 
     // Se soltar em uma célula do layout
     if (destination.droppableId.startsWith("cell-")) {
       const draggableId = result.draggableId;
-      const volumeId = draggableId.startsWith("allocated-") ? draggableId.replace("allocated-", "") : draggableId;
       const [_, linha, coluna] = destination.droppableId.split("-");
+
+      // Se for uma nota sendo arrastada
+      if (draggableId.startsWith("nota-")) {
+        const notaId = draggableId.replace("nota-", "");
+        const nota = notasFiscaisLocal.find(n => n.id === notaId);
+        if (!nota) return;
+
+        const idsEnderecados = enderecamentos.map(e => e.volume_id);
+        const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === notaId);
+        const volumesDisponiveis = volumesNota.filter(v => !idsEnderecados.includes(v.id));
+        const volumesJaEnderecados = volumesNota.filter(v => idsEnderecados.includes(v.id));
+
+        if (volumesDisponiveis.length === 0) {
+          toast.warning("Todos os volumes desta nota já foram endereçados");
+          return;
+        }
+
+        // Abrir modal para seleção de volumes
+        setNotaParaAlocar(nota);
+        setCelulaDestino({ linha: parseInt(linha), coluna });
+        setShowSelecionarVolumes(true);
+        return;
+      }
+
+      // Se for um volume individual sendo arrastado (realocação)
+      const volumeId = draggableId.startsWith("allocated-") ? draggableId.replace("allocated-", "") : draggableId;
 
       try {
         const user = await base44.auth.me();
@@ -740,6 +787,59 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         console.error("Erro ao posicionar volume:", error);
         toast.error("Erro ao posicionar volume");
       }
+    }
+  };
+
+  const handleConfirmarVolumes = async (volumesIds) => {
+    if (!celulaDestino || volumesIds.length === 0) return;
+
+    try {
+      const user = await base44.auth.me();
+      const { linha, coluna } = celulaDestino;
+
+      const novosEnderecamentos = [];
+
+      for (const volumeId of volumesIds) {
+        const volume = volumesLocal.find(v => v.id === volumeId);
+        if (!volume) continue;
+
+        // Endereçar = conferir automaticamente
+        await base44.entities.Volume.update(volumeId, {
+          status_volume: "carregado",
+          localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linha}-${coluna}`
+        });
+
+        const enderecamento = {
+          ordem_id: ordem.id,
+          volume_id: volumeId,
+          nota_fiscal_id: volume.nota_fiscal_id,
+          linha: linha,
+          coluna: coluna,
+          posicao_celula: `${linha}-${coluna}`,
+          data_enderecamento: new Date().toISOString(),
+          enderecado_por: user.id
+        };
+
+        const created = await base44.entities.EnderecamentoVolume.create(enderecamento);
+        novosEnderecamentos.push(created);
+      }
+
+      const enderecamentosAtualizados = [...enderecamentos, ...novosEnderecamentos];
+      setEnderecamentos(enderecamentosAtualizados);
+      
+      // Salvar rascunho
+      localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
+        enderecamentos: enderecamentosAtualizados,
+        timestamp: new Date().toISOString()
+      }));
+
+      toast.success(`${volumesIds.length} volume(s) endereçado(s)!`);
+      setShowSelecionarVolumes(false);
+      setNotaParaAlocar(null);
+      setCelulaDestino(null);
+    } catch (error) {
+      console.error("Erro ao alocar volumes:", error);
+      toast.error("Erro ao alocar volumes");
     }
   };
 
@@ -1431,6 +1531,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   };
 
   const filteredVolumes = getVolumesNaoEnderecados();
+  const notasDisponiveis = getNotasComVolumesNaoEnderecados();
 
   const progressoEnderecamento = volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length > 0
     ? (enderecamentos.length / volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length) * 100
@@ -1532,25 +1633,23 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             <div className="w-32 border-r flex flex-col overflow-hidden" style={{ borderColor: theme.cellBorder, backgroundColor: theme.cardBg }}>
               <div className="p-2 border-b" style={{ borderColor: theme.cardBorder }}>
                 <h3 className="font-semibold text-xs" style={{ color: theme.text }}>
-                  Volumes
+                  Notas Fiscais
                 </h3>
                 <p className="text-[9px]" style={{ color: theme.textMuted }}>
-                  {filteredVolumes.length} disponíveis
+                  {notasDisponiveis.length} com volumes
                 </p>
               </div>
               
-              <Droppable droppableId="volumes-list-mobile">
+              <Droppable droppableId="notas-list-mobile">
                 {(provided) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className="flex-1 overflow-y-auto p-1 space-y-1"
                   >
-                    {filteredVolumes.map((volume, index) => {
-                      const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-                      
+                    {notasDisponiveis.map((nota, index) => {
                       return (
-                        <Draggable key={volume.id} draggableId={volume.id} index={index}>
+                        <Draggable key={nota.id} draggableId={`nota-${nota.id}`} index={index}>
                           {(provided, snapshot) => (
                             <div
                               ref={provided.innerRef}
@@ -1567,17 +1666,29 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                 opacity: snapshot.isDragging ? 0.9 : 1
                               }}
                             >
+                              <div className="flex items-center justify-between gap-1">
+                                <p 
+                                  className="font-bold text-[9px] shrink-0" 
+                                  style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}
+                                >
+                                  NF {nota.numero_nota}
+                                </p>
+                                <Badge 
+                                  className="text-[7px] h-3 px-1"
+                                  style={{ 
+                                    backgroundColor: snapshot.isDragging ? '#ffffff' : '#3b82f6',
+                                    color: snapshot.isDragging ? '#1e40af' : '#ffffff'
+                                  }}
+                                >
+                                  {nota.volumesDisponiveis.length} vol
+                                </Badge>
+                              </div>
                               <p 
-                                className="font-mono text-[9px] font-bold leading-tight break-all" 
-                                style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}
-                              >
-                                {volume.identificador_unico}
-                              </p>
-                              <p 
-                                className="text-[8px] leading-tight" 
+                                className="text-[8px] leading-tight truncate" 
                                 style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}
+                                title={nota.emitente_razao_social}
                               >
-                                NF {nota?.numero_nota}
+                                {nota.emitente_razao_social?.substring(0, 15)}
                               </p>
                             </div>
                           )}
@@ -1586,10 +1697,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     })}
                     {provided.placeholder}
                     
-                    {filteredVolumes.length === 0 && (
+                    {notasDisponiveis.length === 0 && (
                       <div className="text-center py-4" style={{ color: theme.textMuted }}>
-                        <Package className="w-6 h-6 mx-auto mb-1 opacity-20" />
-                        <p className="text-[9px]">Todos alocados</p>
+                        <FileText className="w-6 h-6 mx-auto mb-1 opacity-20" />
+                        <p className="text-[9px]">Todos endereçados</p>
                       </div>
                     )}
                   </div>
@@ -1906,143 +2017,164 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 </div>
               )}
 
-              {/* Lista de Volumes Filtrados ou Notas da Base */}
-              <Droppable droppableId="volumes-list">
-                {(provided) => (
-                  <div 
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className="space-y-2 max-h-[300px] overflow-y-auto"
-                  >
-                    {usarBase && filtroTipo === "nota_fiscal" ? (
-                  // Exibir notas da base quando modo "Base" ativado
-                  <NotasBaseList
-                    notasBaseBusca={notasBaseBusca}
-                    notasFiscaisLocal={notasFiscaisLocal}
-                    volumesLocal={volumesLocal}
-                    onSelecionarNota={async (nota) => {
-                      try {
-                        // Verificar se nota já está vinculada à ordem
-                        const jaVinculada = notasFiscaisLocal.some(nf => nf.id === nota.id);
-                        
-                        if (!jaVinculada) {
-                          // Vincular nota à ordem
-                          await base44.entities.NotaFiscal.update(nota.id, {
-                            ordem_id: ordem.id,
-                            status_nf: "aguardando_expedicao"
-                          });
-
-                          // Atualizar ordem com nova nota
-                          const notasIds = [...(ordem.notas_fiscais_ids || []), nota.id];
-                          await base44.entities.OrdemDeCarregamento.update(ordem.id, {
-                            notas_fiscais_ids: notasIds
-                          });
-
-                          // Atualizar estado local
-                          setNotasFiscaisLocal([...notasFiscaisLocal, nota]);
-                          setNotasOrigem({ ...notasOrigem, [nota.id]: "Adicionada" });
+              {/* Lista de Notas Fiscais Agrupadas */}
+              <div className="flex-1 overflow-y-auto p-4">
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  {usarBase && filtroTipo === "nota_fiscal" ? (
+                    // Exibir notas da base quando modo "Base" ativado
+                    <NotasBaseList
+                      notasBaseBusca={notasBaseBusca}
+                      notasFiscaisLocal={notasFiscaisLocal}
+                      volumesLocal={volumesLocal}
+                      onSelecionarNota={async (nota) => {
+                        try {
+                          const jaVinculada = notasFiscaisLocal.some(nf => nf.id === nota.id);
                           
-                          toast.success(`NF ${nota.numero_nota} vinculada à ordem!`);
-                        }
+                          if (!jaVinculada) {
+                            await base44.entities.NotaFiscal.update(nota.id, {
+                              ordem_id: ordem.id,
+                              status_nf: "aguardando_expedicao"
+                            });
 
-                        // Buscar volumes da nota e selecionar automaticamente
-                        let volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
-                        
-                        // Se não tiver volumes locais, buscar do banco
-                        if (volumesNota.length === 0) {
-                          const volumesDB = await base44.entities.Volume.filter({ nota_fiscal_id: nota.id });
-                          setVolumesLocal([...volumesLocal, ...volumesDB]);
-                          volumesNota = volumesDB;
-                        }
-                        
-                        const volumesNaoEnderecados = volumesNota.filter(v => {
-                          const idsEnderecados = enderecamentos.map(e => e.volume_id);
-                          return !idsEnderecados.includes(v.id);
-                        });
-                        
-                        setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
-                        setNotasBaseBusca("");
-                        setAbaAtiva("volumes");
-                        
-                        if (volumesNaoEnderecados.length > 0) {
-                          toast.success(`${volumesNaoEnderecados.length} volume(s) selecionado(s)`);
-                        } else {
-                          toast.info("Todos os volumes desta NF já foram endereçados");
-                        }
-                      } catch (error) {
-                        console.error("Erro ao vincular nota:", error);
-                        toast.error("Erro ao vincular nota fiscal");
-                      }
-                    }}
-                    theme={theme}
-                    isDark={isDark}
-                  />
-                ) : (
-                  // Exibir volumes normalmente
-                  <>
-                    {filteredVolumes.map((volume, index) => {
-                      const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-                      const isSelected = volumesSelecionados.includes(volume.id);
+                            const notasIds = [...(ordem.notas_fiscais_ids || []), nota.id];
+                            await base44.entities.OrdemDeCarregamento.update(ordem.id, {
+                              notas_fiscais_ids: notasIds
+                            });
 
-                      return (
-                        <Draggable key={volume.id} draggableId={volume.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              onClick={() => handleToggleVolume(volume.id)}
-                              className="p-2 border rounded cursor-pointer hover:shadow-sm transition-all touch-none"
-                              style={{
-                                ...provided.draggableProps.style,
-                                borderColor: isSelected ? '#3b82f6' : theme.cardBorder,
-                                backgroundColor: snapshot.isDragging 
-                                  ? (isDark ? '#1e40af' : '#3b82f6')
-                                  : (isSelected ? (isDark ? '#1e3a8a33' : '#dbeafe33') : 'transparent'),
-                                color: snapshot.isDragging ? '#ffffff' : 'inherit',
-                                opacity: snapshot.isDragging ? 0.9 : 1,
-                                transform: provided.draggableProps.style?.transform || 'none'
-                              }}
-                            >
-                              <div className="flex items-start gap-2">
-                                <Checkbox
-                                  checked={isSelected}
-                                  onCheckedChange={() => handleToggleVolume(volume.id)}
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <p 
-                                    className="font-mono text-xs font-bold truncate" 
-                                    style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}
+                            setNotasFiscaisLocal([...notasFiscaisLocal, nota]);
+                            setNotasOrigem({ ...notasOrigem, [nota.id]: "Adicionada" });
+                            
+                            toast.success(`NF ${nota.numero_nota} vinculada à ordem!`);
+                          }
+
+                          let volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
+                          
+                          if (volumesNota.length === 0) {
+                            const volumesDB = await base44.entities.Volume.filter({ nota_fiscal_id: nota.id });
+                            setVolumesLocal([...volumesLocal, ...volumesDB]);
+                            volumesNota = volumesDB;
+                          }
+                          
+                          const volumesNaoEnderecados = volumesNota.filter(v => {
+                            const idsEnderecados = enderecamentos.map(e => e.volume_id);
+                            return !idsEnderecados.includes(v.id);
+                          });
+                          
+                          setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
+                          setNotasBaseBusca("");
+                          setAbaAtiva("volumes");
+                          
+                          if (volumesNaoEnderecados.length > 0) {
+                            toast.success(`${volumesNaoEnderecados.length} volume(s) selecionado(s)`);
+                          } else {
+                            toast.info("Todos os volumes desta NF já foram endereçados");
+                          }
+                        } catch (error) {
+                          console.error("Erro ao vincular nota:", error);
+                          toast.error("Erro ao vincular nota fiscal");
+                        }
+                      }}
+                      theme={theme}
+                      isDark={isDark}
+                    />
+                  ) : (
+                    // Exibir notas agrupadas para drag and drop
+                    <Droppable droppableId="notas-list">
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className="space-y-2"
+                        >
+                          {notasDisponiveis.map((nota, index) => {
+                            const origem = notasOrigem[nota.id] || "Vinculada";
+                            const origemColor = origem === "Vinculada" ? (isDark ? '#3b82f6' : '#2563eb') : 
+                                              origem === "Adicionada" ? (isDark ? '#f59e0b' : '#d97706') : 
+                                              (isDark ? '#10b981' : '#059669');
+
+                            return (
+                              <Draggable key={nota.id} draggableId={`nota-${nota.id}`} index={index}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    className="p-2 border rounded cursor-move hover:shadow-md transition-all"
+                                    style={{
+                                      ...provided.draggableProps.style,
+                                      borderColor: snapshot.isDragging ? '#3b82f6' : theme.cardBorder,
+                                      backgroundColor: snapshot.isDragging 
+                                        ? (isDark ? '#1e40af' : '#3b82f6')
+                                        : theme.cardBg,
+                                      color: snapshot.isDragging ? '#ffffff' : 'inherit',
+                                      opacity: snapshot.isDragging ? 0.95 : 1
+                                    }}
                                   >
-                                    {volume.identificador_unico}
-                                  </p>
-                                  <p 
-                                    className="text-xs truncate" 
-                                    style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}
-                                  >
-                                    NF {nota?.numero_nota}
-                                  </p>
-                                </div>
-                              </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                                        <FileText className="w-4 h-4 shrink-0" style={{ color: snapshot.isDragging ? '#ffffff' : '#3b82f6' }} />
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2">
+                                            <span 
+                                              className="font-bold text-sm" 
+                                              style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}
+                                            >
+                                              NF {nota.numero_nota}
+                                            </span>
+                                            <Badge
+                                              className="text-[8px] h-4 px-1.5"
+                                              style={{ 
+                                                backgroundColor: snapshot.isDragging ? '#ffffff' : origemColor,
+                                                color: snapshot.isDragging ? '#1e40af' : '#ffffff'
+                                              }}
+                                            >
+                                              {origem}
+                                            </Badge>
+                                          </div>
+                                          <p 
+                                            className="text-xs truncate" 
+                                            style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}
+                                            title={nota.emitente_razao_social}
+                                          >
+                                            {nota.emitente_razao_social}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="shrink-0">
+                                        <Badge 
+                                          className="text-xs"
+                                          style={{ 
+                                            backgroundColor: snapshot.isDragging ? '#ffffff' : '#3b82f6',
+                                            color: snapshot.isDragging ? '#1e40af' : '#ffffff'
+                                          }}
+                                        >
+                                          {nota.volumesDisponiveis.length}/{nota.totalVolumes}
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-3 mt-1 text-xs" style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}>
+                                      <span>{(nota.peso_total_nf || 0).toLocaleString()} kg</span>
+                                      <span>R$ {(nota.valor_nota_fiscal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </Draggable>
+                            );
+                          })}
+                          {provided.placeholder}
+
+                          {notasDisponiveis.length === 0 && (
+                            <div className="text-center py-8" style={{ color: theme.textMuted }}>
+                              <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                              <p className="text-sm">Todos os volumes foram endereçados!</p>
                             </div>
                           )}
-                        </Draggable>
-                      );
-                    })}
-
-                    {filteredVolumes.length === 0 && (
-                      <div className="text-center py-8" style={{ color: theme.textMuted }}>
-                        <Package className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                        <p className="text-sm">Nenhum volume encontrado</p>
-                      </div>
-                    )}
-                    {provided.placeholder}
-                  </>
-                )}
-                  </div>
-                )}
-              </Droppable>
+                        </div>
+                      )}
+                    </Droppable>
+                  )}
+                </DragDropContext>
+              </div>
             </div>
 
             <DialogFooter>
@@ -2373,124 +2505,103 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             )}
           </div>
 
-              {/* Lista de Volumes ou Notas da Base */}
+              {/* Lista de Notas Fiscais Agrupadas */}
               <div className="flex-1 overflow-y-auto p-4">
-                <div className="space-y-2">
-                  {usarBase && filtroTipo === "nota_fiscal" ? (
-                    // Exibir notas da base quando modo "Base" ativado
-                    <NotasBaseList
-                      notasBaseBusca={notasBaseBusca}
-                      notasFiscaisLocal={notasFiscaisLocal}
-                      volumesLocal={volumesLocal}
-                      onSelecionarNota={async (nota) => {
-                        try {
-                          // Verificar se nota já está vinculada à ordem
-                          const jaVinculada = notasFiscaisLocal.some(nf => nf.id === nota.id);
-                          
-                          if (!jaVinculada) {
-                            // Vincular nota à ordem
-                            await base44.entities.NotaFiscal.update(nota.id, {
-                              ordem_id: ordem.id,
-                              status_nf: "aguardando_expedicao"
-                            });
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="notas-list">
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className="space-y-2"
+                      >
+                        {notasDisponiveis.map((nota, index) => {
+                          const origem = notasOrigem[nota.id] || "Vinculada";
+                          const origemColor = origem === "Vinculada" ? (isDark ? '#3b82f6' : '#2563eb') : 
+                                            origem === "Adicionada" ? (isDark ? '#f59e0b' : '#d97706') : 
+                                            (isDark ? '#10b981' : '#059669');
 
-                            // Atualizar ordem com nova nota
-                            const notasIds = [...(ordem.notas_fiscais_ids || []), nota.id];
-                            await base44.entities.OrdemDeCarregamento.update(ordem.id, {
-                              notas_fiscais_ids: notasIds
-                            });
+                          return (
+                            <Draggable key={nota.id} draggableId={`nota-${nota.id}`} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className="p-2 border rounded cursor-move hover:shadow-md transition-all"
+                                  style={{
+                                    ...provided.draggableProps.style,
+                                    borderColor: snapshot.isDragging ? '#3b82f6' : theme.cardBorder,
+                                    backgroundColor: snapshot.isDragging 
+                                      ? (isDark ? '#1e40af' : '#3b82f6')
+                                      : theme.cardBg,
+                                    color: snapshot.isDragging ? '#ffffff' : 'inherit',
+                                    opacity: snapshot.isDragging ? 0.95 : 1
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                                      <FileText className="w-4 h-4 shrink-0" style={{ color: snapshot.isDragging ? '#ffffff' : '#3b82f6' }} />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                          <span 
+                                            className="font-bold text-sm" 
+                                            style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}
+                                          >
+                                            NF {nota.numero_nota}
+                                          </span>
+                                          <Badge
+                                            className="text-[8px] h-4 px-1.5"
+                                            style={{ 
+                                              backgroundColor: snapshot.isDragging ? '#ffffff' : origemColor,
+                                              color: snapshot.isDragging ? '#1e40af' : '#ffffff'
+                                            }}
+                                          >
+                                            {origem}
+                                          </Badge>
+                                        </div>
+                                        <p 
+                                          className="text-xs truncate" 
+                                          style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}
+                                          title={nota.emitente_razao_social}
+                                        >
+                                          {nota.emitente_razao_social}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="shrink-0">
+                                      <Badge 
+                                        className="bg-blue-600 text-white text-xs"
+                                        style={{ 
+                                          backgroundColor: snapshot.isDragging ? '#ffffff' : '#3b82f6',
+                                          color: snapshot.isDragging ? '#1e40af' : '#ffffff'
+                                        }}
+                                      >
+                                        {nota.volumesDisponiveis.length}/{nota.totalVolumes}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3 mt-1 text-[10px]" style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}>
+                                    <span>{(nota.peso_total_nf || 0).toLocaleString()} kg</span>
+                                    <span>R$ {(nota.valor_nota_fiscal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </Draggable>
+                          );
+                        })}
+                        {provided.placeholder}
 
-                            // Atualizar estado local
-                            setNotasFiscaisLocal([...notasFiscaisLocal, nota]);
-                            setNotasOrigem({ ...notasOrigem, [nota.id]: "Adicionada" });
-                            
-                            toast.success(`NF ${nota.numero_nota} vinculada à ordem!`);
-                          }
-
-                          // Buscar volumes da nota e selecionar automaticamente
-                          let volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
-                          
-                          // Se não tiver volumes locais, buscar do banco
-                          if (volumesNota.length === 0) {
-                            const volumesDB = await base44.entities.Volume.filter({ nota_fiscal_id: nota.id });
-                            setVolumesLocal([...volumesLocal, ...volumesDB]);
-                            volumesNota = volumesDB;
-                          }
-                          
-                          const volumesNaoEnderecados = volumesNota.filter(v => {
-                            const idsEnderecados = enderecamentos.map(e => e.volume_id);
-                            return !idsEnderecados.includes(v.id);
-                          });
-                          
-                          setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
-                          setNotasBaseBusca("");
-                          setAbaAtiva("volumes");
-                          
-                          if (volumesNaoEnderecados.length > 0) {
-                            toast.success(`${volumesNaoEnderecados.length} volume(s) selecionado(s)`);
-                          } else {
-                            toast.info("Todos os volumes desta NF já foram endereçados");
-                          }
-                        } catch (error) {
-                          console.error("Erro ao vincular nota:", error);
-                          toast.error("Erro ao vincular nota fiscal");
-                        }
-                      }}
-                      theme={theme}
-                      isDark={isDark}
-                    />
-                  ) : (
-                    // Exibir volumes normalmente
-                    <>
-                      {filteredVolumes.map((volume) => {
-                        const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-                        const isSelected = volumesSelecionados.includes(volume.id);
-
-                        return (
-                          <div
-                            key={volume.id}
-                            onClick={() => handleToggleVolume(volume.id)}
-                            className="p-2 border rounded cursor-pointer hover:shadow-sm transition-all"
-                            style={{
-                              borderColor: isSelected ? '#3b82f6' : theme.cardBorder,
-                              backgroundColor: isSelected ? (isDark ? '#1e3a8a33' : '#dbeafe33') : 'transparent'
-                            }}
-                          >
-                            <div className="flex items-start gap-2">
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={() => handleToggleVolume(volume.id)}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <p className="font-mono text-xs font-bold truncate" style={{ color: theme.text }}>
-                                  {volume.identificador_unico}
-                                </p>
-                                <p className="text-xs truncate" style={{ color: theme.textMuted }}>
-                                  NF {nota?.numero_nota}
-                                </p>
-                                <p className="text-xs" style={{ color: theme.textMuted }}>
-                                  {volume.peso_volume} kg
-                                </p>
-                              </div>
-                            </div>
+                        {notasDisponiveis.length === 0 && (
+                          <div className="text-center py-8" style={{ color: theme.textMuted }}>
+                            <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                            <p className="text-sm">Todos os volumes foram endereçados!</p>
                           </div>
-                        );
-                      })}
-
-                      {filteredVolumes.length === 0 && (
-                        <div className="text-center py-8" style={{ color: theme.textMuted }}>
-                          <Package className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                          <p className="text-sm">
-                            {getVolumesNaoEnderecados().length === 0
-                              ? "Todos os volumes foram posicionados!"
-                              : "Nenhum volume encontrado"}
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
+                        )}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
               </div>
             </TabsContent>
 
@@ -2780,6 +2891,23 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           open={showCamera}
           onClose={() => setShowCamera(false)}
           onScan={handleScanQRCode}
+          isDark={isDark}
+        />
+      )}
+
+      {/* Modal Selecionar Volumes */}
+      {showSelecionarVolumes && notaParaAlocar && celulaDestino && (
+        <SelecionarVolumesModal
+          open={showSelecionarVolumes}
+          onClose={() => {
+            setShowSelecionarVolumes(false);
+            setNotaParaAlocar(null);
+            setCelulaDestino(null);
+          }}
+          nota={notaParaAlocar}
+          volumesDisponiveis={notaParaAlocar.volumesDisponiveis}
+          volumesJaEnderecados={notaParaAlocar.volumesJaEnderecados}
+          onConfirmar={handleConfirmarVolumes}
           isDark={isDark}
         />
       )}
