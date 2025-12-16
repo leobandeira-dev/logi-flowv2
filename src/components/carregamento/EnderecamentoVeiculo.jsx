@@ -708,13 +708,15 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       
       const user = await base44.auth.me();
       const novosEnderecamentos = [];
-
-      setShowQuantidadeModal(false);
-      setMovimentacaoNota(null);
-      setQuantidadeMovimentar("");
+      
+      // Feedback visual imediato
+      toast.loading(`Alocando ${quantidade} volume(s)...`, { id: 'alocando' });
 
       try {
-        for (const volume of volumesParaAlocar) {
+        // Criar endereçamentos um por um com pequeno delay para animação
+        for (let i = 0; i < volumesParaAlocar.length; i++) {
+          const volume = volumesParaAlocar[i];
+          
           await base44.entities.Volume.update(volume.id, {
             status_volume: "carregado",
             localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linhaDestino}-${colunaDestino}`
@@ -732,17 +734,29 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           });
           
           novosEnderecamentos.push(enderecamento);
+          
+          // Atualizar estado imediatamente para mostrar volume aparecendo
+          setEnderecamentos(prev => [...prev, enderecamento]);
+          
+          // Pequeno delay para animação suave
+          if (i < volumesParaAlocar.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 150));
+          }
         }
 
+        // Fechar modal após concluir
+        setShowQuantidadeModal(false);
+        setMovimentacaoNota(null);
+        setQuantidadeMovimentar("");
+
         const enderecamentosAtualizados = [...enderecamentos, ...novosEnderecamentos];
-        setEnderecamentos(enderecamentosAtualizados);
 
         localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
           enderecamentos: enderecamentosAtualizados,
           timestamp: new Date().toISOString()
         }));
 
-        toast.success(`${quantidade} volume(s) alocado(s)!`);
+        toast.success(`${quantidade} volume(s) alocado(s)!`, { id: 'alocando' });
       } catch (error) {
         console.error("Erro ao alocar volumes:", error);
         toast.error("Erro ao alocar volumes");
