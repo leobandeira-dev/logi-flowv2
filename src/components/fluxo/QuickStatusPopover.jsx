@@ -52,6 +52,7 @@ export default function QuickStatusPopover({
   const [camposValidos, setCamposValidos] = useState(false);
   const [camposValores, setCamposValores] = useState({ valores: {}, naAplicavel: {} });
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [salvandoCampos, setSalvandoCampos] = useState(false);
 
   // Estado para o modal de ocorrências
   const [showOcorrenciaModal, setShowOcorrenciaModal] = useState(false);
@@ -419,6 +420,151 @@ export default function QuickStatusPopover({
     }
   };
 
+  const handleSalvarCamposSemConcluir = async () => {
+    setSalvandoCampos(true);
+    try {
+      if (!ordemEtapa?.id) {
+        toast.error("Etapa não iniciada ainda");
+        return;
+      }
+
+      const { valores, naAplicavel } = camposValores;
+
+      if (!valores || Object.keys(valores).length === 0) {
+        toast.info("Nenhum campo foi alterado");
+        return;
+      }
+
+      // Buscar campos para identificar os do tipo data_tracking e campo_ordem
+      const camposData = await base44.entities.EtapaCampo.list();
+      const trackingUpdates = {};
+      const ordemUpdates = {};
+
+      // Buscar registros existentes
+      const registrosExistentes = await base44.entities.OrdemEtapaCampo.list();
+
+      const promises = [];
+
+      for (const [campoId, valor] of Object.entries(valores)) {
+        if (valor || naAplicavel[campoId]) {
+          const registroExistente = registrosExistentes.find(
+            r => r.ordem_etapa_id === ordemEtapa.id && r.campo_id === campoId
+          );
+
+          const dataValor = {
+            ordem_etapa_id: ordemEtapa.id,
+            campo_id: campoId,
+            valor: String(valor || ""),
+            nao_aplicavel: naAplicavel[campoId] || false,
+            data_preenchimento: new Date().toISOString(),
+            preenchido_por: currentUser.id
+          };
+
+          if (registroExistente) {
+            promises.push(
+              base44.entities.OrdemEtapaCampo.update(registroExistente.id, dataValor)
+            );
+          } else {
+            promises.push(
+              base44.entities.OrdemEtapaCampo.create(dataValor)
+            );
+          }
+
+          const campo = camposData.find(c => c.id === campoId);
+          
+          // Se for campo de data_tracking, adicionar ao tracking
+          if (campo && campo.tipo === "data_tracking" && campo.campo_tracking && valor) {
+            try {
+              const dataISO = new Date(valor).toISOString();
+              trackingUpdates[campo.campo_tracking] = dataISO;
+            } catch (err) {
+              console.error("Erro ao converter data tracking:", err);
+            }
+          }
+          
+          // Se for campo_ordem, adicionar ao update da ordem
+          if (campo && campo.tipo === "campo_ordem" && campo.campo_ordem && valor) {
+            ordemUpdates[campo.campo_ordem] = valor;
+          }
+        }
+      }
+
+      // Salvar todos os campos em paralelo
+      await Promise.all(promises);
+
+      // Atualizar tracking se houver campos de data
+      if (Object.keys(trackingUpdates).length > 0) {
+        const ordemAtual = await base44.entities.OrdemDeCarregamento.get(ordem.id);
+        
+        // Determinar novo status tracking baseado nas datas
+        let novoStatusTracking = ordemAtual.status_tracking || "aguardando_agendamento";
+        const ordemTemp = { ...ordemAtual, ...trackingUpdates };
+        
+        if (ordemTemp.descarga_realizada_data) novoStatusTracking = "descarga_realizada";
+        else if (ordemTemp.fim_carregamento && ordemTemp.chegada_destino) novoStatusTracking = "em_descarga";
+        else if (ordemTemp.descarga_agendamento_data) novoStatusTracking = "descarga_agendada";
+        else if (ordemTemp.chegada_destino) novoStatusTracking = "chegada_destino";
+        else if (ordemTemp.saida_unidade) novoStatusTracking = "em_viagem";
+        else if (ordemTemp.fim_carregamento) novoStatusTracking = "carregado";
+        else if (ordemTemp.inicio_carregamento) novoStatusTracking = "em_carregamento";
+        else if (ordemTemp.carregamento_agendamento_data) novoStatusTracking = "carregamento_agendado";
+        
+        trackingUpdates.status_tracking = novoStatusTracking;
+        
+        await base44.entities.OrdemDeCarregamento.update(ordem.id, trackingUpdates);
+        
+        // Atualizar status das notas fiscais
+        if (ordemAtual.notas_fiscais_ids && ordemAtual.notas_fiscais_ids.length > 0) {
+          const mapeamentoStatusNF = {
+            "descarga_realizada": "entregue",
+            "finalizado": "entregue",
+            "em_descarga": "em_rota_entrega",
+            "descarga_agendada": "em_rota_entrega",
+            "chegada_destino": "em_rota_entrega",
+            "em_viagem": "em_rota_entrega",
+            "carregado": "em_rota_entrega",
+            "em_carregamento": "aguardando_expedicao",
+            "carregamento_agendado": "aguardando_expedicao",
+            "aguardando_agendamento": "aguardando_expedicao"
+          };
+          
+          const novoStatusNF = mapeamentoStatusNF[novoStatusTracking] || "recebida";
+          
+          for (const notaId of ordemAtual.notas_fiscais_ids) {
+            try {
+              await base44.entities.NotaFiscal.update(notaId, {
+                status_nf: novoStatusNF
+              });
+            } catch (error) {
+              console.error("Erro ao atualizar nota:", error);
+            }
+          }
+        }
+      }
+      
+      // Atualizar campos da ordem se houver
+      if (Object.keys(ordemUpdates).length > 0) {
+        await base44.entities.OrdemDeCarregamento.update(ordem.id, ordemUpdates);
+      }
+
+      // Atualizar observações se mudaram
+      if (observacoes !== ordemEtapa.observacoes) {
+        await onStatusUpdate(ordemEtapa.id, { observacoes: observacoes.trim() });
+      }
+
+      setHasUnsavedChanges(false);
+      setShowConclusaoDialog(false);
+      setOpen(false);
+      toast.success("Alterações salvas com sucesso!");
+
+    } catch (error) {
+      console.error("Erro ao salvar campos:", error);
+      toast.error("Erro ao salvar alterações");
+    } finally {
+      setSalvandoCampos(false);
+    }
+  };
+
   const handleOpenDetails = () => {
     setOpen(false);
     onOpenDetails(ordem, etapa.id);
@@ -723,14 +869,30 @@ export default function QuickStatusPopover({
             <Button
               variant="outline"
               onClick={() => setShowConclusaoDialog(false)}
-              disabled={changing}
+              disabled={changing || salvandoCampos}
               className="border-2"
             >
               Cancelar
             </Button>
+            {hasUnsavedChanges && (
+              <Button
+                onClick={handleSalvarCamposSemConcluir}
+                disabled={salvandoCampos || changing}
+                className="bg-blue-600 hover:bg-blue-700 font-bold"
+              >
+                {salvandoCampos ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  "Salvar Alterações"
+                )}
+              </Button>
+            )}
             <Button
               onClick={handleConcluirComCampos}
-              disabled={!camposValidos || changing}
+              disabled={!camposValidos || changing || salvandoCampos}
               className="bg-green-600 hover:bg-green-700 font-bold"
             >
               {changing ? (
