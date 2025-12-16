@@ -1575,9 +1575,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             .info-section h3 { font-size: 11px; font-weight: bold; margin-bottom: 4px; border-bottom: 1px solid #ddd; padding-bottom: 2px; }
             .info-line { margin: 2px 0; font-size: 10px; }
             .info-line strong { font-weight: bold; min-width: 80px; display: inline-block; }
-            .grid { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            .grid { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
             .grid-row { display: table-row; }
-            .grid-cell { border: 2px solid #333; padding: 6px; vertical-align: top; min-height: 50px; }
+            .grid-cell { border: 2px solid #333; padding: 6px; vertical-align: top; min-height: 50px; width: ${100 / (layoutConfig.colunas.length + 1)}%; }
             .cell-header { font-weight: bold; background: #e8e8e8; text-align: center; padding: 6px; border: 2px solid #333; font-size: 11px; }
             .linha-header { font-weight: bold; background: #e8e8e8; text-align: center; width: 50px; }
             .nota-item { 
@@ -1691,9 +1691,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             body { font-family: Arial, sans-serif; padding: 20px; }
             .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
             .info { margin-bottom: 20px; }
-            .grid { display: table; border-collapse: collapse; width: 100%; margin-top: 20px; }
+            .grid { display: table; border-collapse: collapse; width: 100%; margin-top: 20px; table-layout: fixed; }
             .row { display: table-row; }
-            .cell { display: table-cell; border: 2px solid #333; padding: 10px; vertical-align: top; min-height: 80px; }
+            .cell { display: table-cell; border: 2px solid #333; padding: 10px; vertical-align: top; min-height: 80px; width: ${100 / (layoutConfig.colunas.length + 1)}%; }
             .cell-header { font-weight: bold; background: #f0f0f0; text-align: center; padding: 5px; }
             .volume-item { background: #e3f2fd; border-left: 3px solid #1976d2; padding: 4px; margin: 2px 0; font-size: 11px; }
             .nota-group { margin-bottom: 8px; }
@@ -2035,7 +2035,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             <div className="flex-1 overflow-auto p-2">
               <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: theme.cellBorder }}>
                 {/* Cabeçalho */}
-                <div className="grid gap-0" style={{ gridTemplateColumns: `50px repeat(${layoutConfig.colunas.length}, 1fr)` }}>
+                <div className="grid gap-0" style={{ gridTemplateColumns: `50px repeat(${layoutConfig.colunas.length}, minmax(80px, 1fr))` }}>
                   <div className="p-2 font-bold text-center border-b border-r text-xs" style={{ backgroundColor: isDark ? '#334155' : '#f1f5f9', borderColor: theme.cellBorder, color: theme.text }}>
                     Lin
                   </div>
@@ -2060,7 +2060,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                   <div
                     key={linha}
                     className="grid gap-0"
-                    style={{ gridTemplateColumns: `50px repeat(${layoutConfig.colunas.length}, 1fr)` }}
+                    style={{ gridTemplateColumns: `50px repeat(${layoutConfig.colunas.length}, minmax(80px, 1fr))` }}
                   >
                     <div
                       className="p-2 font-bold text-center border-b border-r text-xs"
@@ -3324,7 +3324,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             {/* Grid do Veículo */}
             <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: theme.cellBorder }}>
               {/* Cabeçalho */}
-              <div className="grid gap-0" style={{ gridTemplateColumns: `80px repeat(${layoutConfig.colunas.length}, 1fr)` }}>
+              <div className="grid gap-0" style={{ gridTemplateColumns: `80px repeat(${layoutConfig.colunas.length}, minmax(200px, 1fr))` }}>
                 <div className="p-2 font-bold text-center border-b border-r" style={{ backgroundColor: isDark ? '#334155' : '#f1f5f9', borderColor: theme.cellBorder, color: theme.text }}>
                   Linha
                 </div>
@@ -3349,7 +3349,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 <div
                   key={linha}
                   className="grid gap-0"
-                  style={{ gridTemplateColumns: `80px repeat(${layoutConfig.colunas.length}, 1fr)` }}
+                  style={{ gridTemplateColumns: `80px repeat(${layoutConfig.colunas.length}, minmax(200px, 1fr))` }}
                 >
                   <div
                     className="p-2 font-bold text-center border-b border-r"
