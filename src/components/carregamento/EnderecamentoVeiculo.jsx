@@ -171,6 +171,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const [showCamera, setShowCamera] = useState(false);
   const [processandoQR, setProcessandoQR] = useState(false);
   const [notasExpandidas, setNotasExpandidas] = useState({});
+  const [showQuantidadeModal, setShowQuantidadeModal] = useState(false);
+  const [movimentacaoNota, setMovimentacaoNota] = useState(null);
+  const [quantidadeMovimentar, setQuantidadeMovimentar] = useState("");
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -687,6 +690,76 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     }));
   };
 
+  const handleConfirmarMovimentacao = async () => {
+    if (!movimentacaoNota) return;
+
+    const quantidade = parseInt(quantidadeMovimentar) || movimentacaoNota.totalVolumes;
+    
+    if (quantidade <= 0 || quantidade > movimentacaoNota.totalVolumes) {
+      toast.error(`Quantidade inválida. Máximo: ${movimentacaoNota.totalVolumes}`);
+      return;
+    }
+
+    const { notaId, linhaOrigem, colunaOrigem, linhaDestino, colunaDestino, endsParaMover } = movimentacaoNota;
+    
+    // Selecionar apenas a quantidade escolhida
+    const endsParaMoverSelecionados = endsParaMover.slice(0, quantidade);
+    
+    // Atualização otimista - criar endereçamentos temporários
+    const user = await base44.auth.me();
+    const enderecamentosTempNovos = endsParaMoverSelecionados.map(end => ({
+      ...end,
+      id: `temp-${end.id}`,
+      linha: linhaDestino,
+      coluna: colunaDestino,
+      posicao_celula: `${linhaDestino}-${colunaDestino}`
+    }));
+
+    const enderecamentosAtualizados = [
+      ...enderecamentos.filter(e => 
+        !endsParaMoverSelecionados.some(end => end.id === e.id)
+      ),
+      ...enderecamentosTempNovos
+    ];
+    
+    setEnderecamentos(enderecamentosAtualizados);
+    setShowQuantidadeModal(false);
+    setMovimentacaoNota(null);
+    setQuantidadeMovimentar("");
+
+    try {
+      // Remover endereçamentos antigos e criar novos
+      for (const end of endsParaMoverSelecionados) {
+        await base44.entities.EnderecamentoVolume.delete(end.id);
+        
+        await base44.entities.Volume.update(end.volume_id, {
+          localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linhaDestino}-${colunaDestino}`
+        });
+
+        await base44.entities.EnderecamentoVolume.create({
+          ordem_id: ordem.id,
+          volume_id: end.volume_id,
+          nota_fiscal_id: notaId,
+          linha: linhaDestino,
+          coluna: colunaDestino,
+          posicao_celula: `${linhaDestino}-${colunaDestino}`,
+          data_enderecamento: new Date().toISOString(),
+          enderecado_por: user.id
+        });
+      }
+
+      // Recarregar endereçamentos do banco
+      await loadEnderecamentos();
+
+      toast.success(`${quantidade} volume(s) movido(s)!`);
+    } catch (error) {
+      console.error("Erro ao mover volumes:", error);
+      // Reverter em caso de erro
+      setEnderecamentos(enderecamentos);
+      toast.error("Erro ao mover volumes");
+    }
+  };
+
   const handleDragEnd = async (result) => {
     if (!result.destination) return;
 
@@ -736,7 +809,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         return;
       }
 
-      // Se soltar em outra célula, MOVER todos os volumes da nota
+      // Se soltar em outra célula, PERGUNTAR quantos volumes mover
       if (destination.droppableId.startsWith("cell-")) {
         const [__, linhaDestino, colunaDestino] = destination.droppableId.split("-");
         
@@ -745,56 +818,18 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         );
 
         if (endsParaMover.length > 0) {
-          // Atualização otimista - criar endereçamentos temporários
-          const user = await base44.auth.me();
-          const enderecamentosTempNovos = endsParaMover.map(end => ({
-            ...end,
-            id: `temp-${end.id}`,
-            linha: parseInt(linhaDestino),
-            coluna: colunaDestino,
-            posicao_celula: `${linhaDestino}-${colunaDestino}`
-          }));
-
-          const enderecamentosAtualizados = [
-            ...enderecamentos.filter(e => 
-              !(e.linha === parseInt(linhaOrigem) && e.coluna === colunaOrigem && e.nota_fiscal_id === notaId)
-            ),
-            ...enderecamentosTempNovos
-          ];
-          
-          setEnderecamentos(enderecamentosAtualizados);
-
-          try {
-            // Remover endereçamentos antigos e criar novos
-            for (const end of endsParaMover) {
-              await base44.entities.EnderecamentoVolume.delete(end.id);
-              
-              await base44.entities.Volume.update(end.volume_id, {
-                localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linhaDestino}-${colunaDestino}`
-              });
-
-              await base44.entities.EnderecamentoVolume.create({
-                ordem_id: ordem.id,
-                volume_id: end.volume_id,
-                nota_fiscal_id: notaId,
-                linha: parseInt(linhaDestino),
-                coluna: colunaDestino,
-                posicao_celula: `${linhaDestino}-${colunaDestino}`,
-                data_enderecamento: new Date().toISOString(),
-                enderecado_por: user.id
-              });
-            }
-
-            // Recarregar endereçamentos do banco
-            await loadEnderecamentos();
-
-            toast.success(`Nota movida! ${endsParaMover.length} volumes realocados.`);
-          } catch (error) {
-            console.error("Erro ao mover nota:", error);
-            // Reverter em caso de erro
-            setEnderecamentos(enderecamentos);
-            toast.error("Erro ao mover nota");
-          }
+          // Abrir modal para perguntar quantidade
+          setMovimentacaoNota({
+            notaId,
+            linhaOrigem: parseInt(linhaOrigem),
+            colunaOrigem,
+            linhaDestino: parseInt(linhaDestino),
+            colunaDestino,
+            totalVolumes: endsParaMover.length,
+            endsParaMover
+          });
+          setQuantidadeMovimentar(endsParaMover.length.toString());
+          setShowQuantidadeModal(true);
         }
         return;
       }
@@ -2358,6 +2393,77 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           />
         )}
 
+        {/* Modal Quantidade de Volumes a Movimentar Mobile */}
+        <Dialog open={showQuantidadeModal} onOpenChange={setShowQuantidadeModal}>
+          <DialogContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+            <DialogHeader>
+              <DialogTitle style={{ color: theme.text }}>Movimentar Volumes</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <p className="text-sm" style={{ color: theme.text }}>
+                Quantos volumes da nota fiscal deseja movimentar?
+              </p>
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
+                <p className="text-xs" style={{ color: theme.text }}>
+                  Total disponível: <strong>{movimentacaoNota?.totalVolumes || 0}</strong>
+                </p>
+              </div>
+              <div>
+                <Label style={{ color: theme.text }}>Quantidade *</Label>
+                <Input
+                  type="number"
+                  value={quantidadeMovimentar}
+                  onChange={(e) => setQuantidadeMovimentar(e.target.value)}
+                  min={1}
+                  max={movimentacaoNota?.totalVolumes || 1}
+                  className="mt-1"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  placeholder={`Máximo: ${movimentacaoNota?.totalVolumes || 0}`}
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setQuantidadeMovimentar(movimentacaoNota?.totalVolumes.toString() || "0")}
+                  className="flex-1"
+                  style={{ borderColor: theme.cardBorder, color: theme.text }}
+                >
+                  Todos
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setQuantidadeMovimentar("1")}
+                  className="flex-1"
+                  style={{ borderColor: theme.cardBorder, color: theme.text }}
+                >
+                  1 vol.
+                </Button>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowQuantidadeModal(false);
+                  setMovimentacaoNota(null);
+                  setQuantidadeMovimentar("");
+                }}
+                style={{ borderColor: theme.cardBorder, color: theme.text }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleConfirmarMovimentacao}
+                disabled={!quantidadeMovimentar || parseInt(quantidadeMovimentar) <= 0}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Confirmar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Modal Finalizar Carregamento Mobile */}
         <Dialog open={showFinalizarModal} onOpenChange={setShowFinalizarModal}>
           <DialogContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
@@ -3252,6 +3358,77 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           isDark={isDark}
         />
       )}
+
+      {/* Modal Quantidade de Volumes a Movimentar */}
+      <Dialog open={showQuantidadeModal} onOpenChange={setShowQuantidadeModal}>
+        <DialogContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <DialogHeader>
+            <DialogTitle style={{ color: theme.text }}>Movimentar Volumes da Nota Fiscal</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm" style={{ color: theme.text }}>
+              Quantos volumes da nota fiscal deseja movimentar?
+            </p>
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
+              <p className="text-xs" style={{ color: theme.text }}>
+                Total de volumes disponíveis: <strong>{movimentacaoNota?.totalVolumes || 0}</strong>
+              </p>
+            </div>
+            <div>
+              <Label style={{ color: theme.text }}>Quantidade de Volumes *</Label>
+              <Input
+                type="number"
+                value={quantidadeMovimentar}
+                onChange={(e) => setQuantidadeMovimentar(e.target.value)}
+                min={1}
+                max={movimentacaoNota?.totalVolumes || 1}
+                className="mt-1"
+                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                placeholder={`Máximo: ${movimentacaoNota?.totalVolumes || 0}`}
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setQuantidadeMovimentar(movimentacaoNota?.totalVolumes.toString() || "0")}
+                className="flex-1"
+                style={{ borderColor: theme.cardBorder, color: theme.text }}
+              >
+                Todos ({movimentacaoNota?.totalVolumes || 0})
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setQuantidadeMovimentar("1")}
+                className="flex-1"
+                style={{ borderColor: theme.cardBorder, color: theme.text }}
+              >
+                Apenas 1
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowQuantidadeModal(false);
+                setMovimentacaoNota(null);
+                setQuantidadeMovimentar("");
+              }}
+              style={{ borderColor: theme.cardBorder, color: theme.text }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmarMovimentacao}
+              disabled={!quantidadeMovimentar || parseInt(quantidadeMovimentar) <= 0}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal Finalizar Carregamento Desktop */}
       <Dialog open={showFinalizarModal} onOpenChange={setShowFinalizarModal}>
