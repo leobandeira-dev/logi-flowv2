@@ -743,34 +743,21 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       const draggableId = result.draggableId;
       const [_, linha, coluna] = destination.droppableId.split("-");
 
-      // Se for uma nota sendo arrastada (pode ter sufixo de célula para realocação)
-      if (draggableId.startsWith("nota-")) {
-        // Extrair o ID da nota (remover prefixo e possível sufixo de célula)
+      // Se for uma nota sendo arrastada da célula (realocação)
+      if (draggableId.startsWith("nota-") && draggableId.includes("-celula-")) {
         const notaIdMatch = draggableId.match(/nota-([^-]+)/);
-        const notaId = notaIdMatch ? notaIdMatch[1] : draggableId.replace("nota-", "");
+        const notaId = notaIdMatch ? notaIdMatch[1] : null;
         const nota = notasFiscaisLocal.find(n => n.id === notaId);
         if (!nota) return;
 
-        const idsEnderecados = enderecamentos.map(e => e.volume_id);
         const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === notaId);
-        const volumesDisponiveis = volumesNota.filter(v => !idsEnderecados.includes(v.id));
-        const volumesJaEnderecados = volumesNota.filter(v => idsEnderecados.includes(v.id));
-
-        // Se está realocando da célula (draggableId tem sufixo -celula-)
-        const estaRealocando = draggableId.includes("-celula-");
         
-        if (!estaRealocando && volumesDisponiveis.length === 0) {
-          toast.warning("Todos os volumes desta nota já foram endereçados");
-          return;
-        }
-
-        // Guardar informação de realocação para processar no modal
         const notaComDados = {
           ...nota,
-          volumesDisponiveis: estaRealocando ? volumesNota : volumesDisponiveis,
-          volumesJaEnderecados: estaRealocando ? [] : volumesJaEnderecados,
-          estaRealocando,
-          celulaOrigem: estaRealocando ? draggableId.match(/-celula-(\d+)-(.+)$/) : null
+          volumesDisponiveis: volumesNota,
+          volumesJaEnderecados: [],
+          estaRealocando: true,
+          celulaOrigem: draggableId.match(/-celula-(\d+)-(.+)$/)
         };
         
         setNotaParaAlocar(notaComDados);
@@ -779,56 +766,30 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         return;
       }
 
-      // Se for um volume individual sendo arrastado (realocação)
-      const volumeId = draggableId.startsWith("allocated-") ? draggableId.replace("allocated-", "") : draggableId;
+      // Se for um volume individual sendo arrastado da lista
+      const volumeId = draggableId;
+      const volume = volumesLocal.find(v => v.id === volumeId);
+      if (!volume) return;
 
-      try {
-        const user = await base44.auth.me();
-        const volume = volumesLocal.find(v => v.id === volumeId);
-        if (!volume) return;
+      const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+      if (!nota) return;
 
-        // Se o volume já estava alocado, remover alocação anterior
-        const alocacaoExistente = enderecamentos.find(e => e.volume_id === volumeId);
-        if (alocacaoExistente) {
-          await base44.entities.EnderecamentoVolume.delete(alocacaoExistente.id);
-          setEnderecamentos(prev => prev.filter(e => e.id !== alocacaoExistente.id));
-          toast.info("Volume realocado!");
-        }
+      const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
+      const volumesDisponiveis = volumesNota.filter(v => !idsEnderecados.includes(v.id));
 
-        const enderecamento = {
-          ordem_id: ordem.id,
-          volume_id: volumeId,
-          nota_fiscal_id: volume.nota_fiscal_id,
-          linha: parseInt(linha),
-          coluna: coluna,
-          posicao_celula: `${linha}-${coluna}`,
-          data_enderecamento: new Date().toISOString(),
-          enderecado_por: user.id
-        };
-
-        // Endereçar = conferir automaticamente
-        await base44.entities.Volume.update(volumeId, {
-          status_volume: "carregado",
-          localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linha}-${coluna}`
-        });
-
-        const created = await base44.entities.EnderecamentoVolume.create(enderecamento);
-        const enderecamentosAtualizados = [...enderecamentos.filter(e => e.volume_id !== volumeId), created];
-        setEnderecamentos(enderecamentosAtualizados);
-
-        // Salvar rascunho
-        localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
-          enderecamentos: enderecamentosAtualizados,
-          timestamp: new Date().toISOString()
-        }));
-
-        if (!alocacaoExistente) {
-          toast.success("Volume posicionado!");
-        }
-      } catch (error) {
-        console.error("Erro ao posicionar volume:", error);
-        toast.error("Erro ao posicionar volume");
-      }
+      // Abrir modal para seleção de volumes (mesmo que seja só um)
+      const notaComDados = {
+        ...nota,
+        volumesDisponiveis: volumesDisponiveis,
+        volumesJaEnderecados: [],
+        volumeInicial: volumeId, // Marcar qual volume foi arrastado
+        estaRealocando: false,
+        celulaOrigem: null
+      };
+      
+      setNotaParaAlocar(notaComDados);
+      setCelulaDestino({ linha: parseInt(linha), coluna });
+      setShowSelecionarVolumes(true);
     }
   };
 
@@ -2554,101 +2515,74 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             )}
           </div>
 
-              {/* Lista de Notas Fiscais Agrupadas */}
+              {/* Lista de Volumes Individuais */}
               <div className="flex-1 overflow-y-auto p-4">
-                <Droppable droppableId="notas-list">
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className="space-y-2"
-                      >
-                        {notasDisponiveis.map((nota, index) => {
-                          const origem = notasOrigem[nota.id] || "Vinculada";
-                          const origemColor = origem === "Vinculada" ? (isDark ? '#3b82f6' : '#2563eb') : 
-                                            origem === "Adicionada" ? (isDark ? '#f59e0b' : '#d97706') : 
-                                            (isDark ? '#10b981' : '#059669');
+                <Droppable droppableId="volumes-list">
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className="space-y-1"
+                    >
+                      {volumesNaoEnderecados.map((volume, index) => {
+                        const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+                        const isSelecionado = volumesSelecionados.includes(volume.id);
 
-                          return (
-                            <Draggable key={nota.id} draggableId={`nota-${nota.id}`} index={index}>
-                              {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  className="p-2 border rounded cursor-move hover:shadow-md transition-all"
-                                  style={{
-                                    ...provided.draggableProps.style,
-                                    borderColor: snapshot.isDragging ? '#3b82f6' : theme.cardBorder,
-                                    backgroundColor: snapshot.isDragging 
-                                      ? (isDark ? '#1e40af' : '#3b82f6')
+                        return (
+                          <Draggable key={volume.id} draggableId={volume.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                onClick={() => handleToggleVolume(volume.id)}
+                                className="p-2 border rounded cursor-pointer hover:shadow-sm transition-all"
+                                style={{
+                                  ...provided.draggableProps.style,
+                                  borderColor: isSelecionado ? '#3b82f6' : (snapshot.isDragging ? '#3b82f6' : theme.cardBorder),
+                                  backgroundColor: snapshot.isDragging 
+                                    ? (isDark ? '#1e40af' : '#3b82f6')
+                                    : isSelecionado 
+                                      ? (isDark ? '#1e3a8a' : '#dbeafe')
                                       : theme.cardBg,
-                                    color: snapshot.isDragging ? '#ffffff' : 'inherit',
-                                    opacity: snapshot.isDragging ? 0.95 : 1
-                                  }}
-                                >
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                                      <FileText className="w-4 h-4 shrink-0" style={{ color: snapshot.isDragging ? '#ffffff' : '#3b82f6' }} />
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                          <span 
-                                            className="font-bold text-sm" 
-                                            style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}
-                                          >
-                                            NF {nota.numero_nota}
-                                          </span>
-                                          <Badge
-                                            className="text-[8px] h-4 px-1.5"
-                                            style={{ 
-                                              backgroundColor: snapshot.isDragging ? '#ffffff' : origemColor,
-                                              color: snapshot.isDragging ? '#1e40af' : '#ffffff'
-                                            }}
-                                          >
-                                            {origem}
-                                          </Badge>
-                                        </div>
-                                        <p 
-                                          className="text-xs truncate" 
-                                          style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}
-                                          title={nota.emitente_razao_social}
-                                        >
-                                          {nota.emitente_razao_social}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className="shrink-0">
-                                      <Badge 
-                                        className="bg-blue-600 text-white text-xs"
-                                        style={{ 
-                                          backgroundColor: snapshot.isDragging ? '#ffffff' : '#3b82f6',
-                                          color: snapshot.isDragging ? '#1e40af' : '#ffffff'
-                                        }}
-                                      >
-                                        {nota.volumesDisponiveis.length}/{nota.totalVolumes}
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-3 mt-1 text-[10px]" style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}>
-                                    <span>{(nota.peso_total_nf || 0).toLocaleString()} kg</span>
-                                    <span>R$ {(nota.valor_nota_fiscal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                  color: snapshot.isDragging ? '#ffffff' : 'inherit',
+                                  opacity: snapshot.isDragging ? 0.9 : 1
+                                }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Checkbox checked={isSelecionado} className="pointer-events-none" />
+                                  <Package className="w-3 h-3 shrink-0" style={{ color: snapshot.isDragging ? '#ffffff' : '#3b82f6' }} />
+                                  <div className="flex-1 min-w-0">
+                                    <p 
+                                      className="font-mono text-xs font-bold" 
+                                      style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}
+                                    >
+                                      {volume.identificador_unico}
+                                    </p>
+                                    <p 
+                                      className="text-[10px] truncate" 
+                                      style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}
+                                    >
+                                      NF {nota?.numero_nota} • {volume.peso_volume} kg
+                                    </p>
                                   </div>
                                 </div>
-                              )}
-                            </Draggable>
-                          );
-                        })}
-                        {provided.placeholder}
+                              </div>
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
 
-                        {notasDisponiveis.length === 0 && (
-                          <div className="text-center py-8" style={{ color: theme.textMuted }}>
-                            <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                            <p className="text-sm">Todos os volumes foram endereçados!</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </Droppable>
+                      {volumesNaoEnderecados.length === 0 && (
+                        <div className="text-center py-8" style={{ color: theme.textMuted }}>
+                          <Package className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                          <p className="text-sm">Todos os volumes foram endereçados!</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Droppable>
               </div>
             </TabsContent>
 

@@ -22,10 +22,13 @@ export default function SelecionarVolumesModal({
   onConfirmar,
   isDark 
 }) {
+  const volumeInicial = nota?.volumeInicial;
   const [modoSelecao, setModoSelecao] = useState("quantidade"); // quantidade ou individual
   const [quantidade, setQuantidade] = useState(volumesDisponiveis.length);
   const [volumesSelecionados, setVolumesSelecionados] = useState(
-    volumesDisponiveis.slice(0, quantidade).map(v => v.id)
+    volumeInicial 
+      ? [volumeInicial]
+      : volumesDisponiveis.slice(0, quantidade).map(v => v.id)
   );
 
   const theme = {
@@ -40,8 +43,29 @@ export default function SelecionarVolumesModal({
   const handleQuantidadeChange = (valor) => {
     const qtd = Math.max(1, Math.min(volumesDisponiveis.length, parseInt(valor) || 1));
     setQuantidade(qtd);
-    setVolumesSelecionados(volumesDisponiveis.slice(0, qtd).map(v => v.id));
+    
+    // Se tiver volume inicial, manter ele e adicionar mais
+    if (volumeInicial) {
+      const volumesOrdenados = [
+        volumesDisponiveis.find(v => v.id === volumeInicial),
+        ...volumesDisponiveis.filter(v => v.id !== volumeInicial)
+      ].filter(Boolean);
+      setVolumesSelecionados(volumesOrdenados.slice(0, qtd).map(v => v.id));
+    } else {
+      setVolumesSelecionados(volumesDisponiveis.slice(0, qtd).map(v => v.id));
+    }
   };
+
+  // Atualizar seleção inicial quando nota mudar
+  React.useEffect(() => {
+    if (volumeInicial) {
+      setVolumesSelecionados([volumeInicial]);
+      setQuantidade(1);
+    } else {
+      setQuantidade(volumesDisponiveis.length);
+      setVolumesSelecionados(volumesDisponiveis.map(v => v.id));
+    }
+  }, [nota?.id, volumeInicial]);
 
   const handleToggleVolume = (volumeId) => {
     setVolumesSelecionados(prev =>
