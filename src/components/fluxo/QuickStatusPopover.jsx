@@ -199,15 +199,95 @@ export default function QuickStatusPopover({
         dados: dataToSave
       });
 
+      let ordemEtapaId;
+
       // Executar update ou create com as funções que já têm retry
       if (ordemEtapa) {
         await onStatusUpdate(ordemEtapa.id, dataToSave);
+        ordemEtapaId = ordemEtapa.id;
       } else {
-        await onCreateOrdemEtapa(dataToSave);
+        const resultado = await onCreateOrdemEtapa(dataToSave);
+        ordemEtapaId = resultado?.id || resultado;
+      }
+
+      // Se há campos alterados, salvá-los também
+      if (hasUnsavedChanges && ordemEtapaId) {
+        const { valores, naAplicavel } = camposValores;
+
+        if (valores && Object.keys(valores).length > 0) {
+          const camposData = await base44.entities.EtapaCampo.list();
+          const trackingUpdates = {};
+          const ordemUpdates = {};
+          const registrosExistentes = await base44.entities.OrdemEtapaCampo.list();
+          const promises = [];
+
+          for (const [campoId, valor] of Object.entries(valores)) {
+            if (valor || naAplicavel[campoId]) {
+              const registroExistente = registrosExistentes.find(
+                r => r.ordem_etapa_id === ordemEtapaId && r.campo_id === campoId
+              );
+
+              const dataValor = {
+                ordem_etapa_id: ordemEtapaId,
+                campo_id: campoId,
+                valor: String(valor || ""),
+                nao_aplicavel: naAplicavel[campoId] || false,
+                data_preenchimento: new Date().toISOString(),
+                preenchido_por: currentUser.id
+              };
+
+              if (registroExistente) {
+                promises.push(base44.entities.OrdemEtapaCampo.update(registroExistente.id, dataValor));
+              } else {
+                promises.push(base44.entities.OrdemEtapaCampo.create(dataValor));
+              }
+
+              const campo = camposData.find(c => c.id === campoId);
+              
+              if (campo && campo.tipo === "data_tracking" && campo.campo_tracking && valor) {
+                try {
+                  const dataISO = new Date(valor).toISOString();
+                  trackingUpdates[campo.campo_tracking] = dataISO;
+                } catch (err) {
+                  console.error("Erro ao converter data tracking:", err);
+                }
+              }
+              
+              if (campo && campo.tipo === "campo_ordem" && campo.campo_ordem && valor) {
+                ordemUpdates[campo.campo_ordem] = valor;
+              }
+            }
+          }
+
+          await Promise.all(promises);
+
+          if (Object.keys(trackingUpdates).length > 0) {
+            const ordemAtual = await base44.entities.OrdemDeCarregamento.get(ordem.id);
+            let novoStatusTracking = ordemAtual.status_tracking || "aguardando_agendamento";
+            const ordemTemp = { ...ordemAtual, ...trackingUpdates };
+            
+            if (ordemTemp.descarga_realizada_data) novoStatusTracking = "descarga_realizada";
+            else if (ordemTemp.fim_carregamento && ordemTemp.chegada_destino) novoStatusTracking = "em_descarga";
+            else if (ordemTemp.descarga_agendamento_data) novoStatusTracking = "descarga_agendada";
+            else if (ordemTemp.chegada_destino) novoStatusTracking = "chegada_destino";
+            else if (ordemTemp.saida_unidade) novoStatusTracking = "em_viagem";
+            else if (ordemTemp.fim_carregamento) novoStatusTracking = "carregado";
+            else if (ordemTemp.inicio_carregamento) novoStatusTracking = "em_carregamento";
+            else if (ordemTemp.carregamento_agendamento_data) novoStatusTracking = "carregamento_agendado";
+            
+            trackingUpdates.status_tracking = novoStatusTracking;
+            await base44.entities.OrdemDeCarregamento.update(ordem.id, trackingUpdates);
+          }
+          
+          if (Object.keys(ordemUpdates).length > 0) {
+            await base44.entities.OrdemDeCarregamento.update(ordem.id, ordemUpdates);
+          }
+        }
       }
 
       console.log(`✅ POPOVER - Status salvo com sucesso`);
       setOpen(false);
+      setHasUnsavedChanges(false);
 
     } catch (error) {
       console.error("❌ POPOVER - Erro ao atualizar status:", error);
