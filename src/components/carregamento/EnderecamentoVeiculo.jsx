@@ -39,104 +39,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
-// Componente otimizado de célula do grid com React.memo
-const CelulaGrid = React.memo(({ 
-  linha, 
-  coluna, 
-  notasNaCelula, 
-  volumesNaCelula, 
-  onRemoverNota,
-  onClick,
-  theme, 
-  isDark 
-}) => {
-  const temVolumes = volumesNaCelula.length > 0;
 
-  return (
-    <Droppable droppableId={`cell-${linha}-${coluna}`}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.droppableProps}
-          onClick={onClick}
-          className="p-2 border-b min-h-[100px] cursor-pointer hover:bg-opacity-50 transition-colors"
-          style={{
-            backgroundColor: snapshot.isDraggingOver 
-              ? (isDark ? '#1e40af44' : '#dbeafe') 
-              : theme.cellBg,
-            borderColor: theme.cellBorder,
-          }}
-        >
-          <div className="space-y-0.5">
-            {notasNaCelula.map((nota, notaIdx) => {
-              const volumesNota = volumesNaCelula.filter(v => v.nota_fiscal_id === nota.id);
-              const fornecedorAbreviado = nota.emitente_razao_social
-                ?.split(' ')
-                .slice(0, 2)
-                .join(' ')
-                .substring(0, 18) || 'N/A';
-              
-              return (
-                <Draggable 
-                  key={nota.id} 
-                  draggableId={`nota-${nota.id}-celula-${linha}-${coluna}`} 
-                  index={notaIdx}
-                >
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      className="flex items-center justify-between gap-1 px-1.5 py-0.5 rounded text-[10px] leading-tight group"
-                      style={{
-                        ...provided.draggableProps.style,
-                        backgroundColor: snapshot.isDragging 
-                          ? (isDark ? '#3b82f6' : '#60a5fa')
-                          : (isDark ? '#1e40af' : '#bfdbfe'),
-                        color: isDark ? '#ffffff' : '#1e3a8a',
-                        opacity: snapshot.isDragging ? 0.9 : 1
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <span className="font-bold shrink-0 w-12">
-                        {nota.numero_nota}
-                      </span>
-                      <span className="flex-1 truncate text-center px-0.5" title={nota.emitente_razao_social}>
-                        {fornecedorAbreviado}
-                      </span>
-                      <span className="font-semibold shrink-0 w-5 text-right">
-                        {volumesNota.length}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRemoverNota(linha, coluna, nota.id);
-                        }}
-                        className="shrink-0 w-4 h-4 flex items-center justify-center rounded hover:bg-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                        title="Remover"
-                      >
-                        <Trash2 className="w-2.5 h-2.5" />
-                      </button>
-                    </div>
-                  )}
-                </Draggable>
-              );
-            })}
-          </div>
-          
-          {!temVolumes && (
-            <div className="text-center text-xs" style={{ color: theme.textMuted, opacity: 0.5 }}>
-              {snapshot.isDraggingOver ? "Solte aqui" : "Vazio"}
-            </div>
-          )}
-          {provided.placeholder}
-        </div>
-      )}
-    </Droppable>
-  );
-});
-
-CelulaGrid.displayName = 'CelulaGrid';
 
 // Componente auxiliar para exibir lista de notas da base
 const NotasBaseList = ({ notasBaseBusca, notasFiscaisLocal, volumesLocal, onSelecionarNota, theme, isDark }) => {
@@ -2937,25 +2840,90 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                   {layoutConfig.colunas.map((coluna, idx) => {
                     const notasNaCelula = getNotasFiscaisNaCelula(linha, coluna);
                     const volumesNaCelula = getVolumesNaCelula(linha, coluna);
+                    const temVolumes = volumesNaCelula.length > 0;
 
                     return (
-                      <div
-                        key={`${linha}-${coluna}`}
-                        style={{
-                          borderRight: idx < layoutConfig.colunas.length - 1 ? `1px solid ${theme.cellBorder}` : 'none'
-                        }}
-                      >
-                        <CelulaGrid
-                          linha={linha}
-                          coluna={coluna}
-                          notasNaCelula={notasNaCelula}
-                          volumesNaCelula={volumesNaCelula}
-                          onRemoverNota={handleRemoverNotaDaCelula}
-                          onClick={() => handleAlocarNaCelula(linha, coluna)}
-                          theme={theme}
-                          isDark={isDark}
-                        />
-                      </div>
+                      <Droppable key={`${linha}-${coluna}`} droppableId={`cell-${linha}-${coluna}`}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                            onClick={() => handleAlocarNaCelula(linha, coluna)}
+                            className="p-2 border-b min-h-[100px] cursor-pointer hover:bg-opacity-50 transition-colors"
+                            style={{
+                              backgroundColor: snapshot.isDraggingOver 
+                                ? (isDark ? '#1e40af44' : '#dbeafe') 
+                                : theme.cellBg,
+                              borderColor: theme.cellBorder,
+                              borderRight: idx < layoutConfig.colunas.length - 1 ? `1px solid ${theme.cellBorder}` : 'none'
+                            }}
+                          >
+                            <div className="space-y-0.5">
+                              {notasNaCelula.map((nota, notaIdx) => {
+                                const volumesNota = volumesNaCelula.filter(v => v.nota_fiscal_id === nota.id);
+                                const fornecedorAbreviado = nota.emitente_razao_social
+                                  ?.split(' ')
+                                  .slice(0, 2)
+                                  .join(' ')
+                                  .substring(0, 18) || 'N/A';
+                                
+                                return (
+                                  <Draggable 
+                                    key={nota.id} 
+                                    draggableId={`nota-${nota.id}-celula-${linha}-${coluna}`} 
+                                    index={notaIdx}
+                                  >
+                                    {(provided, snapshot) => (
+                                      <div
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        {...provided.dragHandleProps}
+                                        className="flex items-center justify-between gap-1 px-1.5 py-0.5 rounded text-[10px] leading-tight group"
+                                        style={{
+                                          ...provided.draggableProps.style,
+                                          backgroundColor: snapshot.isDragging 
+                                            ? (isDark ? '#3b82f6' : '#60a5fa')
+                                            : (isDark ? '#1e40af' : '#bfdbfe'),
+                                          color: isDark ? '#ffffff' : '#1e3a8a',
+                                          opacity: snapshot.isDragging ? 0.9 : 1
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <span className="font-bold shrink-0 w-12">
+                                          {nota.numero_nota}
+                                        </span>
+                                        <span className="flex-1 truncate text-center px-0.5" title={nota.emitente_razao_social}>
+                                          {fornecedorAbreviado}
+                                        </span>
+                                        <span className="font-semibold shrink-0 w-5 text-right">
+                                          {volumesNota.length}
+                                        </span>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoverNotaDaCelula(linha, coluna, nota.id);
+                                          }}
+                                          className="shrink-0 w-4 h-4 flex items-center justify-center rounded hover:bg-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                          title="Remover"
+                                        >
+                                          <Trash2 className="w-2.5 h-2.5" />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </Draggable>
+                                );
+                              })}
+                            </div>
+                            
+                            {!temVolumes && (
+                              <div className="text-center text-xs" style={{ color: theme.textMuted, opacity: 0.5 }}>
+                                {snapshot.isDraggingOver ? "Solte aqui" : "Vazio"}
+                              </div>
+                            )}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
                     );
                   })}
                 </div>
