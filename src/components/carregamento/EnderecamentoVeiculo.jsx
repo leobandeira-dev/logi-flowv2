@@ -169,6 +169,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const inputChaveRef = React.useRef(null);
   const [showCamera, setShowCamera] = useState(false);
   const [processandoQR, setProcessandoQR] = useState(false);
+  const [notasExpandidas, setNotasExpandidas] = useState({});
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -677,12 +678,111 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     }
   }, [notasBaseBusca, usarBase, filtroTipo]);
 
+  const toggleNotaExpandida = (notaId, linha, coluna) => {
+    const key = `${notaId}-${linha}-${coluna}`;
+    setNotasExpandidas(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
   const handleDragEnd = async (result) => {
     if (!result.destination) return;
 
     const { source, destination } = result;
 
     const draggableId = result.draggableId;
+    
+    // Verificar se é uma nota completa sendo arrastada
+    if (draggableId.startsWith("nota-")) {
+      const [_, notaId, linhaOrigem, colunaOrigem] = draggableId.split("-");
+      
+      // Se soltar na lista de volumes, DESALOCAR todos os volumes da nota
+      if (destination.droppableId === "volumes-list" || destination.droppableId === "volumes-list-mobile") {
+        const endsParaRemover = enderecamentos.filter(e =>
+          e.linha === parseInt(linhaOrigem) && e.coluna === colunaOrigem && e.nota_fiscal_id === notaId
+        );
+
+        if (endsParaRemover.length > 0) {
+          try {
+            for (const end of endsParaRemover) {
+              await base44.entities.EnderecamentoVolume.delete(end.id);
+              await base44.entities.Volume.update(end.volume_id, {
+                status_volume: "criado",
+                localizacao_atual: null
+              });
+            }
+
+            const enderecamentosAtualizados = enderecamentos.filter(e =>
+              !(e.linha === parseInt(linhaOrigem) && e.coluna === colunaOrigem && e.nota_fiscal_id === notaId)
+            );
+            setEnderecamentos(enderecamentosAtualizados);
+
+            localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
+              enderecamentos: enderecamentosAtualizados,
+              timestamp: new Date().toISOString()
+            }));
+
+            toast.success(`Nota fiscal desalocada! ${endsParaRemover.length} volumes removidos.`);
+          } catch (error) {
+            console.error("Erro ao desalocar nota:", error);
+            toast.error("Erro ao desalocar nota");
+          }
+        }
+        return;
+      }
+
+      // Se soltar em outra célula, MOVER todos os volumes da nota
+      if (destination.droppableId.startsWith("cell-")) {
+        const [__, linhaDestino, colunaDestino] = destination.droppableId.split("-");
+        
+        try {
+          const user = await base44.auth.me();
+          const endsParaMover = enderecamentos.filter(e =>
+            e.linha === parseInt(linhaOrigem) && e.coluna === colunaOrigem && e.nota_fiscal_id === notaId
+          );
+
+          if (endsParaMover.length > 0) {
+            // Remover endereçamentos antigos e criar novos
+            for (const end of endsParaMover) {
+              await base44.entities.EnderecamentoVolume.delete(end.id);
+              
+              await base44.entities.Volume.update(end.volume_id, {
+                localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linhaDestino}-${colunaDestino}`
+              });
+
+              const novoEnd = await base44.entities.EnderecamentoVolume.create({
+                ordem_id: ordem.id,
+                volume_id: end.volume_id,
+                nota_fiscal_id: notaId,
+                linha: parseInt(linhaDestino),
+                coluna: colunaDestino,
+                posicao_celula: `${linhaDestino}-${colunaDestino}`,
+                data_enderecamento: new Date().toISOString(),
+                enderecado_por: user.id
+              });
+            }
+
+            // Atualizar estado
+            const enderecamentosAtualizados = [
+              ...enderecamentos.filter(e => 
+                !(e.linha === parseInt(linhaOrigem) && e.coluna === colunaOrigem && e.nota_fiscal_id === notaId)
+              )
+            ];
+            
+            // Recarregar para pegar os novos endereçamentos
+            await loadEnderecamentos();
+
+            toast.success(`Nota movida! ${endsParaMover.length} volumes realocados.`);
+          }
+        } catch (error) {
+          console.error("Erro ao mover nota:", error);
+          toast.error("Erro ao mover nota");
+        }
+        return;
+      }
+    }
+    
     const volumeId = draggableId.startsWith("allocated-") ? draggableId.replace("allocated-", "") : draggableId;
 
     // Se soltar na lista de volumes, DESALOCAR
@@ -1691,54 +1791,70 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                               }}
                             >
                               <div className="space-y-0.5">
-                                {notasNaCelula.map((nota) => {
+                                {notasNaCelula.map((nota, notaIndex) => {
                                   const volumesNota = volumesNaCelula.filter(v => v.nota_fiscal_id === nota.id);
                                   const fornecedorAbreviado = nota.emitente_razao_social
                                     ?.split(' ')
                                     .slice(0, 1)
                                     .join(' ')
                                     .substring(0, 10) || 'N/A';
+                                  const expandKey = `${nota.id}-${linha}-${coluna}`;
+                                  const isExpanded = notasExpandidas[expandKey];
                                   
                                   return (
                                     <div key={nota.id} className="space-y-0.5">
-                                      <div
-                                        className="flex items-center justify-between gap-0.5 px-1 py-0.5 rounded text-[8px] leading-tight group"
-                                        style={{
-                                          backgroundColor: isDark ? '#1e40af' : '#bfdbfe',
-                                          color: isDark ? '#ffffff' : '#1e3a8a'
-                                        }}
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        <span className="font-bold shrink-0 text-[9px]">
-                                          NF {nota.numero_nota}
-                                        </span>
-                                        <span className="flex-1 truncate text-center px-0.5 text-[8px]" title={nota.emitente_razao_social}>
-                                          {fornecedorAbreviado}
-                                        </span>
-                                        <span className="font-semibold shrink-0 text-[9px]">
-                                          {volumesNota.length} vol.
-                                        </span>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRemoverNotaDaCelula(linha, coluna, nota.id);
-                                          }}
-                                          className="shrink-0 w-4 h-4 flex items-center justify-center rounded hover:bg-red-500 transition-colors opacity-70 group-hover:opacity-100"
-                                          title="Remover"
-                                        >
-                                          <Trash2 className="w-2.5 h-2.5" />
-                                        </button>
-                                      </div>
+                                      <Draggable draggableId={`nota-${nota.id}-${linha}-${coluna}`} index={notaIndex}>
+                                        {(provided, snapshot) => (
+                                          <div
+                                            ref={provided.innerRef}
+                                            {...provided.draggableProps}
+                                            {...provided.dragHandleProps}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              toggleNotaExpandida(nota.id, linha, coluna);
+                                            }}
+                                            className="flex items-center justify-between gap-0.5 px-1 py-0.5 rounded text-[8px] leading-tight group cursor-pointer touch-none"
+                                            style={{
+                                              ...provided.draggableProps.style,
+                                              backgroundColor: snapshot.isDragging 
+                                                ? (isDark ? '#1e40af' : '#3b82f6')
+                                                : (isDark ? '#1e40af' : '#bfdbfe'),
+                                              color: isDark ? '#ffffff' : '#1e3a8a',
+                                              opacity: snapshot.isDragging ? 0.9 : 1
+                                            }}
+                                          >
+                                            <span className="font-bold shrink-0 text-[9px]">
+                                              NF {nota.numero_nota}
+                                            </span>
+                                            <span className="flex-1 truncate text-center px-0.5 text-[8px]" title={nota.emitente_razao_social}>
+                                              {fornecedorAbreviado}
+                                            </span>
+                                            <span className="font-semibold shrink-0 text-[9px]">
+                                              {volumesNota.length} vol.
+                                            </span>
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRemoverNotaDaCelula(linha, coluna, nota.id);
+                                              }}
+                                              className="shrink-0 w-4 h-4 flex items-center justify-center rounded hover:bg-red-500 transition-colors opacity-70 group-hover:opacity-100"
+                                              title="Remover"
+                                            >
+                                              <Trash2 className="w-2.5 h-2.5" />
+                                            </button>
+                                          </div>
+                                        )}
+                                      </Draggable>
                                       
-                                      {/* Volumes individuais arrastáveis mobile */}
-                                      {volumesNota.map((vol, volIndex) => (
+                                      {/* Volumes individuais - mostrar apenas quando expandido */}
+                                      {isExpanded && volumesNota.map((vol, volIndex) => (
                                         <Draggable key={vol.id} draggableId={`allocated-${vol.id}`} index={volIndex}>
                                           {(provided, snapshot) => (
                                             <div
                                               ref={provided.innerRef}
                                               {...provided.draggableProps}
                                               {...provided.dragHandleProps}
-                                              className="px-1 py-0.5 rounded text-[8px] leading-tight cursor-move touch-none"
+                                              className="px-1 py-0.5 rounded text-[8px] leading-tight cursor-move touch-none ml-2"
                                               style={{
                                                 ...provided.draggableProps.style,
                                                 backgroundColor: snapshot.isDragging 
@@ -2825,56 +2941,72 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                             title="Clique para alocar volumes selecionados ou arraste volumes aqui"
                           >
                             <div className="space-y-0.5">
-                              {notasNaCelula.map((nota) => {
+                              {notasNaCelula.map((nota, notaIndex) => {
                                 const volumesNota = volumesNaCelula.filter(v => v.nota_fiscal_id === nota.id);
                                 const fornecedorAbreviado = nota.emitente_razao_social
                                   ?.split(' ')
                                   .slice(0, 2)
                                   .join(' ')
                                   .substring(0, 18) || 'N/A';
+                                const expandKey = `${nota.id}-${linha}-${coluna}`;
+                                const isExpanded = notasExpandidas[expandKey];
                                 
                                 return (
                                   <div key={nota.id} className="space-y-0.5">
-                                    <div
-                                      className="flex items-center justify-between gap-1 px-1.5 py-0.5 rounded text-[10px] leading-tight"
-                                      style={{
-                                        backgroundColor: isDark ? '#1e40af' : '#bfdbfe',
-                                        color: isDark ? '#ffffff' : '#1e3a8a'
-                                      }}
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <span className="font-bold shrink-0 w-12">
-                                        {nota.numero_nota}
-                                      </span>
-                                      <span className="flex-1 truncate text-center px-0.5" title={nota.emitente_razao_social}>
-                                        {fornecedorAbreviado}
-                                      </span>
-                                      <span className="font-semibold shrink-0 w-5 text-right">
-                                        {volumesNota.length}
-                                      </span>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleRemoverNotaDaCelula(linha, coluna, nota.id);
-                                        }}
-                                        className="h-4 w-4 p-0 hover:bg-red-100 dark:hover:bg-red-900 flex-shrink-0"
-                                        title="Remover NF desta célula"
-                                      >
-                                        <Trash2 className="w-2.5 h-2.5 text-red-600" />
-                                      </Button>
-                                    </div>
+                                    <Draggable draggableId={`nota-${nota.id}-${linha}-${coluna}`} index={notaIndex}>
+                                      {(provided, snapshot) => (
+                                        <div
+                                          ref={provided.innerRef}
+                                          {...provided.draggableProps}
+                                          {...provided.dragHandleProps}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleNotaExpandida(nota.id, linha, coluna);
+                                          }}
+                                          className="flex items-center justify-between gap-1 px-1.5 py-0.5 rounded text-[10px] leading-tight cursor-pointer"
+                                          style={{
+                                            ...provided.draggableProps.style,
+                                            backgroundColor: snapshot.isDragging 
+                                              ? (isDark ? '#1e40af' : '#3b82f6')
+                                              : (isDark ? '#1e40af' : '#bfdbfe'),
+                                            color: isDark ? '#ffffff' : '#1e3a8a',
+                                            opacity: snapshot.isDragging ? 0.9 : 1
+                                          }}
+                                        >
+                                          <span className="font-bold shrink-0 w-12">
+                                            {nota.numero_nota}
+                                          </span>
+                                          <span className="flex-1 truncate text-center px-0.5" title={nota.emitente_razao_social}>
+                                            {fornecedorAbreviado}
+                                          </span>
+                                          <span className="font-semibold shrink-0 w-5 text-right">
+                                            {volumesNota.length}
+                                          </span>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleRemoverNotaDaCelula(linha, coluna, nota.id);
+                                            }}
+                                            className="h-4 w-4 p-0 hover:bg-red-100 dark:hover:bg-red-900 flex-shrink-0"
+                                            title="Remover NF desta célula"
+                                          >
+                                            <Trash2 className="w-2.5 h-2.5 text-red-600" />
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </Draggable>
                                     
-                                    {/* Volumes individuais arrastáveis */}
-                                    {volumesNota.map((vol, volIndex) => (
+                                    {/* Volumes individuais - mostrar apenas quando expandido */}
+                                    {isExpanded && volumesNota.map((vol, volIndex) => (
                                       <Draggable key={vol.id} draggableId={`allocated-${vol.id}`} index={volIndex}>
                                         {(provided, snapshot) => (
                                           <div
                                             ref={provided.innerRef}
                                             {...provided.draggableProps}
                                             {...provided.dragHandleProps}
-                                            className="px-1.5 py-0.5 rounded text-[9px] leading-tight cursor-move"
+                                            className="px-1.5 py-0.5 rounded text-[9px] leading-tight cursor-move ml-2"
                                             style={{
                                               ...provided.draggableProps.style,
                                               backgroundColor: snapshot.isDragging 
