@@ -1583,18 +1583,21 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             .nota-item { 
               background: #bfdbfe; 
               color: #1e3a8a; 
-              padding: 3px 5px; 
-              margin: 1px 0; 
-              font-size: 9px; 
-              border-radius: 2px; 
+              padding: 4px 6px; 
+              margin: 2px 0; 
+              font-size: 10px; 
+              font-weight: 600;
+              letter-spacing: 0.3px;
+              border-radius: 3px; 
               display: flex; 
               align-items: center; 
-              gap: 4px;
+              gap: 5px;
               border: 1px solid #93c5fd;
+              text-transform: uppercase;
             }
-            .nota-num { font-weight: bold; width: 45px; flex-shrink: 0; }
+            .nota-num { font-weight: bold; width: 50px; flex-shrink: 0; }
             .nota-forn { flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .nota-qtd { font-weight: bold; width: 20px; text-align: right; flex-shrink: 0; }
+            .nota-qtd { font-weight: bold; width: 22px; text-align: right; flex-shrink: 0; }
             .footer { margin-top: 12px; padding-top: 8px; border-top: 1px solid #ddd; font-size: 9px; color: #666; text-align: center; }
             @media print { 
               body { padding: 10px; } 
@@ -1653,7 +1656,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         } else {
           notasNaCelula.forEach(nota => {
             const volumesNota = getVolumesNaCelula(linha, coluna).filter(v => v.nota_fiscal_id === nota.id);
-            const fornecedorAbreviado = nota.emitente_razao_social?.split(' ').slice(0, 2).join(' ').substring(0, 18) || 'N/A';
+            const fornecedorAbreviado = (nota.emitente_razao_social?.split(' ').slice(0, 2).join(' ').substring(0, 18) || 'N/A').toUpperCase();
             html += `<div class="nota-item">`;
             html += `<span class="nota-num">${nota.numero_nota}</span>`;
             html += `<span class="nota-forn" title="${nota.emitente_razao_social}">${fornecedorAbreviado}</span>`;
@@ -2117,24 +2120,26 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                               e.stopPropagation();
                                               toggleNotaExpandida(nota.id, linha, coluna);
                                             }}
-                                            className="flex items-center justify-between gap-0.5 px-1 py-0.5 rounded text-[8px] leading-tight group cursor-pointer touch-none"
+                                            className="flex items-center justify-between gap-1 px-1.5 py-1 rounded text-[9px] leading-tight group cursor-pointer touch-none"
                                             style={{
                                               ...provided.draggableProps.style,
                                               backgroundColor: snapshot.isDragging 
                                                 ? (isDark ? '#1e40af' : '#3b82f6')
                                                 : (isDark ? '#1e40af' : '#bfdbfe'),
                                               color: isDark ? '#ffffff' : '#1e3a8a',
-                                              opacity: snapshot.isDragging ? 0.9 : 1
+                                              opacity: snapshot.isDragging ? 0.9 : 1,
+                                              fontWeight: '600',
+                                              letterSpacing: '0.3px'
                                             }}
                                           >
-                                            <span className="font-bold shrink-0 text-[9px]">
+                                            <span className="font-bold shrink-0 text-[10px] uppercase">
                                               NF {nota.numero_nota}
                                             </span>
-                                            <span className="flex-1 truncate text-center px-0.5 text-[8px]" title={nota.emitente_razao_social}>
+                                            <span className="flex-1 truncate text-center px-0.5 text-[9px] uppercase" title={nota.emitente_razao_social}>
                                               {fornecedorAbreviado}
                                             </span>
-                                            <span className="font-semibold shrink-0 text-[9px]">
-                                              {volumesNota.length} vol.
+                                            <span className="font-bold shrink-0 text-[10px]">
+                                              {volumesNota.length}
                                             </span>
                                             <button
                                               onClick={(e) => {
@@ -3407,24 +3412,26 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                             e.stopPropagation();
                                             toggleNotaExpandida(nota.id, linha, coluna);
                                           }}
-                                          className="flex items-center justify-between gap-1 px-1.5 py-0.5 rounded text-[10px] leading-tight cursor-pointer"
+                                          className="flex items-center justify-between gap-1 px-2 py-1 rounded text-[11px] leading-tight cursor-pointer"
                                           style={{
-                                            ...provided.draggableProps.style,
-                                            backgroundColor: snapshot.isDragging 
-                                              ? (isDark ? '#1e40af' : '#3b82f6')
-                                              : (isDark ? '#1e40af' : '#bfdbfe'),
-                                            color: isDark ? '#ffffff' : '#1e3a8a',
-                                            opacity: snapshot.isDragging ? 0.9 : 1
+                                           ...provided.draggableProps.style,
+                                           backgroundColor: snapshot.isDragging 
+                                             ? (isDark ? '#1e40af' : '#3b82f6')
+                                             : (isDark ? '#1e40af' : '#bfdbfe'),
+                                           color: isDark ? '#ffffff' : '#1e3a8a',
+                                           opacity: snapshot.isDragging ? 0.9 : 1,
+                                           fontWeight: '600',
+                                           letterSpacing: '0.3px'
                                           }}
-                                        >
-                                          <span className="font-bold shrink-0 w-12">
-                                            {nota.numero_nota}
+                                          >
+                                          <span className="font-bold shrink-0 w-14 uppercase">
+                                           {nota.numero_nota}
                                           </span>
-                                          <span className="flex-1 truncate text-center px-0.5" title={nota.emitente_razao_social}>
-                                            {fornecedorAbreviado}
+                                          <span className="flex-1 truncate text-center px-1 uppercase" title={nota.emitente_razao_social}>
+                                           {fornecedorAbreviado}
                                           </span>
-                                          <span className="font-semibold shrink-0 w-5 text-right">
-                                            {volumesNota.length}
+                                          <span className="font-bold shrink-0 w-6 text-right">
+                                           {volumesNota.length}
                                           </span>
                                           <Button
                                             variant="ghost"
