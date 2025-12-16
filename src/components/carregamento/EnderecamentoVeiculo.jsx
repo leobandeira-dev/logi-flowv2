@@ -757,6 +757,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         const notaDoVolume = await base44.entities.NotaFiscal.get(volumeEncontrado.nota_fiscal_id);
         const notaJaVinculada = notasFiscaisLocal.some(nf => nf.id === notaDoVolume.id);
 
+        // SEMPRE buscar TODOS os volumes da nota do banco
+        const todosVolumesDaNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaDoVolume.id });
+
         if (!notaJaVinculada) {
           // Vincular a nota à ordem
           await base44.entities.NotaFiscal.update(notaDoVolume.id, {
@@ -769,25 +772,38 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             notas_fiscais_ids: notasIds
           });
 
-          const volumesDaNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaDoVolume.id });
-
           setNotasFiscaisLocal([...notasFiscaisLocal, notaDoVolume]);
-          setVolumesLocal([...volumesLocal, ...volumesDaNota]);
           setNotasOrigem({ ...notasOrigem, [notaDoVolume.id]: "Auto-vinculada" });
 
-          localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-            notas: [...notasFiscaisLocal, notaDoVolume],
-            volumes: [...volumesLocal, ...volumesDaNota],
-            timestamp: new Date().toISOString()
-          }));
-
-          toast.success(`NF ${notaDoVolume.numero_nota} vinculada! ${volumesDaNota.length} volumes carregados.`);
+          toast.success(`NF ${notaDoVolume.numero_nota} vinculada! ${todosVolumesDaNota.length} volumes carregados.`);
         }
 
-        // Selecionar apenas este volume
+        // Garantir que TODOS os volumes da nota estão no estado local
+        const volumesIdsLocais = volumesLocal.map(v => v.id);
+        const volumesParaAdicionar = todosVolumesDaNota.filter(v => !volumesIdsLocais.includes(v.id));
+        
+        if (volumesParaAdicionar.length > 0) {
+          setVolumesLocal(prev => [...prev, ...volumesParaAdicionar]);
+          
+          // Salvar rascunho com todos os volumes
+          localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
+            notas: notaJaVinculada ? notasFiscaisLocal : [...notasFiscaisLocal, notaDoVolume],
+            volumes: [...volumesLocal, ...volumesParaAdicionar],
+            timestamp: new Date().toISOString()
+          }));
+        } else if (!notaJaVinculada) {
+          // Salvar rascunho se nota foi vinculada
+          localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
+            notas: [...notasFiscaisLocal, notaDoVolume],
+            volumes: volumesLocal,
+            timestamp: new Date().toISOString()
+          }));
+        }
+
+        // Selecionar apenas este volume bipado
         setVolumesSelecionados([volumeEncontrado.id]);
         setSearchTerm("");
-        toast.success(`Volume ${termoUpper} selecionado!`);
+        toast.success(`Volume ${termoUpper} selecionado! (${todosVolumesDaNota.length} vol. disponíveis)`);
         setProcessandoBusca(false);
         return;
       }

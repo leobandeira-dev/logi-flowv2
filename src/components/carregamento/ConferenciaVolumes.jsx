@@ -283,15 +283,15 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
             return;
           }
 
+          // Buscar TODOS os volumes da nota do banco
+          const todosVolumesNota = await base44.entities.Volume.filter({ 
+            nota_fiscal_id: notaDoVolume.id 
+          });
+
           // Vincular automaticamente a nota à ordem
           await base44.entities.NotaFiscal.update(notaDoVolume.id, {
             ordem_id: ordem.id,
             status_nf: "aguardando_expedicao"
-          });
-
-          // Buscar todos os volumes da nota
-          const volumesNota = await base44.entities.Volume.filter({ 
-            nota_fiscal_id: notaDoVolume.id 
           });
 
           // Atualizar ordem com nova nota
@@ -313,11 +313,18 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
             volumes: volumesTotal
           });
 
-          // Atualizar estados locais
+          // Atualizar estados locais com TODOS os volumes da nota
           setNotasFiscaisLocal([...notasFiscaisLocal, notaDoVolume]);
-          setVolumesLocal([...volumesLocal, ...volumesNota]);
+          setVolumesLocal([...volumesLocal, ...todosVolumesNota]);
 
-          toast.success(`NF ${notaDoVolume.numero_nota} vinculada automaticamente!`);
+          // Salvar rascunho
+          localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
+            notas: [...notasFiscaisLocal, notaDoVolume],
+            volumes: [...volumesLocal, ...todosVolumesNota],
+            timestamp: new Date().toISOString()
+          }));
+
+          toast.success(`✅ NF ${notaDoVolume.numero_nota} vinculada! ${todosVolumesNota.length} volumes disponíveis.`);
         } else {
           toast.error("Volume não encontrado no estoque");
           setCodigoScanner("");
@@ -328,6 +335,34 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         toast.error("Erro ao processar volume");
         setCodigoScanner("");
         return;
+      }
+    } else {
+      // Volume encontrado localmente - garantir que todos os volumes da nota estão carregados
+      const notaDoVolume = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+      if (notaDoVolume) {
+        const volumesNotaLocais = volumesLocal.filter(v => v.nota_fiscal_id === notaDoVolume.id);
+        
+        // Se tiver menos volumes locais do que o total da nota, buscar do banco
+        if (volumesNotaLocais.length < (notaDoVolume.quantidade_total_volumes_nf || 0)) {
+          const todosVolumesNota = await base44.entities.Volume.filter({ 
+            nota_fiscal_id: notaDoVolume.id 
+          });
+          
+          const volumesIdsLocais = volumesLocal.map(v => v.id);
+          const volumesParaAdicionar = todosVolumesNota.filter(v => !volumesIdsLocais.includes(v.id));
+          
+          if (volumesParaAdicionar.length > 0) {
+            setVolumesLocal(prev => [...prev, ...volumesParaAdicionar]);
+            
+            localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
+              notas: notasFiscaisLocal,
+              volumes: [...volumesLocal, ...volumesParaAdicionar],
+              timestamp: new Date().toISOString()
+            }));
+            
+            toast.info(`${volumesParaAdicionar.length} volumes adicionais da NF ${notaDoVolume.numero_nota} carregados`);
+          }
+        }
       }
     }
 
