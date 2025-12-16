@@ -1700,34 +1700,62 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     .substring(0, 10) || 'N/A';
                                   
                                   return (
-                                    <div
-                                      key={nota.id}
-                                      className="flex items-center justify-between gap-0.5 px-1 py-0.5 rounded text-[8px] leading-tight group"
-                                      style={{
-                                        backgroundColor: isDark ? '#1e40af' : '#bfdbfe',
-                                        color: isDark ? '#ffffff' : '#1e3a8a'
-                                      }}
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <span className="font-bold shrink-0 text-[9px]">
-                                        NF {nota.numero_nota}
-                                      </span>
-                                      <span className="flex-1 truncate text-center px-0.5 text-[8px]" title={nota.emitente_razao_social}>
-                                        {fornecedorAbreviado}
-                                      </span>
-                                      <span className="font-semibold shrink-0 text-[9px]">
-                                        {volumesNota.length} vol.
-                                      </span>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleRemoverNotaDaCelula(linha, coluna, nota.id);
+                                    <div key={nota.id} className="space-y-0.5">
+                                      <div
+                                        className="flex items-center justify-between gap-0.5 px-1 py-0.5 rounded text-[8px] leading-tight group"
+                                        style={{
+                                          backgroundColor: isDark ? '#1e40af' : '#bfdbfe',
+                                          color: isDark ? '#ffffff' : '#1e3a8a'
                                         }}
-                                        className="shrink-0 w-4 h-4 flex items-center justify-center rounded hover:bg-red-500 transition-colors opacity-70 group-hover:opacity-100"
-                                        title="Remover"
+                                        onClick={(e) => e.stopPropagation()}
                                       >
-                                        <Trash2 className="w-2.5 h-2.5" />
-                                      </button>
+                                        <span className="font-bold shrink-0 text-[9px]">
+                                          NF {nota.numero_nota}
+                                        </span>
+                                        <span className="flex-1 truncate text-center px-0.5 text-[8px]" title={nota.emitente_razao_social}>
+                                          {fornecedorAbreviado}
+                                        </span>
+                                        <span className="font-semibold shrink-0 text-[9px]">
+                                          {volumesNota.length} vol.
+                                        </span>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoverNotaDaCelula(linha, coluna, nota.id);
+                                          }}
+                                          className="shrink-0 w-4 h-4 flex items-center justify-center rounded hover:bg-red-500 transition-colors opacity-70 group-hover:opacity-100"
+                                          title="Remover"
+                                        >
+                                          <Trash2 className="w-2.5 h-2.5" />
+                                        </button>
+                                      </div>
+                                      
+                                      {/* Volumes individuais arrastáveis mobile */}
+                                      {volumesNota.map((vol, volIndex) => (
+                                        <Draggable key={vol.id} draggableId={`allocated-${vol.id}`} index={volIndex}>
+                                          {(provided, snapshot) => (
+                                            <div
+                                              ref={provided.innerRef}
+                                              {...provided.draggableProps}
+                                              {...provided.dragHandleProps}
+                                              className="px-1 py-0.5 rounded text-[8px] leading-tight cursor-move touch-none"
+                                              style={{
+                                                ...provided.draggableProps.style,
+                                                backgroundColor: snapshot.isDragging 
+                                                  ? (isDark ? '#1e40af' : '#3b82f6')
+                                                  : (isDark ? '#334155' : '#e2e8f0'),
+                                                color: snapshot.isDragging ? '#ffffff' : theme.text,
+                                                opacity: snapshot.isDragging ? 0.9 : 1
+                                              }}
+                                              title="Arraste para mover"
+                                            >
+                                              <span className="font-mono font-bold text-[8px]">
+                                                {vol.identificador_unico}
+                                              </span>
+                                            </div>
+                                          )}
+                                        </Draggable>
+                                      ))}
                                     </div>
                                   );
                                 })}
