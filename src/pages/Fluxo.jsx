@@ -970,6 +970,9 @@ export default function Fluxo() {
                 <SelectItem value="10" style={{ color: theme.text }}>10</SelectItem>
                 <SelectItem value="20" style={{ color: theme.text }}>20</SelectItem>
                 <SelectItem value="50" style={{ color: theme.text }}>50</SelectItem>
+                <SelectItem value="100" style={{ color: theme.text }}>100</SelectItem>
+                <SelectItem value="150" style={{ color: theme.text }}>150</SelectItem>
+                <SelectItem value="200" style={{ color: theme.text }}>200</SelectItem>
               </SelectContent>
             </Select>
               <FiltrosPredefinidos
