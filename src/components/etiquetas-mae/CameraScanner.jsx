@@ -14,11 +14,10 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
   const [scanning, setScanning] = useState(false);
   const [manualInput, setManualInput] = useState("");
   const [useManualMode, setUseManualMode] = useState(false);
-  const [scanMode, setScanMode] = useState(null); // 'qrcode' ou 'nfe'
   const html5QrCodeRef = useRef(null);
 
   useEffect(() => {
-    if (open && !useManualMode && scanMode) {
+    if (open && !useManualMode) {
       setTimeout(() => {
         startScanner();
       }, 100);
@@ -27,7 +26,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
     return () => {
       stopScanner();
     };
-  }, [open, useManualMode, scanMode]);
+  }, [open, useManualMode]);
 
   const startScanner = async () => {
     if (html5QrCodeRef.current || useManualMode) return;
@@ -47,20 +46,10 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
       const html5QrCode = new window.Html5Qrcode("qr-reader");
       html5QrCodeRef.current = html5QrCode;
 
-      // Calcular tamanho do qrbox baseado no modo de leitura
+      // Calcular tamanho do qrbox - área quadrada perfeita para QR Code
       const screenWidth = window.innerWidth;
-      
-      let qrbox;
-      if (scanMode === 'qrcode') {
-        // ✅ QUADRADO PERFEITO para QR Code - mesmo valor para width e height
-        const size = Math.floor(screenWidth * 0.70);
-        qrbox = size; // Passando apenas número cria quadrado perfeito
-      } else {
-        // ✅ RETÂNGULO HORIZONTAL para chave NF-e
-        const width = Math.floor(screenWidth * 0.85);
-        const height = Math.floor(width * 0.30);
-        qrbox = { width, height };
-      }
+      const size = Math.floor(screenWidth * 0.70);
+      const qrbox = size; // Número único cria área quadrada perfeita
 
       const config = {
         fps: 10,
@@ -132,64 +121,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
         style={{ backgroundColor: theme.bg, borderColor: theme.border }}
       >
         <DialogHeader className="p-4 pb-2">
-          <DialogTitle style={{ color: theme.text }}>
-            {!scanMode ? 'Selecione o Tipo de Leitura' : 
-             scanMode === 'qrcode' ? '📦 Scanner QR Code / Código de Barras' : 
-             '📄 Scanner Chave NF-e'}
-          </DialogTitle>
+        <DialogTitle style={{ color: theme.text }}>
+        📦 Scanner QR Code / Código de Barras
+        </DialogTitle>
         </DialogHeader>
 
         <div className="p-4 pt-0">
-          {!scanMode ? (
-            // Seleção do tipo de leitura
-            <div className="space-y-3">
-              <p className="text-sm mb-3 text-center" style={{ color: theme.text }}>
-                Escolha o tipo de código que deseja escanear:
-              </p>
-              
-              <Button
-                onClick={() => setScanMode('qrcode')}
-                variant="outline"
-                className="w-full h-auto py-4 flex items-center justify-start gap-3"
-                style={{ borderColor: theme.border, color: theme.text }}
-              >
-                <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-7 h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <rect x="4" y="4" width="6" height="6" />
-                    <rect x="14" y="4" width="6" height="6" />
-                    <rect x="4" y="14" width="6" height="6" />
-                    <rect x="14" y="14" width="6" height="6" />
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-base">QR Code ou Código de Barras</p>
-                  <p className="text-xs" style={{ color: isDark ? '#94a3b8' : '#6b7280' }}>
-                    Leitura em área quadrada • Volumes e etiquetas
-                  </p>
-                </div>
-              </Button>
-
-              <Button
-                onClick={() => setScanMode('nfe')}
-                variant="outline"
-                className="w-full h-auto py-4 flex items-center justify-start gap-3"
-                style={{ borderColor: theme.border, color: theme.text }}
-              >
-                <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <rect x="3" y="8" width="18" height="3" />
-                    <rect x="3" y="13" width="18" height="3" />
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-base">Chave NF-e (44 dígitos)</p>
-                  <p className="text-xs" style={{ color: isDark ? '#94a3b8' : '#6b7280' }}>
-                    Leitura em área retangular • Código de barras NF-e
-                  </p>
-                </div>
-              </Button>
-            </div>
-          ) : !useManualMode ? (
+          {!useManualMode ? (
             <div 
               ref={scannerRef}
               className="relative bg-black rounded-lg overflow-hidden" 
@@ -212,9 +150,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
                 <div 
                   className="border-4 border-white"
                   style={{
-                    width: scanMode === 'qrcode' ? '70%' : '85%',
-                    height: scanMode === 'qrcode' ? '70%' : '25%',
-                    aspectRatio: scanMode === 'qrcode' ? '1/1' : 'auto',
+                    width: '70%',
+                    height: '70%',
+                    aspectRatio: '1/1',
                     boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
                     borderRadius: '8px',
                     position: 'relative'
@@ -229,24 +167,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
                   {/* Texto de orientação */}
                   <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
                     <p className="text-white text-xs font-bold bg-black/70 px-3 py-1 rounded-full">
-                      {scanMode === 'qrcode' ? '📦 Centralize o código' : '📄 Alinhe o código de barras'}
+                      📦 Centralize o código na área quadrada
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="absolute top-2 left-2 right-2 flex gap-2 z-10">
-                <Button
-                  onClick={() => {
-                    stopScanner();
-                    setScanMode(null);
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/90 hover:bg-white"
-                >
-                  Voltar
-                </Button>
+              <div className="absolute top-2 right-2 flex gap-2 z-10">
                 <Button
                   onClick={() => {
                     stopScanner();
@@ -288,7 +215,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
               </p>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Código ou chave NF-e (44 dígitos)"
+                  placeholder="Código QR ou código de barras..."
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
                   onKeyDown={(e) => {
