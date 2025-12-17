@@ -735,7 +735,16 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         <div className="border-b p-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
           <div className="max-w-2xl mx-auto">
             <Button
-              onClick={() => setShowCamera(true)}
+              onClick={() => {
+                // Identificar nota em conferência (primeira com volumes pendentes)
+                const notaPendente = notasFiscaisLocal.find(nota => {
+                  const volumesNota = getVolumesNota(nota.id);
+                  const embarcadosNota = getVolumesEmbarcadosNota(nota.id);
+                  return embarcadosNota.length < volumesNota.length;
+                });
+                setNotaEmConferencia(notaPendente);
+                setShowCamera(true);
+              }}
               size="lg"
               className="w-full bg-blue-600 hover:bg-blue-700 h-12"
             >
