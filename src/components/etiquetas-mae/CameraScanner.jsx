@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera, X, Keyboard } from "lucide-react";
+import { Camera, X, Loader2, Keyboard } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -46,9 +46,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
       const html5QrCode = new window.Html5Qrcode("qr-reader");
       html5QrCodeRef.current = html5QrCode;
 
+      // Detectar orientação para ajustar o tamanho do qrbox
+      const isPortrait = window.innerHeight > window.innerWidth;
+      const qrboxSize = isPortrait ? 
+        { width: Math.min(250, window.innerWidth * 0.7), height: Math.min(250, window.innerWidth * 0.7) } : 
+        { width: 250, height: 250 };
+
       const config = {
         fps: 10,
-        qrbox: { width: 250, height: 250 },
+        qrbox: qrboxSize,
         formatsToSupport: [
           window.Html5QrcodeSupportedFormats.QR_CODE,
           window.Html5QrcodeSupportedFormats.CODE_128,
