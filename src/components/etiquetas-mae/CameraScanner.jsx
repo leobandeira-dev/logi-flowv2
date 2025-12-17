@@ -58,10 +58,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         },
         {
           returnDetailedScanResult: true,
-          highlightScanRegion: true,
-          highlightCodeOutline: true,
           preferredCamera: "environment",
-          overlay: document.createElement('div') // Overlay vazio para desabilitar visual padrão
+          maxScansPerSecond: 5
         }
       );
 
