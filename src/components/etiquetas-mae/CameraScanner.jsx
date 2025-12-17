@@ -52,17 +52,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
       const screenHeight = window.innerHeight;
       
       let qrbox;
-      if (scanMode === 'nfe') {
-        // Retângulo horizontal para chaves de NF-e (mais largo que alto)
-        const width = Math.floor(screenWidth * 0.8);
-        const height = Math.floor(width * 0.25); // 25% da largura = retângulo bem horizontal
-        qrbox = { width, height };
-        console.log('📏 NFe Mode - qrbox:', qrbox);
-      } else {
-        // Quadrado perfeito para QR Code (70% da largura da tela)
-        const size = Math.floor(screenWidth * 0.7);
+      if (scanMode === 'qrcode') {
+        // ✅ QUADRADO para QR Code e códigos de barras verticais
+        const size = Math.floor(Math.min(screenWidth, screenHeight) * 0.65);
         qrbox = { width: size, height: size };
-        console.log('📏 QRCode Mode - qrbox:', qrbox);
+      } else {
+        // ✅ RETÂNGULO HORIZONTAL para chave NF-e (código de barras horizontal)
+        const width = Math.floor(screenWidth * 0.85);
+        const height = Math.floor(width * 0.22);
+        qrbox = { width, height };
       }
 
       const config = {
@@ -163,9 +161,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
                   </svg>
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-base">QR Code / Código de Barras</p>
+                  <p className="font-semibold text-base">QR Code ou Código de Barras</p>
                   <p className="text-xs" style={{ color: isDark ? '#94a3b8' : '#6b7280' }}>
-                    Para volumes e etiquetas mãe
+                    Leitura em área quadrada • Volumes e etiquetas
                   </p>
                 </div>
               </Button>
@@ -183,9 +181,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
                   </svg>
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-base">Chave de Nota Fiscal</p>
+                  <p className="font-semibold text-base">Chave NF-e (44 dígitos)</p>
                   <p className="text-xs" style={{ color: isDark ? '#94a3b8' : '#6b7280' }}>
-                    Para importar NF-e via chave
+                    Leitura em área retangular • Código de barras NF-e
                   </p>
                 </div>
               </Button>
@@ -284,8 +282,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2">
                 <p className="text-xs text-center font-semibold mb-1" style={{ color: isDark ? '#86efac' : '#15803d' }}>
                   {scanMode === 'qrcode' 
-                    ? '📷 Posicione o QR Code ou código de barras dentro do quadrado'
-                    : '📷 Posicione a chave da NF-e dentro do retângulo horizontal'
+                    ? '📦 Centralize o código dentro da área QUADRADA'
+                    : '📄 Centralize o código de barras na área RETANGULAR'
                   }
                 </p>
                 <p className="text-[10px] text-center" style={{ color: isDark ? '#86efac' : '#15803d' }}>
