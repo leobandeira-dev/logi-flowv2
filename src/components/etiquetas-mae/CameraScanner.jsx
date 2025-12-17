@@ -58,8 +58,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         },
         {
           returnDetailedScanResult: true,
-          preferredCamera: "environment",
-          maxScansPerSecond: 5
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+          preferredCamera: "environment"
         }
       );
 
