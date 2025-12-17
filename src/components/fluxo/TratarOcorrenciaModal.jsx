@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -15,7 +14,10 @@ import { base44 } from "@/api/base44Client";
 import { 
   AlertTriangle, 
   CheckCircle2, 
-  XCircle,
+  XCircle, 
+  Clock,
+  User,
+  Calendar,
   Loader2,
   Image as ImageIcon
 } from "lucide-react";
@@ -79,11 +81,11 @@ export default function TratarOcorrenciaModal({
         // Se foi passada uma ocorrência específica, carregar apenas ela
         ocorrenciasAbertas = [ocorrenciaEspecifica];
       } else if (ordemEtapa) {
-        // Filtrar ocorrências abertas APENAS desta etapa específica
+        // Filtrar ocorrências abertas E em andamento desta etapa
         ocorrenciasAbertas = todasOcorrencias.filter(
           o => o.ordem_id === ordem.id && 
                o.ordem_etapa_id === ordemEtapa.id && 
-               o.status === "aberta" &&
+               (o.status === "aberta" || o.status === "em_andamento") &&
                o.categoria === "fluxo"
         );
       } else {
@@ -100,6 +102,41 @@ export default function TratarOcorrenciaModal({
       toast.error("Erro ao carregar ocorrências");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEmAndamento = async (ocorrencia) => {
+    const obs = observacoesResolucao[ocorrencia.id];
+    if (!obs || !obs.trim()) {
+      toast.error("Descreva o motivo de não poder concluir agora");
+      return;
+    }
+
+    setResolvendoId(ocorrencia.id);
+    try {
+      // Atualizar ocorrência para em andamento
+      await base44.entities.Ocorrencia.update(ocorrencia.id, {
+        status: "em_andamento",
+        observacoes: `${ocorrencia.observacoes}\n\n[EM ANDAMENTO]: ${obs}`
+      });
+
+      toast.success("Ocorrência marcada como em andamento");
+
+      // Limpar observações desta ocorrência
+      setObservacoesResolucao(prev => {
+        const newObs = { ...prev };
+        delete newObs[ocorrencia.id];
+        return newObs;
+      });
+
+      await loadOcorrencias();
+      onSuccess();
+      onClose();
+    } catch (error) {
+      console.error("Erro ao atualizar ocorrência:", error);
+      toast.error("Erro ao atualizar ocorrência");
+    } finally {
+      setResolvendoId(null);
     }
   };
 
@@ -340,8 +377,12 @@ export default function TratarOcorrenciaModal({
                           {etapa.nome}
                         </Badge>
                       )}
-                      <Badge className="text-xs font-bold bg-red-600 text-white">
-                        Aberta
+                      <Badge className={`text-xs font-bold ${
+                        ocorrencia.status === 'em_andamento' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-red-600 text-white'
+                      }`}>
+                        {ocorrencia.status === 'em_andamento' ? 'Em Andamento' : 'Aberta'}
                       </Badge>
                     </div>
 
@@ -432,7 +473,10 @@ export default function TratarOcorrenciaModal({
                     <Label className={`font-bold text-sm mb-2 block ${
                       isDark ? 'text-gray-100' : 'text-gray-900'
                     }`}>
-                      Descrição da Resolução
+                      {ocorrencia.status === 'em_andamento' 
+                        ? 'Nova Atualização / Resolução'
+                        : 'Motivo / Resolução'
+                      }
                     </Label>
                     <Textarea
                       value={observacoesResolucao[ocorrencia.id] || ""}
@@ -440,47 +484,67 @@ export default function TratarOcorrenciaModal({
                         ...prev,
                         [ocorrencia.id]: e.target.value
                       }))}
-                      placeholder="Como foi resolvido o problema?"
+                      placeholder={
+                        ocorrencia.status === 'em_andamento'
+                          ? "Atualize o progresso ou descreva como foi resolvido..."
+                          : "Por que não pode ser concluída agora? ou Como foi resolvido?"
+                      }
                       rows={3}
                       className="mt-1 border-2 focus:border-blue-500"
                       disabled={!!resolvendoId}
                     />
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleEmAndamento(ocorrencia)}
+                        disabled={!!resolvendoId}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold h-12"
+                      >
+                        {isResolvendo ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <>
+                            <Clock className="w-5 h-5 mr-2" />
+                            Em Andamento
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => handleResolver(ocorrencia)}
+                        disabled={!!resolvendoId}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold h-12"
+                      >
+                        {isResolvendo ? (
+                          <>
+                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            Resolvendo...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-5 h-5 mr-2" />
+                            Resolver
+                          </>
+                        )}
+                      </Button>
+                    </div>
                     <Button
                       onClick={() => handleCancelar(ocorrencia)}
                       disabled={!!resolvendoId}
                       variant="outline"
-                      className={`flex-1 h-12 border-2 font-bold ${
+                      className={`w-full h-10 border-2 ${
                         isDark 
                           ? 'border-gray-600 text-gray-300 hover:bg-gray-900' 
                           : 'border-gray-400 text-gray-700 hover:bg-gray-100'
                       }`}
                     >
                       {isResolvendo ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
                         <>
-                          <XCircle className="w-5 h-5 mr-2" />
+                          <XCircle className="w-4 h-4 mr-2" />
                           Cancelar Ocorrência
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      onClick={() => handleResolver(ocorrencia)}
-                      disabled={!!resolvendoId}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold h-12"
-                    >
-                      {isResolvendo ? (
-                        <>
-                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                          Resolvendo...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="w-5 h-5 mr-2" />
-                          Resolver
                         </>
                       )}
                     </Button>
