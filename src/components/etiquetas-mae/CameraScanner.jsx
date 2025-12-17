@@ -46,15 +46,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
       const html5QrCode = new window.Html5Qrcode("qr-reader");
       html5QrCodeRef.current = html5QrCode;
 
-      // Detectar orientação para ajustar o tamanho do qrbox
-      const isPortrait = window.innerHeight > window.innerWidth;
-      const qrboxSize = isPortrait ? 
-        { width: Math.min(250, window.innerWidth * 0.7), height: Math.min(250, window.innerWidth * 0.7) } : 
-        { width: 250, height: 250 };
+      // Definir tamanho do qrbox baseado na largura disponível
+      const containerWidth = scannerRef.current?.offsetWidth || window.innerWidth * 0.9;
+      const qrboxSize = Math.min(250, containerWidth * 0.7);
 
       const config = {
         fps: 10,
-        qrbox: qrboxSize,
+        qrbox: qrboxSize, // Define um valor único para criar um quadrado perfeito
         formatsToSupport: [
           window.Html5QrcodeSupportedFormats.QR_CODE,
           window.Html5QrcodeSupportedFormats.CODE_128,
@@ -127,7 +125,11 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
 
         <div className="p-4 pt-0">
           {!useManualMode ? (
-            <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
+            <div 
+              ref={scannerRef}
+              className="relative bg-black rounded-lg overflow-hidden" 
+              style={{ aspectRatio: '4/3' }}
+            >
               <div 
                 id="qr-reader" 
                 style={{ 
