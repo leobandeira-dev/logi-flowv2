@@ -70,31 +70,61 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
   }, []);
 
   useEffect(() => {
-    setNotasFiscaisLocal(notasFiscais);
-    setVolumesLocal(volumes);
-    
-    // Restaurar notas e volumes do rascunho de endereçamento (podem ter sido adicionadas lá)
-    const rascunhoNotas = localStorage.getItem(`enderecamento_notas_${ordem.id}`);
-    if (rascunhoNotas) {
+    const carregarVolumesCompletos = async () => {
+      setNotasFiscaisLocal(notasFiscais);
+      
+      // Buscar volumes específicos das notas fiscais vinculadas
+      const notasIds = notasFiscais.map(nf => nf.id);
+      let volumesCompletos = [...volumes];
+      
       try {
-        const rascunho = JSON.parse(rascunhoNotas);
-        if (rascunho.notas && rascunho.volumes) {
-          const notasIdsExistentes = notasFiscais.map(n => n.id);
-          const notasNovas = rascunho.notas.filter(n => !notasIdsExistentes.includes(n.id));
-          
-          const volumesIdsExistentes = volumes.map(v => v.id);
-          const volumesNovos = rascunho.volumes.filter(v => !volumesIdsExistentes.includes(v.id));
-          
-          if (notasNovas.length > 0 || volumesNovos.length > 0) {
-            setNotasFiscaisLocal([...notasFiscais, ...notasNovas]);
-            setVolumesLocal([...volumes, ...volumesNovos]);
-          }
+        // Buscar volumes do banco de dados por nota fiscal
+        const volumesDosBanco = await base44.entities.Volume.filter({ 
+          nota_fiscal_id: { $in: notasIds } 
+        });
+        
+        // Mesclar com volumes já carregados, evitando duplicatas
+        const volumesIdsExistentes = volumes.map(v => v.id);
+        const volumesNovos = volumesDosBanco.filter(v => !volumesIdsExistentes.includes(v.id));
+        
+        if (volumesNovos.length > 0) {
+          console.log(`📦 ${volumesNovos.length} volumes adicionais carregados do banco`);
+          volumesCompletos = [...volumes, ...volumesNovos];
         }
       } catch (error) {
-        console.error("Erro ao restaurar notas do rascunho:", error);
+        console.error("Erro ao carregar volumes adicionais:", error);
       }
-    }
-  }, [notasFiscais, volumes]);
+      
+      // Restaurar notas e volumes do rascunho de endereçamento
+      const rascunhoNotas = localStorage.getItem(`enderecamento_notas_${ordem.id}`);
+      if (rascunhoNotas) {
+        try {
+          const rascunho = JSON.parse(rascunhoNotas);
+          if (rascunho.notas && rascunho.volumes) {
+            const notasIdsExistentes = notasFiscais.map(n => n.id);
+            const notasNovas = rascunho.notas.filter(n => !notasIdsExistentes.includes(n.id));
+            
+            const volumesIdsExistentes = volumesCompletos.map(v => v.id);
+            const volumesNovosRascunho = rascunho.volumes.filter(v => !volumesIdsExistentes.includes(v.id));
+            
+            if (notasNovas.length > 0) {
+              setNotasFiscaisLocal([...notasFiscais, ...notasNovas]);
+            }
+            
+            if (volumesNovosRascunho.length > 0) {
+              volumesCompletos = [...volumesCompletos, ...volumesNovosRascunho];
+            }
+          }
+        } catch (error) {
+          console.error("Erro ao restaurar notas do rascunho:", error);
+        }
+      }
+      
+      setVolumesLocal(volumesCompletos);
+    };
+    
+    carregarVolumesCompletos();
+  }, [notasFiscais, volumes, ordem.id]);
 
   useEffect(() => {
     // Carregar volumes já embarcados do banco
@@ -800,8 +830,12 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
               const pendentes = volumesNota.length - volumesEmbarcadosNota.length;
               const isExpanded = notasExpandidas[nota.id];
 
+              // Verificar se há divergência entre volumes esperados e volumes reais
+              const volumesEsperados = nota.quantidade_total_volumes_nf || 0;
+              const temDivergencia = volumesEsperados > 0 && volumesNota.length === 0;
+
               return (
-                <Card key={nota.id} style={{ backgroundColor: theme.cardBg, borderColor: notaCompleta ? '#10b981' : theme.cardBorder }}>
+                <Card key={nota.id} style={{ backgroundColor: theme.cardBg, borderColor: notaCompleta ? '#10b981' : temDivergencia ? '#ef4444' : theme.cardBorder }}>
                   {/* Header Resumido */}
                   <div 
                     className="p-3 cursor-pointer active:bg-gray-50 dark:active:bg-gray-800/50 transition-colors"
@@ -814,14 +848,18 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
                         ) : (
                           <ChevronRight className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: theme.textMuted }} />
                         )}
-                        
+
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />
                             <span className="font-bold text-base" style={{ color: theme.text }}>
                               NF {nota.numero_nota}
                             </span>
-                            {notaCompleta ? (
+                            {temDivergencia ? (
+                              <Badge className="bg-red-600 text-white text-xs px-2 py-0.5 font-bold">
+                                ⚠️ {volumesEsperados} vol. faltando
+                              </Badge>
+                            ) : notaCompleta ? (
                               <Badge className="bg-green-600 text-white text-xs px-2 py-0.5">
                                 Completa
                               </Badge>
@@ -856,6 +894,14 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
                   {/* Lista Detalhada (Expansível) */}
                   {isExpanded && (
                     <CardContent className="pt-0 pb-3 px-3">
+                      {temDivergencia && (
+                        <div className="mb-3 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                          <p className="text-xs text-red-800 dark:text-red-200">
+                            ⚠️ Esta nota fiscal indica {volumesEsperados} volume(s), mas nenhum foi encontrado no sistema. 
+                            Verifique se os volumes foram cadastrados no recebimento.
+                          </p>
+                        </div>
+                      )}
                       <div className="space-y-1 mb-3">
                         {volumesNota.map((volume) => {
                           const embarcado = volumesEmbarcados.includes(volume.id);
