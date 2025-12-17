@@ -42,7 +42,17 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             // Limpar apenas caracteres não numéricos se parecer ser chave NF-e
             const cleaned = decodedText.replace(/\D/g, '');
             const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
-            onScan(finalCode);
+            
+            const scanResult = onScan(finalCode);
+            
+            // Feedback visual
+            if (scanResult === 'duplicate') {
+              setScanFeedback('duplicate');
+            } else if (scanResult === 'success') {
+              setScanFeedback('success');
+            }
+            
+            setTimeout(() => setScanFeedback(null), 1500);
             // NÃO parar o scanner - continuar pronto para próximo scan
           }
         },
