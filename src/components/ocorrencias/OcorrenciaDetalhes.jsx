@@ -284,8 +284,8 @@ export default function OcorrenciaDetalhes({ open, onClose, ocorrencia, onUpdate
             <div>
               <Label htmlFor="resolucao" className="text-sm font-medium">
                 {ocorrencia.status === "em_andamento" 
-                  ? "Nova Atualização / Resolução" 
-                  : "Motivo / Resolução"
+                  ? "Nova Atualização / Resolução *" 
+                  : "Motivo / Resolução *"
                 }
               </Label>
               <Textarea
@@ -298,8 +298,14 @@ export default function OcorrenciaDetalhes({ open, onClose, ocorrencia, onUpdate
                     : "Por que não pode ser concluída agora? ou Como foi resolvido?"
                 }
                 rows={3}
-                className="mt-2"
+                className="mt-2 border-2 border-orange-400 dark:border-orange-600 focus:border-blue-600"
               />
+              <p className="text-xs text-orange-600 dark:text-orange-400 font-medium mt-1.5">
+                ⚠️ {ocorrencia.status === "em_andamento" 
+                  ? "Justificativa obrigatória para atualizar ou resolver" 
+                  : "Justificativa obrigatória para marcar como 'Em Andamento' ou 'Resolver'"
+                }
+              </p>
             </div>
           )}
         </div>
