@@ -58,6 +58,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
     fim: ""
   });
   const [notasExpandidas, setNotasExpandidas] = useState({});
+  const [notaEmConferencia, setNotaEmConferencia] = useState(null);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -285,7 +286,27 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
             timestamp: new Date().toISOString()
           }));
           
-          toast.success(`✅ ${volumesParaCarregar.length} volumes da etiqueta ${etiquetaMae.codigo} embarcados!`);
+          toast.success(`✅ ${volumesParaCarregar.length} volumes embarcados!`);
+          
+          // Atualizar nota em conferência
+          if (notasIdsUnicas.length === 1) {
+            const notaId = notasIdsUnicas[0];
+            const nota = notasFiscaisLocal.find(nf => nf.id === notaId) || notasParaVincular.find(n => n.id === notaId);
+            if (nota) {
+              setNotaEmConferencia(nota);
+              
+              // Verificar se completou a nota
+              const volumesNota = getVolumesNota(nota.id);
+              const embarcadosNota = volumesAtualizados.filter(id => 
+                volumesNota.some(v => v.id === id)
+              );
+              if (embarcadosNota.length === volumesNota.length) {
+                toast.success(`✅ Nota Fiscal ${nota.numero_nota} completa!`);
+                setNotaEmConferencia(null);
+              }
+            }
+          }
+          
           setCodigoScanner("");
           return;
         } else {
@@ -465,8 +486,12 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         volumesNota.some(v => v.id === id)
       );
 
+      // Atualizar nota em conferência
+      setNotaEmConferencia(nota);
+
       if (embarcadosNota.length === volumesNota.length) {
         toast.success(`✅ Nota Fiscal ${nota?.numero_nota} completa!`);
+        setNotaEmConferencia(null);
       }
     } catch (error) {
       console.error("Erro ao embarcar volume:", error);
@@ -615,7 +640,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
   };
 
   const handleScanQRCode = async (codigo) => {
-    setShowCamera(false);
+    // Não fechar o modal - deixar aberto para scans consecutivos
     await handleScanVolume(codigo);
   };
 
@@ -1024,9 +1049,18 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       {showCamera && (
         <CameraScanner
           open={showCamera}
-          onClose={() => setShowCamera(false)}
+          onClose={() => {
+            setShowCamera(false);
+            setNotaEmConferencia(null);
+          }}
           onScan={handleScanQRCode}
           isDark={isDark}
+          notaAtual={notaEmConferencia}
+          progressoAtual={notaEmConferencia ? {
+            embarcados: getVolumesEmbarcadosNota(notaEmConferencia.id).length,
+            total: getVolumesNota(notaEmConferencia.id).length,
+            faltam: getVolumesNota(notaEmConferencia.id).length - getVolumesEmbarcadosNota(notaEmConferencia.id).length
+          } : null}
         />
       )}
     </>

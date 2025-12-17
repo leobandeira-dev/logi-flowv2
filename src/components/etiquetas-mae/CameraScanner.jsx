@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import QrScanner from "qr-scanner";
 
-export default function CameraScanner({ open, onClose, onScan, isDark }) {
+export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual, progressoAtual }) {
   const videoRef = useRef(null);
   const [scanning, setScanning] = useState(false);
   const [manualInput, setManualInput] = useState("");
@@ -91,10 +91,33 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
         className="max-w-md w-[95vw] p-0" 
         style={{ backgroundColor: theme.bg, borderColor: theme.border }}
       >
-        <DialogHeader className="p-4 pb-2">
+        <DialogHeader className="p-4 pb-3">
           <DialogTitle style={{ color: theme.text }}>
             Scanner QR Code
           </DialogTitle>
+          {notaAtual && progressoAtual && (
+            <div className="mt-3 p-3 rounded-lg border" style={{ backgroundColor: isDark ? '#1e3a8a' : '#dbeafe', borderColor: isDark ? '#1e40af' : '#93c5fd' }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold" style={{ color: isDark ? '#ffffff' : '#1e40af' }}>
+                  NF {notaAtual.numero_nota}
+                </span>
+                <span className="text-xs font-bold" style={{ color: isDark ? '#60a5fa' : '#1e40af' }}>
+                  {progressoAtual.embarcados}/{progressoAtual.total} volumes
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(progressoAtual.embarcados / progressoAtual.total) * 100}%` }}
+                />
+              </div>
+              {progressoAtual.faltam > 0 && (
+                <p className="text-xs mt-2 text-center font-medium" style={{ color: isDark ? '#93c5fd' : '#1e40af' }}>
+                  Faltam {progressoAtual.faltam} volume{progressoAtual.faltam !== 1 ? 's' : ''}
+                </p>
+              )}
+            </div>
+          )}
         </DialogHeader>
 
         <div className="p-4 pt-0">
