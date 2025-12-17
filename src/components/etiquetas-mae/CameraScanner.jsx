@@ -130,23 +130,29 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             Scanner QR Code
           </DialogTitle>
           {notaAtual && progressoAtual && (
-            <div className="mt-3 p-3 rounded-lg border" style={{ backgroundColor: isDark ? '#1e3a8a' : '#dbeafe', borderColor: isDark ? '#1e40af' : '#93c5fd' }}>
+            <div className="mt-3 p-4 rounded-xl border-2 shadow-lg" style={{ backgroundColor: isDark ? '#1e3a8a' : '#dbeafe', borderColor: isDark ? '#1e40af' : '#2563eb' }}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold" style={{ color: isDark ? '#ffffff' : '#1e40af' }}>
+                <span className="text-base font-bold" style={{ color: isDark ? '#ffffff' : '#1e40af' }}>
                   NF {notaAtual.numero_nota}
                 </span>
-                <span className="text-xs font-bold" style={{ color: isDark ? '#60a5fa' : '#1e40af' }}>
+                <span className="text-sm font-bold px-2 py-1 rounded-lg" style={{ 
+                  color: 'white',
+                  backgroundColor: isDark ? '#2563eb' : '#1e40af'
+                }}>
                   {progressoAtual.embarcados}/{progressoAtual.total} volumes
                 </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 shadow-inner">
                 <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${(progressoAtual.embarcados / progressoAtual.total) * 100}%` }}
+                  className="bg-blue-600 h-3 rounded-full transition-all duration-300 shadow-md"
+                  style={{ 
+                    width: `${(progressoAtual.embarcados / progressoAtual.total) * 100}%`,
+                    boxShadow: '0 2px 6px rgba(37, 99, 235, 0.5)'
+                  }}
                 />
               </div>
               {progressoAtual.faltam > 0 && (
-                <p className="text-xs mt-2 text-center font-medium" style={{ color: isDark ? '#93c5fd' : '#1e40af' }}>
+                <p className="text-sm mt-2 text-center font-bold" style={{ color: isDark ? '#93c5fd' : '#1e40af' }}>
                   Faltam {progressoAtual.faltam} volume{progressoAtual.faltam !== 1 ? 's' : ''}
                 </p>
               )}
@@ -169,37 +175,45 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 style={{ zIndex: 5 }}
               >
                 <div 
-                  className="border-4 shadow-lg transition-all duration-300"
+                  className="shadow-lg transition-all duration-300"
                   style={{
                     width: '80%',
                     height: '80%',
                     aspectRatio: '1/1',
                     maxWidth: '80%',
                     maxHeight: '80%',
-                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+                    boxShadow: scanFeedback 
+                      ? `0 0 0 9999px rgba(0, 0, 0, 0.7), 0 0 40px ${scanFeedback === 'success' ? '#10b981' : '#f59e0b'}` 
+                      : '0 0 0 9999px rgba(0, 0, 0, 0.5)',
                     borderRadius: '12px',
                     position: 'relative',
-                    borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa'
+                    border: scanFeedback === 'success' 
+                      ? '6px solid #10b981' 
+                      : scanFeedback === 'duplicate' 
+                      ? '6px solid #f59e0b' 
+                      : '6px solid #60a5fa'
                   }}
                 >
                   {/* Cantos */}
-                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4" style={{ borderRadius: '12px 0 0 0', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
-                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4" style={{ borderRadius: '0 12px 0 0', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
-                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4" style={{ borderRadius: '0 0 0 12px', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
-                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4" style={{ borderRadius: '0 0 12px 0', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
+                  <div className="absolute top-0 left-0 w-12 h-12 border-t-8 border-l-8" style={{ borderRadius: '12px 0 0 0', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
+                  <div className="absolute top-0 right-0 w-12 h-12 border-t-8 border-r-8" style={{ borderRadius: '0 12px 0 0', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
+                  <div className="absolute bottom-0 left-0 w-12 h-12 border-b-8 border-l-8" style={{ borderRadius: '0 0 0 12px', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
+                  <div className="absolute bottom-0 right-0 w-12 h-12 border-b-8 border-r-8" style={{ borderRadius: '0 0 12px 0', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
                 </div>
               </div>
               
               {/* Feedback Visual */}
               {scanFeedback && (
                 <div 
-                  className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 px-4 py-2 rounded-lg font-medium text-sm animate-in fade-in slide-in-from-top-2"
+                  className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 px-6 py-3 rounded-xl font-bold text-base animate-in fade-in slide-in-from-top-2 shadow-2xl"
                   style={{
                     backgroundColor: scanFeedback === 'success' ? '#10b981' : '#f59e0b',
-                    color: 'white'
+                    color: 'white',
+                    boxShadow: `0 10px 30px ${scanFeedback === 'success' ? 'rgba(16, 185, 129, 0.6)' : 'rgba(245, 158, 11, 0.6)'}`,
+                    border: '3px solid white'
                   }}
                 >
-                  {scanFeedback === 'success' ? '✓ Volume escaneado' : '⚠️ Volume já escaneado'}
+                  {scanFeedback === 'success' ? '✓ VOLUME ESCANEADO' : '⚠️ VOLUME JÁ ESCANEADO'}
                 </div>
               )}
 
