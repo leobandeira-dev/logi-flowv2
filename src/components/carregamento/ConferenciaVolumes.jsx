@@ -610,25 +610,9 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
     }
   };
 
-  const handleOpenCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "environment" } 
-      });
-      setVideoStream(stream);
-      setShowCamera(true);
-    } catch (error) {
-      console.error("Erro ao acessar câmera:", error);
-      toast.error("Não foi possível acessar a câmera");
-    }
-  };
-
-  const handleCloseCamera = () => {
-    if (videoStream) {
-      videoStream.getTracks().forEach(track => track.stop());
-      setVideoStream(null);
-    }
+  const handleScanQRCode = async (codigo) => {
     setShowCamera(false);
+    await handleScanVolume(codigo);
   };
 
   // Limpar volumes embarcados órfãos quando notas mudarem
@@ -1018,26 +1002,14 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         </DialogContent>
       </Dialog>
 
-      {/* Modal Câmera (Placeholder - requer biblioteca de QR Code) */}
+      {/* Modal de Câmera */}
       {showCamera && (
-        <Dialog open={showCamera} onOpenChange={handleCloseCamera}>
-          <DialogContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-            <DialogHeader>
-              <DialogTitle style={{ color: theme.text }}>Scanner de Código de Barras</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <p className="text-center text-sm mb-4" style={{ color: theme.textMuted }}>
-                Funcionalidade de scanner via câmera disponível em breve.
-              </p>
-              <p className="text-center text-sm" style={{ color: theme.textMuted }}>
-                Por enquanto, digite o código manualmente no campo acima.
-              </p>
-            </div>
-            <DialogFooter>
-              <Button onClick={handleCloseCamera}>Fechar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CameraScanner
+          open={showCamera}
+          onClose={() => setShowCamera(false)}
+          onScan={handleScanQRCode}
+          isDark={isDark}
+        />
       )}
     </>
   );
