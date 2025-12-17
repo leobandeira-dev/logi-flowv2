@@ -8,13 +8,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import QrScanner from "qr-scanner";
 
 export default function CameraScanner({ open, onClose, onScan, isDark }) {
-  const scannerRef = useRef(null);
+  const videoRef = useRef(null);
   const [scanning, setScanning] = useState(false);
   const [manualInput, setManualInput] = useState("");
   const [useManualMode, setUseManualMode] = useState(false);
-  const html5QrCodeRef = useRef(null);
+  const qrScannerRef = useRef(null);
 
   useEffect(() => {
     if (open && !useManualMode) {
@@ -29,46 +30,14 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
   }, [open, useManualMode]);
 
   const startScanner = async () => {
-    if (html5QrCodeRef.current || useManualMode) return;
+    if (qrScannerRef.current || useManualMode || !videoRef.current) return;
 
     try {
-      // Carregar biblioteca html5-qrcode
-      if (!window.Html5Qrcode) {
-        await new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
-          script.onload = resolve;
-          script.onerror = reject;
-          document.head.appendChild(script);
-        });
-      }
-
-      const html5QrCode = new window.Html5Qrcode("qr-reader");
-      html5QrCodeRef.current = html5QrCode;
-
-      // Calcular tamanho do qrbox - número único força área QUADRADA na biblioteca
-      const screenWidth = window.innerWidth;
-      const qrboxSize = Math.floor(screenWidth * 0.70);
-
-      const config = {
-        fps: 10,
-        qrbox: qrboxSize, // IMPORTANTE: número único (não objeto) = área quadrada
-        formatsToSupport: [
-          window.Html5QrcodeSupportedFormats.QR_CODE,
-          window.Html5QrcodeSupportedFormats.CODE_128,
-          window.Html5QrcodeSupportedFormats.CODE_39,
-          window.Html5QrcodeSupportedFormats.EAN_13,
-          window.Html5QrcodeSupportedFormats.ITF
-        ],
-        showTorchButtonIfSupported: true,
-        aspectRatio: 1.0 // Força proporção 1:1 (quadrado)
-      };
-
-      await html5QrCode.start(
-        { facingMode: "environment" },
-        config,
-        (decodedText) => {
-          if (decodedText) {
+      const qrScanner = new QrScanner(
+        videoRef.current,
+        (result) => {
+          if (result?.data) {
+            const decodedText = result.data;
             // Limpar apenas caracteres não numéricos se parecer ser chave NF-e
             const cleaned = decodedText.replace(/\D/g, '');
             const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
@@ -76,11 +45,16 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
             stopScanner();
           }
         },
-        (errorMessage) => {
-          // Erro silencioso - continua escaneando
+        {
+          returnDetailedScanResult: true,
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+          preferredCamera: "environment"
         }
       );
 
+      qrScannerRef.current = qrScanner;
+      await qrScanner.start();
       setScanning(true);
     } catch (error) {
       console.error("Erro ao iniciar scanner:", error);
@@ -88,14 +62,11 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
     }
   };
 
-  const stopScanner = async () => {
-    if (html5QrCodeRef.current) {
-      try {
-        await html5QrCodeRef.current.stop();
-        html5QrCodeRef.current = null;
-      } catch (error) {
-        console.error("Erro ao parar scanner:", error);
-      }
+  const stopScanner = () => {
+    if (qrScannerRef.current) {
+      qrScannerRef.current.stop();
+      qrScannerRef.current.destroy();
+      qrScannerRef.current = null;
     }
     setScanning(false);
   };
@@ -128,52 +99,46 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
 
         <div className="p-4 pt-0">
           {!useManualMode ? (
-            <div 
-              ref={scannerRef}
-              className="relative bg-black rounded-lg overflow-hidden" 
-              style={{ aspectRatio: '4/3' }}
-            >
-              <div 
-                id="qr-reader" 
-                style={{ 
-                  width: '100%',
-                  height: '100%',
-                  border: 'none'
-                }}
+            <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                style={{ transform: 'scaleX(-1)' }}
               />
 
-              {/* Overlay visual para guiar o usuário */}
+              {/* Overlay QUADRADO */}
               <div 
                 className="absolute inset-0 pointer-events-none flex items-center justify-center"
                 style={{ zIndex: 5 }}
               >
                 <div 
-                  className="border-4 border-white"
+                  className="border-4 border-green-400 shadow-lg"
                   style={{
-                    width: '70%',
-                    height: '70%',
+                    width: '80%',
+                    height: '80%',
                     aspectRatio: '1/1',
+                    maxWidth: '80%',
+                    maxHeight: '80%',
                     boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
-                    borderRadius: '8px',
+                    borderRadius: '12px',
                     position: 'relative'
                   }}
                 >
-                  {/* Cantos do guia */}
-                  <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-green-400" style={{ borderRadius: '8px 0 0 0' }}></div>
-                  <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-green-400" style={{ borderRadius: '0 8px 0 0' }}></div>
-                  <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-green-400" style={{ borderRadius: '0 0 0 8px' }}></div>
-                  <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-green-400" style={{ borderRadius: '0 0 8px 0' }}></div>
-                  
-                  {/* Texto de orientação */}
-                  <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
-                    <p className="text-white text-xs font-bold bg-black/70 px-3 py-1 rounded-full">
-                      📦 Centralize o código na área quadrada
-                    </p>
-                  </div>
+                  {/* Cantos animados */}
+                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-green-400 animate-pulse" style={{ borderRadius: '12px 0 0 0' }}></div>
+                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-green-400 animate-pulse" style={{ borderRadius: '0 12px 0 0' }}></div>
+                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-green-400 animate-pulse" style={{ borderRadius: '0 0 0 12px' }}></div>
+                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-green-400 animate-pulse" style={{ borderRadius: '0 0 12px 0' }}></div>
                 </div>
               </div>
 
-              <div className="absolute top-2 right-2 flex gap-2 z-10">
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
+                <p className="text-white text-sm font-bold bg-black/80 px-4 py-2 rounded-full shadow-lg">
+                  📦 Centralize o QR Code na área QUADRADA
+                </p>
+              </div>
+
+              <div className="absolute top-2 right-2 z-10">
                 <Button
                   onClick={() => {
                     stopScanner();
@@ -181,7 +146,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
                   }}
                   variant="outline"
                   size="sm"
-                  className="bg-white/90 hover:bg-white ml-auto"
+                  className="bg-white/90 hover:bg-white"
                 >
                   <Keyboard className="w-4 h-4 mr-1" />
                   Digitar
@@ -189,7 +154,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
               </div>
             </div>
           ) : (
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '4/3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div className="w-full">
                 <Keyboard className="w-12 h-12 mx-auto mb-3 text-blue-600" />
                 <p className="text-sm mb-2" style={{ color: theme.text }}>Modo Manual</p>
@@ -240,10 +205,10 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
             {!useManualMode && (
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2">
                 <p className="text-xs text-center font-semibold mb-1" style={{ color: isDark ? '#86efac' : '#15803d' }}>
-                  📦 Centralize o código dentro da área QUADRADA
+                  ✅ Scanner QR Code especializado ativo
                 </p>
                 <p className="text-[10px] text-center" style={{ color: isDark ? '#86efac' : '#15803d' }}>
-                  Mantenha a câmera estável e com boa iluminação
+                  Área QUADRADA otimizada para QR Codes
                 </p>
               </div>
             )}
