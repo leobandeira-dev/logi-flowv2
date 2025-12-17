@@ -42,7 +42,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             const cleaned = decodedText.replace(/\D/g, '');
             const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
             onScan(finalCode);
-            stopScanner();
+            // NÃO parar o scanner - continuar pronto para próximo scan
           }
         },
         {
@@ -74,8 +74,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const handleManualSubmit = () => {
     if (manualInput.trim()) {
       onScan(manualInput.trim());
-      stopScanner();
-      onClose();
+      setManualInput(""); // Limpar campo após scan
+      // NÃO fechar o modal - manter aberto para próximo scan
     }
   };
 
@@ -192,45 +192,44 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             </div>
           )}
 
-          <div className="mt-4 space-y-3">
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-              <p className="text-xs text-center font-medium mb-2" style={{ color: isDark ? '#93c5fd' : '#1e40af' }}>
-                💡 Digite ou cole o código
-              </p>
+          <div className="mt-3 space-y-2">
+            <div className="bg-white dark:bg-gray-900 border-2 rounded-lg p-3" style={{ borderColor: isDark ? '#3b82f6' : '#2563eb' }}>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Código QR ou código de barras..."
+                  placeholder="Digite ou cole o código..."
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === 'Enter' && manualInput.trim()) {
                       handleManualSubmit();
                     }
                   }}
-                  className="text-center font-mono text-base"
-                  style={{ backgroundColor: theme.bg, borderColor: theme.border, color: theme.text }}
-                  autoFocus={useManualMode}
+                  className="text-center font-mono text-lg h-12"
+                  style={{ 
+                    backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                    borderColor: isDark ? '#475569' : '#cbd5e1',
+                    color: isDark ? '#f1f5f9' : '#0f172a'
+                  }}
+                  autoFocus
                 />
                 <Button
                   onClick={handleManualSubmit}
                   disabled={!manualInput.trim()}
-                  className="bg-blue-600 hover:bg-blue-700 px-6"
+                  className="bg-blue-600 hover:bg-blue-700 px-8 h-12 text-base"
                 >
                   OK
                 </Button>
               </div>
             </div>
 
-
-
             <Button
               variant="outline"
               onClick={onClose}
-              className="w-full"
+              className="w-full h-11"
               style={{ borderColor: theme.border, color: theme.text }}
             >
               <X className="w-4 h-4 mr-2" />
-              Cancelar
+              Fechar Scanner
             </Button>
           </div>
         </div>
