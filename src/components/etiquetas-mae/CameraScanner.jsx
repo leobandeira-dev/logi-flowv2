@@ -207,13 +207,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 style={{ transform: 'scaleX(-1)' }}
               />
 
-              {/* Overlay Fixo - SEM FLASHBACK */}
+              {/* Overlay com Feedback Sutil por Cor */}
               <div 
-                className="absolute inset-0 pointer-events-none flex items-center justify-center"
+                className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
                 style={{ zIndex: 5 }}
               >
                 <div 
-                  className="shadow-lg"
+                  className="shadow-lg transition-all duration-300"
                   style={{
                     width: '80%',
                     height: '80%',
@@ -223,14 +223,40 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                     boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
                     borderRadius: '12px',
                     position: 'relative',
-                    border: '6px solid #60a5fa'
+                    border: scanFeedback === 'processing' 
+                      ? '8px solid #3b82f6' 
+                      : '6px solid #60a5fa',
+                    backgroundColor: scanFeedback === 'processing' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
                   }}
                 >
-                  {/* Cantos */}
-                  <div className="absolute top-0 left-0 w-12 h-12 border-t-8 border-l-8" style={{ borderRadius: '12px 0 0 0', borderColor: '#60a5fa' }}></div>
-                  <div className="absolute top-0 right-0 w-12 h-12 border-t-8 border-r-8" style={{ borderRadius: '0 12px 0 0', borderColor: '#60a5fa' }}></div>
-                  <div className="absolute bottom-0 left-0 w-12 h-12 border-b-8 border-l-8" style={{ borderRadius: '0 0 0 12px', borderColor: '#60a5fa' }}></div>
-                  <div className="absolute bottom-0 right-0 w-12 h-12 border-b-8 border-r-8" style={{ borderRadius: '0 0 12px 0', borderColor: '#60a5fa' }}></div>
+                  {/* Cantos com Feedback Visual */}
+                  <div className="absolute top-0 left-0 w-16 h-16 border-t-8 border-l-8 transition-all duration-300" style={{ 
+                    borderRadius: '12px 0 0 0', 
+                    borderColor: scanFeedback === 'processing' ? '#3b82f6' : '#60a5fa',
+                    borderWidth: scanFeedback === 'processing' ? '10px' : '8px'
+                  }}></div>
+                  <div className="absolute top-0 right-0 w-16 h-16 border-t-8 border-r-8 transition-all duration-300" style={{ 
+                    borderRadius: '0 12px 0 0', 
+                    borderColor: scanFeedback === 'processing' ? '#3b82f6' : '#60a5fa',
+                    borderWidth: scanFeedback === 'processing' ? '10px' : '8px'
+                  }}></div>
+                  <div className="absolute bottom-0 left-0 w-16 h-16 border-b-8 border-l-8 transition-all duration-300" style={{ 
+                    borderRadius: '0 0 0 12px', 
+                    borderColor: scanFeedback === 'processing' ? '#3b82f6' : '#60a5fa',
+                    borderWidth: scanFeedback === 'processing' ? '10px' : '8px'
+                  }}></div>
+                  <div className="absolute bottom-0 right-0 w-16 h-16 border-b-8 border-r-8 transition-all duration-300" style={{ 
+                    borderRadius: '0 0 12px 0', 
+                    borderColor: scanFeedback === 'processing' ? '#3b82f6' : '#60a5fa',
+                    borderWidth: scanFeedback === 'processing' ? '10px' : '8px'
+                  }}></div>
+
+                  {/* Indicador Central Sutil */}
+                  {scanFeedback === 'processing' && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
+                    </div>
+                  )}
                 </div>
               </div>
 

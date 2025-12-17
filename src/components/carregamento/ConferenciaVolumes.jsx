@@ -59,8 +59,6 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
   const [notasExpandidas, setNotasExpandidas] = useState({});
   const [notaEmConferencia, setNotaEmConferencia] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [alertaVolume, setAlertaVolume] = useState(null);
-  const [showAlertaModal, setShowAlertaModal] = useState(false);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -398,20 +396,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
 
     // Verificar duplicata IMEDIATAMENTE após encontrar o volume
     if (volume && volumesEmbarcados.includes(volume.id)) {
-      const notaDoVolumeJaEmbarcado = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-      
-      setAlertaVolume({
-        tipo: 'duplicado',
-        mensagem: 'Este volume já foi embarcado anteriormente!',
-        detalhes: {
-          volumeCodigo: volume.identificador_unico,
-          notaOriginal: notaDoVolumeJaEmbarcado,
-        },
-        sugestao: 'Verifique se não há duplicidade no processo de embarque.'
-      });
-      setShowAlertaModal(true);
-      
-      toast.warning(`Volume já embarcado na NF ${notaDoVolumeJaEmbarcado?.numero_nota || 'anterior'}!`, { duration: 2000 });
+      console.log('⚠️ Volume duplicado detectado:', volume.identificador_unico);
       setCodigoScanner("");
       return 'duplicate';
     }
@@ -428,20 +413,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
           
           // Verificar duplicata TAMBÉM para volumes encontrados no banco
           if (volumesEmbarcados.includes(volume.id)) {
-            const notaDoVolumeJaEmbarcado = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-            
-            setAlertaVolume({
-              tipo: 'duplicado',
-              mensagem: 'Este volume já foi embarcado anteriormente!',
-              detalhes: {
-                volumeCodigo: volume.identificador_unico,
-                notaOriginal: notaDoVolumeJaEmbarcado,
-              },
-              sugestao: 'Verifique se não há duplicidade no processo de embarque.'
-            });
-            setShowAlertaModal(true);
-            
-            toast.warning(`Volume já embarcado na NF ${notaDoVolumeJaEmbarcado?.numero_nota || 'anterior'}!`, { duration: 2000 });
+            console.log('⚠️ Volume duplicado detectado:', volume.identificador_unico);
             setCodigoScanner("");
             return 'duplicate';
           }
@@ -570,20 +542,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
 
     // Verificação final de duplicata (segurança)
     if (volumesEmbarcados.includes(volume.id)) {
-      const notaDoVolumeJaEmbarcado = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-      
-      setAlertaVolume({
-        tipo: 'duplicado',
-        mensagem: 'Este volume já foi embarcado anteriormente!',
-        detalhes: {
-          volumeCodigo: volume.identificador_unico,
-          notaOriginal: notaDoVolumeJaEmbarcado,
-        },
-        sugestao: 'Verifique se não há duplicidade no processo de embarque.'
-      });
-      setShowAlertaModal(true);
-      
-      toast.warning(`Volume já embarcado na NF ${notaDoVolumeJaEmbarcado?.numero_nota || 'anterior'}!`, { duration: 2000 });
+      console.log('⚠️ Volume duplicado detectado:', volume.identificador_unico);
       setCodigoScanner("");
       return 'duplicate';
     }
@@ -631,12 +590,13 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       
       console.log('💾 Rascunho salvo no localStorage');
       
-      // 5. Forçar refresh
-      setRefreshKey(prev => {
-        const novoKey = prev + 1;
-        console.log('🔄 RefreshKey atualizado:', prev, '->', novoKey);
-        return novoKey;
-      });
+      // 5. Forçar múltiplas atualizações para garantir renderização
+      setRefreshKey(prev => prev + 1);
+      
+      // Forçar re-render assíncrono
+      setTimeout(() => {
+        setRefreshKey(prev => prev + 1);
+      }, 50);
       
       setCodigoScanner("");
 
@@ -907,7 +867,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         </div>
 
         {/* Lista Resumida de Notas Fiscais */}
-        <div className="flex-1 overflow-y-auto p-3">
+        <div className="flex-1 overflow-y-auto p-3" key={`lista-${refreshKey}`}>
           <div className="space-y-2">
             {notasFiscaisLocal.map((nota) => {
               const volumesNota = getVolumesNota(nota.id);
@@ -1175,16 +1135,6 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         />
       )}
 
-      {/* Modal de Alerta de Volume */}
-      <AlertaVolumeModal
-        open={showAlertaModal}
-        onClose={() => {
-          setShowAlertaModal(false);
-          setAlertaVolume(null);
-        }}
-        alerta={alertaVolume}
-        isDark={isDark}
-      />
       </>
       );
       }
