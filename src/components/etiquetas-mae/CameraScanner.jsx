@@ -46,15 +46,26 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
       const html5QrCode = new window.Html5Qrcode("qr-reader");
       html5QrCodeRef.current = html5QrCode;
 
-      // Calcular tamanho do qrbox perfeitamente quadrado
+      // Calcular tamanho do qrbox baseado no modo de leitura
       const screenWidth = window.innerWidth;
       const screenHeight = window.innerHeight;
       const minDimension = Math.min(screenWidth, screenHeight);
-      const qrboxSize = Math.floor(minDimension * 0.6); // 60% da menor dimensão para garantir quadrado
+      
+      let qrbox;
+      if (scanMode === 'qrcode') {
+        // Quadrado perfeito para QR Code e códigos de barras verticais
+        const size = Math.floor(minDimension * 0.6);
+        qrbox = { width: size, height: size };
+      } else {
+        // Retângulo horizontal para chaves de NF-e (mais largo que alto)
+        const width = Math.floor(screenWidth * 0.85);
+        const height = Math.floor(width * 0.35); // 35% da largura para formato retangular
+        qrbox = { width, height };
+      }
 
       const config = {
         fps: 10,
-        qrbox: { width: qrboxSize, height: qrboxSize }, // Forçar quadrado perfeito
+        qrbox,
         formatsToSupport: [
           window.Html5QrcodeSupportedFormats.QR_CODE,
           window.Html5QrcodeSupportedFormats.CODE_128,
