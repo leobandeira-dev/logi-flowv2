@@ -47,8 +47,6 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
     observacoes: ""
   });
   const [saving, setSaving] = useState(false);
-  const [showConfirmarNF, setShowConfirmarNF] = useState(false);
-  const [nfParaConfirmar, setNfParaConfirmar] = useState(null);
   const [videoStream, setVideoStream] = useState(null);
   const [notasFiscaisLocal, setNotasFiscaisLocal] = useState([]);
   const [volumesLocal, setVolumesLocal] = useState([]);
@@ -499,42 +497,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
     }
     };
 
-  const handleConfirmarNFCompleta = async () => {
-    if (!nfParaConfirmar) return;
 
-    setSaving(true);
-    try {
-      const volumesNota = getVolumesNota(nfParaConfirmar.id);
-      
-      for (const volume of volumesNota) {
-        if (!volumesEmbarcados.includes(volume.id)) {
-          await base44.entities.Volume.update(volume.id, {
-            status_volume: "carregado",
-            localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)}`
-          });
-        }
-      }
-
-      const novosEmbarcados = [...volumesEmbarcados, ...volumesNota.map(v => v.id)];
-      const volumesAtualizados = [...new Set(novosEmbarcados)];
-      setVolumesEmbarcados(volumesAtualizados);
-
-      // Salvar rascunho
-      localStorage.setItem(`conferencia_rascunho_${ordem.id}`, JSON.stringify({
-        volumesEmbarcados: volumesAtualizados,
-        timestamp: new Date().toISOString()
-      }));
-
-      toast.success(`NF ${nfParaConfirmar.numero_nota} confirmada completamente!`);
-      setShowConfirmarNF(false);
-      setNfParaConfirmar(null);
-    } catch (error) {
-      console.error("Erro ao confirmar NF:", error);
-      toast.error("Erro ao confirmar NF completa");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleRegistrarOcorrencia = async () => {
     if (!ocorrenciaData.observacoes.trim()) {
@@ -687,24 +650,24 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
   return (
     <>
       <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: theme.bg }}>
-        {/* Header */}
-        <div className="border-b p-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
+        {/* Header Compacto */}
+        <div className="border-b p-3" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onClose}
+                className="h-8"
                 style={{ borderColor: theme.cardBorder, color: theme.text }}
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar
+                <ArrowLeft className="w-4 h-4" />
               </Button>
               <div>
-                <h2 className="text-xl font-bold" style={{ color: theme.text }}>
+                <h2 className="text-base font-bold leading-tight" style={{ color: theme.text }}>
                   Conferência de Carregamento
                 </h2>
-                <p className="text-sm" style={{ color: theme.textMuted }}>
+                <p className="text-xs" style={{ color: theme.textMuted }}>
                   Ordem: {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
                 </p>
               </div>
@@ -712,51 +675,50 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
             <Button
               onClick={handleAbrirFinalizacao}
               disabled={saving}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white h-8 text-xs"
             >
-              <TruckIcon className="w-4 h-4 mr-2" />
-              Finalizar Carregamento
+              <TruckIcon className="w-3 h-3 mr-1" />
+              Finalizar
             </Button>
           </div>
 
           {/* Progresso Geral */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs">
               <span style={{ color: theme.text }}>Progresso Geral</span>
               <span className="font-bold" style={{ color: theme.text }}>
                 {getVolumesEmbarcadosValidos().length} / {getTotalVolumes()} volumes
               </span>
             </div>
-            <Progress value={progressoGeral} className="h-3" />
+            <Progress value={progressoGeral} className="h-2" />
           </div>
         </div>
 
         {/* Scanner QR Code */}
-        <div className="border-b p-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-          <div className="max-w-2xl mx-auto">
-            <Button
-              onClick={() => {
-                // Identificar nota em conferência (primeira com volumes pendentes)
-                const notaPendente = notasFiscaisLocal.find(nota => {
-                  const volumesNota = getVolumesNota(nota.id);
-                  const embarcadosNota = getVolumesEmbarcadosNota(nota.id);
-                  return embarcadosNota.length < volumesNota.length;
-                });
-                setNotaEmConferencia(notaPendente);
-                setShowCamera(true);
-              }}
-              size="lg"
-              className="w-full bg-blue-600 hover:bg-blue-700 h-12"
-            >
-              <Camera className="w-5 h-5 mr-2" />
-              Escanear QR Code
-            </Button>
-          </div>
+        <div className="border-b p-3" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <Button
+            onClick={() => {
+              // Identificar nota em conferência (primeira com volumes pendentes)
+              const notaPendente = notasFiscaisLocal.find(nota => {
+                const volumesNota = getVolumesNota(nota.id);
+                const embarcadosNota = getVolumesEmbarcadosNota(nota.id);
+                return embarcadosNota.length < volumesNota.length;
+              });
+              setNotaEmConferencia(notaPendente);
+              setShowCamera(true);
+            }}
+            size="lg"
+            className="w-full bg-blue-600 hover:bg-blue-700 h-12"
+          >
+            <Camera className="w-5 h-5 mr-2" />
+            Escanear QR Code
+          </Button>
         </div>
 
         {/* Lista Resumida de Notas Fiscais */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="max-w-5xl mx-auto space-y-3">
+        <div className="flex-1 overflow-y-auto p-3">
+          <div className="space-y-2">
             {notasFiscaisLocal.map((nota) => {
               const volumesNota = getVolumesNota(nota.id);
               const volumesEmbarcadosNota = getVolumesEmbarcadosNota(nota.id);
@@ -771,131 +733,96 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
                 <Card key={nota.id} style={{ backgroundColor: theme.cardBg, borderColor: notaCompleta ? '#10b981' : theme.cardBorder }}>
                   {/* Header Resumido */}
                   <div 
-                    className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                    className="p-3 cursor-pointer active:bg-gray-50 dark:active:bg-gray-800/50 transition-colors"
                     onClick={() => toggleNotaExpandida(nota.id)}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex items-start gap-2 flex-1 min-w-0">
                         {isExpanded ? (
-                          <ChevronDown className="w-5 h-5" style={{ color: theme.textMuted }} />
+                          <ChevronDown className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: theme.textMuted }} />
                         ) : (
-                          <ChevronRight className="w-5 h-5" style={{ color: theme.textMuted }} />
+                          <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: theme.textMuted }} />
                         )}
                         
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <FileText className="w-4 h-4 text-blue-600" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <FileText className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
                             <span className="font-bold text-sm" style={{ color: theme.text }}>
                               NF {nota.numero_nota}
                             </span>
-                            {notaCompleta && (
-                              <Badge className="bg-green-600 text-white text-xs">
-                                <CheckCircle className="w-3 h-3 mr-1" />
+                            {notaCompleta ? (
+                              <Badge className="bg-green-600 text-white text-[10px] px-1.5 py-0">
                                 Completa
                               </Badge>
-                            )}
-                            {pendentes > 0 && (
-                              <Badge className="bg-orange-500 text-white text-xs">
+                            ) : (
+                              <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0 font-bold">
                                 {pendentes} pendente{pendentes !== 1 ? 's' : ''}
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs" style={{ color: theme.textMuted }}>
+                          <p className="text-[11px] truncate" style={{ color: theme.textMuted }}>
                             {nota.emitente_razao_social}
                           </p>
                         </div>
-
-                        <div className="text-right">
-                          <div className="text-sm font-bold" style={{ color: theme.text }}>
-                            {volumesEmbarcadosNota.length}/{volumesNota.length}
-                          </div>
-                          <div className="text-xs" style={{ color: theme.textMuted }}>
-                            {nota.peso_total_nf?.toLocaleString()} kg
-                          </div>
-                        </div>
                       </div>
 
-                      {!isExpanded && !notaCompleta && pendentes > 0 && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setNfParaConfirmar(nota);
-                            setShowConfirmarNF(true);
-                          }}
-                          className="ml-3"
-                          style={{ borderColor: theme.cardBorder, color: theme.text }}
-                        >
-                          Confirmar Todos
-                        </Button>
-                      )}
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-sm font-bold whitespace-nowrap" style={{ color: theme.text }}>
+                          {volumesEmbarcadosNota.length}/{volumesNota.length}
+                        </div>
+                        <div className="text-[11px] whitespace-nowrap" style={{ color: theme.textMuted }}>
+                          {nota.peso_total_nf?.toLocaleString()} kg
+                        </div>
+                      </div>
                     </div>
 
-                    <Progress value={progressoNota} className="h-2 mt-2" />
+                    <Progress value={progressoNota} className="h-1.5" />
                   </div>
 
                   {/* Lista Detalhada (Expansível) */}
                   {isExpanded && (
-                    <CardContent className="pt-0 pb-4">
+                    <CardContent className="pt-0 pb-3 px-3">
                       <div className="space-y-1 mb-3">
                         {volumesNota.map((volume) => {
                           const embarcado = volumesEmbarcados.includes(volume.id);
                           return (
                             <div
                               key={volume.id}
-                              className="flex items-center justify-between p-2 rounded border"
+                              className="flex items-center gap-2 p-2 rounded border"
                               style={{
                                 backgroundColor: embarcado ? (isDark ? '#064e3b' : '#d1fae5') : 'transparent',
                                 borderColor: embarcado ? '#10b981' : theme.cardBorder
                               }}
                             >
-                              <div className="flex items-center gap-3">
-                                {embarcado ? (
-                                  <CheckCircle className="w-4 h-4 text-green-600" />
-                                ) : (
-                                  <Package className="w-4 h-4" style={{ color: theme.textMuted }} />
-                                )}
-                                <span className="font-mono text-sm" style={{ color: theme.text }}>
-                                  {volume.identificador_unico}
-                                </span>
-                                <span className="text-xs" style={{ color: theme.textMuted }}>
-                                  {volume.peso_volume} kg
-                                </span>
-                              </div>
+                              {embarcado ? (
+                                <CheckCircle className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                              ) : (
+                                <Package className="w-3.5 h-3.5 flex-shrink-0" style={{ color: theme.textMuted }} />
+                              )}
+                              <span className="font-mono text-xs flex-1" style={{ color: theme.text }}>
+                                {volume.identificador_unico}
+                              </span>
+                              <span className="text-[10px] flex-shrink-0" style={{ color: theme.textMuted }}>
+                                {volume.peso_volume} kg
+                              </span>
                             </div>
                           );
                         })}
                       </div>
 
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setNfParaConfirmar(nota);
-                            setShowConfirmarNF(true);
-                          }}
-                          disabled={notaCompleta}
-                          className="flex-1"
-                          style={{ borderColor: theme.cardBorder, color: theme.text }}
-                        >
-                          <Check className="w-4 h-4 mr-2" />
-                          Confirmar Todos
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setNotaOcorrencia(nota);
-                            setShowOcorrenciaModal(true);
-                          }}
-                          style={{ borderColor: '#ef4444', color: '#ef4444' }}
-                        >
-                          <AlertTriangle className="w-4 h-4 mr-2" />
-                          Ocorrência
-                        </Button>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setNotaOcorrencia(nota);
+                          setShowOcorrenciaModal(true);
+                        }}
+                        className="w-full h-9"
+                        style={{ borderColor: '#ef4444', color: '#ef4444' }}
+                      >
+                        <AlertTriangle className="w-4 h-4 mr-2" />
+                        Registrar Ocorrência
+                      </Button>
                     </CardContent>
                   )}
                 </Card>
@@ -905,41 +832,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         </div>
       </div>
 
-      {/* Modal Confirmar NF Completa */}
-      <Dialog open={showConfirmarNF} onOpenChange={setShowConfirmarNF}>
-        <DialogContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-          <DialogHeader>
-            <DialogTitle style={{ color: theme.text }}>Confirmar NF Completa</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p style={{ color: theme.text }}>
-              Deseja confirmar todos os volumes da NF <strong>{nfParaConfirmar?.numero_nota}</strong>?
-            </p>
-            <p className="text-sm mt-2" style={{ color: theme.textMuted }}>
-              Total de volumes: {nfParaConfirmar ? getVolumesNota(nfParaConfirmar.id).length : 0}
-            </p>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowConfirmarNF(false);
-                setNfParaConfirmar(null);
-              }}
-              style={{ borderColor: theme.cardBorder, color: theme.text }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleConfirmarNFCompleta}
-              disabled={saving}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {saving ? "Confirmando..." : "Confirmar Todos"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
 
       {/* Modal Finalizar Carregamento */}
       <Dialog open={showFinalizarModal} onOpenChange={setShowFinalizarModal}>
