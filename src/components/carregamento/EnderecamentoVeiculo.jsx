@@ -268,6 +268,27 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     setNotasOrigem(origens);
   };
 
+  // Helper para salvar rascunho de forma assíncrona (não bloqueia UI)
+  const salvarRascunho = () => {
+    requestIdleCallback(() => {
+      try {
+        const enderecamentosOrdemAtual = enderecamentos.filter(e => e.ordem_id === ordem.id);
+        localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
+          enderecamentos: enderecamentosOrdemAtual,
+          timestamp: new Date().toISOString()
+        }));
+        
+        localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
+          notas: notasFiscaisLocal,
+          volumes: volumesLocal,
+          timestamp: new Date().toISOString()
+        }));
+      } catch (error) {
+        console.error("Erro ao salvar rascunho:", error);
+      }
+    }, { timeout: 500 });
+  };
+
   useEffect(() => {
     if (ordem.tipo_veiculo) {
       const tipoBase = ordem.tipo_veiculo.split(' ')[0];
@@ -379,14 +400,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       setShowBuscaModal(false);
       setCelulaAtiva(null);
       
-      // Salvar rascunho apenas com endereçamentos desta ordem
-      const enderecamentosOrdemAtual = todosEnderecamentos.filter(e => e.ordem_id === ordem.id);
-      localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
-        enderecamentos: enderecamentosOrdemAtual,
-        timestamp: new Date().toISOString()
-      }));
-      
       toast.success(`${volumesSelecionados.length} volume(s) alocado(s)!`);
+      
+      // Salvar rascunho de forma assíncrona
+      salvarRascunho();
     } catch (error) {
       console.error("Erro ao alocar volumes:", error);
       toast.error("Erro ao alocar volumes");
@@ -420,14 +437,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         !(e.linha === linha && e.coluna === coluna && e.nota_fiscal_id === notaId)
       );
       setEnderecamentos(enderecamentosAtualizados);
-      
-      // Salvar rascunho
-      localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
-        enderecamentos: enderecamentosAtualizados,
-        timestamp: new Date().toISOString()
-      }));
 
       toast.success("Nota fiscal removida da célula!");
+      
+      // Salvar rascunho de forma assíncrona
+      salvarRascunho();
     } catch (error) {
       console.error("Erro ao remover:", error);
       toast.error("Erro ao remover da célula");
@@ -501,14 +515,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         setVolumesLocal(volumesAtualizados);
         setNotasOrigem({ ...notasOrigem, [notaExistente.id]: "Adicionada" });
         
-        // Salvar rascunho das notas e volumes vinculados
-        localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-          notas: notasAtualizadas,
-          volumes: volumesAtualizados,
-          timestamp: new Date().toISOString()
-        }));
-        
         toast.success("Nota fiscal vinculada automaticamente!");
+        
+        // Salvar rascunho de forma assíncrona
+        salvarRascunho();
         setSearchChaveNF("");
         
         // Manter foco no campo
@@ -656,14 +666,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       setVolumesLocal(volumesAtualizados);
       setNotasOrigem({ ...notasOrigem, [novaNF.id]: "Importada" });
       
-      // Salvar rascunho das notas e volumes vinculados
-      localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-        notas: notasAtualizadas,
-        volumes: volumesAtualizados,
-        timestamp: new Date().toISOString()
-      }));
-      
       toast.success(`Nota fiscal importada! ${quantidadeVolumes} volume(s) criado(s).`);
+      
+      // Salvar rascunho de forma assíncrona
+      salvarRascunho();
       setSearchChaveNF("");
       
       // Manter foco no campo
@@ -775,14 +781,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
         setEnderecamentos(todosEnderecamentos);
 
-        // Salvar rascunho apenas com endereçamentos desta ordem
-        const enderecamentosOrdemAtual = todosEnderecamentos.filter(e => e.ordem_id === ordem.id);
-        localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
-          enderecamentos: enderecamentosOrdemAtual,
-          timestamp: new Date().toISOString()
-        }));
-
         toast.success(`${quantidade} volume(s) alocado(s)!`, { id: 'alocando' });
+        
+        // Salvar rascunho de forma assíncrona
+        salvarRascunho();
         
         // Fechar modal após concluir
         setShowQuantidadeModal(false);
@@ -844,14 +846,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
       setEnderecamentos(todosEnderecamentos);
 
-      // Salvar rascunho apenas com endereçamentos desta ordem
-      const enderecamentosOrdemAtual = todosEnderecamentos.filter(e => e.ordem_id === ordem.id);
-      localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
-        enderecamentos: enderecamentosOrdemAtual,
-        timestamp: new Date().toISOString()
-      }));
-
       toast.success(`${quantidade} volume(s) movido(s)!`);
+      
+      // Salvar rascunho de forma assíncrona
+      salvarRascunho();
       
       // Fechar modal após concluir
       setShowQuantidadeModal(false);
@@ -937,12 +935,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
             setEnderecamentos(todosEnderecamentos);
 
-            localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
-              enderecamentos: enderecamentosAtualizados,
-              timestamp: new Date().toISOString()
-            }));
-
             toast.success(`Nota fiscal desalocada! ${endsParaRemover.length} volumes removidos.`);
+            
+            // Salvar rascunho de forma assíncrona
+            salvarRascunho();
           } catch (error) {
             console.error("Erro ao desalocar nota:", error);
             // Reverter em caso de erro
@@ -1001,14 +997,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
           setEnderecamentos(todosEnderecamentos);
 
-          // Salvar rascunho
-          const enderecamentosOrdemAtual = todosEnderecamentos.filter(e => e.ordem_id === ordem.id);
-          localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
-            enderecamentos: enderecamentosOrdemAtual,
-            timestamp: new Date().toISOString()
-          }));
-
           toast.success("Volume desalocado!");
+          
+          // Salvar rascunho de forma assíncrona
+          salvarRascunho();
         } catch (error) {
           console.error("Erro ao desalocar volume:", error);
           await loadEnderecamentos();
@@ -1075,18 +1067,14 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
         setEnderecamentos(todosEnderecamentos);
 
-        // Salvar rascunho apenas com endereçamentos desta ordem
-        const enderecamentosOrdemAtual = todosEnderecamentos.filter(e => e.ordem_id === ordem.id);
-        localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
-          enderecamentos: enderecamentosOrdemAtual,
-          timestamp: new Date().toISOString()
-        }));
-
         if (alocacaoExistente) {
           toast.success("Volume realocado!");
         } else {
           toast.success("Volume posicionado!");
         }
+        
+        // Salvar rascunho de forma assíncrona
+        salvarRascunho();
       } catch (error) {
         console.error("Erro ao posicionar volume:", error);
         // Reverter em caso de erro
@@ -1146,24 +1134,13 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         // Garantir que TODOS os volumes da nota estão no estado local
         const volumesIdsLocais = volumesLocal.map(v => v.id);
         const volumesParaAdicionar = todosVolumesDaNota.filter(v => !volumesIdsLocais.includes(v.id));
-        
+
         if (volumesParaAdicionar.length > 0) {
           setVolumesLocal(prev => [...prev, ...volumesParaAdicionar]);
-          
-          // Salvar rascunho com todos os volumes
-          localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-            notas: notaJaVinculada ? notasFiscaisLocal : [...notasFiscaisLocal, notaDoVolume],
-            volumes: [...volumesLocal, ...volumesParaAdicionar],
-            timestamp: new Date().toISOString()
-          }));
-        } else if (!notaJaVinculada) {
-          // Salvar rascunho se nota foi vinculada
-          localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-            notas: [...notasFiscaisLocal, notaDoVolume],
-            volumes: volumesLocal,
-            timestamp: new Date().toISOString()
-          }));
         }
+
+        // Salvar rascunho de forma assíncrona sempre
+        salvarRascunho();
 
         // Selecionar apenas este volume bipado
         setVolumesSelecionados([volumeEncontrado.id]);
@@ -1250,14 +1227,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           
           if (volumesParaAdicionar.length > 0) {
             setVolumesLocal(prev => [...prev, ...volumesParaAdicionar]);
-            
-            // Salvar rascunho de notas e volumes
-            localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-              notas: notasFiscaisLocal,
-              volumes: [...volumesLocal, ...volumesParaAdicionar],
-              timestamp: new Date().toISOString()
-            }));
           }
+
+          // Salvar rascunho de forma assíncrona
+          salvarRascunho();
 
           // Selecionar volumes não endereçados e finalizar
           setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
@@ -3003,12 +2976,6 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                           // Adicionar apenas volumes novos (evita duplicação)
                           if (volumesNovos.length > 0) {
                             setVolumesLocal(prev => [...prev, ...volumesNovos]);
-                            
-                            localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-                              notas: jaVinculada ? notasFiscaisLocal : [...notasFiscaisLocal, nota],
-                              volumes: [...volumesLocal, ...volumesNovos],
-                              timestamp: new Date().toISOString()
-                            }));
                           }
                           
                           // Usar todos os volumes carregados (locais + novos)
@@ -3029,6 +2996,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                           } else {
                             toast.info("Todos os volumes já endereçados");
                           }
+                          
+                          // Salvar rascunho de forma assíncrona
+                          salvarRascunho();
                         } catch (error) {
                           console.error("Erro ao vincular nota:", error);
                           toast.error("Erro ao vincular nota fiscal");
