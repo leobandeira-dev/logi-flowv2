@@ -760,11 +760,8 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs truncate mb-0.5" style={{ color: theme.textMuted }}>
+                          <p className="text-xs truncate" style={{ color: theme.textMuted }}>
                             {nota.emitente_razao_social}
-                          </p>
-                          <p className="text-xs font-medium" style={{ color: theme.textMuted }}>
-                            {nota.destinatario_cidade}/{nota.destinatario_uf}
                           </p>
                         </div>
                       </div>
@@ -772,6 +769,9 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
                       <div className="text-right flex-shrink-0">
                         <div className="text-base font-bold whitespace-nowrap" style={{ color: theme.text }}>
                           {volumesEmbarcadosNota.length}/{volumesNota.length}
+                        </div>
+                        <div className="text-xs whitespace-nowrap" style={{ color: theme.textMuted }}>
+                          {nota.destinatario_cidade}/{nota.destinatario_uf}
                         </div>
                         <div className="text-xs whitespace-nowrap" style={{ color: theme.textMuted }}>
                           {nota.peso_total_nf?.toLocaleString()} kg
