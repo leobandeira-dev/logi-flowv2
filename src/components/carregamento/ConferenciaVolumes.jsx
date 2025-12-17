@@ -181,13 +181,14 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
 
   const handleScanVolume = async (codigo) => {
     if (!codigo || !codigo.trim()) {
-      toast.error("Digite ou escaneie um código de volume");
+      toast.error("Digite ou escaneie um código");
       return;
     }
 
     const codigoLimpo = codigo.trim().toUpperCase();
 
-    // Verificar se é uma etiqueta mãe
+    // 1. Tentar encontrar como ETIQUETA MÃE primeiro
+
     try {
       const etiquetasEncontradas = await base44.entities.EtiquetaMae.filter({ codigo: codigoLimpo });
       
@@ -293,7 +294,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       console.log("Não é etiqueta mãe, continuando busca por volume...");
     }
 
-    // Buscar volume primeiro nas notas vinculadas
+// 2. Buscar como VOLUME INDIVIDUAL
     let volume = volumesLocal.find(v => 
       v.identificador_unico?.toUpperCase() === codigoLimpo &&
       notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)
@@ -348,17 +349,17 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
           });
 
           // Atualizar estados locais com TODOS os volumes da nota
-          setNotasFiscaisLocal([...notasFiscaisLocal, notaDoVolume]);
-          setVolumesLocal([...volumesLocal, ...todosVolumesNota]);
+                setNotasFiscaisLocal(prev => [...prev, notaDoVolume]);
+                setVolumesLocal(prev => [...prev, ...todosVolumesNota]);
 
-          // Salvar rascunho
-          localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-            notas: [...notasFiscaisLocal, notaDoVolume],
-            volumes: [...volumesLocal, ...todosVolumesNota],
-            timestamp: new Date().toISOString()
-          }));
+                // Salvar rascunho de notas e volumes
+                localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
+                  notas: [...notasFiscaisLocal, notaDoVolume],
+                  volumes: [...volumesLocal, ...todosVolumesNota],
+                  timestamp: new Date().toISOString()
+                }));
 
-          toast.success(`✅ NF ${notaDoVolume.numero_nota} vinculada! ${todosVolumesNota.length} volumes disponíveis.`);
+                toast.success(`✅ NF ${notaDoVolume.numero_nota} vinculada! ${todosVolumesNota.length} volumes disponíveis.`, { duration: 2000 });
         } else {
           toast.error("Volume não encontrado no estoque");
           setCodigoScanner("");
@@ -434,7 +435,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       return;
     }
 
-    // Embarcar volume
+    // Embarcar volume individual
     try {
       await base44.entities.Volume.update(volume.id, {
         status_volume: "carregado",
@@ -452,7 +453,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       }));
 
       const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-      toast.success(`Volume embarcado! NF ${nota?.numero_nota || ''}`);
+      toast.success(`Volume embarcado! NF ${nota?.numero_nota || ''}`, { duration: 2000 });
 
       // Verificar se todos os volumes da NF foram embarcados
       const volumesNota = getVolumesNota(volume.nota_fiscal_id);
@@ -467,7 +468,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       console.error("Erro ao embarcar volume:", error);
       toast.error("Erro ao registrar embarque");
     }
-  };
+    };
 
   const handleConfirmarNFCompleta = async () => {
     if (!nfParaConfirmar) return;
