@@ -53,13 +53,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
       
       let qrbox;
       if (scanMode === 'qrcode') {
-        // ✅ QUADRADO para QR Code e códigos de barras verticais
-        const size = Math.floor(Math.min(screenWidth, screenHeight) * 0.65);
+        // ✅ QUADRADO para QR Code - 70% da menor dimensão
+        const size = Math.floor(Math.min(screenWidth, screenHeight) * 0.70);
         qrbox = { width: size, height: size };
       } else {
-        // ✅ RETÂNGULO HORIZONTAL para chave NF-e (código de barras horizontal)
+        // ✅ RETÂNGULO HORIZONTAL para chave NF-e - 85% largura x 25% altura
         const width = Math.floor(screenWidth * 0.85);
-        const height = Math.floor(width * 0.22);
+        const height = Math.floor(screenHeight * 0.25);
         qrbox = { width, height };
       }
 
@@ -213,8 +213,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
                 <div 
                   className="border-4 border-white"
                   style={{
-                    width: scanMode === 'qrcode' ? '65%' : '85%',
-                    height: scanMode === 'qrcode' ? '65%' : '22%',
+                    width: scanMode === 'qrcode' ? '70%' : '85%',
+                    height: scanMode === 'qrcode' ? '70%' : '25%',
                     aspectRatio: scanMode === 'qrcode' ? '1/1' : 'auto',
                     boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
                     borderRadius: '8px',
