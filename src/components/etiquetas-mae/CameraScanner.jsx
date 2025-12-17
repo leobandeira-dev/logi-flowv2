@@ -49,7 +49,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
       // Calcular tamanho do qrbox - área quadrada perfeita para QR Code
       const screenWidth = window.innerWidth;
       const size = Math.floor(screenWidth * 0.70);
-      const qrbox = size; // Número único cria área quadrada perfeita
+      const qrbox = { width: size, height: size }; // Forçar área quadrada
 
       const config = {
         fps: 10,
