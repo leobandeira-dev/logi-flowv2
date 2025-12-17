@@ -31,6 +31,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import CameraScanner from "../etiquetas-mae/CameraScanner";
+import AlertaVolumeModal from "./AlertaVolumeModal";
 import { toast } from "sonner";
 import { sincronizarStatusNotas } from "@/functions/sincronizarStatusNotas";
 
@@ -58,6 +59,8 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
   const [notasExpandidas, setNotasExpandidas] = useState({});
   const [notaEmConferencia, setNotaEmConferencia] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [alertaVolume, setAlertaVolume] = useState(null);
+  const [showAlertaModal, setShowAlertaModal] = useState(false);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -378,6 +381,18 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
     // Verificar duplicata IMEDIATAMENTE após encontrar o volume
     if (volume && volumesEmbarcados.includes(volume.id)) {
       const notaDoVolumeJaEmbarcado = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+      
+      setAlertaVolume({
+        tipo: 'duplicado',
+        mensagem: 'Este volume já foi embarcado anteriormente!',
+        detalhes: {
+          volumeCodigo: volume.identificador_unico,
+          notaOriginal: notaDoVolumeJaEmbarcado,
+        },
+        sugestao: 'Verifique se não há duplicidade no processo de embarque.'
+      });
+      setShowAlertaModal(true);
+      
       toast.warning(`Volume já embarcado na NF ${notaDoVolumeJaEmbarcado?.numero_nota || 'anterior'}!`, { duration: 2000 });
       setCodigoScanner("");
       return 'duplicate';
@@ -396,6 +411,18 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
           // Verificar duplicata TAMBÉM para volumes encontrados no banco
           if (volumesEmbarcados.includes(volume.id)) {
             const notaDoVolumeJaEmbarcado = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+            
+            setAlertaVolume({
+              tipo: 'duplicado',
+              mensagem: 'Este volume já foi embarcado anteriormente!',
+              detalhes: {
+                volumeCodigo: volume.identificador_unico,
+                notaOriginal: notaDoVolumeJaEmbarcado,
+              },
+              sugestao: 'Verifique se não há duplicidade no processo de embarque.'
+            });
+            setShowAlertaModal(true);
+            
             toast.warning(`Volume já embarcado na NF ${notaDoVolumeJaEmbarcado?.numero_nota || 'anterior'}!`, { duration: 2000 });
             setCodigoScanner("");
             return 'duplicate';
@@ -524,6 +551,18 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
     // Verificação final de duplicata (segurança)
     if (volumesEmbarcados.includes(volume.id)) {
       const notaDoVolumeJaEmbarcado = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+      
+      setAlertaVolume({
+        tipo: 'duplicado',
+        mensagem: 'Este volume já foi embarcado anteriormente!',
+        detalhes: {
+          volumeCodigo: volume.identificador_unico,
+          notaOriginal: notaDoVolumeJaEmbarcado,
+        },
+        sugestao: 'Verifique se não há duplicidade no processo de embarque.'
+      });
+      setShowAlertaModal(true);
+      
       toast.warning(`Volume já embarcado na NF ${notaDoVolumeJaEmbarcado?.numero_nota || 'anterior'}!`, { duration: 2000 });
       setCodigoScanner("");
       return 'duplicate';
@@ -1085,6 +1124,17 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
           } : null}
         />
       )}
-    </>
-  );
-}
+
+      {/* Modal de Alerta de Volume */}
+      <AlertaVolumeModal
+        open={showAlertaModal}
+        onClose={() => {
+          setShowAlertaModal(false);
+          setAlertaVolume(null);
+        }}
+        alerta={alertaVolume}
+        isDark={isDark}
+      />
+      </>
+      );
+      }
