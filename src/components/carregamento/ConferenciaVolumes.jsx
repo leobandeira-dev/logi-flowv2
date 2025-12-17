@@ -465,6 +465,11 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
             nota_fiscal_id: notaDoVolume.id 
           });
 
+          console.log('📦 Nova nota encontrada:', {
+            nota: notaDoVolume.numero_nota,
+            volumesEncontrados: todosVolumesNota.length
+          });
+
           // Vincular automaticamente a nota à ordem
           await base44.entities.NotaFiscal.update(notaDoVolume.id, {
             ordem_id: ordem.id,
@@ -490,25 +495,30 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
             volumes: volumesTotal
           });
 
-          // Atualizar estados locais com TODOS os volumes da nota
-                const notasAtualizadas = [...notasFiscaisLocal, notaDoVolume];
-                const volumesAtualizados = [...volumesLocal, ...todosVolumesNota];
-                
-                setNotasFiscaisLocal(notasAtualizadas);
-                setVolumesLocal(volumesAtualizados);
+          console.log('✅ Nota vinculada à ordem, atualizando estados locais');
 
-                // Salvar rascunho de notas e volumes
-                localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-                  notas: notasAtualizadas,
-                  volumes: volumesAtualizados,
-                  timestamp: new Date().toISOString()
-                }));
-
-                // Feedback: iniciando conferência de nova nota
-                toast.info(`📋 Iniciando conferência da NF ${notaDoVolume.numero_nota} - ${todosVolumesNota.length} volumes`, { duration: 2000 });
+          // CRÍTICO: Atualizar estados locais de forma síncrona
+          const notasAtualizadas = [...notasFiscaisLocal, notaDoVolume];
+          const volumesAtualizados = [...volumesLocal, ...todosVolumesNota];
                 
-                // Forçar atualização do UI
-                setRefreshKey(prev => prev + 1);
+          setNotasFiscaisLocal(notasAtualizadas);
+          setVolumesLocal(volumesAtualizados);
+
+          // Salvar rascunho de notas e volumes
+          localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
+            notas: notasAtualizadas,
+            volumes: volumesAtualizados,
+            timestamp: new Date().toISOString()
+          }));
+
+          toast.info(`📋 NF ${notaDoVolume.numero_nota} adicionada - ${todosVolumesNota.length} volumes`, { duration: 2000 });
+                
+          // Forçar atualização do UI
+          setRefreshKey(prev => prev + 1);
+          
+          // Agora continuar para embarcar o volume escaneado
+          // IMPORTANTE: usar volume do todosVolumesNota ao invés da referência anterior
+          volume = todosVolumesNota.find(v => v.identificador_unico?.toUpperCase() === codigoLimpo);
         } else {
           toast.error("Volume não encontrado no estoque");
           setCodigoScanner("");
@@ -529,36 +539,39 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       return 'error';
     }
 
-    // Carregar volumes adicionais da nota se necessário
+    // GARANTIR que todos os volumes da nota estão carregados
+    const notaDoVolume = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+    if (!notaDoVolume) {
+      toast.error("Nota fiscal do volume não encontrada");
+      setCodigoScanner("");
+      return 'error';
+    }
+
     try {
-      const notaDoVolume = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-      if (notaDoVolume) {
-        const volumesNotaLocais = volumesLocal.filter(v => v.nota_fiscal_id === notaDoVolume.id);
+      const volumesNotaLocais = volumesLocal.filter(v => v.nota_fiscal_id === notaDoVolume.id);
+      
+      // Sempre buscar do banco para garantir lista completa
+      const todosVolumesNota = await base44.entities.Volume.filter({ 
+        nota_fiscal_id: notaDoVolume.id 
+      });
+      
+      const volumesIdsLocais = volumesLocal.map(v => v.id);
+      const volumesParaAdicionar = todosVolumesNota.filter(v => !volumesIdsLocais.includes(v.id));
+      
+      if (volumesParaAdicionar.length > 0) {
+        const volumesLocaisCompletos = [...volumesLocal, ...volumesParaAdicionar];
+        setVolumesLocal(volumesLocaisCompletos);
         
-        // Se tiver menos volumes locais do que o total da nota, buscar do banco
-        if (volumesNotaLocais.length < (notaDoVolume.quantidade_total_volumes_nf || 0)) {
-          const todosVolumesNota = await base44.entities.Volume.filter({ 
-            nota_fiscal_id: notaDoVolume.id 
-          });
-          
-          const volumesIdsLocais = volumesLocal.map(v => v.id);
-          const volumesParaAdicionar = todosVolumesNota.filter(v => !volumesIdsLocais.includes(v.id));
-          
-          if (volumesParaAdicionar.length > 0) {
-            setVolumesLocal(prev => [...prev, ...volumesParaAdicionar]);
-            
-            localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-              notas: notasFiscaisLocal,
-              volumes: [...volumesLocal, ...volumesParaAdicionar],
-              timestamp: new Date().toISOString()
-            }));
-            
-            console.log(`📦 ${volumesParaAdicionar.length} volumes adicionais da NF ${notaDoVolume.numero_nota} carregados`);
-          }
-        }
+        localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
+          notas: notasFiscaisLocal,
+          volumes: volumesLocaisCompletos,
+          timestamp: new Date().toISOString()
+        }));
+        
+        console.log(`📦 ${volumesParaAdicionar.length} volumes adicionais carregados para NF ${notaDoVolume.numero_nota}`);
       }
     } catch (error) {
-      console.error("Erro ao carregar volumes adicionais da nota:", error);
+      console.error("Erro ao carregar volumes da nota:", error);
     }
 
     // Verificação final de duplicata (segurança)
