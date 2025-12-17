@@ -27,6 +27,7 @@ export default function GestaoDeNotasFiscais() {
   const [volumes, setVolumes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchTermAtivo, setSearchTermAtivo] = useState("");
   const [selectedNota, setSelectedNota] = useState(null);
   const [notaVolumes, setNotaVolumes] = useState([]);
   const [isDark, setIsDark] = useState(false);
@@ -197,8 +198,14 @@ export default function GestaoDeNotasFiscais() {
     entregue: { label: "Entregue", color: "bg-emerald-600" }
   };
 
+  const handleBuscar = () => {
+    setSearchTermAtivo(searchTerm);
+    setPaginaAtual(1);
+  };
+
   const limparFiltros = () => {
     setSearchTerm("");
+    setSearchTermAtivo("");
     setFiltroStatus("todos");
     setFiltroEmitente("");
     setFiltroDestinatario("");
@@ -226,12 +233,12 @@ export default function GestaoDeNotasFiscais() {
     const ordem = ordens.find(o => o.id === nota.ordem_id);
     const numeroCarga = ordem?.numero_carga || '';
     
-    const matchesSearch = !searchTerm || 
-      nota.numero_nota?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      nota.chave_nota_fiscal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      nota.emitente_razao_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      nota.destinatario_razao_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      numeroCarga.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = !searchTermAtivo || 
+      nota.numero_nota?.toLowerCase().includes(searchTermAtivo.toLowerCase()) ||
+      nota.chave_nota_fiscal?.toLowerCase().includes(searchTermAtivo.toLowerCase()) ||
+      nota.emitente_razao_social?.toLowerCase().includes(searchTermAtivo.toLowerCase()) ||
+      nota.destinatario_razao_social?.toLowerCase().includes(searchTermAtivo.toLowerCase()) ||
+      numeroCarga.toLowerCase().includes(searchTermAtivo.toLowerCase());
 
     const statusDinamico = calcularStatusDinamico(nota);
     const matchesStatus = filtroStatus === "todos" || statusDinamico === filtroStatus;
@@ -313,10 +320,23 @@ export default function GestaoDeNotasFiscais() {
                 placeholder="Buscar notas..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleBuscar();
+                  }
+                }}
                 className="pl-10 h-9 text-sm"
                 style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
               />
             </div>
+            <Button
+              onClick={handleBuscar}
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 h-9"
+            >
+              <Search className="w-4 h-4 mr-2" />
+              Buscar
+            </Button>
             <FiltrosPredefinidos
               rota="gestao_notas_fiscais"
               filtrosAtuais={{
