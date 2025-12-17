@@ -46,19 +46,23 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
       const html5QrCode = new window.Html5Qrcode("qr-reader");
       html5QrCodeRef.current = html5QrCode;
 
-      // Definir tamanho do qrbox baseado na largura disponível
-      const containerWidth = scannerRef.current?.offsetWidth || window.innerWidth * 0.9;
-      const qrboxSize = Math.min(250, containerWidth * 0.7);
+      // Calcular tamanho ideal do qrbox (quadrado de leitura)
+      // Usar 70% da menor dimensão da tela para garantir visibilidade
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      const minDimension = Math.min(screenWidth, screenHeight);
+      const qrboxSize = Math.floor(minDimension * 0.65); // 65% da menor dimensão
 
       const config = {
         fps: 10,
-        qrbox: qrboxSize, // Define um valor único para criar um quadrado perfeito
+        qrbox: qrboxSize, // Tamanho do quadrado de leitura
         formatsToSupport: [
           window.Html5QrcodeSupportedFormats.QR_CODE,
           window.Html5QrcodeSupportedFormats.CODE_128,
           window.Html5QrcodeSupportedFormats.ITF
         ],
-        showTorchButtonIfSupported: true
+        showTorchButtonIfSupported: true,
+        aspectRatio: 1.0 // Força proporção quadrada
       };
 
       await html5QrCode.start(
