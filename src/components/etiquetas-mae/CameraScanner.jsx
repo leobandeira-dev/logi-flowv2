@@ -49,17 +49,16 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
 
       // Calcular tamanho do qrbox baseado no modo de leitura
       const screenWidth = window.innerWidth;
-      const screenHeight = window.innerHeight;
       
       let qrbox;
       if (scanMode === 'qrcode') {
-        // ✅ QUADRADO para QR Code - 70% da menor dimensão
-        const size = Math.floor(Math.min(screenWidth, screenHeight) * 0.70);
-        qrbox = { width: size, height: size };
+        // ✅ QUADRADO PERFEITO para QR Code - mesmo valor para width e height
+        const size = Math.floor(screenWidth * 0.70);
+        qrbox = size; // Passando apenas número cria quadrado perfeito
       } else {
-        // ✅ RETÂNGULO HORIZONTAL para chave NF-e - 85% largura x 25% altura
+        // ✅ RETÂNGULO HORIZONTAL para chave NF-e
         const width = Math.floor(screenWidth * 0.85);
-        const height = Math.floor(screenHeight * 0.25);
+        const height = Math.floor(width * 0.30);
         qrbox = { width, height };
       }
 
