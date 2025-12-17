@@ -53,15 +53,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
       const minDimension = Math.min(screenWidth, screenHeight);
       
       let qrbox;
-      if (scanMode === 'qrcode') {
-        // Quadrado perfeito para QR Code e códigos de barras verticais
-        const size = Math.floor(minDimension * 0.6);
-        qrbox = { width: size, height: size };
-      } else {
+      if (scanMode === 'nfe') {
         // Retângulo horizontal para chaves de NF-e (mais largo que alto)
         const width = Math.floor(screenWidth * 0.85);
-        const height = Math.floor(width * 0.35); // 35% da largura para formato retangular
+        const height = Math.floor(width * 0.3); // 30% da largura para formato bem retangular
         qrbox = { width, height };
+      } else {
+        // Quadrado perfeito para QR Code e códigos de barras
+        const size = Math.floor(minDimension * 0.65);
+        qrbox = { width: size, height: size };
       }
 
       const config = {
