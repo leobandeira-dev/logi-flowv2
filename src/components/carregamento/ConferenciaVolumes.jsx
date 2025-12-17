@@ -136,6 +136,12 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       (v.status_volume === "carregado" || v.status_volume === "em_transito")
     ).map(v => v.id);
     
+    console.log('🔄 Restaurando volumes embarcados:', {
+      totalVolumesLocal: volumesLocal.length,
+      embarcadosDoBanco: embarcados.length,
+      ordemId: ordem.id
+    });
+    
     // Carregar rascunho do localStorage
     const rascunhoSalvo = localStorage.getItem(`conferencia_rascunho_${ordem.id}`);
     if (rascunhoSalvo) {
@@ -150,6 +156,12 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
           const volumesValidos = volumesRestaurados.filter(volumeId => {
             const volume = volumesLocal.find(v => v.id === volumeId);
             return volume && notasIdsAtuais.includes(volume.nota_fiscal_id);
+          });
+          
+          console.log('✅ Volumes restaurados do rascunho:', {
+            totalRestaurados: volumesRestaurados.length,
+            volumesValidos: volumesValidos.length,
+            notasAtuais: notasIdsAtuais.length
           });
           
           setVolumesEmbarcados(volumesValidos);
@@ -169,6 +181,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         console.error("Erro ao carregar rascunho:", error);
       }
     } else {
+      console.log('📝 Nenhum rascunho encontrado, usando volumes do banco');
       setVolumesEmbarcados(embarcados);
     }
   }, [volumesLocal, ordem.id, notasFiscaisLocal]);
@@ -182,12 +195,16 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
   }, [videoStream]);
 
   const getVolumesNota = (notaId) => {
-    return volumesLocal.filter(v => v.nota_fiscal_id === notaId);
+    const volumes = volumesLocal.filter(v => v.nota_fiscal_id === notaId);
+    console.log(`📦 Volumes da nota ${notaId}:`, volumes.length);
+    return volumes;
   };
 
   const getVolumesEmbarcadosNota = (notaId) => {
     const volumesNota = getVolumesNota(notaId);
-    return volumesNota.filter(v => volumesEmbarcados.includes(v.id));
+    const embarcados = volumesNota.filter(v => volumesEmbarcados.includes(v.id));
+    console.log(`✅ Volumes embarcados da nota ${notaId}:`, embarcados.length, '/', volumesNota.length);
+    return embarcados;
   };
 
   const getTotalVolumes = () => {
@@ -467,18 +484,24 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
           });
 
           // Atualizar estados locais com TODOS os volumes da nota
-                setNotasFiscaisLocal(prev => [...prev, notaDoVolume]);
-                setVolumesLocal(prev => [...prev, ...todosVolumesNota]);
+                const notasAtualizadas = [...notasFiscaisLocal, notaDoVolume];
+                const volumesAtualizados = [...volumesLocal, ...todosVolumesNota];
+                
+                setNotasFiscaisLocal(notasAtualizadas);
+                setVolumesLocal(volumesAtualizados);
 
                 // Salvar rascunho de notas e volumes
                 localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-                  notas: [...notasFiscaisLocal, notaDoVolume],
-                  volumes: [...volumesLocal, ...todosVolumesNota],
+                  notas: notasAtualizadas,
+                  volumes: volumesAtualizados,
                   timestamp: new Date().toISOString()
                 }));
 
                 // Feedback: iniciando conferência de nova nota
                 toast.info(`📋 Iniciando conferência da NF ${notaDoVolume.numero_nota} - ${todosVolumesNota.length} volumes`, { duration: 2000 });
+                
+                // Forçar atualização do UI
+                setRefreshKey(prev => prev + 1);
         } else {
           toast.error("Volume não encontrado no estoque");
           setCodigoScanner("");
@@ -564,22 +587,31 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
 
     // Embarcar volume individual
     try {
+      console.log('🔄 Embarcando volume:', volume.id, volume.identificador_unico);
+      
       await base44.entities.Volume.update(volume.id, {
         status_volume: "carregado",
+        ordem_id: ordem.id,
         localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)}`
       });
 
-      // Atualizar volumes locais com status atualizado PRIMEIRO
-      setVolumesLocal(prevVolumes => 
-        prevVolumes.map(v => 
+      console.log('✅ Volume atualizado no banco');
+
+      // Atualizar volumes locais com status atualizado
+      setVolumesLocal(prevVolumes => {
+        const novosVolumes = prevVolumes.map(v => 
           v.id === volume.id 
             ? { ...v, status_volume: "carregado", ordem_id: ordem.id }
             : v
-        )
-      );
+        );
+        console.log('📦 Volumes locais atualizados:', novosVolumes.length);
+        return novosVolumes;
+      });
 
-      const volumesAtualizados = [...volumesEmbarcados, volume.id];
-      setVolumesEmbarcados(volumesAtualizados);
+      const volumesEmbarcadosAtualizados = [...volumesEmbarcados, volume.id];
+      setVolumesEmbarcados(volumesEmbarcadosAtualizados);
+      
+      console.log('📋 Volumes embarcados:', volumesEmbarcadosAtualizados.length);
       
       // Forçar refresh da UI
       setRefreshKey(prev => prev + 1);
@@ -588,28 +620,33 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
 
       // Salvar rascunho
       localStorage.setItem(`conferencia_rascunho_${ordem.id}`, JSON.stringify({
-        volumesEmbarcados: volumesAtualizados,
+        volumesEmbarcados: volumesEmbarcadosAtualizados,
         timestamp: new Date().toISOString()
       }));
 
-      const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
       toast.success(`✓ Volume embarcado! NF ${nota?.numero_nota || ''}`, { duration: 1500 });
 
-      // Verificar se todos os volumes da NF foram embarcados usando setTimeout para garantir que o state foi atualizado
+      // Verificar se todos os volumes da NF foram embarcados
       setTimeout(() => {
         const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === volume.nota_fiscal_id);
-        const embarcadosNota = volumesAtualizados.filter(id => 
+        const embarcadosNota = volumesEmbarcadosAtualizados.filter(id => 
           volumesNota.some(v => v.id === id)
         );
+
+        console.log('📊 Status da nota:', {
+          notaId: nota?.numero_nota,
+          totalVolumes: volumesNota.length,
+          embarcados: embarcadosNota.length
+        });
 
         // Atualizar nota em conferência
         setNotaEmConferencia(nota);
 
-        if (embarcadosNota.length === volumesNota.length) {
+        if (embarcadosNota.length === volumesNota.length && volumesNota.length > 0) {
           toast.success(`✅ Nota Fiscal ${nota?.numero_nota} completa!`);
           setNotaEmConferencia(null);
         }
-      }, 100);
+      }, 200);
 
       return 'success';
       } catch (error) {
@@ -840,7 +877,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         </div>
 
         {/* Lista Resumida de Notas Fiscais */}
-        <div className="flex-1 overflow-y-auto p-3" key={refreshKey}>
+        <div className="flex-1 overflow-y-auto p-3">
           <div className="space-y-2">
             {notasFiscaisLocal.map((nota) => {
               const volumesNota = getVolumesNota(nota.id);
@@ -851,6 +888,13 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
               const notaCompleta = progressoNota === 100;
               const pendentes = volumesNota.length - volumesEmbarcadosNota.length;
               const isExpanded = notasExpandidas[nota.id];
+              
+              console.log(`🔍 Renderizando nota ${nota.numero_nota}:`, {
+                volumesTotal: volumesNota.length,
+                embarcados: volumesEmbarcadosNota.length,
+                progresso: progressoNota,
+                refreshKey
+              });
 
               // Verificar se há divergência entre volumes esperados e volumes reais
               const volumesEsperados = nota.quantidade_total_volumes_nf || 0;
