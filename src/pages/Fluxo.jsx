@@ -815,18 +815,8 @@ export default function Fluxo() {
   };
 
   const getOrdensAtivasNaEtapa = (etapaId) => {
-    // Filtrar ordens base sem considerar filtros de UI
-    const ordensBase = ordens.filter(ordem => {
-      // Excluir coletas, recebimentos e entregas
-      if (ordem.numero_coleta && ordem.numero_coleta.startsWith("COL-")) return false;
-      const tiposExcluidos = ["coleta_solicitada", "coleta_aprovada", "coleta_reprovada", "recebimento", "ordem_entrega"];
-      if (tiposExcluidos.includes(ordem.tipo_registro)) return false;
-      const tiposOrdemExcluidos = ["coleta", "recebimento", "entrega"];
-      if (tiposOrdemExcluidos.includes(ordem.tipo_ordem)) return false;
-      return true;
-    });
-
-    return ordensBase.filter(ordem => {
+    // Usar filteredOrdens ao invés de ordens base para respeitar todos os filtros
+    return filteredOrdens.filter(ordem => {
       const ordemEtapa = ordensetapas.find(oe => oe.ordem_id === ordem.id && oe.etapa_id === etapaId);
       
       // Se não tem a etapa criada, considera pendente (conta)
