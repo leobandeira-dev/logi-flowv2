@@ -614,7 +614,8 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
 
   const handleScanQRCode = async (codigo) => {
     // Não fechar o modal - deixar aberto para scans consecutivos
-    await handleScanVolume(codigo);
+    const result = await handleScanVolume(codigo);
+    return result; // Retornar resultado para feedback visual
   };
 
   const toggleNotaExpandida = (notaId) => {

@@ -48,9 +48,10 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         },
         {
           returnDetailedScanResult: true,
-          highlightScanRegion: false,
-          highlightCodeOutline: false,
-          preferredCamera: "environment"
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+          preferredCamera: "environment",
+          overlay: document.createElement('div') // Overlay vazio para desabilitar visual padrão
         }
       );
 
@@ -97,6 +98,12 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
+      <style>{`
+        .scan-region-highlight-svg,
+        .code-outline-highlight {
+          display: none !important;
+        }
+      `}</style>
       <DialogContent 
         className="max-w-md w-[95vw] p-0" 
         style={{ backgroundColor: theme.bg, borderColor: theme.border }}
