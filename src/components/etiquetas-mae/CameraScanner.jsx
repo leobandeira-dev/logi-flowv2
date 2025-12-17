@@ -16,6 +16,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const [manualInput, setManualInput] = useState("");
   const [useManualMode, setUseManualMode] = useState(false);
   const qrScannerRef = useRef(null);
+  const [scanFeedback, setScanFeedback] = useState(null); // 'success' | 'duplicate' | null
 
   useEffect(() => {
     if (open && !useManualMode) {
@@ -47,8 +48,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         },
         {
           returnDetailedScanResult: true,
-          highlightScanRegion: true,
-          highlightCodeOutline: true,
+          highlightScanRegion: false,
+          highlightCodeOutline: false,
           preferredCamera: "environment"
         }
       );
@@ -73,8 +74,17 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
   const handleManualSubmit = () => {
     if (manualInput.trim()) {
-      onScan(manualInput.trim());
+      const result = onScan(manualInput.trim());
       setManualInput(""); // Limpar campo após scan
+      
+      // Feedback visual
+      if (result === 'duplicate') {
+        setScanFeedback('duplicate');
+      } else {
+        setScanFeedback('success');
+      }
+      
+      setTimeout(() => setScanFeedback(null), 1500);
       // NÃO fechar o modal - manter aberto para próximo scan
     }
   };
@@ -135,7 +145,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 style={{ zIndex: 5 }}
               >
                 <div 
-                  className="border-4 border-green-400 shadow-lg"
+                  className="border-4 shadow-lg transition-all duration-300"
                   style={{
                     width: '80%',
                     height: '80%',
@@ -144,16 +154,30 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                     maxHeight: '80%',
                     boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
                     borderRadius: '12px',
-                    position: 'relative'
+                    position: 'relative',
+                    borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa'
                   }}
                 >
-                  {/* Cantos animados */}
-                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-green-400 animate-pulse" style={{ borderRadius: '12px 0 0 0' }}></div>
-                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-green-400 animate-pulse" style={{ borderRadius: '0 12px 0 0' }}></div>
-                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-green-400 animate-pulse" style={{ borderRadius: '0 0 0 12px' }}></div>
-                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-green-400 animate-pulse" style={{ borderRadius: '0 0 12px 0' }}></div>
+                  {/* Cantos */}
+                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4" style={{ borderRadius: '12px 0 0 0', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
+                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4" style={{ borderRadius: '0 12px 0 0', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
+                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4" style={{ borderRadius: '0 0 0 12px', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
+                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4" style={{ borderRadius: '0 0 12px 0', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
                 </div>
               </div>
+              
+              {/* Feedback Visual */}
+              {scanFeedback && (
+                <div 
+                  className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 px-4 py-2 rounded-lg font-medium text-sm animate-in fade-in slide-in-from-top-2"
+                  style={{
+                    backgroundColor: scanFeedback === 'success' ? '#10b981' : '#f59e0b',
+                    color: 'white'
+                  }}
+                >
+                  {scanFeedback === 'success' ? '✓ Volume escaneado' : '⚠️ Volume já escaneado'}
+                </div>
+              )}
 
 
 

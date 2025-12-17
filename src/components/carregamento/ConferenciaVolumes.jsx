@@ -185,7 +185,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
   const handleScanVolume = async (codigo) => {
     if (!codigo || !codigo.trim()) {
       toast.error("Digite ou escaneie um código");
-      return;
+      return 'error';
     }
 
     const codigoLimpo = codigo.trim().toUpperCase();
@@ -323,14 +323,21 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)
     );
 
-    // Se não encontrou, buscar em TODOS os volumes do estoque
-    if (!volume) {
-      try {
-        const todosVolumes = await base44.entities.Volume.filter({ 
-          identificador_unico: codigoLimpo 
-        });
+    // Verificar se já foi embarcado ANTES de qualquer processamento
+      if (volume && volumesEmbarcados.includes(volume.id)) {
+        toast.warning("Volume já foi embarcado!", { duration: 1500 });
+        setCodigoScanner("");
+        return 'duplicate';
+      }
 
-        if (todosVolumes.length > 0) {
+    // Se não encontrou, buscar em TODOS os volumes do estoque
+      if (!volume) {
+        try {
+          const todosVolumes = await base44.entities.Volume.filter({ 
+            identificador_unico: codigoLimpo 
+          });
+
+          if (todosVolumes.length > 0) {
           volume = todosVolumes[0];
           
           // Buscar a nota fiscal deste volume
@@ -453,9 +460,9 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
     }
 
     if (volumesEmbarcados.includes(volume.id)) {
-      toast.warning("Volume já foi embarcado!");
+      toast.warning("Volume já foi embarcado!", { duration: 1500 });
       setCodigoScanner("");
-      return;
+      return 'duplicate';
     }
 
     // Embarcar volume individual
@@ -476,7 +483,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       }));
 
       const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-      toast.success(`Volume embarcado! NF ${nota?.numero_nota || ''}`, { duration: 2000 });
+      toast.success(`✓ Volume embarcado! NF ${nota?.numero_nota || ''}`, { duration: 1500 });
 
       // Verificar se todos os volumes da NF foram embarcados
       const volumesNota = getVolumesNota(volume.nota_fiscal_id);
@@ -491,11 +498,14 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         toast.success(`✅ Nota Fiscal ${nota?.numero_nota} completa!`);
         setNotaEmConferencia(null);
       }
-    } catch (error) {
+
+      return 'success';
+      } catch (error) {
       console.error("Erro ao embarcar volume:", error);
       toast.error("Erro ao registrar embarque");
-    }
-    };
+      return 'error';
+      }
+      };
 
 
 
