@@ -719,7 +719,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
               <Button
                 variant="outline"
                 size="lg"
-                onClick={handleOpenCamera}
+                onClick={() => setShowCamera(true)}
                 style={{ borderColor: theme.cardBorder, color: theme.text }}
               >
                 <Camera className="w-5 h-5" />
