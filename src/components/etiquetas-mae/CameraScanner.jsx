@@ -37,25 +37,21 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       const qrScanner = new QrScanner(
         videoRef.current,
         async (result) => {
-          if (result?.data && !scanFeedback) { // Prevenir scans duplicados durante feedback
+          if (result?.data && !scanFeedback) {
             const decodedText = result.data;
             console.log('🔍 QR Code detectado:', decodedText);
 
-            // Limpar apenas caracteres não numéricos se parecer ser chave NF-e
             const cleaned = decodedText.replace(/\D/g, '');
             const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
 
             console.log('📦 Código processado:', finalCode);
 
-            // Mostrar feedback imediato
             setScanFeedback('processing');
 
-            // Processar scan
             const scanResult = await Promise.resolve(onScan(finalCode));
 
             console.log('✅ Resultado do scan:', scanResult);
 
-            // Feedback visual baseado no resultado
             if (scanResult === 'duplicate') {
               setScanFeedback('duplicate');
             } else if (scanResult === 'success') {
@@ -64,7 +60,6 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
               setScanFeedback(null);
             }
 
-            // Limpar feedback após 1 segundo
             setTimeout(() => setScanFeedback(null), 1000);
           }
         },
@@ -73,13 +68,56 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
           highlightScanRegion: false,
           highlightCodeOutline: false,
           preferredCamera: "environment",
-          maxScansPerSecond: 3, // Limitar para evitar scans duplicados
+          maxScansPerSecond: 5,
+          calculateScanRegion: (video) => {
+            // Área de scan maior para capturar códigos de diferentes distâncias
+            const smallestDimension = Math.min(video.videoWidth, video.videoHeight);
+            const scanRegionSize = Math.round(0.85 * smallestDimension);
+
+            return {
+              x: Math.round((video.videoWidth - scanRegionSize) / 2),
+              y: Math.round((video.videoHeight - scanRegionSize) / 2),
+              width: scanRegionSize,
+              height: scanRegionSize,
+            };
+          }
         }
       );
+
+      // Configurar vídeo para melhor qualidade e foco automático
+      qrScanner.setInversionMode('both'); // Detectar QR codes claros e escuros
 
       qrScannerRef.current = qrScanner;
       await qrScanner.start();
       setScanning(true);
+
+      // Otimizar configurações da câmera para diferentes distâncias
+      try {
+        const videoTrack = videoRef.current?.srcObject?.getVideoTracks()[0];
+        if (videoTrack) {
+          const capabilities = videoTrack.getCapabilities();
+          const constraints = {};
+
+          // Ativar foco contínuo se disponível
+          if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+            constraints.focusMode = 'continuous';
+          }
+
+          // Zoom ideal se disponível
+          if (capabilities.zoom) {
+            constraints.zoom = Math.max(capabilities.zoom.min, 1);
+          }
+
+          await videoTrack.applyConstraints({
+            advanced: [{ ...constraints }]
+          });
+
+          console.log('📸 Scanner otimizado para diferentes distâncias');
+        }
+      } catch (error) {
+        console.log('Otimizações de câmera não aplicadas:', error.message);
+      }
+
       console.log('📸 Scanner QR iniciado');
     } catch (error) {
       console.error("Erro ao iniciar scanner:", error);
