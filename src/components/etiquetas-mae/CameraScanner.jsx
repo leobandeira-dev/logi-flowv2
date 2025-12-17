@@ -14,10 +14,11 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
   const [scanning, setScanning] = useState(false);
   const [manualInput, setManualInput] = useState("");
   const [useManualMode, setUseManualMode] = useState(false);
+  const [scanMode, setScanMode] = useState(null); // 'qrcode' ou 'nfe'
   const html5QrCodeRef = useRef(null);
 
   useEffect(() => {
-    if (open && !useManualMode) {
+    if (open && !useManualMode && scanMode) {
       setTimeout(() => {
         startScanner();
       }, 100);
@@ -26,7 +27,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
     return () => {
       stopScanner();
     };
-  }, [open, useManualMode]);
+  }, [open, useManualMode, scanMode]);
 
   const startScanner = async () => {
     if (html5QrCodeRef.current || useManualMode) return;
@@ -139,7 +140,56 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
         </DialogHeader>
 
         <div className="p-4 pt-0">
-          {!useManualMode ? (
+          {!scanMode ? (
+            // Seleção do tipo de leitura
+            <div className="space-y-3">
+              <p className="text-sm mb-3 text-center" style={{ color: theme.text }}>
+                Escolha o tipo de código que deseja escanear:
+              </p>
+              
+              <Button
+                onClick={() => setScanMode('qrcode')}
+                variant="outline"
+                className="w-full h-auto py-4 flex items-center justify-start gap-3"
+                style={{ borderColor: theme.border, color: theme.text }}
+              >
+                <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-7 h-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <rect x="4" y="4" width="6" height="6" />
+                    <rect x="14" y="4" width="6" height="6" />
+                    <rect x="4" y="14" width="6" height="6" />
+                    <rect x="14" y="14" width="6" height="6" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-base">QR Code / Código de Barras</p>
+                  <p className="text-xs" style={{ color: isDark ? '#94a3b8' : '#6b7280' }}>
+                    Para volumes e etiquetas mãe
+                  </p>
+                </div>
+              </Button>
+
+              <Button
+                onClick={() => setScanMode('nfe')}
+                variant="outline"
+                className="w-full h-auto py-4 flex items-center justify-start gap-3"
+                style={{ borderColor: theme.border, color: theme.text }}
+              >
+                <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <rect x="3" y="8" width="18" height="3" />
+                    <rect x="3" y="13" width="18" height="3" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-base">Chave de Nota Fiscal</p>
+                  <p className="text-xs" style={{ color: isDark ? '#94a3b8' : '#6b7280' }}>
+                    Para importar NF-e via chave
+                  </p>
+                </div>
+              </Button>
+            </div>
+          ) : !useManualMode ? (
             <div 
               ref={scannerRef}
               className="relative bg-black rounded-lg overflow-hidden" 
@@ -154,18 +204,31 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
                 }}
               />
 
-              <Button
-                onClick={() => {
-                  stopScanner();
-                  setUseManualMode(true);
-                }}
-                variant="outline"
-                size="sm"
-                className="absolute top-2 right-2 bg-white/90 hover:bg-white z-10"
-              >
-                <Keyboard className="w-4 h-4 mr-1" />
-                Digitar
-              </Button>
+              <div className="absolute top-2 left-2 right-2 flex gap-2 z-10">
+                <Button
+                  onClick={() => {
+                    stopScanner();
+                    setScanMode(null);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/90 hover:bg-white"
+                >
+                  Voltar
+                </Button>
+                <Button
+                  onClick={() => {
+                    stopScanner();
+                    setUseManualMode(true);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/90 hover:bg-white ml-auto"
+                >
+                  <Keyboard className="w-4 h-4 mr-1" />
+                  Digitar
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '4/3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -216,10 +279,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
               </div>
             </div>
             
-            {!useManualMode && (
+            {!useManualMode && scanMode && (
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2">
                 <p className="text-xs text-center font-semibold mb-1" style={{ color: isDark ? '#86efac' : '#15803d' }}>
-                  📷 Posicione o QR Code ou código de barras dentro do quadrado
+                  {scanMode === 'qrcode' 
+                    ? '📷 Posicione o QR Code ou código de barras dentro do quadrado'
+                    : '📷 Posicione a chave da NF-e dentro do retângulo horizontal'
+                  }
                 </p>
                 <p className="text-[10px] text-center" style={{ color: isDark ? '#86efac' : '#15803d' }}>
                   Mantenha a câmera estável e com boa iluminação
