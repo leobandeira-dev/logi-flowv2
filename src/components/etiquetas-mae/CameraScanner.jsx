@@ -46,14 +46,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
       const html5QrCode = new window.Html5Qrcode("qr-reader");
       html5QrCodeRef.current = html5QrCode;
 
-      // Calcular tamanho do qrbox - área quadrada perfeita para QR Code
+      // Calcular tamanho do qrbox - número único força área QUADRADA na biblioteca
       const screenWidth = window.innerWidth;
-      const size = Math.floor(screenWidth * 0.70);
-      const qrbox = { width: size, height: size }; // Forçar área quadrada
+      const qrboxSize = Math.floor(screenWidth * 0.70);
 
       const config = {
         fps: 10,
-        qrbox,
+        qrbox: qrboxSize, // IMPORTANTE: número único (não objeto) = área quadrada
         formatsToSupport: [
           window.Html5QrcodeSupportedFormats.QR_CODE,
           window.Html5QrcodeSupportedFormats.CODE_128,
@@ -61,7 +60,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
           window.Html5QrcodeSupportedFormats.EAN_13,
           window.Html5QrcodeSupportedFormats.ITF
         ],
-        showTorchButtonIfSupported: true
+        showTorchButtonIfSupported: true,
+        aspectRatio: 1.0 // Força proporção 1:1 (quadrado)
       };
 
       await html5QrCode.start(
