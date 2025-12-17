@@ -236,21 +236,18 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
                 </Button>
               </div>
             </div>
-            
-            {!useManualMode && scanMode && (
+
+            {!useManualMode && (
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2">
                 <p className="text-xs text-center font-semibold mb-1" style={{ color: isDark ? '#86efac' : '#15803d' }}>
-                  {scanMode === 'qrcode' 
-                    ? '📦 Centralize o código dentro da área QUADRADA'
-                    : '📄 Centralize o código de barras na área RETANGULAR'
-                  }
+                  📦 Centralize o código dentro da área QUADRADA
                 </p>
                 <p className="text-[10px] text-center" style={{ color: isDark ? '#86efac' : '#15803d' }}>
                   Mantenha a câmera estável e com boa iluminação
                 </p>
               </div>
             )}
-            
+
             <Button
               variant="outline"
               onClick={onClose}
