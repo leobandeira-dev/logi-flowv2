@@ -134,7 +134,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
       >
         <DialogHeader className="p-4 pb-2">
           <DialogTitle style={{ color: theme.text }}>
-            Scanner de Etiqueta Mãe
+            {!scanMode ? 'Selecione o Tipo de Leitura' : 
+             scanMode === 'qrcode' ? '📦 Scanner QR Code / Código de Barras' : 
+             '📄 Scanner Chave NF-e'}
           </DialogTitle>
         </DialogHeader>
 
@@ -202,6 +204,37 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
                   border: 'none'
                 }}
               />
+
+              {/* Overlay visual para guiar o usuário */}
+              <div 
+                className="absolute inset-0 pointer-events-none flex items-center justify-center"
+                style={{ zIndex: 5 }}
+              >
+                <div 
+                  className="border-4 border-white"
+                  style={{
+                    width: scanMode === 'qrcode' ? '65%' : '85%',
+                    height: scanMode === 'qrcode' ? '65%' : '22%',
+                    aspectRatio: scanMode === 'qrcode' ? '1/1' : 'auto',
+                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+                    borderRadius: '8px',
+                    position: 'relative'
+                  }}
+                >
+                  {/* Cantos do guia */}
+                  <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-green-400" style={{ borderRadius: '8px 0 0 0' }}></div>
+                  <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-green-400" style={{ borderRadius: '0 8px 0 0' }}></div>
+                  <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-green-400" style={{ borderRadius: '0 0 0 8px' }}></div>
+                  <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-green-400" style={{ borderRadius: '0 0 8px 0' }}></div>
+                  
+                  {/* Texto de orientação */}
+                  <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                    <p className="text-white text-xs font-bold bg-black/70 px-3 py-1 rounded-full">
+                      {scanMode === 'qrcode' ? '📦 Centralize o código' : '📄 Alinhe o código de barras'}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               <div className="absolute top-2 left-2 right-2 flex gap-2 z-10">
                 <Button
