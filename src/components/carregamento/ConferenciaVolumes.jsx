@@ -57,6 +57,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
   });
   const [notasExpandidas, setNotasExpandidas] = useState({});
   const [notaEmConferencia, setNotaEmConferencia] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -273,19 +274,22 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
 
           await Promise.all(updateVolumePromises);
 
+          // Atualizar volumes locais com status atualizado PRIMEIRO
+          setVolumesLocal(prevVolumes => 
+            prevVolumes.map(v => 
+              volumesParaCarregar.some(vol => vol.id === v.id)
+                ? { ...v, status_volume: "carregado", ordem_id: ordem.id }
+                : v
+            )
+          );
+
           // Atualizar estado local
           const novosIdsEmbarcados = volumesParaCarregar.map(v => v.id);
           const volumesAtualizados = [...volumesEmbarcados, ...novosIdsEmbarcados];
           setVolumesEmbarcados(volumesAtualizados);
 
-          // Atualizar volumes locais com status atualizado
-          setVolumesLocal(prevVolumes => 
-            prevVolumes.map(v => 
-              novosIdsEmbarcados.includes(v.id) 
-                ? { ...v, status_volume: "carregado" }
-                : v
-            )
-          );
+          // Forçar refresh da UI
+          setRefreshKey(prev => prev + 1);
 
           // Salvar rascunho
           localStorage.setItem(`conferencia_rascunho_${ordem.id}`, JSON.stringify({
@@ -302,15 +306,17 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
             if (nota) {
               setNotaEmConferencia(nota);
 
-              // Verificar se completou a nota
-              const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
-              const embarcadosNota = volumesAtualizados.filter(id => 
-                volumesNota.some(v => v.id === id)
-              );
-              if (embarcadosNota.length === volumesNota.length) {
-                toast.success(`✅ Nota Fiscal ${nota.numero_nota} completa!`);
-                setNotaEmConferencia(null);
-              }
+              // Verificar se completou a nota usando os volumes atualizados
+              setTimeout(() => {
+                const volumesNotaAtualizados = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
+                const embarcadosNota = volumesAtualizados.filter(id => 
+                  volumesNotaAtualizados.some(v => v.id === id)
+                );
+                if (embarcadosNota.length === volumesNotaAtualizados.length) {
+                  toast.success(`✅ Nota Fiscal ${nota.numero_nota} completa!`);
+                  setNotaEmConferencia(null);
+                }
+              }, 100);
             }
           }
 
@@ -481,17 +487,20 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)}`
       });
 
-      const volumesAtualizados = [...volumesEmbarcados, volume.id];
-      setVolumesEmbarcados(volumesAtualizados);
-      
-      // Atualizar volumes locais com status atualizado
+      // Atualizar volumes locais com status atualizado PRIMEIRO
       setVolumesLocal(prevVolumes => 
         prevVolumes.map(v => 
           v.id === volume.id 
-            ? { ...v, status_volume: "carregado" }
+            ? { ...v, status_volume: "carregado", ordem_id: ordem.id }
             : v
         )
       );
+
+      const volumesAtualizados = [...volumesEmbarcados, volume.id];
+      setVolumesEmbarcados(volumesAtualizados);
+      
+      // Forçar refresh da UI
+      setRefreshKey(prev => prev + 1);
       
       setCodigoScanner("");
 
@@ -504,19 +513,21 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
       toast.success(`✓ Volume embarcado! NF ${nota?.numero_nota || ''}`, { duration: 1500 });
 
-      // Verificar se todos os volumes da NF foram embarcados
-      const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === volume.nota_fiscal_id);
-      const embarcadosNota = volumesAtualizados.filter(id => 
-        volumesNota.some(v => v.id === id)
-      );
+      // Verificar se todos os volumes da NF foram embarcados usando setTimeout para garantir que o state foi atualizado
+      setTimeout(() => {
+        const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === volume.nota_fiscal_id);
+        const embarcadosNota = volumesAtualizados.filter(id => 
+          volumesNota.some(v => v.id === id)
+        );
 
-      // Atualizar nota em conferência
-      setNotaEmConferencia(nota);
+        // Atualizar nota em conferência
+        setNotaEmConferencia(nota);
 
-      if (embarcadosNota.length === volumesNota.length) {
-        toast.success(`✅ Nota Fiscal ${nota?.numero_nota} completa!`);
-        setNotaEmConferencia(null);
-      }
+        if (embarcadosNota.length === volumesNota.length) {
+          toast.success(`✅ Nota Fiscal ${nota?.numero_nota} completa!`);
+          setNotaEmConferencia(null);
+        }
+      }, 100);
 
       return 'success';
       } catch (error) {
@@ -747,7 +758,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         </div>
 
         {/* Lista Resumida de Notas Fiscais */}
-        <div className="flex-1 overflow-y-auto p-3">
+        <div className="flex-1 overflow-y-auto p-3" key={refreshKey}>
           <div className="space-y-2">
             {notasFiscaisLocal.map((nota) => {
               const volumesNota = getVolumesNota(nota.id);
