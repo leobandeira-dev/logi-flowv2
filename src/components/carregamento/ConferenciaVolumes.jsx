@@ -253,15 +253,23 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
             }
           }
 
-          // Filtrar volumes que ainda não foram carregados
+          // Verificar volumes já embarcados vs volumes a embarcar
+          const volumesJaEmbarcados = volumesDaEtiquetaDB.filter(v => 
+            volumesEmbarcados.includes(v.id)
+          );
+          
           const volumesParaCarregar = volumesDaEtiquetaDB.filter(v => 
             !volumesEmbarcados.includes(v.id) && v.nota_fiscal_id
           );
 
-          if (volumesParaCarregar.length === 0) {
-            toast.info(`Todos os volumes da etiqueta ${etiquetaMae.codigo} já foram embarcados`);
+          if (volumesJaEmbarcados.length > 0 && volumesParaCarregar.length === 0) {
+            toast.warning(`Todos os ${volumesDaEtiquetaDB.length} volumes da etiqueta ${etiquetaMae.codigo} já foram embarcados!`);
             setCodigoScanner("");
-            return;
+            return 'duplicate';
+          }
+          
+          if (volumesJaEmbarcados.length > 0) {
+            toast.info(`${volumesJaEmbarcados.length} volume(s) já embarcado(s), embarcando ${volumesParaCarregar.length} novo(s)`);
           }
 
           // Embarcar volumes em batch (paralelo)
@@ -334,16 +342,16 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
 
 // 2. Buscar como VOLUME INDIVIDUAL
     let volume = volumesLocal.find(v => 
-      v.identificador_unico?.toUpperCase() === codigoLimpo &&
-      notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)
+      v.identificador_unico?.toUpperCase() === codigoLimpo
     );
 
-    // Verificar se já foi embarcado ANTES de qualquer processamento
-      if (volume && volumesEmbarcados.includes(volume.id)) {
-        toast.warning("Volume já foi embarcado!", { duration: 1500 });
-        setCodigoScanner("");
-        return 'duplicate';
-      }
+    // Verificar duplicata IMEDIATAMENTE após encontrar o volume
+    if (volume && volumesEmbarcados.includes(volume.id)) {
+      const notaDoVolumeJaEmbarcado = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+      toast.warning(`Volume já embarcado na NF ${notaDoVolumeJaEmbarcado?.numero_nota || 'anterior'}!`, { duration: 2000 });
+      setCodigoScanner("");
+      return 'duplicate';
+    }
 
     // Se não encontrou, buscar em TODOS os volumes do estoque
       if (!volume) {
@@ -354,6 +362,14 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
 
           if (todosVolumes.length > 0) {
           volume = todosVolumes[0];
+          
+          // Verificar duplicata TAMBÉM para volumes encontrados no banco
+          if (volumesEmbarcados.includes(volume.id)) {
+            const notaDoVolumeJaEmbarcado = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+            toast.warning(`Volume já embarcado na NF ${notaDoVolumeJaEmbarcado?.numero_nota || 'anterior'}!`, { duration: 2000 });
+            setCodigoScanner("");
+            return 'duplicate';
+          }
           
           // Buscar a nota fiscal deste volume
           const notaDoVolume = await base44.entities.NotaFiscal.get(volume.nota_fiscal_id);
@@ -404,11 +420,12 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
                   timestamp: new Date().toISOString()
                 }));
 
-                toast.success(`✅ NF ${notaDoVolume.numero_nota} vinculada! ${todosVolumesNota.length} volumes disponíveis.`, { duration: 2000 });
+                // Feedback: iniciando conferência de nova nota
+                toast.info(`📋 Iniciando conferência da NF ${notaDoVolume.numero_nota} - ${todosVolumesNota.length} volumes`, { duration: 2000 });
         } else {
           toast.error("Volume não encontrado no estoque");
           setCodigoScanner("");
-          return;
+          return 'error';
         }
       } catch (error) {
         console.error("Erro ao buscar volume:", error);
@@ -474,10 +491,23 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       }
     }
 
+    // Verificação final de duplicata (segurança)
     if (volumesEmbarcados.includes(volume.id)) {
-      toast.warning("Volume já foi embarcado!", { duration: 1500 });
+      const notaDoVolumeJaEmbarcado = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+      toast.warning(`Volume já embarcado na NF ${notaDoVolumeJaEmbarcado?.numero_nota || 'anterior'}!`, { duration: 2000 });
       setCodigoScanner("");
       return 'duplicate';
+    }
+
+    // Feedback: iniciando conferência de nova nota se for primeira leitura da nota
+    const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+    const volumesNotaAtual = volumesLocal.filter(v => v.nota_fiscal_id === volume.nota_fiscal_id);
+    const embarcadosNotaAtual = volumesEmbarcados.filter(id => 
+      volumesNotaAtual.some(v => v.id === id)
+    );
+    
+    if (embarcadosNotaAtual.length === 0 && nota) {
+      toast.info(`📋 Iniciando conferência da NF ${nota.numero_nota} - ${volumesNotaAtual.length} volumes`, { duration: 2000 });
     }
 
     // Embarcar volume individual
