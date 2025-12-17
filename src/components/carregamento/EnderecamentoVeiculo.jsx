@@ -198,64 +198,61 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   }, []);
 
   useEffect(() => {
-    setNotasFiscaisLocal(notasFiscais);
-    setVolumesLocal(volumes);
-    
-    // Carregar rascunho do localStorage - APENAS da ordem atual
-    const rascunhoSalvo = localStorage.getItem(`enderecamento_rascunho_${ordem.id}`);
-    if (rascunhoSalvo) {
-      try {
-        const rascunho = JSON.parse(rascunhoSalvo);
-        if (rascunho.enderecamentos) {
-          // Filtrar endereçamentos do rascunho que são da ordem atual
-          const enderecamentosRascunhoOrdem = rascunho.enderecamentos.filter(e => e.ordem_id === ordem.id);
-          
-          // Mesclar apenas endereçamentos da ordem atual
-          const idsExistentes = enderecamentos.filter(e => e.ordem_id === ordem.id).map(e => e.volume_id);
-          const enderecamentosRascunho = enderecamentosRascunhoOrdem.filter(e => !idsExistentes.includes(e.volume_id));
-          
-          if (enderecamentosRascunho.length > 0) {
-            // Manter endereçamentos de outras ordens + adicionar do rascunho desta ordem
-            setEnderecamentos([...enderecamentos, ...enderecamentosRascunho]);
-            toast.info(`${enderecamentosRascunho.length} endereçamento(s) restaurado(s) do rascunho`);
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao carregar rascunho:", error);
-      }
-    }
+    inicializarDados();
   }, [notasFiscais, volumes]);
+
+  const inicializarDados = async () => {
+    try {
+      // 1. Carregar endereçamentos da ordem do banco
+      const enderecamentosDB = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
+      
+      // 2. Extrair IDs únicos de notas e volumes dos endereçamentos
+      const notasIdsEnderecadas = [...new Set(enderecamentosDB.map(e => e.nota_fiscal_id).filter(Boolean))];
+      const volumesIdsEnderecados = [...new Set(enderecamentosDB.map(e => e.volume_id).filter(Boolean))];
+      
+      // 3. Buscar notas e volumes do banco se houver endereçamentos
+      let notasDB = [];
+      let volumesDB = [];
+      
+      if (notasIdsEnderecadas.length > 0) {
+        notasDB = await base44.entities.NotaFiscal.filter({ id: { $in: notasIdsEnderecadas } });
+      }
+      
+      if (volumesIdsEnderecados.length > 0) {
+        volumesDB = await base44.entities.Volume.filter({ id: { $in: volumesIdsEnderecados } });
+      }
+      
+      // 4. Mesclar com dados das props (sem duplicar)
+      const notasIdsProps = notasFiscais.map(n => n.id);
+      const volumesIdsProps = volumes.map(v => v.id);
+      
+      const notasFinais = [
+        ...notasFiscais,
+        ...notasDB.filter(n => !notasIdsProps.includes(n.id))
+      ];
+      
+      const volumesFinais = [
+        ...volumes,
+        ...volumesDB.filter(v => !volumesIdsProps.includes(v.id))
+      ];
+      
+      setNotasFiscaisLocal(notasFinais);
+      setVolumesLocal(volumesFinais);
+      
+      if (notasDB.length > 0 || volumesDB.length > 0) {
+        console.log(`📦 Restaurados: ${notasDB.length} notas, ${volumesDB.length} volumes`);
+      }
+    } catch (error) {
+      console.error("Erro ao inicializar dados:", error);
+      // Fallback para props
+      setNotasFiscaisLocal(notasFiscais);
+      setVolumesLocal(volumes);
+    }
+  };
 
   useEffect(() => {
     loadEnderecamentos();
     loadNotasOrigem();
-    
-    // Restaurar notas e volumes do rascunho
-    const rascunhoNotas = localStorage.getItem(`enderecamento_notas_${ordem.id}`);
-    if (rascunhoNotas) {
-      try {
-        const rascunho = JSON.parse(rascunhoNotas);
-        if (rascunho.notas && rascunho.volumes) {
-          // Mesclar notas que não existem localmente
-          const notasIdsExistentes = notasFiscaisLocal.map(n => n.id);
-          const notasNovas = rascunho.notas.filter(n => !notasIdsExistentes.includes(n.id));
-          
-          const volumesIdsExistentes = volumesLocal.map(v => v.id);
-          const volumesNovos = rascunho.volumes.filter(v => !volumesIdsExistentes.includes(v.id));
-          
-          if (notasNovas.length > 0 || volumesNovos.length > 0) {
-            setNotasFiscaisLocal([...notasFiscaisLocal, ...notasNovas]);
-            setVolumesLocal([...volumesLocal, ...volumesNovos]);
-            
-            if (notasNovas.length > 0) {
-              toast.info(`${notasNovas.length} nota(s) restaurada(s) do rascunho`);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao restaurar rascunho de notas:", error);
-      }
-    }
   }, [ordem.id]);
 
   const loadNotasOrigem = () => {
@@ -268,25 +265,23 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     setNotasOrigem(origens);
   };
 
-  // Helper para salvar rascunho de forma assíncrona (não bloqueia UI)
+  // Helper para salvar rascunho (síncrono para garantir salvamento)
   const salvarRascunho = () => {
-    requestIdleCallback(() => {
-      try {
-        const enderecamentosOrdemAtual = enderecamentos.filter(e => e.ordem_id === ordem.id);
-        localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
-          enderecamentos: enderecamentosOrdemAtual,
-          timestamp: new Date().toISOString()
-        }));
-        
-        localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-          notas: notasFiscaisLocal,
-          volumes: volumesLocal,
-          timestamp: new Date().toISOString()
-        }));
-      } catch (error) {
-        console.error("Erro ao salvar rascunho:", error);
-      }
-    }, { timeout: 500 });
+    try {
+      const enderecamentosOrdemAtual = enderecamentos.filter(e => e.ordem_id === ordem.id);
+      localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
+        enderecamentos: enderecamentosOrdemAtual,
+        timestamp: new Date().toISOString()
+      }));
+      
+      localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
+        notas: notasFiscaisLocal,
+        volumes: volumesLocal,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error("Erro ao salvar rascunho:", error);
+    }
   };
 
   useEffect(() => {
@@ -303,6 +298,31 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     setLoading(true);
     try {
       const endData = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
+      
+      // Buscar notas e volumes relacionados aos endereçamentos
+      const notasIds = [...new Set(endData.map(e => e.nota_fiscal_id).filter(Boolean))];
+      const volumesIds = [...new Set(endData.map(e => e.volume_id).filter(Boolean))];
+      
+      if (notasIds.length > 0) {
+        const notasDB = await base44.entities.NotaFiscal.filter({ id: { $in: notasIds } });
+        const notasIdsExistentes = notasFiscaisLocal.map(n => n.id);
+        const notasNovas = notasDB.filter(n => !notasIdsExistentes.includes(n.id));
+        
+        if (notasNovas.length > 0) {
+          setNotasFiscaisLocal(prev => [...prev, ...notasNovas]);
+        }
+      }
+      
+      if (volumesIds.length > 0) {
+        const volumesDB = await base44.entities.Volume.filter({ id: { $in: volumesIds } });
+        const volumesIdsExistentes = volumesLocal.map(v => v.id);
+        const volumesNovos = volumesDB.filter(v => !volumesIdsExistentes.includes(v.id));
+        
+        if (volumesNovos.length > 0) {
+          setVolumesLocal(prev => [...prev, ...volumesNovos]);
+        }
+      }
+      
       setEnderecamentos(endData);
     } catch (error) {
       console.error("Erro ao carregar endereçamentos:", error);
@@ -313,19 +333,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
   // Helper para pegar apenas endereçamentos da ordem atual
   const getEnderecamentosOrdemAtual = () => {
-    const enderecamentosOrdem = enderecamentos.filter(e => e.ordem_id === ordem.id);
-    
-    // Debug log para identificar problema
-    if (enderecamentos.length !== enderecamentosOrdem.length) {
-      console.log('🚨 PROBLEMA DETECTADO - Endereçamentos:', {
-        total: enderecamentos.length,
-        destaOrdem: enderecamentosOrdem.length,
-        deOutrasOrdens: enderecamentos.length - enderecamentosOrdem.length,
-        ordemAtual: ordem.id.slice(-6)
-      });
-    }
-    
-    return enderecamentosOrdem;
+    return enderecamentos.filter(e => e.ordem_id === ordem.id);
   };
 
   const getVolumesNaoEnderecados = () => {
