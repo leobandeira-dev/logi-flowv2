@@ -714,18 +714,18 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         <div className="border-b p-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
           <div className="max-w-2xl mx-auto">
             <Label className="text-sm font-semibold mb-2 block" style={{ color: theme.text }}>
-              Escanear Volume
+              Escanear Volume ou Etiqueta Mãe
             </Label>
             <div className="flex gap-2">
               <Input
                 value={codigoScanner}
-                onChange={(e) => setCodigoScanner(e.target.value)}
+                onChange={(e) => setCodigoScanner(e.target.value.toUpperCase())}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     handleScanVolume(codigoScanner);
                   }
                 }}
-                placeholder="Digite ou escaneie o código do volume..."
+                placeholder="Volume unitário ou etiqueta mãe..."
                 className="flex-1 h-12 text-lg"
                 style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
                 autoFocus
@@ -747,6 +747,9 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
                 Confirmar
               </Button>
             </div>
+            <p className="text-xs mt-1 text-center" style={{ color: theme.textMuted }}>
+              Escaneie ou digite o código do volume individual ou da etiqueta mãe
+            </p>
           </div>
         </div>
 
