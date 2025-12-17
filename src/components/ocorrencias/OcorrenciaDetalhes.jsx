@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -26,6 +25,7 @@ const gravidadeColors = {
 
 const statusColors = {
   aberta: "bg-red-600 text-white font-bold",
+  em_andamento: "bg-blue-600 text-white font-bold",
   resolvida: "bg-green-600 text-white font-bold",
   cancelada: "bg-gray-600 text-white font-bold"
 };
@@ -61,6 +61,30 @@ export default function OcorrenciaDetalhes({ open, onClose, ocorrencia, onUpdate
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
+    }
+  };
+
+  const handleEmAndamento = async () => {
+    if (!resolucao.trim()) {
+      toast.error("Descreva o motivo de não poder concluir agora");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await base44.entities.Ocorrencia.update(ocorrencia.id, {
+        status: "em_andamento",
+        observacoes: `${ocorrencia.observacoes}\n\n[EM ANDAMENTO]: ${resolucao}`
+      });
+
+      toast.success("Ocorrência marcada como em andamento");
+      onUpdate();
+      onClose();
+    } catch (error) {
+      console.error("Erro ao atualizar:", error);
+      toast.error("Erro ao atualizar ocorrência");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -142,7 +166,8 @@ export default function OcorrenciaDetalhes({ open, onClose, ocorrencia, onUpdate
             </DialogTitle>
             <div className="flex gap-2">
               <Badge className={statusColors[ocorrencia.status]}>
-                {ocorrencia.status === "aberta" && <><Clock className="w-3 h-3 mr-1" />Aberta</>}
+                {ocorrencia.status === "aberta" && <><AlertTriangle className="w-3 h-3 mr-1" />Aberta</>}
+                {ocorrencia.status === "em_andamento" && <><Clock className="w-3 h-3 mr-1" />Em Andamento</>}
                 {ocorrencia.status === "resolvida" && <><CheckCircle2 className="w-3 h-3 mr-1" />Resolvida</>}
                 {ocorrencia.status === "cancelada" && <><XCircle className="w-3 h-3 mr-1" />Cancelada</>}
               </Badge>
@@ -255,14 +280,23 @@ export default function OcorrenciaDetalhes({ open, onClose, ocorrencia, onUpdate
             </div>
           )}
 
-          {ocorrencia.status === "aberta" && (
+          {(ocorrencia.status === "aberta" || ocorrencia.status === "em_andamento") && (
             <div>
-              <Label htmlFor="resolucao" className="text-sm font-medium">Descrição da Resolução</Label>
+              <Label htmlFor="resolucao" className="text-sm font-medium">
+                {ocorrencia.status === "em_andamento" 
+                  ? "Nova Atualização / Resolução" 
+                  : "Motivo / Resolução"
+                }
+              </Label>
               <Textarea
                 id="resolucao"
                 value={resolucao}
                 onChange={(e) => setResolucao(e.target.value)}
-                placeholder="Como foi resolvido o problema?"
+                placeholder={
+                  ocorrencia.status === "em_andamento"
+                    ? "Atualize o progresso ou descreva como foi resolvido..."
+                    : "Por que não pode ser concluída agora? ou Como foi resolvido?"
+                }
                 rows={3}
                 className="mt-2"
               />
@@ -271,8 +305,41 @@ export default function OcorrenciaDetalhes({ open, onClose, ocorrencia, onUpdate
         </div>
 
         <DialogFooter>
-          {ocorrencia.status === "aberta" && (
-            <>
+          {(ocorrencia.status === "aberta" || ocorrencia.status === "em_andamento") && (
+            <div className="flex flex-col gap-2 w-full">
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleEmAndamento}
+                  disabled={saving}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  {saving ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Clock className="w-4 h-4 mr-2" />
+                      Em Andamento
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={handleResolver}
+                  disabled={saving}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  {saving ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      Resolvendo...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Resolver
+                    </>
+                  )}
+                </Button>
+              </div>
               <Button
                 variant="outline"
                 onClick={handleCancelar}
@@ -281,26 +348,9 @@ export default function OcorrenciaDetalhes({ open, onClose, ocorrencia, onUpdate
                 <XCircle className="w-4 h-4 mr-2" />
                 Cancelar Ocorrência
               </Button>
-              <Button
-                onClick={handleResolver}
-                disabled={saving}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                {saving ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Resolvendo...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Resolver
-                  </>
-                )}
-              </Button>
-            </>
+            </div>
           )}
-          {ocorrencia.status !== "aberta" && (
+          {ocorrencia.status !== "aberta" && ocorrencia.status !== "em_andamento" && (
             <Button onClick={onClose}>Fechar</Button>
           )}
         </DialogFooter>
