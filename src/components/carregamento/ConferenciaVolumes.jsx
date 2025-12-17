@@ -278,23 +278,32 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
           const volumesAtualizados = [...volumesEmbarcados, ...novosIdsEmbarcados];
           setVolumesEmbarcados(volumesAtualizados);
 
+          // Atualizar volumes locais com status atualizado
+          setVolumesLocal(prevVolumes => 
+            prevVolumes.map(v => 
+              novosIdsEmbarcados.includes(v.id) 
+                ? { ...v, status_volume: "carregado" }
+                : v
+            )
+          );
+
           // Salvar rascunho
           localStorage.setItem(`conferencia_rascunho_${ordem.id}`, JSON.stringify({
             volumesEmbarcados: volumesAtualizados,
             timestamp: new Date().toISOString()
           }));
-          
+
           toast.success(`✅ ${volumesParaCarregar.length} volumes embarcados!`);
-          
+
           // Atualizar nota em conferência
           if (notasIdsUnicas.length === 1) {
             const notaId = notasIdsUnicas[0];
             const nota = notasFiscaisLocal.find(nf => nf.id === notaId) || notasParaVincular.find(n => n.id === notaId);
             if (nota) {
               setNotaEmConferencia(nota);
-              
+
               // Verificar se completou a nota
-              const volumesNota = getVolumesNota(nota.id);
+              const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
               const embarcadosNota = volumesAtualizados.filter(id => 
                 volumesNota.some(v => v.id === id)
               );
@@ -304,9 +313,9 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
               }
             }
           }
-          
+
           setCodigoScanner("");
-          return;
+          return 'success';
         } else {
           toast.warning(`Etiqueta ${etiquetaMae.codigo} sem volumes vinculados`);
           setCodigoScanner("");
@@ -474,6 +483,16 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
 
       const volumesAtualizados = [...volumesEmbarcados, volume.id];
       setVolumesEmbarcados(volumesAtualizados);
+      
+      // Atualizar volumes locais com status atualizado
+      setVolumesLocal(prevVolumes => 
+        prevVolumes.map(v => 
+          v.id === volume.id 
+            ? { ...v, status_volume: "carregado" }
+            : v
+        )
+      );
+      
       setCodigoScanner("");
 
       // Salvar rascunho
@@ -486,8 +505,8 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       toast.success(`✓ Volume embarcado! NF ${nota?.numero_nota || ''}`, { duration: 1500 });
 
       // Verificar se todos os volumes da NF foram embarcados
-      const volumesNota = getVolumesNota(volume.nota_fiscal_id);
-      const embarcadosNota = [...volumesEmbarcados, volume.id].filter(id => 
+      const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === volume.nota_fiscal_id);
+      const embarcadosNota = volumesAtualizados.filter(id => 
         volumesNota.some(v => v.id === id)
       );
 
