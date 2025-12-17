@@ -92,9 +92,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
         style={{ backgroundColor: theme.bg, borderColor: theme.border }}
       >
         <DialogHeader className="p-4 pb-2">
-        <DialogTitle style={{ color: theme.text }}>
-        📦 Scanner QR Code / Código de Barras
-        </DialogTitle>
+          <DialogTitle style={{ color: theme.text }}>
+            Scanner QR Code
+          </DialogTitle>
         </DialogHeader>
 
         <div className="p-4 pt-0">
@@ -132,11 +132,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
                 </div>
               </div>
 
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
-                <p className="text-white text-sm font-bold bg-black/80 px-4 py-2 rounded-full shadow-lg">
-                  📦 Centralize o QR Code na área QUADRADA
-                </p>
-              </div>
+
 
               <div className="absolute top-2 right-2 z-10">
                 <Button
@@ -202,16 +198,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark }) {
               </div>
             </div>
 
-            {!useManualMode && (
-              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2">
-                <p className="text-xs text-center font-semibold mb-1" style={{ color: isDark ? '#86efac' : '#15803d' }}>
-                  ✅ Scanner QR Code especializado ativo
-                </p>
-                <p className="text-[10px] text-center" style={{ color: isDark ? '#86efac' : '#15803d' }}>
-                  Área QUADRADA otimizada para QR Codes
-                </p>
-              </div>
-            )}
+
 
             <Button
               variant="outline"
