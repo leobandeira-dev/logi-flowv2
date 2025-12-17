@@ -640,28 +640,36 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       
       setCodigoScanner("");
 
-      // 6. Feedback para usuário
+      // 6. Verificar se nota foi completada ANTES do toast
       const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-      toast.success(`✓ Volume embarcado! NF ${nota?.numero_nota || ''}`, { duration: 1000 });
-
-      // 7. Verificar se nota foi completada
       const volumesNota = volumesLocaisAtualizados.filter(v => v.nota_fiscal_id === volume.nota_fiscal_id);
       const embarcadosNota = volumesEmbarcadosAtualizados.filter(id => 
         volumesNota.some(v => v.id === id)
       );
 
-      console.log('📊 VERIFICAÇÃO FINAL:', {
+      const notaCompleta = embarcadosNota.length === volumesNota.length && volumesNota.length > 0;
+
+      console.log('📊 APONTAMENTO CONFERÊNCIA:', {
         nota: nota?.numero_nota,
         volumesTotal: volumesNota.length,
         volumesEmbarcados: embarcadosNota.length,
-        completa: embarcadosNota.length === volumesNota.length
+        completa: notaCompleta,
+        timestamp: new Date().toISOString()
       });
 
-      setNotaEmConferencia(nota);
-
-      if (embarcadosNota.length === volumesNota.length && volumesNota.length > 0) {
-        toast.success(`✅ Nota Fiscal ${nota?.numero_nota} completa!`, { duration: 2000 });
+      // 7. Feedback consolidado para usuário
+      if (notaCompleta) {
+        toast.success(`✅ NF ${nota?.numero_nota} COMPLETA - ${volumesNota.length}/${volumesNota.length} volumes`, { 
+          duration: 2000,
+          style: { background: '#10b981', color: 'white', fontWeight: 'bold' }
+        });
         setNotaEmConferencia(null);
+      } else {
+        const faltam = volumesNota.length - embarcadosNota.length;
+        toast.success(`✓ Volume ${embarcadosNota.length}/${volumesNota.length} - NF ${nota?.numero_nota} (faltam ${faltam})`, { 
+          duration: 1500 
+        });
+        setNotaEmConferencia(nota);
       }
 
       return 'success';

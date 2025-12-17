@@ -46,21 +46,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
             console.log('📦 Código processado:', finalCode);
 
+            // Bloquear novos scans por 800ms
             setScanFeedback('processing');
 
             const scanResult = await Promise.resolve(onScan(finalCode));
 
             console.log('✅ Resultado do scan:', scanResult);
 
-            if (scanResult === 'duplicate') {
-              setScanFeedback('duplicate');
-            } else if (scanResult === 'success') {
-              setScanFeedback('success');
-            } else {
-              setScanFeedback(null);
-            }
-
-            setTimeout(() => setScanFeedback(null), 1000);
+            // Liberar para próximo scan após processamento
+            setTimeout(() => setScanFeedback(null), 800);
           }
         },
         {
@@ -138,25 +132,16 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     if (manualInput.trim()) {
       console.log('⌨️ MODO MANUAL - Código digitado:', manualInput.trim());
       
-      // Mostrar feedback de processamento
       setScanFeedback('processing');
       
       const result = await Promise.resolve(onScan(manualInput.trim()));
       
       console.log('⌨️ MODO MANUAL - Resultado:', result);
       
-      setManualInput(""); // Limpar campo após scan
+      setManualInput("");
       
-      // Feedback visual
-      if (result === 'duplicate') {
-        setScanFeedback('duplicate');
-      } else if (result === 'success') {
-        setScanFeedback('success');
-      } else {
-        setScanFeedback(null);
-      }
-      
-      setTimeout(() => setScanFeedback(null), 1000);
+      // Liberar para próximo scan
+      setTimeout(() => setScanFeedback(null), 800);
     }
   };
 
@@ -222,53 +207,32 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 style={{ transform: 'scaleX(-1)' }}
               />
 
-              {/* Overlay QUADRADO */}
+              {/* Overlay Fixo - SEM FLASHBACK */}
               <div 
                 className="absolute inset-0 pointer-events-none flex items-center justify-center"
                 style={{ zIndex: 5 }}
               >
                 <div 
-                  className="shadow-lg transition-all duration-300"
+                  className="shadow-lg"
                   style={{
                     width: '80%',
                     height: '80%',
                     aspectRatio: '1/1',
                     maxWidth: '80%',
                     maxHeight: '80%',
-                    boxShadow: scanFeedback 
-                      ? `0 0 0 9999px rgba(0, 0, 0, 0.7), 0 0 40px ${scanFeedback === 'success' ? '#10b981' : '#f59e0b'}` 
-                      : '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
                     borderRadius: '12px',
                     position: 'relative',
-                    border: scanFeedback === 'success' 
-                      ? '6px solid #10b981' 
-                      : scanFeedback === 'duplicate' 
-                      ? '6px solid #f59e0b' 
-                      : '6px solid #60a5fa'
+                    border: '6px solid #60a5fa'
                   }}
                 >
                   {/* Cantos */}
-                  <div className="absolute top-0 left-0 w-12 h-12 border-t-8 border-l-8" style={{ borderRadius: '12px 0 0 0', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
-                  <div className="absolute top-0 right-0 w-12 h-12 border-t-8 border-r-8" style={{ borderRadius: '0 12px 0 0', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
-                  <div className="absolute bottom-0 left-0 w-12 h-12 border-b-8 border-l-8" style={{ borderRadius: '0 0 0 12px', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
-                  <div className="absolute bottom-0 right-0 w-12 h-12 border-b-8 border-r-8" style={{ borderRadius: '0 0 12px 0', borderColor: scanFeedback === 'success' ? '#10b981' : scanFeedback === 'duplicate' ? '#f59e0b' : '#60a5fa' }}></div>
+                  <div className="absolute top-0 left-0 w-12 h-12 border-t-8 border-l-8" style={{ borderRadius: '12px 0 0 0', borderColor: '#60a5fa' }}></div>
+                  <div className="absolute top-0 right-0 w-12 h-12 border-t-8 border-r-8" style={{ borderRadius: '0 12px 0 0', borderColor: '#60a5fa' }}></div>
+                  <div className="absolute bottom-0 left-0 w-12 h-12 border-b-8 border-l-8" style={{ borderRadius: '0 0 0 12px', borderColor: '#60a5fa' }}></div>
+                  <div className="absolute bottom-0 right-0 w-12 h-12 border-b-8 border-r-8" style={{ borderRadius: '0 0 12px 0', borderColor: '#60a5fa' }}></div>
                 </div>
               </div>
-              
-              {/* Feedback Visual */}
-              {scanFeedback && (
-                <div 
-                  className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 px-6 py-3 rounded-xl font-bold text-base animate-in fade-in slide-in-from-top-2 shadow-2xl"
-                  style={{
-                    backgroundColor: scanFeedback === 'success' ? '#10b981' : '#f59e0b',
-                    color: 'white',
-                    boxShadow: `0 10px 30px ${scanFeedback === 'success' ? 'rgba(16, 185, 129, 0.6)' : 'rgba(245, 158, 11, 0.6)'}`,
-                    border: '3px solid white'
-                  }}
-                >
-                  {scanFeedback === 'success' ? '✓ VOLUME ESCANEADO' : '⚠️ VOLUME JÁ ESCANEADO'}
-                </div>
-              )}
 
 
 
