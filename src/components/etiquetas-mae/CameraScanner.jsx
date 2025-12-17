@@ -37,37 +37,43 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       const qrScanner = new QrScanner(
         videoRef.current,
         async (result) => {
-          if (result?.data) {
+          if (result?.data && !scanFeedback) { // Prevenir scans duplicados durante feedback
             const decodedText = result.data;
             console.log('🔍 QR Code detectado:', decodedText);
-            
+
             // Limpar apenas caracteres não numéricos se parecer ser chave NF-e
             const cleaned = decodedText.replace(/\D/g, '');
             const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
-            
+
             console.log('📦 Código processado:', finalCode);
-            
-            // Garantir processamento assíncrono
+
+            // Mostrar feedback imediato
+            setScanFeedback('processing');
+
+            // Processar scan
             const scanResult = await Promise.resolve(onScan(finalCode));
-            
+
             console.log('✅ Resultado do scan:', scanResult);
-            
-            // Feedback visual
+
+            // Feedback visual baseado no resultado
             if (scanResult === 'duplicate') {
               setScanFeedback('duplicate');
-            } else if (scanResult === 'success' || scanResult !== 'error') {
+            } else if (scanResult === 'success') {
               setScanFeedback('success');
+            } else {
+              setScanFeedback(null);
             }
-            
-            setTimeout(() => setScanFeedback(null), 1500);
-            // NÃO parar o scanner - continuar pronto para próximo scan
+
+            // Limpar feedback após 1 segundo
+            setTimeout(() => setScanFeedback(null), 1000);
           }
         },
         {
           returnDetailedScanResult: true,
-          highlightScanRegion: true,
-          highlightCodeOutline: true,
-          preferredCamera: "environment"
+          highlightScanRegion: false,
+          highlightCodeOutline: false,
+          preferredCamera: "environment",
+          maxScansPerSecond: 3, // Limitar para evitar scans duplicados
         }
       );
 
@@ -90,20 +96,29 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     setScanning(false);
   };
 
-  const handleManualSubmit = () => {
+  const handleManualSubmit = async () => {
     if (manualInput.trim()) {
-      const result = onScan(manualInput.trim());
+      console.log('⌨️ MODO MANUAL - Código digitado:', manualInput.trim());
+      
+      // Mostrar feedback de processamento
+      setScanFeedback('processing');
+      
+      const result = await Promise.resolve(onScan(manualInput.trim()));
+      
+      console.log('⌨️ MODO MANUAL - Resultado:', result);
+      
       setManualInput(""); // Limpar campo após scan
       
       // Feedback visual
       if (result === 'duplicate') {
         setScanFeedback('duplicate');
-      } else {
+      } else if (result === 'success') {
         setScanFeedback('success');
+      } else {
+        setScanFeedback(null);
       }
       
-      setTimeout(() => setScanFeedback(null), 1500);
-      // NÃO fechar o modal - manter aberto para próximo scan
+      setTimeout(() => setScanFeedback(null), 1000);
     }
   };
 

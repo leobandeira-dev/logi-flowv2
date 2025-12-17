@@ -195,16 +195,12 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
   }, [videoStream]);
 
   const getVolumesNota = (notaId) => {
-    const volumes = volumesLocal.filter(v => v.nota_fiscal_id === notaId);
-    console.log(`📦 Volumes da nota ${notaId}:`, volumes.length);
-    return volumes;
+    return volumesLocal.filter(v => v.nota_fiscal_id === notaId);
   };
 
   const getVolumesEmbarcadosNota = (notaId) => {
     const volumesNota = getVolumesNota(notaId);
-    const embarcados = volumesNota.filter(v => volumesEmbarcados.includes(v.id));
-    console.log(`✅ Volumes embarcados da nota ${notaId}:`, embarcados.length, '/', volumesNota.length);
-    return embarcados;
+    return volumesNota.filter(v => volumesEmbarcados.includes(v.id));
   };
 
   const getTotalVolumes = () => {
@@ -221,15 +217,6 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       return volume && notasIdsAtuais.includes(volume.nota_fiscal_id);
     });
     
-    // Debug log
-    console.log('📊 Volumes Embarcados Debug:', {
-      totalEmbarcados: volumesEmbarcados.length,
-      volumesValidos: validos.length,
-      totalVolumes: getTotalVolumes(),
-      notasAtuais: notasFiscaisLocal.length,
-      volumesOrf: volumesEmbarcados.length - validos.length
-    });
-    
     return validos;
   };
 
@@ -240,6 +227,13 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
     }
 
     const codigoLimpo = codigo.trim().toUpperCase();
+    
+    console.log('🔍 SCAN INICIADO:', {
+      codigo: codigoLimpo,
+      volumesLocaisTotal: volumesLocal.length,
+      volumesEmbarcadosTotal: volumesEmbarcados.length,
+      notasLocaisTotal: notasFiscaisLocal.length
+    });
 
     // 1. Tentar encontrar como ETIQUETA MÃE primeiro
 
@@ -594,90 +588,89 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       return 'duplicate';
     }
 
-    // Feedback: iniciando conferência de nova nota se for primeira leitura da nota
-    const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
-    const volumesNotaAtual = volumesLocal.filter(v => v.nota_fiscal_id === volume.nota_fiscal_id);
-    const embarcadosNotaAtual = volumesEmbarcados.filter(id => 
-      volumesNotaAtual.some(v => v.id === id)
-    );
-    
-    if (embarcadosNotaAtual.length === 0 && nota) {
-      toast.info(`📋 Iniciando conferência da NF ${nota.numero_nota} - ${volumesNotaAtual.length} volumes`, { duration: 2000 });
-    }
-
     // Embarcar volume individual
     try {
-      console.log('🔄 Embarcando volume:', volume.id, volume.identificador_unico);
+      console.log('🔄 EMBARCANDO VOLUME:', {
+        volumeId: volume.id.slice(-6),
+        identificador: volume.identificador_unico,
+        notaId: volume.nota_fiscal_id
+      });
       
+      // 1. Atualizar no banco de dados
       await base44.entities.Volume.update(volume.id, {
         status_volume: "carregado",
         ordem_id: ordem.id,
         localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)}`
       });
 
-      console.log('✅ Volume atualizado no banco');
+      console.log('✅ Volume atualizado no banco de dados');
 
-      // CRÍTICO: Atualizar ambos os estados de forma síncrona
+      // 2. CRIAR NOVOS ARRAYS (não mutar os existentes)
       const volumesEmbarcadosAtualizados = [...volumesEmbarcados, volume.id];
-      
-      // Atualizar volumes locais IMEDIATAMENTE
       const volumesLocaisAtualizados = volumesLocal.map(v => 
         v.id === volume.id 
           ? { ...v, status_volume: "carregado", ordem_id: ordem.id }
           : v
       );
       
-      console.log('🔄 Atualizando estados:', {
-        volumeId: volume.id.slice(-6),
+      console.log('🔄 ESTADOS ATUALIZADOS:', {
         volumesEmbarcadosAntes: volumesEmbarcados.length,
         volumesEmbarcadosDepois: volumesEmbarcadosAtualizados.length,
-        volumesLocaisTotal: volumesLocaisAtualizados.length
+        volumeAdicionado: volume.id.slice(-6)
       });
       
-      // Atualizar estados em batch
+      // 3. Atualizar estados de uma vez
       setVolumesLocal(volumesLocaisAtualizados);
       setVolumesEmbarcados(volumesEmbarcadosAtualizados);
       
-      // Salvar rascunho IMEDIATAMENTE
+      // 4. Salvar rascunho
       localStorage.setItem(`conferencia_rascunho_${ordem.id}`, JSON.stringify({
         volumesEmbarcados: volumesEmbarcadosAtualizados,
         timestamp: new Date().toISOString()
       }));
       
-      // Forçar refresh da UI
-      setRefreshKey(prev => prev + 1);
+      console.log('💾 Rascunho salvo no localStorage');
+      
+      // 5. Forçar refresh
+      setRefreshKey(prev => {
+        const novoKey = prev + 1;
+        console.log('🔄 RefreshKey atualizado:', prev, '->', novoKey);
+        return novoKey;
+      });
       
       setCodigoScanner("");
 
-      toast.success(`✓ Volume embarcado! NF ${nota?.numero_nota || ''}`, { duration: 1500 });
+      // 6. Feedback para usuário
+      const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+      toast.success(`✓ Volume embarcado! NF ${nota?.numero_nota || ''}`, { duration: 1000 });
 
-      // Verificar conclusão da nota usando dados já atualizados
+      // 7. Verificar se nota foi completada
       const volumesNota = volumesLocaisAtualizados.filter(v => v.nota_fiscal_id === volume.nota_fiscal_id);
       const embarcadosNota = volumesEmbarcadosAtualizados.filter(id => 
         volumesNota.some(v => v.id === id)
       );
 
-      console.log('📊 Status da nota:', {
-        notaId: nota?.numero_nota,
-        totalVolumes: volumesNota.length,
-        embarcados: embarcadosNota.length,
+      console.log('📊 VERIFICAÇÃO FINAL:', {
+        nota: nota?.numero_nota,
+        volumesTotal: volumesNota.length,
+        volumesEmbarcados: embarcadosNota.length,
         completa: embarcadosNota.length === volumesNota.length
       });
 
       setNotaEmConferencia(nota);
 
       if (embarcadosNota.length === volumesNota.length && volumesNota.length > 0) {
-        toast.success(`✅ Nota Fiscal ${nota?.numero_nota} completa!`);
+        toast.success(`✅ Nota Fiscal ${nota?.numero_nota} completa!`, { duration: 2000 });
         setNotaEmConferencia(null);
       }
 
       return 'success';
-      } catch (error) {
-      console.error("Erro ao embarcar volume:", error);
+    } catch (error) {
+      console.error("❌ ERRO ao embarcar volume:", error);
       toast.error("Erro ao registrar embarque");
       return 'error';
-      }
-      };
+    }
+  };
 
 
 
@@ -785,9 +778,15 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
   };
 
   const handleScanQRCode = async (codigo) => {
-    // Não fechar o modal - deixar aberto para scans consecutivos
+    console.log('📸 SCANNER - Código recebido:', codigo);
+    
+    // Processar o scan
     const result = await handleScanVolume(codigo);
-    return result; // Retornar resultado para feedback visual
+    
+    console.log('📸 SCANNER - Resultado:', result);
+    
+    // Retornar resultado para feedback visual no scanner
+    return result;
   };
 
   const toggleNotaExpandida = (notaId) => {
@@ -911,13 +910,6 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
               const notaCompleta = progressoNota === 100;
               const pendentes = volumesNota.length - volumesEmbarcadosNota.length;
               const isExpanded = notasExpandidas[nota.id];
-              
-              console.log(`🔍 Renderizando nota ${nota.numero_nota}:`, {
-                volumesTotal: volumesNota.length,
-                embarcados: volumesEmbarcadosNota.length,
-                progresso: progressoNota,
-                refreshKey
-              });
 
               // Verificar se há divergência entre volumes esperados e volumes reais
               const volumesEsperados = nota.quantidade_total_volumes_nf || 0;
