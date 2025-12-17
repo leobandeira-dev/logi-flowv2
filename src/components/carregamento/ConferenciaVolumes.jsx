@@ -739,38 +739,41 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="flex items-start gap-2 flex-1 min-w-0">
                         {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: theme.textMuted }} />
+                          <ChevronDown className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: theme.textMuted }} />
                         ) : (
-                          <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: theme.textMuted }} />
+                          <ChevronRight className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: theme.textMuted }} />
                         )}
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <FileText className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
-                            <span className="font-bold text-sm" style={{ color: theme.text }}>
+                            <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                            <span className="font-bold text-base" style={{ color: theme.text }}>
                               NF {nota.numero_nota}
                             </span>
                             {notaCompleta ? (
-                              <Badge className="bg-green-600 text-white text-[10px] px-1.5 py-0">
+                              <Badge className="bg-green-600 text-white text-xs px-2 py-0.5">
                                 Completa
                               </Badge>
                             ) : (
-                              <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0 font-bold">
+                              <Badge className="bg-orange-500 text-white text-xs px-2 py-0.5 font-bold">
                                 {pendentes} pendente{pendentes !== 1 ? 's' : ''}
                               </Badge>
                             )}
                           </div>
-                          <p className="text-[11px] truncate" style={{ color: theme.textMuted }}>
+                          <p className="text-xs truncate mb-0.5" style={{ color: theme.textMuted }}>
                             {nota.emitente_razao_social}
+                          </p>
+                          <p className="text-xs font-medium" style={{ color: theme.textMuted }}>
+                            {nota.destinatario_cidade}/{nota.destinatario_uf}
                           </p>
                         </div>
                       </div>
 
                       <div className="text-right flex-shrink-0">
-                        <div className="text-sm font-bold whitespace-nowrap" style={{ color: theme.text }}>
+                        <div className="text-base font-bold whitespace-nowrap" style={{ color: theme.text }}>
                           {volumesEmbarcadosNota.length}/{volumesNota.length}
                         </div>
-                        <div className="text-[11px] whitespace-nowrap" style={{ color: theme.textMuted }}>
+                        <div className="text-xs whitespace-nowrap" style={{ color: theme.textMuted }}>
                           {nota.peso_total_nf?.toLocaleString()} kg
                         </div>
                       </div>
