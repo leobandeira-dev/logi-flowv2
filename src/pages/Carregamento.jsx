@@ -717,7 +717,6 @@ export default function Carregamento() {
                     <div className="grid grid-cols-2 gap-2">
                       <Button
                         onClick={() => handleAbrirConferencia(ordem)}
-                        disabled={!qtdNotas}
                         size="sm"
                         className="bg-blue-600 hover:bg-blue-700 h-11 text-sm"
                       >
@@ -726,7 +725,6 @@ export default function Carregamento() {
                       </Button>
                       <Button
                         onClick={() => handleAbrirEnderecamento(ordem)}
-                        disabled={!qtdNotas}
                         size="sm"
                         className="bg-purple-600 hover:bg-purple-700 h-11 text-sm"
                       >

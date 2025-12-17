@@ -931,7 +931,6 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                                 className="h-6 w-6 p-0"
                                 style={{ color: '#3b82f6' }}
                                 title="Conferência de Volumes"
-                                disabled={!ordem.notas_fiscais_ids || ordem.notas_fiscais_ids.length === 0}
                               >
                                 <Scan className="w-3.5 h-3.5" />
                               </Button>
@@ -944,7 +943,6 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                                 className="h-6 w-6 p-0"
                                 style={{ color: '#9333ea' }}
                                 title="Endereçamento de Veículo"
-                                disabled={!ordem.notas_fiscais_ids || ordem.notas_fiscais_ids.length === 0}
                               >
                                 <Grid3x3 className="w-3.5 h-3.5" />
                               </Button>
