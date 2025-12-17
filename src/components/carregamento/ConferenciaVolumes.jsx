@@ -332,28 +332,35 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
 
           await Promise.all(updateVolumePromises);
 
-          // Atualizar volumes locais com status atualizado PRIMEIRO
-          setVolumesLocal(prevVolumes => 
-            prevVolumes.map(v => 
-              volumesParaCarregar.some(vol => vol.id === v.id)
-                ? { ...v, status_volume: "carregado", ordem_id: ordem.id }
-                : v
-            )
-          );
-
-          // Atualizar estado local
+          // CRÍTICO: Atualizar estados de forma síncrona
           const novosIdsEmbarcados = volumesParaCarregar.map(v => v.id);
-          const volumesAtualizados = [...volumesEmbarcados, ...novosIdsEmbarcados];
-          setVolumesEmbarcados(volumesAtualizados);
-
-          // Forçar refresh da UI
-          setRefreshKey(prev => prev + 1);
+          const volumesEmbarcadosAtualizados = [...volumesEmbarcados, ...novosIdsEmbarcados];
+          
+          // Atualizar volumes locais
+          const volumesLocaisAtualizados = volumesLocal.map(v => 
+            volumesParaCarregar.some(vol => vol.id === v.id)
+              ? { ...v, status_volume: "carregado", ordem_id: ordem.id }
+              : v
+          );
+          
+          console.log('🔄 Etiqueta Mãe - Atualizando estados:', {
+            volumesParaCarregar: volumesParaCarregar.length,
+            volumesEmbarcadosAntes: volumesEmbarcados.length,
+            volumesEmbarcadosDepois: volumesEmbarcadosAtualizados.length
+          });
+          
+          // Atualizar estados em batch
+          setVolumesLocal(volumesLocaisAtualizados);
+          setVolumesEmbarcados(volumesEmbarcadosAtualizados);
 
           // Salvar rascunho
           localStorage.setItem(`conferencia_rascunho_${ordem.id}`, JSON.stringify({
-            volumesEmbarcados: volumesAtualizados,
+            volumesEmbarcados: volumesEmbarcadosAtualizados,
             timestamp: new Date().toISOString()
           }));
+
+          // Forçar refresh da UI
+          setRefreshKey(prev => prev + 1);
 
           toast.success(`✅ ${volumesParaCarregar.length} volumes embarcados!`);
 
@@ -597,56 +604,59 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
 
       console.log('✅ Volume atualizado no banco');
 
-      // Atualizar volumes locais com status atualizado
-      setVolumesLocal(prevVolumes => {
-        const novosVolumes = prevVolumes.map(v => 
-          v.id === volume.id 
-            ? { ...v, status_volume: "carregado", ordem_id: ordem.id }
-            : v
-        );
-        console.log('📦 Volumes locais atualizados:', novosVolumes.length);
-        return novosVolumes;
-      });
-
+      // CRÍTICO: Atualizar ambos os estados de forma síncrona
       const volumesEmbarcadosAtualizados = [...volumesEmbarcados, volume.id];
+      
+      // Atualizar volumes locais IMEDIATAMENTE
+      const volumesLocaisAtualizados = volumesLocal.map(v => 
+        v.id === volume.id 
+          ? { ...v, status_volume: "carregado", ordem_id: ordem.id }
+          : v
+      );
+      
+      console.log('🔄 Atualizando estados:', {
+        volumeId: volume.id.slice(-6),
+        volumesEmbarcadosAntes: volumesEmbarcados.length,
+        volumesEmbarcadosDepois: volumesEmbarcadosAtualizados.length,
+        volumesLocaisTotal: volumesLocaisAtualizados.length
+      });
+      
+      // Atualizar estados em batch
+      setVolumesLocal(volumesLocaisAtualizados);
       setVolumesEmbarcados(volumesEmbarcadosAtualizados);
       
-      console.log('📋 Volumes embarcados:', volumesEmbarcadosAtualizados.length);
+      // Salvar rascunho IMEDIATAMENTE
+      localStorage.setItem(`conferencia_rascunho_${ordem.id}`, JSON.stringify({
+        volumesEmbarcados: volumesEmbarcadosAtualizados,
+        timestamp: new Date().toISOString()
+      }));
       
       // Forçar refresh da UI
       setRefreshKey(prev => prev + 1);
       
       setCodigoScanner("");
 
-      // Salvar rascunho
-      localStorage.setItem(`conferencia_rascunho_${ordem.id}`, JSON.stringify({
-        volumesEmbarcados: volumesEmbarcadosAtualizados,
-        timestamp: new Date().toISOString()
-      }));
-
       toast.success(`✓ Volume embarcado! NF ${nota?.numero_nota || ''}`, { duration: 1500 });
 
-      // Verificar se todos os volumes da NF foram embarcados
-      setTimeout(() => {
-        const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === volume.nota_fiscal_id);
-        const embarcadosNota = volumesEmbarcadosAtualizados.filter(id => 
-          volumesNota.some(v => v.id === id)
-        );
+      // Verificar conclusão da nota usando dados já atualizados
+      const volumesNota = volumesLocaisAtualizados.filter(v => v.nota_fiscal_id === volume.nota_fiscal_id);
+      const embarcadosNota = volumesEmbarcadosAtualizados.filter(id => 
+        volumesNota.some(v => v.id === id)
+      );
 
-        console.log('📊 Status da nota:', {
-          notaId: nota?.numero_nota,
-          totalVolumes: volumesNota.length,
-          embarcados: embarcadosNota.length
-        });
+      console.log('📊 Status da nota:', {
+        notaId: nota?.numero_nota,
+        totalVolumes: volumesNota.length,
+        embarcados: embarcadosNota.length,
+        completa: embarcadosNota.length === volumesNota.length
+      });
 
-        // Atualizar nota em conferência
-        setNotaEmConferencia(nota);
+      setNotaEmConferencia(nota);
 
-        if (embarcadosNota.length === volumesNota.length && volumesNota.length > 0) {
-          toast.success(`✅ Nota Fiscal ${nota?.numero_nota} completa!`);
-          setNotaEmConferencia(null);
-        }
-      }, 200);
+      if (embarcadosNota.length === volumesNota.length && volumesNota.length > 0) {
+        toast.success(`✅ Nota Fiscal ${nota?.numero_nota} completa!`);
+        setNotaEmConferencia(null);
+      }
 
       return 'success';
       } catch (error) {
