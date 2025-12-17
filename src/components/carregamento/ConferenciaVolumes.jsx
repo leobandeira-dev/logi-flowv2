@@ -28,6 +28,7 @@ import {
   AlertTriangle,
   TruckIcon
 } from "lucide-react";
+import CameraScanner from "../etiquetas-mae/CameraScanner";
 import { toast } from "sonner";
 import { sincronizarStatusNotas } from "@/functions/sincronizarStatusNotas";
 
