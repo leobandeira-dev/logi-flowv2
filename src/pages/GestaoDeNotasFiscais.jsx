@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -229,56 +229,60 @@ export default function GestaoDeNotasFiscais() {
     toast.success("Filtro aplicado!");
   };
 
-  const filteredNotas = notasFiscais.filter(nota => {
-    const ordem = ordens.find(o => o.id === nota.ordem_id);
-    const numeroCarga = ordem?.numero_carga || '';
-    
-    const matchesSearch = !searchTermAtivo || 
-      nota.numero_nota?.toLowerCase().includes(searchTermAtivo.toLowerCase()) ||
-      nota.chave_nota_fiscal?.toLowerCase().includes(searchTermAtivo.toLowerCase()) ||
-      nota.emitente_razao_social?.toLowerCase().includes(searchTermAtivo.toLowerCase()) ||
-      nota.destinatario_razao_social?.toLowerCase().includes(searchTermAtivo.toLowerCase()) ||
-      numeroCarga.toLowerCase().includes(searchTermAtivo.toLowerCase());
+  const filteredNotas = useMemo(() => {
+    return notasFiscais.filter(nota => {
+      const ordem = ordens.find(o => o.id === nota.ordem_id);
+      const numeroCarga = ordem?.numero_carga || '';
+      
+      const matchesSearch = !searchTermAtivo || 
+        nota.numero_nota?.toLowerCase().includes(searchTermAtivo.toLowerCase()) ||
+        nota.chave_nota_fiscal?.toLowerCase().includes(searchTermAtivo.toLowerCase()) ||
+        nota.emitente_razao_social?.toLowerCase().includes(searchTermAtivo.toLowerCase()) ||
+        nota.destinatario_razao_social?.toLowerCase().includes(searchTermAtivo.toLowerCase()) ||
+        numeroCarga.toLowerCase().includes(searchTermAtivo.toLowerCase());
 
-    const statusDinamico = calcularStatusDinamico(nota);
-    const matchesStatus = filtroStatus === "todos" || statusDinamico === filtroStatus;
+      const statusDinamico = calcularStatusDinamico(nota);
+      const matchesStatus = filtroStatus === "todos" || statusDinamico === filtroStatus;
 
-    const matchesEmitente = !filtroEmitente || 
-      nota.emitente_razao_social?.toLowerCase().includes(filtroEmitente.toLowerCase());
+      const matchesEmitente = !filtroEmitente || 
+        nota.emitente_razao_social?.toLowerCase().includes(filtroEmitente.toLowerCase());
 
-    const matchesDestinatario = !filtroDestinatario || 
-      nota.destinatario_razao_social?.toLowerCase().includes(filtroDestinatario.toLowerCase());
+      const matchesDestinatario = !filtroDestinatario || 
+        nota.destinatario_razao_social?.toLowerCase().includes(filtroDestinatario.toLowerCase());
 
-    const matchesCidade = !filtroCidade || 
-      nota.destinatario_cidade?.toLowerCase().includes(filtroCidade.toLowerCase());
+      const matchesCidade = !filtroCidade || 
+        nota.destinatario_cidade?.toLowerCase().includes(filtroCidade.toLowerCase());
 
-    const matchesUF = !filtroUF || 
-      nota.destinatario_uf?.toLowerCase().includes(filtroUF.toLowerCase());
+      const matchesUF = !filtroUF || 
+        nota.destinatario_uf?.toLowerCase().includes(filtroUF.toLowerCase());
 
-    let matchesDataInicio = true;
-    if (filtroDataInicio && nota.created_date) {
-      const dataRecebimento = new Date(nota.created_date);
-      dataRecebimento.setHours(0, 0, 0, 0);
-      const dataInicio = new Date(filtroDataInicio);
-      dataInicio.setHours(0, 0, 0, 0);
-      matchesDataInicio = dataRecebimento >= dataInicio;
-    }
+      let matchesDataInicio = true;
+      if (filtroDataInicio && nota.created_date) {
+        const dataRecebimento = new Date(nota.created_date);
+        dataRecebimento.setHours(0, 0, 0, 0);
+        const dataInicio = new Date(filtroDataInicio);
+        dataInicio.setHours(0, 0, 0, 0);
+        matchesDataInicio = dataRecebimento >= dataInicio;
+      }
 
-    let matchesDataFim = true;
-    if (filtroDataFim && nota.created_date) {
-      const dataRecebimento = new Date(nota.created_date);
-      dataRecebimento.setHours(0, 0, 0, 0);
-      const dataFim = new Date(filtroDataFim);
-      dataFim.setHours(23, 59, 59, 999);
-      matchesDataFim = dataRecebimento <= dataFim;
-    }
+      let matchesDataFim = true;
+      if (filtroDataFim && nota.created_date) {
+        const dataRecebimento = new Date(nota.created_date);
+        dataRecebimento.setHours(0, 0, 0, 0);
+        const dataFim = new Date(filtroDataFim);
+        dataFim.setHours(23, 59, 59, 999);
+        matchesDataFim = dataRecebimento <= dataFim;
+      }
 
-    return matchesSearch && matchesStatus && matchesEmitente && 
-           matchesDestinatario && matchesCidade && matchesUF &&
-           matchesDataInicio && matchesDataFim;
-  });
+      return matchesSearch && matchesStatus && matchesEmitente && 
+             matchesDestinatario && matchesCidade && matchesUF &&
+             matchesDataInicio && matchesDataFim;
+    });
+  }, [notasFiscais, ordens, searchTermAtivo, filtroStatus, filtroEmitente, filtroDestinatario, filtroCidade, filtroUF, filtroDataInicio, filtroDataFim]);
 
-  const notasPaginadas = filteredNotas.slice((paginaAtual - 1) * limite, paginaAtual * limite);
+  const notasPaginadas = useMemo(() => {
+    return filteredNotas.slice((paginaAtual - 1) * limite, paginaAtual * limite);
+  }, [filteredNotas, paginaAtual, limite]);
 
   const theme = {
     bg: isDark ? '#0f172a' : '#f9fafb',
