@@ -36,19 +36,26 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     try {
       const qrScanner = new QrScanner(
         videoRef.current,
-        (result) => {
+        async (result) => {
           if (result?.data) {
             const decodedText = result.data;
+            console.log('🔍 QR Code detectado:', decodedText);
+            
             // Limpar apenas caracteres não numéricos se parecer ser chave NF-e
             const cleaned = decodedText.replace(/\D/g, '');
             const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
             
-            const scanResult = onScan(finalCode);
+            console.log('📦 Código processado:', finalCode);
+            
+            // Garantir processamento assíncrono
+            const scanResult = await Promise.resolve(onScan(finalCode));
+            
+            console.log('✅ Resultado do scan:', scanResult);
             
             // Feedback visual
             if (scanResult === 'duplicate') {
               setScanFeedback('duplicate');
-            } else if (scanResult === 'success') {
+            } else if (scanResult === 'success' || scanResult !== 'error') {
               setScanFeedback('success');
             }
             
@@ -67,6 +74,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       qrScannerRef.current = qrScanner;
       await qrScanner.start();
       setScanning(true);
+      console.log('📸 Scanner QR iniciado');
     } catch (error) {
       console.error("Erro ao iniciar scanner:", error);
       setUseManualMode(true);
