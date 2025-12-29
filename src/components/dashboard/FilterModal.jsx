@@ -16,7 +16,7 @@ export default function FilterModal({ open, onClose, filters, onFiltersChange, m
   const handleClearFilters = () => {
     onFiltersChange({
       dataInicio: "", dataFim: "", origem: "", destino: "", motorista: "", motoristaId: "",
-      tipoOrdem: "", etapaId: "", status: "", frota: "", operacoesIds: [], modalidadeCarga: "", tipoRegistro: ""
+      tipoOrdem: "", etapaId: "", status: "", frota: "", operacoesIds: [], modalidadeCarga: "", tipoRegistro: "", statusTracking: ""
     });
   };
 
@@ -211,7 +211,29 @@ export default function FilterModal({ open, onClose, filters, onFiltersChange, m
               </SelectContent>
             </Select>
           </div>
-        </div>
+
+          <div className="col-span-2">
+            <Label className="text-sm font-semibold">Status de Tracking</Label>
+            <Select value={filters.statusTracking} onValueChange={(value) => handleFilterChange("statusTracking", value)}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={null}>Todos</SelectItem>
+                <SelectItem value="aguardando_agendamento">Aguardando Agendamento</SelectItem>
+                <SelectItem value="carregamento_agendado">Carregamento Agendado</SelectItem>
+                <SelectItem value="em_carregamento">Em Carregamento</SelectItem>
+                <SelectItem value="carregado">Carregado</SelectItem>
+                <SelectItem value="em_viagem">Em Viagem</SelectItem>
+                <SelectItem value="chegada_destino">Chegada no Destino</SelectItem>
+                <SelectItem value="descarga_agendada">Descarga Agendada</SelectItem>
+                <SelectItem value="em_descarga">Em Descarga</SelectItem>
+                <SelectItem value="descarga_realizada">Descarga Realizada</SelectItem>
+                <SelectItem value="finalizado">Finalizado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline" onClick={onClose}>

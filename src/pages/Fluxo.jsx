@@ -89,7 +89,8 @@ export default function Fluxo() {
     destino: "",
     motoristaId: "",
     tiposOrdem: ["negociando", "alocado"], // Padrão: apenas negociando e alocado
-    modalidadeCarga: ""
+    modalidadeCarga: "",
+    statusTracking: ""
   });
   const [showFilters, setShowFilters] = useState(false);
   const [operacoes, setOperacoes] = useState([]);
@@ -950,6 +951,8 @@ export default function Fluxo() {
     if (filters.destino && filters.destino !== "" && !ordem.destino?.toLowerCase().includes(filters.destino.toLowerCase())) return false;
 
     if (filters.motoristaId && filters.motoristaId !== "" && ordem.motorista_id !== filters.motoristaId) return false;
+
+    if (filters.statusTracking && filters.statusTracking !== "" && ordem.status_tracking !== filters.statusTracking) return false;
 
     if (!searchTerm) return true;
 
