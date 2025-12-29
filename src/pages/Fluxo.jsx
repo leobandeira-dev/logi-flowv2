@@ -140,7 +140,6 @@ export default function Fluxo() {
       return;
     }
 
-    // Iniciar processamento
     setProcessandoNovembro(true);
     setProgressoAtual(0);
     setProgressoTotal(1);
@@ -149,36 +148,51 @@ export default function Fluxo() {
       console.log('🔍 INICIANDO PROCESSAMENTO');
       console.log('📅 Período selecionado:', dataInicioConcluir, 'até', dataFimConcluir);
 
-      const todasEtapasOrdem = await base44.entities.OrdemEtapa.list();
-      console.log('📋 Total OrdemEtapa:', todasEtapasOrdem.length);
+      // Carregar TODAS as etapas sem limite
+      const todasEtapasOrdem = await base44.entities.OrdemEtapa.list(null, 10000);
+      console.log('📋 Total OrdemEtapa carregadas:', todasEtapasOrdem.length);
 
       const [anoInicio, mesInicio, diaInicio] = dataInicioConcluir.split('-').map(n => parseInt(n));
       const [anoFim, mesFim, diaFim] = dataFimConcluir.split('-').map(n => parseInt(n));
-      
+
       const inicio = new Date(anoInicio, mesInicio - 1, diaInicio, 0, 0, 0);
       const fim = new Date(anoFim, mesFim - 1, diaFim, 23, 59, 59);
-      
+
       console.log('🎯 Período:', inicio.toISOString(), 'até', fim.toISOString());
 
-      // Filtrar ETAPAS não concluídas criadas no período
+      // Log de todas as etapas para debug
+      const todasStatus = todasEtapasOrdem.reduce((acc, e) => {
+        acc[e.status] = (acc[e.status] || 0) + 1;
+        return acc;
+      }, {});
+      console.log('📊 Todas etapas por status:', todasStatus);
+
+      // Filtrar etapas não concluídas criadas no período
       const etapasNaoConcluidas = todasEtapasOrdem.filter(etapa => {
-        if (!etapa.created_date) return false;
-        if (etapa.status === "concluida" || etapa.status === "cancelada") return false;
-        
+        if (!etapa.created_date) {
+          console.log('⚠️ Etapa sem created_date:', etapa.id.slice(-6));
+          return false;
+        }
+
         const dataEtapa = new Date(etapa.created_date);
-        return dataEtapa >= inicio && dataEtapa <= fim;
+        const dentroPerido = dataEtapa >= inicio && dataEtapa <= fim;
+        const statusPendente = etapa.status !== "concluida" && etapa.status !== "cancelada";
+
+        return dentroPerido && statusPendente;
       });
 
       console.log('⏳ Etapas não concluídas do período:', etapasNaoConcluidas.length);
-      
+
       if (etapasNaoConcluidas.length > 0) {
-        console.log('Status:', etapasNaoConcluidas.reduce((acc, e) => {
+        const statusFiltradas = etapasNaoConcluidas.reduce((acc, e) => {
           acc[e.status] = (acc[e.status] || 0) + 1;
           return acc;
-        }, {}));
-        console.log('Primeiras 5 etapas:');
-        etapasNaoConcluidas.slice(0, 5).forEach((e, idx) => {
-          console.log(`  ${idx + 1}. ID: ${e.id.slice(-6)}, Status: ${e.status}, Created: ${new Date(e.created_date).toLocaleDateString()}`);
+        }, {});
+        console.log('📊 Status das etapas filtradas:', statusFiltradas);
+
+        console.log('📝 Primeiras 10 etapas encontradas:');
+        etapasNaoConcluidas.slice(0, 10).forEach((e, idx) => {
+          console.log(`  ${idx + 1}. ID: ${e.id.slice(-6)}, Status: ${e.status}, Created: ${format(new Date(e.created_date), 'dd/MM/yyyy HH:mm')}`);
         });
       }
 
@@ -191,9 +205,9 @@ export default function Fluxo() {
 
       const dataAtual = new Date().toISOString();
       setProgressoTotal(etapasNaoConcluidas.length);
-      console.log('🚀 Concluindo', etapasNaoConcluidas.length, 'etapas...');
+      console.log('🚀 Iniciando conclusão de', etapasNaoConcluidas.length, 'etapas...');
 
-      // 4. Concluir todas as etapas
+      // Concluir todas as etapas
       for (let i = 0; i < etapasNaoConcluidas.length; i++) {
         const etapa = etapasNaoConcluidas[i];
         await base44.entities.OrdemEtapa.update(etapa.id, {
@@ -202,7 +216,7 @@ export default function Fluxo() {
           data_inicio: etapa.data_inicio || dataAtual
         });
         setProgressoAtual(i + 1);
-        
+
         if ((i + 1) % 10 === 0 || i === etapasNaoConcluidas.length - 1) {
           console.log(`✅ ${i + 1}/${etapasNaoConcluidas.length} etapas concluídas`);
         }
@@ -213,8 +227,7 @@ export default function Fluxo() {
       setShowModalConcluir(false);
       setDataInicioConcluir("");
       setDataFimConcluir("");
-      
-      // Forçar reload completo da página para garantir dados atualizados
+
       setTimeout(() => {
         window.location.reload();
       }, 1000);
