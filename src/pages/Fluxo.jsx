@@ -149,15 +149,8 @@ export default function Fluxo() {
       console.log('🔍 INICIANDO PROCESSAMENTO');
       console.log('📅 Período selecionado:', dataInicioConcluir, 'até', dataFimConcluir);
 
-      const [todasOrdens, todasEtapasOrdem, todasEtapasConfig] = await Promise.all([
-        base44.entities.OrdemDeCarregamento.list(),
-        base44.entities.OrdemEtapa.list(),
-        base44.entities.Etapa.list("ordem")
-      ]);
-
-      console.log('📦 Total ordens:', todasOrdens.length);
+      const todasEtapasOrdem = await base44.entities.OrdemEtapa.list();
       console.log('📋 Total OrdemEtapa:', todasEtapasOrdem.length);
-      console.log('⚙️ Total Etapas config:', todasEtapasConfig.length);
 
       const [anoInicio, mesInicio, diaInicio] = dataInicioConcluir.split('-').map(n => parseInt(n));
       const [anoFim, mesFim, diaFim] = dataFimConcluir.split('-').map(n => parseInt(n));
@@ -167,39 +160,26 @@ export default function Fluxo() {
       
       console.log('🎯 Período:', inicio.toISOString(), 'até', fim.toISOString());
 
-      // 1. Buscar ORDENS criadas no período
-      const ordensPeriodo = todasOrdens.filter(ordem => {
-        if (!ordem.created_date) return false;
-        const dataOrdem = new Date(ordem.created_date);
-        return dataOrdem >= inicio && dataOrdem <= fim;
+      // Filtrar ETAPAS não concluídas criadas no período
+      const etapasNaoConcluidas = todasEtapasOrdem.filter(etapa => {
+        if (!etapa.created_date) return false;
+        if (etapa.status === "concluida" || etapa.status === "cancelada") return false;
+        
+        const dataEtapa = new Date(etapa.created_date);
+        return dataEtapa >= inicio && dataEtapa <= fim;
       });
 
-      console.log('📦 Ordens no período:', ordensPeriodo.length);
-
-      if (ordensPeriodo.length === 0) {
-        toast.warning('Nenhuma ordem encontrada no período');
-        setProcessandoNovembro(false);
-        setProgressoTotal(0);
-        return;
-      }
-
-      // 2. Buscar IDs das ordens do período
-      const ordensIds = new Set(ordensPeriodo.map(o => o.id));
-
-      // 3. Buscar TODAS as etapas NÃO CONCLUÍDAS dessas ordens
-      const etapasNaoConcluidas = todasEtapasOrdem.filter(etapa => 
-        ordensIds.has(etapa.ordem_id) && 
-        etapa.status !== "concluida" && 
-        etapa.status !== "cancelada"
-      );
-
-      console.log('⏳ Etapas não concluídas encontradas:', etapasNaoConcluidas.length);
+      console.log('⏳ Etapas não concluídas do período:', etapasNaoConcluidas.length);
       
       if (etapasNaoConcluidas.length > 0) {
         console.log('Status:', etapasNaoConcluidas.reduce((acc, e) => {
           acc[e.status] = (acc[e.status] || 0) + 1;
           return acc;
         }, {}));
+        console.log('Primeiras 5 etapas:');
+        etapasNaoConcluidas.slice(0, 5).forEach((e, idx) => {
+          console.log(`  ${idx + 1}. ID: ${e.id.slice(-6)}, Status: ${e.status}, Created: ${new Date(e.created_date).toLocaleDateString()}`);
+        });
       }
 
       if (etapasNaoConcluidas.length === 0) {
