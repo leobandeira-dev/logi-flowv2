@@ -800,21 +800,6 @@ export default function Fluxo() {
     return true;
   });
 
-  // Calcular etapas pendentes das ordens filtradas
-  React.useEffect(() => {
-    if (filteredOrdens.length > 0 && ordensetapas.length > 0) {
-      const idsOrdensFiltradas = filteredOrdens.map(o => o.id);
-      const etapasPendentes = ordensetapas.filter(etapa => {
-        const ordemFiltrada = idsOrdensFiltradas.includes(etapa.ordem_id);
-        const statusPendente = etapa.status !== "concluida" && etapa.status !== "cancelada";
-        return ordemFiltrada && statusPendente;
-      });
-      setEtapasPendentesCount(etapasPendentes.length);
-    } else {
-      setEtapasPendentesCount(0);
-    }
-  }, [filteredOrdens, ordensetapas]);
-
   const filteredOrdens = ordensFiltradaPorPeriodo.filter(ordem => {
     // REGRA: Excluir coletas, recebimentos e entregas - apenas ordens de carregamento
     
@@ -956,6 +941,21 @@ export default function Fluxo() {
   const inicio = (paginaAtual - 1) * limite;
   const fim = inicio + limite;
   const ordensLimitadas = filteredOrdens.slice(inicio, fim);
+
+  // Calcular etapas pendentes das ordens filtradas
+  React.useEffect(() => {
+    if (filteredOrdens.length > 0 && ordensetapas.length > 0) {
+      const idsOrdensFiltradas = filteredOrdens.map(o => o.id);
+      const etapasPendentes = ordensetapas.filter(etapa => {
+        const ordemFiltrada = idsOrdensFiltradas.includes(etapa.ordem_id);
+        const statusPendente = etapa.status !== "concluida" && etapa.status !== "cancelada";
+        return ordemFiltrada && statusPendente;
+      });
+      setEtapasPendentesCount(etapasPendentes.length);
+    } else {
+      setEtapasPendentesCount(0);
+    }
+  }, [filteredOrdens, ordensetapas]);
 
   const getOrdensporEtapa = (etapaId) => {
     const ordensIds = ordensetapas
