@@ -166,31 +166,39 @@ export default function Fluxo() {
       
       console.log('📅 Período:', inicio.toLocaleDateString(), 'até', fim.toLocaleDateString());
 
-      // Filtrar etapas que foram CRIADAS no período selecionado
-      const etapasDoPeriodo = todasEtapas.filter(etapa => {
-        if (!etapa.created_date) return false;
-        const dataEtapa = new Date(etapa.created_date);
-        return dataEtapa >= inicio && dataEtapa <= fim;
+      // 1. Buscar ORDENS criadas no período
+      const ordensPeriodo = todasOrdens.filter(ordem => {
+        if (!ordem.created_date) return false;
+        const dataOrdem = new Date(ordem.created_date);
+        return dataOrdem >= inicio && dataOrdem <= fim;
       });
 
-      console.log('📊 Total de etapas criadas no período:', etapasDoPeriodo.length);
-      console.log('Status das etapas do período:', etapasDoPeriodo.reduce((acc, e) => {
+      console.log('📦 Ordens criadas no período:', ordensPeriodo.length);
+
+      // 2. Pegar IDs dessas ordens
+      const ordensIds = new Set(ordensPeriodo.map(o => o.id));
+
+      // 3. Buscar TODAS as etapas dessas ordens (independente de quando foram criadas)
+      const todasEtapasDasOrdens = todasEtapas.filter(etapa => ordensIds.has(etapa.ordem_id));
+      
+      console.log('📊 Total de etapas das ordens:', todasEtapasDasOrdens.length);
+      console.log('Status:', todasEtapasDasOrdens.reduce((acc, e) => {
         acc[e.status] = (acc[e.status] || 0) + 1;
         return acc;
       }, {}));
       
-      const etapasParaConcluir = etapasDoPeriodo.filter(oe => 
-        oe.status !== "concluida" && 
-        oe.status !== "cancelada"
+      // 4. Filtrar apenas as que precisam ser concluídas
+      const etapasParaConcluir = todasEtapasDasOrdens.filter(etapa => 
+        etapa.status === "pendente" || 
+        etapa.status === "em_andamento" || 
+        etapa.status === "bloqueada"
       );
 
       console.log('⏳ Etapas a concluir:', etapasParaConcluir.length);
-      if (etapasParaConcluir.length > 0) {
-        console.log('Exemplos (primeiras 5):');
-        etapasParaConcluir.slice(0, 5).forEach(e => {
-          console.log('  - Status:', e.status, 'criada em', new Date(e.created_date).toLocaleString());
-        });
-      }
+      console.log('Detalhamento:', etapasParaConcluir.reduce((acc, e) => {
+        acc[e.status] = (acc[e.status] || 0) + 1;
+        return acc;
+      }, {}));
 
       if (etapasParaConcluir.length === 0) {
         toast.info('Nenhuma etapa pendente encontrada');
