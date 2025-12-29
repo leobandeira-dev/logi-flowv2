@@ -729,6 +729,12 @@ export default function Fluxo() {
     if (filters.dataInicio && filters.dataInicio !== "" && ordem.data_solicitacao) {
       const dataOrdem = new Date(ordem.data_solicitacao);
       const dataInicio = new Date(filters.dataInicio);
+      console.log('🔍 Filtrando por data início:', { 
+        ordem: ordem.numero_carga, 
+        dataOrdem: dataOrdem.toISOString().split('T')[0], 
+        dataInicio: filters.dataInicio,
+        passa: dataOrdem >= dataInicio
+      });
       if (dataOrdem < dataInicio) return false;
     }
 
@@ -736,6 +742,12 @@ export default function Fluxo() {
       const dataOrdem = new Date(ordem.data_solicitacao);
       const dataFim = new Date(filters.dataFim);
       dataFim.setHours(23, 59, 59, 999);
+      console.log('🔍 Filtrando por data fim:', { 
+        ordem: ordem.numero_carga, 
+        dataOrdem: dataOrdem.toISOString().split('T')[0], 
+        dataFim: filters.dataFim,
+        passa: dataOrdem <= dataFim
+      });
       if (dataOrdem > dataFim) return false;
     }
 

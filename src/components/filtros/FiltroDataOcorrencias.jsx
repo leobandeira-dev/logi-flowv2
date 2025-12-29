@@ -25,10 +25,12 @@ export default function FiltroDataOcorrencias({
   }, [periodoSelecionado, dataInicio]);
 
   const handlePeriodoChange = (valor) => {
+    console.log('📅 FiltroDataOcorrencias - Período alterado:', valor);
     onPeriodoChange(valor);
     
     if (valor === "mes_atual" || valor === "ano_atual") {
       const periodo = getPeriodoParaValor(valor);
+      console.log('📅 Aplicando período:', periodo);
       onDataInicioChange(periodo.inicio);
       onDataFimChange(periodo.fim);
     } else if (valor === "mes_especifico") {
@@ -38,6 +40,8 @@ export default function FiltroDataOcorrencias({
       const ano = hoje.getFullYear();
       const primeiro = new Date(ano, mes, 1);
       const ultimo = new Date(ano, mes + 1, 0);
+      
+      console.log('📅 Inicializando mês específico:', { mes, ano, inicio: primeiro.toISOString().split('T')[0], fim: ultimo.toISOString().split('T')[0] });
       
       setMesSelecionado(mes.toString());
       setAnoSelecionado(ano.toString());
@@ -132,12 +136,16 @@ export default function FiltroDataOcorrencias({
             <Select
               value={mesSelecionado}
               onValueChange={(mes) => {
+                console.log('📅 Mês selecionado:', mes);
                 setMesSelecionado(mes);
                 const ano = anoSelecionado || new Date().getFullYear().toString();
                 const primeiro = new Date(parseInt(ano), parseInt(mes), 1);
                 const ultimo = new Date(parseInt(ano), parseInt(mes) + 1, 0);
-                onDataInicioChange(primeiro.toISOString().split('T')[0]);
-                onDataFimChange(ultimo.toISOString().split('T')[0]);
+                const inicio = primeiro.toISOString().split('T')[0];
+                const fim = ultimo.toISOString().split('T')[0];
+                console.log('📅 Datas calculadas:', { inicio, fim, mes, ano });
+                onDataInicioChange(inicio);
+                onDataFimChange(fim);
               }}
             >
               <SelectTrigger className="h-8 text-sm" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}>
@@ -164,12 +172,16 @@ export default function FiltroDataOcorrencias({
             <Select
               value={anoSelecionado}
               onValueChange={(ano) => {
+                console.log('📅 Ano selecionado:', ano);
                 setAnoSelecionado(ano);
                 const mes = mesSelecionado || new Date().getMonth().toString();
                 const primeiro = new Date(parseInt(ano), parseInt(mes), 1);
                 const ultimo = new Date(parseInt(ano), parseInt(mes) + 1, 0);
-                onDataInicioChange(primeiro.toISOString().split('T')[0]);
-                onDataFimChange(ultimo.toISOString().split('T')[0]);
+                const inicio = primeiro.toISOString().split('T')[0];
+                const fim = ultimo.toISOString().split('T')[0];
+                console.log('📅 Datas calculadas:', { inicio, fim, mes, ano });
+                onDataInicioChange(inicio);
+                onDataFimChange(fim);
               }}
             >
               <SelectTrigger className="h-8 text-sm" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}>
