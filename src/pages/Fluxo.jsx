@@ -158,14 +158,15 @@ export default function Fluxo() {
       const todasEtapasOrdem = await base44.entities.OrdemEtapa.list(null, 10000);
       console.log('📋 Total OrdemEtapa carregadas:', todasEtapasOrdem.length);
 
-      // 2. Filtrar apenas etapas das ordens filtradas que NÃO estão concluídas
+      // 2. Filtrar TODAS etapas das ordens filtradas que NÃO estão concluídas
+      // (pendente, em_andamento, bloqueada - qualquer coisa exceto concluida/cancelada)
       const etapasNaoConcluidas = todasEtapasOrdem.filter(etapa => {
         const ordemFiltrada = idsOrdens.includes(etapa.ordem_id);
-        const statusPendente = etapa.status !== "concluida" && etapa.status !== "cancelada";
-        return ordemFiltrada && statusPendente;
+        const naoEstaConcluida = etapa.status !== "concluida" && etapa.status !== "cancelada";
+        return ordemFiltrada && naoEstaConcluida;
       });
 
-      console.log('⏳ Etapas não concluídas das ordens filtradas:', etapasNaoConcluidas.length);
+      console.log('⏳ Etapas NÃO concluídas encontradas:', etapasNaoConcluidas.length);
       toast.dismiss();
 
       if (etapasNaoConcluidas.length > 0) {
@@ -173,7 +174,15 @@ export default function Fluxo() {
           acc[e.status] = (acc[e.status] || 0) + 1;
           return acc;
         }, {});
-        console.log('📊 Status das etapas a serem concluídas:', statusFiltradas);
+        console.log('📊 Distribuição por status:', statusFiltradas);
+
+        // Mostrar exemplos
+        console.log('📝 Exemplos de etapas a concluir:');
+        etapasNaoConcluidas.slice(0, 10).forEach((e, idx) => {
+          const ordem = filteredOrdens.find(o => o.id === e.ordem_id);
+          const etapa = etapas.find(et => et.id === e.etapa_id);
+          console.log(`  ${idx + 1}. ${ordem?.numero_carga || 'N/A'} - ${etapa?.nome || 'N/A'} (${e.status})`);
+        });
       }
 
       if (etapasNaoConcluidas.length === 0) {
@@ -188,18 +197,21 @@ export default function Fluxo() {
       console.log('🚀 Iniciando conclusão de', etapasNaoConcluidas.length, 'etapas...');
       toast.success(`Processando ${etapasNaoConcluidas.length} etapas...`);
 
-      // 3. Concluir todas as etapas
+      // 3. Concluir TODAS as etapas pendentes (ignorando validações de campos obrigatórios)
       for (let i = 0; i < etapasNaoConcluidas.length; i++) {
         const etapa = etapasNaoConcluidas[i];
+
+        // Atualizar para concluída SEM validar campos obrigatórios
         await base44.entities.OrdemEtapa.update(etapa.id, {
           status: "concluida",
           data_conclusao: dataAtual,
           data_inicio: etapa.data_inicio || dataAtual
         });
+
         setProgressoAtual(i + 1);
 
         if ((i + 1) % 10 === 0 || i === etapasNaoConcluidas.length - 1) {
-          console.log(`✅ ${i + 1}/${etapasNaoConcluidas.length} etapas concluídas`);
+          console.log(`✅ ${i + 1}/${etapasNaoConcluidas.length} etapas marcadas como concluídas`);
         }
       }
 
@@ -942,16 +954,21 @@ export default function Fluxo() {
   const fim = inicio + limite;
   const ordensLimitadas = filteredOrdens.slice(inicio, fim);
 
-  // Calcular etapas pendentes das ordens filtradas
+  // Calcular etapas NÃO concluídas das ordens filtradas
   React.useEffect(() => {
     if (filteredOrdens.length > 0 && ordensetapas.length > 0) {
       const idsOrdensFiltradas = filteredOrdens.map(o => o.id);
-      const etapasPendentes = ordensetapas.filter(etapa => {
+      const etapasNaoConcluidas = ordensetapas.filter(etapa => {
         const ordemFiltrada = idsOrdensFiltradas.includes(etapa.ordem_id);
-        const statusPendente = etapa.status !== "concluida" && etapa.status !== "cancelada";
-        return ordemFiltrada && statusPendente;
+        const naoEstaConcluida = etapa.status !== "concluida" && etapa.status !== "cancelada";
+        return ordemFiltrada && naoEstaConcluida;
       });
-      setEtapasPendentesCount(etapasPendentes.length);
+      setEtapasPendentesCount(etapasNaoConcluidas.length);
+
+      // Debug
+      if (etapasNaoConcluidas.length > 0) {
+        console.log('🔍 Etapas não concluídas detectadas:', etapasNaoConcluidas.length);
+      }
     } else {
       setEtapasPendentesCount(0);
     }
