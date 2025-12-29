@@ -156,7 +156,7 @@ export default function Fluxo() {
 
       console.log('🎯 Período:', inicio.toISOString(), 'até', fim.toISOString());
 
-      // 1. Buscar TODAS as ordens criadas no período
+      // 1. Buscar TODAS as ordens criadas no período (FILTRO PELA DATA DA ORDEM)
       const todasOrdens = await base44.entities.OrdemDeCarregamento.list("-created_date", 10000);
       console.log('📦 Total de ordens carregadas:', todasOrdens.length);
 
@@ -166,7 +166,11 @@ export default function Fluxo() {
         return dataOrdem >= inicio && dataOrdem <= fim;
       });
 
-      console.log('📦 Ordens criadas no período:', ordensNoPeriodo.length);
+      console.log('📦 Ordens criadas no período (baseado em ordem.created_date):', ordensNoPeriodo.length);
+      console.log('📦 Exemplos de ordens do período:');
+      ordensNoPeriodo.slice(0, 5).forEach((o, idx) => {
+        console.log(`  ${idx + 1}. ${o.numero_carga} - Criada em: ${format(new Date(o.created_date), 'dd/MM/yyyy HH:mm')}`);
+      });
 
       if (ordensNoPeriodo.length === 0) {
         toast.info('Nenhuma ordem encontrada no período');
