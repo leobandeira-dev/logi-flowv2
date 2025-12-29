@@ -55,7 +55,7 @@ import PlanilhaView from "../components/tracking/PlanilhaView";
 import FiltrosPredefinidos from "../components/filtros/FiltrosPredefinidos";
 import PaginacaoControles from "../components/filtros/PaginacaoControles";
 import ExpurgoModal from "../components/tracking/ExpurgoModal";
-import FiltroDataSimples from "../components/filtros/FiltroDataSimples";
+import FiltroPeriodo from "../components/filtros/FiltroPeriodo";
 
 const statusTrackingConfig = {
   aguardando_agendamento: { label: "Aguardando Agendamento", color: "bg-gray-500", icon: Clock },
@@ -93,6 +93,12 @@ export default function Tracking() {
   const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
   const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
   
+  const [periodoSelecionado, setPeriodoSelecionado] = useState("mes_atual");
+  const [anoSelecionado, setAnoSelecionado] = useState(hoje.getFullYear());
+  const [mesSelecionado, setMesSelecionado] = useState(hoje.getMonth() + 1);
+  const [dataInicioPersonalizada, setDataInicioPersonalizada] = useState("");
+  const [dataFimPersonalizada, setDataFimPersonalizada] = useState("");
+  
   const [filters, setFilters] = useState({
     statusTracking: "",
     origem: "",
@@ -105,10 +111,7 @@ export default function Tracking() {
     diariaDescarga: "",
     tipoRegistro: "",
     tiposOrdemFiltro: ["carregamento"],
-    tipoCampoData: "criacao",
-    periodoSelecionado: "mes_atual",
-    anoSelecionado: hoje.getFullYear(),
-    mesSelecionado: hoje.getMonth() + 1
+    tipoCampoData: "criacao"
   });
   const [showFilters, setShowFilters] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -474,23 +477,26 @@ export default function Tracking() {
       dataOrdem = ordem.descarga_agendamento_data ? new Date(ordem.descarga_agendamento_data) : null;
     }
 
-    if (dataOrdem && filters.periodoSelecionado) {
-      const hoje = new Date();
-      
-      if (filters.periodoSelecionado === "mes_atual") {
-        const mesAtual = hoje.getMonth();
-        const anoAtual = hoje.getFullYear();
-        if (dataOrdem.getMonth() !== mesAtual || dataOrdem.getFullYear() !== anoAtual) {
+    if (dataOrdem) {
+      if (periodoSelecionado === "mes_atual") {
+        const hoje = new Date();
+        if (dataOrdem.getMonth() !== hoje.getMonth() || dataOrdem.getFullYear() !== hoje.getFullYear()) {
           return false;
         }
-      } else if (filters.periodoSelecionado === "ano_atual") {
-        if (dataOrdem.getFullYear() !== filters.anoSelecionado) {
+      } else if (periodoSelecionado === "ano_atual") {
+        if (dataOrdem.getFullYear() !== anoSelecionado) {
           return false;
         }
-      } else if (filters.periodoSelecionado === "mes_especifico") {
-        if (dataOrdem.getFullYear() !== filters.anoSelecionado || 
-            dataOrdem.getMonth() + 1 !== filters.mesSelecionado) {
+      } else if (periodoSelecionado === "mes_especifico") {
+        if (dataOrdem.getFullYear() !== anoSelecionado || dataOrdem.getMonth() + 1 !== mesSelecionado) {
           return false;
+        }
+      } else if (periodoSelecionado === "personalizado") {
+        if (dataInicioPersonalizada && dataFimPersonalizada) {
+          const inicio = new Date(dataInicioPersonalizada);
+          const fim = new Date(dataFimPersonalizada);
+          fim.setHours(23, 59, 59, 999);
+          if (dataOrdem < inicio || dataOrdem > fim) return false;
         }
       }
     }
@@ -1002,15 +1008,27 @@ export default function Tracking() {
           </div>
 
           <div className="flex gap-2 w-full lg:w-auto flex-wrap items-end">
-            <FiltroDataSimples
-              tipoCampoData={filters.tipoCampoData}
-              onTipoCampoDataChange={(val) => setFilters({...filters, tipoCampoData: val})}
-              periodoSelecionado={filters.periodoSelecionado}
-              onPeriodoChange={(val) => setFilters({...filters, periodoSelecionado: val})}
-              anoSelecionado={filters.anoSelecionado}
-              onAnoChange={(val) => setFilters({...filters, anoSelecionado: val})}
-              mesSelecionado={filters.mesSelecionado}
-              onMesChange={(val) => setFilters({...filters, mesSelecionado: val})}
+            <Select value={filters.tipoCampoData} onValueChange={(val) => setFilters({...filters, tipoCampoData: val})}>
+              <SelectTrigger className="w-40 h-8 text-xs" style={{ backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
+                <SelectItem value="criacao" style={{ color: theme.text }}>Data Criação</SelectItem>
+                <SelectItem value="agenda_carga" style={{ color: theme.text }}>Agenda Carga</SelectItem>
+                <SelectItem value="agenda_descarga" style={{ color: theme.text }}>Agenda Descarga</SelectItem>
+              </SelectContent>
+            </Select>
+            <FiltroPeriodo
+              periodoFiltro={periodoSelecionado}
+              onPeriodoChange={setPeriodoSelecionado}
+              anoSelecionado={anoSelecionado}
+              onAnoChange={setAnoSelecionado}
+              mesSelecionado={mesSelecionado}
+              onMesChange={setMesSelecionado}
+              dataInicioPersonalizada={dataInicioPersonalizada}
+              onDataInicioPersonalizadaChange={setDataInicioPersonalizada}
+              dataFimPersonalizada={dataFimPersonalizada}
+              onDataFimPersonalizadaChange={setDataFimPersonalizada}
               isDark={isDark}
             />
             <div className="relative flex-1 lg:w-52">
@@ -1453,11 +1471,13 @@ export default function Tracking() {
                       statusTracking: "", origem: "", destino: "",
                       frota: "", operacoesIds: [], modalidadeCarga: "",
                       tiposOrdem: [], diariaCarregamento: "", diariaDescarga: "", tipoRegistro: "",
-                      tiposOrdemFiltro: ["carregamento"], tipoCampoData: "criacao",
-                      periodoSelecionado: "mes_atual",
-                      anoSelecionado: new Date().getFullYear(),
-                      mesSelecionado: new Date().getMonth() + 1
+                      tiposOrdemFiltro: ["carregamento"], tipoCampoData: "criacao"
                     });
+                    setPeriodoSelecionado("mes_atual");
+                    setAnoSelecionado(new Date().getFullYear());
+                    setMesSelecionado(new Date().getMonth() + 1);
+                    setDataInicioPersonalizada("");
+                    setDataFimPersonalizada("");
                   }}
                   className="h-7 text-xs"
                   style={{

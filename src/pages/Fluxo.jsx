@@ -52,7 +52,7 @@ import {
 import { format, differenceInHours, differenceInDays, differenceInMinutes, addHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import FilterModal from "../components/dashboard/FilterModal";
-import FiltroDataOcorrencias from "../components/filtros/FiltroDataOcorrencias";
+import FiltroPeriodo from "../components/filtros/FiltroPeriodo";
 
 
 export default function Fluxo() {
@@ -75,15 +75,12 @@ export default function Fluxo() {
   const [filtroAtribuicao, setFiltroAtribuicao] = useState("todos");
 
   const [periodoSelecionado, setPeriodoSelecionado] = useState("mes_atual");
-  
-  // Calcular datas do mês atual
-  const hoje = new Date();
-  const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-  const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+  const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
+  const [mesSelecionado, setMesSelecionado] = useState(new Date().getMonth() + 1);
+  const [dataInicioPersonalizada, setDataInicioPersonalizada] = useState("");
+  const [dataFimPersonalizada, setDataFimPersonalizada] = useState("");
   
   const [filters, setFilters] = useState({
-    dataInicio: primeiroDiaMes.toISOString().split('T')[0],
-    dataFim: ultimoDiaMes.toISOString().split('T')[0],
     etapaId: "",
     status: "",
     frota: "",
@@ -686,7 +683,29 @@ export default function Fluxo() {
     totalOrdens: filteredOrdensByAtribuicao.length
   });
 
-  const filteredOrdens = filteredOrdensByAtribuicao.filter(ordem => {
+  // Filtrar por período de data primeiro
+  const ordensFiltradaPorPeriodo = filteredOrdensByAtribuicao.filter(ordem => {
+    if (!ordem.created_date) return false;
+    const dataOrdem = new Date(ordem.created_date);
+
+    if (periodoSelecionado === "mes_atual") {
+      const hoje = new Date();
+      return dataOrdem.getMonth() === hoje.getMonth() && dataOrdem.getFullYear() === hoje.getFullYear();
+    } else if (periodoSelecionado === "ano_atual") {
+      return dataOrdem.getFullYear() === anoSelecionado;
+    } else if (periodoSelecionado === "mes_especifico") {
+      return dataOrdem.getFullYear() === anoSelecionado && dataOrdem.getMonth() + 1 === mesSelecionado;
+    } else if (periodoSelecionado === "personalizado") {
+      if (!dataInicioPersonalizada || !dataFimPersonalizada) return true;
+      const inicio = new Date(dataInicioPersonalizada);
+      const fim = new Date(dataFimPersonalizada);
+      fim.setHours(23, 59, 59, 999);
+      return dataOrdem >= inicio && dataOrdem <= fim;
+    }
+    return true;
+  });
+
+  const filteredOrdens = ordensFiltradaPorPeriodo.filter(ordem => {
     // REGRA: Excluir coletas, recebimentos e entregas - apenas ordens de carregamento
     
     // Excluir por numero_coleta (qualquer ordem com COL- é coleta)
@@ -905,22 +924,17 @@ export default function Fluxo() {
           </div>
 
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3 w-full lg:w-auto">
-            <FiltroDataOcorrencias
-              periodoSelecionado={periodoSelecionado}
-              onPeriodoChange={(valor) => {
-                console.log('📅 FLUXO - Período alterado para:', valor);
-                setPeriodoSelecionado(valor);
-              }}
-              dataInicio={filters.dataInicio}
-              dataFim={filters.dataFim}
-              onDataInicioChange={(val) => {
-                console.log('📅 FLUXO - dataInicio alterado:', val);
-                setFilters({...filters, dataInicio: val});
-              }}
-              onDataFimChange={(val) => {
-                console.log('📅 FLUXO - dataFim alterado:', val);
-                setFilters({...filters, dataFim: val});
-              }}
+            <FiltroPeriodo
+              periodoFiltro={periodoSelecionado}
+              onPeriodoChange={setPeriodoSelecionado}
+              anoSelecionado={anoSelecionado}
+              onAnoChange={setAnoSelecionado}
+              mesSelecionado={mesSelecionado}
+              onMesChange={setMesSelecionado}
+              dataInicioPersonalizada={dataInicioPersonalizada}
+              onDataInicioPersonalizadaChange={setDataInicioPersonalizada}
+              dataFimPersonalizada={dataFimPersonalizada}
+              onDataFimPersonalizadaChange={setDataFimPersonalizada}
               isDark={isDark}
             />
             <div className="flex items-center gap-2 w-full lg:w-auto">
