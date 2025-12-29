@@ -44,6 +44,7 @@ import OcorrenciaAvulsaForm from "../components/ocorrencias/OcorrenciaAvulsaForm
 import FiltrosPredefinidos from "../components/filtros/FiltrosPredefinidos";
 import PaginacaoControles from "../components/filtros/PaginacaoControles";
 import GestaoDiariasModal from "../components/ocorrencias/GestaoDiariasModal";
+import FiltroDataOcorrencias from "../components/filtros/FiltroDataOcorrencias";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -156,6 +157,9 @@ export default function OcorrenciasGestao() {
   const [ocorrenciaParaResponsavel, setOcorrenciaParaResponsavel] = useState(null);
   const [responsavelSelecionado, setResponsavelSelecionado] = useState("");
   const [salvandoResponsavel, setSalvandoResponsavel] = useState(false);
+  const [periodoSelecionado, setPeriodoSelecionado] = useState("mes_atual");
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -169,6 +173,13 @@ export default function OcorrenciasGestao() {
 
   useEffect(() => {
     loadData();
+    
+    // Inicializar período mês atual
+    const hoje = new Date();
+    const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    setDataInicio(primeiroDiaMes.toISOString().split('T')[0]);
+    setDataFim(ultimoDiaMes.toISOString().split('T')[0]);
   }, []);
 
   const loadData = async () => {
@@ -593,6 +604,21 @@ export default function OcorrenciasGestao() {
     if (filters.responsavel_id && ocorrencia.responsavel_id !== filters.responsavel_id) return false;
     if (filters.tipo_ocorrencia_id && ocorrencia.tipo_ocorrencia_id !== filters.tipo_ocorrencia_id) return false;
 
+    // Filtro de data do período (sempre ativo se datas estiverem definidas)
+    if (dataInicio && ocorrencia.data_inicio) {
+      const dataOcorrencia = new Date(ocorrencia.data_inicio);
+      const dataInicioFilter = new Date(dataInicio);
+      if (dataOcorrencia < dataInicioFilter) return false;
+    }
+
+    if (dataFim && ocorrencia.data_inicio) {
+      const dataOcorrencia = new Date(ocorrencia.data_inicio);
+      const dataFimFilter = new Date(dataFim);
+      dataFimFilter.setHours(23, 59, 59, 999);
+      if (dataOcorrencia > dataFimFilter) return false;
+    }
+
+    // Filtros avançados (modal)
     if (filters.dataInicio && ocorrencia.data_inicio) {
       const dataOcorrencia = new Date(ocorrencia.data_inicio);
       const dataInicio = new Date(filters.dataInicio);
@@ -846,8 +872,31 @@ export default function OcorrenciasGestao() {
         </div>
       </div>
 
+      <div className="mb-4">
+        <FiltroDataOcorrencias
+          periodoSelecionado={periodoSelecionado}
+          onPeriodoChange={setPeriodoSelecionado}
+          dataInicio={dataInicio}
+          dataFim={dataFim}
+          onDataInicioChange={setDataInicio}
+          onDataFimChange={setDataFim}
+          isDark={isDark}
+        />
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-10 gap-4 mb-6">
-        <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <Card 
+          style={{ 
+            backgroundColor: theme.cardBg, 
+            borderColor: theme.cardBorder,
+            cursor: 'pointer'
+          }}
+          className="hover:shadow-lg transition-shadow"
+          onClick={() => {
+            setFilters({ ...filters, status: "", gravidade: "", categoria: "" });
+            setPaginaAtual(1);
+          }}
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <Package className="w-5 h-5 text-blue-600" />
@@ -857,7 +906,18 @@ export default function OcorrenciasGestao() {
           </CardContent>
         </Card>
 
-        <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <Card 
+          style={{ 
+            backgroundColor: filters.status === "aberta" ? (isDark ? '#1e293b' : '#fee2e2') : theme.cardBg, 
+            borderColor: filters.status === "aberta" ? '#ef4444' : theme.cardBorder,
+            cursor: 'pointer'
+          }}
+          className="hover:shadow-lg transition-shadow"
+          onClick={() => {
+            setFilters({ ...filters, status: filters.status === "aberta" ? "" : "aberta" });
+            setPaginaAtual(1);
+          }}
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <AlertCircle className="w-5 h-5 text-red-600" />
@@ -867,7 +927,18 @@ export default function OcorrenciasGestao() {
           </CardContent>
         </Card>
 
-        <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <Card 
+          style={{ 
+            backgroundColor: filters.status === "em_andamento" ? (isDark ? '#1e293b' : '#dbeafe') : theme.cardBg, 
+            borderColor: filters.status === "em_andamento" ? '#3b82f6' : theme.cardBorder,
+            cursor: 'pointer'
+          }}
+          className="hover:shadow-lg transition-shadow"
+          onClick={() => {
+            setFilters({ ...filters, status: filters.status === "em_andamento" ? "" : "em_andamento" });
+            setPaginaAtual(1);
+          }}
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <Clock className="w-5 h-5 text-blue-600" />
@@ -877,7 +948,18 @@ export default function OcorrenciasGestao() {
           </CardContent>
         </Card>
 
-        <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <Card 
+          style={{ 
+            backgroundColor: filters.status === "resolvida" ? (isDark ? '#1e293b' : '#d1fae5') : theme.cardBg, 
+            borderColor: filters.status === "resolvida" ? '#10b981' : theme.cardBorder,
+            cursor: 'pointer'
+          }}
+          className="hover:shadow-lg transition-shadow"
+          onClick={() => {
+            setFilters({ ...filters, status: filters.status === "resolvida" ? "" : "resolvida" });
+            setPaginaAtual(1);
+          }}
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <CheckCircle2 className="w-5 h-5 text-green-600" />
@@ -887,7 +969,18 @@ export default function OcorrenciasGestao() {
           </CardContent>
         </Card>
 
-        <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <Card 
+          style={{ 
+            backgroundColor: filters.gravidade === "critica" ? (isDark ? '#1e293b' : '#fee2e2') : theme.cardBg, 
+            borderColor: filters.gravidade === "critica" ? '#dc2626' : theme.cardBorder,
+            cursor: 'pointer'
+          }}
+          className="hover:shadow-lg transition-shadow"
+          onClick={() => {
+            setFilters({ ...filters, gravidade: filters.gravidade === "critica" ? "" : "critica" });
+            setPaginaAtual(1);
+          }}
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <AlertCircle className="w-5 h-5 text-red-700" />
@@ -907,7 +1000,18 @@ export default function OcorrenciasGestao() {
           </CardContent>
         </Card>
 
-        <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <Card 
+          style={{ 
+            backgroundColor: filters.categoria === "tracking" ? (isDark ? '#1e293b' : '#dbeafe') : theme.cardBg, 
+            borderColor: filters.categoria === "tracking" ? '#3b82f6' : theme.cardBorder,
+            cursor: 'pointer'
+          }}
+          className="hover:shadow-lg transition-shadow"
+          onClick={() => {
+            setFilters({ ...filters, categoria: filters.categoria === "tracking" ? "" : "tracking" });
+            setPaginaAtual(1);
+          }}
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <MapPin className="w-5 h-5 text-blue-600" />
@@ -917,7 +1021,18 @@ export default function OcorrenciasGestao() {
           </CardContent>
         </Card>
 
-        <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <Card 
+          style={{ 
+            backgroundColor: filters.categoria === "fluxo" ? (isDark ? '#1e293b' : '#f3e8ff') : theme.cardBg, 
+            borderColor: filters.categoria === "fluxo" ? '#9333ea' : theme.cardBorder,
+            cursor: 'pointer'
+          }}
+          className="hover:shadow-lg transition-shadow"
+          onClick={() => {
+            setFilters({ ...filters, categoria: filters.categoria === "fluxo" ? "" : "fluxo" });
+            setPaginaAtual(1);
+          }}
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <Package className="w-5 h-5 text-purple-600" />
@@ -927,7 +1042,18 @@ export default function OcorrenciasGestao() {
           </CardContent>
         </Card>
 
-        <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <Card 
+          style={{ 
+            backgroundColor: filters.categoria === "tarefa" ? (isDark ? '#1e293b' : '#ccfbf1') : theme.cardBg, 
+            borderColor: filters.categoria === "tarefa" ? '#14b8a6' : theme.cardBorder,
+            cursor: 'pointer'
+          }}
+          className="hover:shadow-lg transition-shadow"
+          onClick={() => {
+            setFilters({ ...filters, categoria: filters.categoria === "tarefa" ? "" : "tarefa" });
+            setPaginaAtual(1);
+          }}
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <CheckCircle2 className="w-5 h-5 text-teal-600" />
