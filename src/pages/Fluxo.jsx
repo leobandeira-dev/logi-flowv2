@@ -160,19 +160,15 @@ export default function Fluxo() {
     setProgressoTotal(1);
 
     try {
-      toast.loading('Carregando dados...');
       console.log('🔍 INICIANDO PROCESSAMENTO');
       console.log('📦 Ordens filtradas:', filteredOrdens.length);
       console.log('📅 Período:', { periodoSelecionado, anoSelecionado, mesSelecionado });
 
-      // 1. Buscar todas as etapas das ordens filtradas
+      // Usar as MESMAS etapas que os cartões estão usando (ordensetapas já carregadas)
       const idsOrdens = filteredOrdens.map(o => o.id);
-      const todasEtapasOrdem = await base44.entities.OrdemEtapa.list(null, 10000);
-      console.log('📋 Total OrdemEtapa carregadas:', todasEtapasOrdem.length);
 
-      // 2. Filtrar TODAS etapas das ordens filtradas que NÃO estão concluídas
-      // (pendente, em_andamento, bloqueada - qualquer coisa exceto concluida/cancelada)
-      const etapasNaoConcluidas = todasEtapasOrdem.filter(etapa => {
+      // Filtrar etapas das ordens filtradas que NÃO estão concluídas
+      const etapasNaoConcluidas = ordensetapas.filter(etapa => {
         const ordemFiltrada = idsOrdens.includes(etapa.ordem_id);
         const naoEstaConcluida = etapa.status !== "concluida" && etapa.status !== "cancelada";
         return ordemFiltrada && naoEstaConcluida;
