@@ -150,7 +150,9 @@ export default function Fluxo() {
     }
 
     try {
-      toast.loading('Carregando dados...');
+      setProcessandoNovembro(true);
+      setProgressoAtual(0);
+      setProgressoTotal(1); // Mostrar barra durante carregamento
 
       const [todasOrdens, todasEtapas] = await Promise.all([
         base44.entities.OrdemDeCarregamento.list(),
@@ -172,17 +174,19 @@ export default function Fluxo() {
 
       if (etapasParaConcluir.length === 0) {
         toast.info('Nenhuma etapa pendente encontrada neste período');
+        setProcessandoNovembro(false);
         return;
       }
 
       const confirmMsg = `⚠️ Serão concluídas ${etapasParaConcluir.length} etapas de ${ordensPeriodo.length} ordens.\n\nDeseja continuar?`;
       
       if (!window.confirm(confirmMsg)) {
+        setProcessandoNovembro(false);
+        setProgressoTotal(0);
         return;
       }
 
-      // Iniciar processamento
-      setProcessandoNovembro(true);
+      // Iniciar processamento real
       setProgressoTotal(etapasParaConcluir.length);
       setProgressoAtual(0);
 
@@ -1938,21 +1942,25 @@ export default function Fluxo() {
               />
             </div>
 
-            {processandoNovembro && progressoTotal > 0 && (
+            {processandoNovembro && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm" style={{ color: theme.text }}>
-                  <span>Processando etapas...</span>
-                  <span className="font-bold">{progressoAtual} / {progressoTotal}</span>
+                  <span>{progressoTotal === 1 ? 'Carregando dados...' : 'Processando etapas...'}</span>
+                  {progressoTotal > 1 && (
+                    <span className="font-bold">{progressoAtual} / {progressoTotal}</span>
+                  )}
                 </div>
                 <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#334155' : '#e5e7eb' }}>
                   <div
                     className="h-full bg-orange-600 transition-all duration-300"
-                    style={{ width: `${(progressoAtual / progressoTotal) * 100}%` }}
+                    style={{ width: progressoTotal === 1 ? '100%' : `${(progressoAtual / progressoTotal) * 100}%` }}
                   />
                 </div>
-                <p className="text-xs text-center" style={{ color: theme.textMuted }}>
-                  {Math.round((progressoAtual / progressoTotal) * 100)}% concluído
-                </p>
+                {progressoTotal > 1 && (
+                  <p className="text-xs text-center" style={{ color: theme.textMuted }}>
+                    {Math.round((progressoAtual / progressoTotal) * 100)}% concluído
+                  </p>
+                )}
               </div>
             )}
 
