@@ -147,58 +147,63 @@ export default function Fluxo() {
 
     try {
       console.log('🔍 INICIANDO PROCESSAMENTO');
-      console.log('Período:', dataInicioConcluir, 'até', dataFimConcluir);
+      console.log('📅 Período selecionado:', dataInicioConcluir, 'até', dataFimConcluir);
 
-      const [todasOrdens, todasEtapas] = await Promise.all([
-        base44.entities.OrdemDeCarregamento.list(),
-        base44.entities.OrdemEtapa.list()
-      ]);
+      const todasEtapas = await base44.entities.OrdemEtapa.list();
 
-      console.log('📦 Total ordens:', todasOrdens.length);
-      console.log('📋 Total etapas:', todasEtapas.length);
+      console.log('📋 Total de etapas no sistema:', todasEtapas.length);
 
-      // Filtrar ordens do período (input date retorna YYYY-MM-DD)
+      // Filtrar etapas criadas no período (input date retorna YYYY-MM-DD)
       const [anoInicio, mesInicio, diaInicio] = dataInicioConcluir.split('-').map(n => parseInt(n));
       const [anoFim, mesFim, diaFim] = dataFimConcluir.split('-').map(n => parseInt(n));
       
       const inicio = new Date(anoInicio, mesInicio - 1, diaInicio, 0, 0, 0);
       const fim = new Date(anoFim, mesFim - 1, diaFim, 23, 59, 59);
       
-      console.log('📅 Período:', inicio.toLocaleDateString(), 'até', fim.toLocaleDateString());
+      console.log('🎯 Buscando etapas entre:', inicio.toISOString(), 'e', fim.toISOString());
 
-      // 1. Buscar ORDENS criadas no período
-      const ordensPeriodo = todasOrdens.filter(ordem => {
-        if (!ordem.created_date) return false;
-        const dataOrdem = new Date(ordem.created_date);
-        return dataOrdem >= inicio && dataOrdem <= fim;
+      // Exemplo de formato de created_date
+      if (todasEtapas.length > 0) {
+        console.log('📝 Exemplo de etapa (created_date):', todasEtapas[0].created_date);
+      }
+
+      // Filtrar etapas que foram criadas no período
+      const etapasDoPeriodo = todasEtapas.filter(etapa => {
+        if (!etapa.created_date) {
+          console.log('⚠️ Etapa sem created_date:', etapa.id);
+          return false;
+        }
+        const dataEtapa = new Date(etapa.created_date);
+        return dataEtapa >= inicio && dataEtapa <= fim;
       });
 
-      console.log('📦 Ordens criadas no período:', ordensPeriodo.length);
+      console.log('📊 Etapas criadas no período:', etapasDoPeriodo.length);
 
-      // 2. Pegar IDs dessas ordens
-      const ordensIds = new Set(ordensPeriodo.map(o => o.id));
-
-      // 3. Buscar TODAS as etapas dessas ordens (independente de quando foram criadas)
-      const todasEtapasDasOrdens = todasEtapas.filter(etapa => ordensIds.has(etapa.ordem_id));
+      if (etapasDoPeriodo.length > 0) {
+        console.log('Status das etapas do período:', etapasDoPeriodo.reduce((acc, e) => {
+          acc[e.status] = (acc[e.status] || 0) + 1;
+          return acc;
+        }, {}));
+        console.log('Primeiras 3 etapas do período:');
+        etapasDoPeriodo.slice(0, 3).forEach(e => {
+          console.log('  - ID:', e.id.slice(-6), 'Status:', e.status, 'Created:', new Date(e.created_date).toLocaleString());
+        });
+      }
       
-      console.log('📊 Total de etapas das ordens:', todasEtapasDasOrdens.length);
-      console.log('Status:', todasEtapasDasOrdens.reduce((acc, e) => {
-        acc[e.status] = (acc[e.status] || 0) + 1;
-        return acc;
-      }, {}));
-      
-      // 4. Filtrar apenas as que precisam ser concluídas
-      const etapasParaConcluir = todasEtapasDasOrdens.filter(etapa => 
+      // Filtrar apenas as que precisam ser concluídas
+      const etapasParaConcluir = etapasDoPeriodo.filter(etapa => 
         etapa.status === "pendente" || 
         etapa.status === "em_andamento" || 
         etapa.status === "bloqueada"
       );
 
       console.log('⏳ Etapas a concluir:', etapasParaConcluir.length);
-      console.log('Detalhamento:', etapasParaConcluir.reduce((acc, e) => {
-        acc[e.status] = (acc[e.status] || 0) + 1;
-        return acc;
-      }, {}));
+      if (etapasParaConcluir.length > 0) {
+        console.log('Detalhamento por status:', etapasParaConcluir.reduce((acc, e) => {
+          acc[e.status] = (acc[e.status] || 0) + 1;
+          return acc;
+        }, {}));
+      }
 
       if (etapasParaConcluir.length === 0) {
         toast.info('Nenhuma etapa pendente encontrada');
