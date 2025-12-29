@@ -99,6 +99,10 @@ export default function Fluxo() {
   // Estado para iniciar fluxo de ofertas
   const [iniciandoFluxo, setIniciandoFluxo] = useState(false);
 
+  // Estado para processar etapas de novembro (ADMIN)
+  const [processandoNovembro, setProcessandoNovembro] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
   // Listener para detectar mudanças no dark mode
   useEffect(() => {
     const checkDarkMode = () => {
@@ -119,8 +123,62 @@ export default function Fluxo() {
     try {
       const user = await base44.auth.me();
       setCurrentUser(user);
+      setIsAdmin(user?.role === "admin");
     } catch (error) {
       console.error("Erro ao carregar usuário:", error);
+    }
+  };
+
+  const processarEtapasNovembro = async () => {
+    if (!window.confirm('⚠️ Isto irá concluir TODAS as etapas não concluídas de novembro/2025. Deseja continuar?')) {
+      return;
+    }
+
+    setProcessandoNovembro(true);
+    toast.loading('Processando etapas de novembro...');
+
+    try {
+      const [todasOrdens, todasEtapas] = await Promise.all([
+        base44.entities.OrdemDeCarregamento.list(),
+        base44.entities.OrdemEtapa.list()
+      ]);
+
+      const ordensPeriodo = todasOrdens.filter(ordem => {
+        if (!ordem.created_date) return false;
+        const data = new Date(ordem.created_date);
+        return data.getMonth() + 1 === 11 && data.getFullYear() === 2025;
+      });
+
+      const ordensIds = new Set(ordensPeriodo.map(o => o.id));
+      const etapasParaConcluir = todasEtapas.filter(oe => 
+        ordensIds.has(oe.ordem_id) && 
+        oe.status !== "concluida" && 
+        oe.status !== "cancelada"
+      );
+
+      const dataAtual = new Date().toISOString();
+      let atualizadas = 0;
+
+      for (const etapa of etapasParaConcluir) {
+        await base44.entities.OrdemEtapa.update(etapa.id, {
+          status: "concluida",
+          data_conclusao: dataAtual,
+          data_inicio: etapa.data_inicio || dataAtual
+        });
+        atualizadas++;
+
+        if (atualizadas % 50 === 0) {
+          toast.loading(`Processando: ${atualizadas}/${etapasParaConcluir.length}`);
+        }
+      }
+
+      toast.success(`✅ ${atualizadas} etapas de ${ordensPeriodo.length} ordens de novembro concluídas!`);
+      await loadData();
+    } catch (error) {
+      console.error('Erro ao processar:', error);
+      toast.error(`❌ Erro: ${error.message}`);
+    } finally {
+      setProcessandoNovembro(false);
     }
   };
 
