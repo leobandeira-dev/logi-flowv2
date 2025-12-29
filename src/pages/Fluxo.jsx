@@ -220,9 +220,9 @@ export default function Fluxo() {
       setProgressoTotal(totalOperacoes);
       console.log(`🎯 ${etapasParaCriar.length} etapas para criar, ${etapasParaAtualizar.length} para atualizar`);
 
-      // Processar criações em lotes de 50
-      const BATCH_SIZE = 50;
-      const DELAY_MS = 500; // 500ms entre lotes
+      // Processar criações em lotes de 10 (reduzido para evitar rate limit)
+      const BATCH_SIZE = 10;
+      const DELAY_MS = 1000; // 1 segundo entre lotes
       
       for (let i = 0; i < etapasParaCriar.length; i += BATCH_SIZE) {
         const batch = etapasParaCriar.slice(i, i + BATCH_SIZE);
