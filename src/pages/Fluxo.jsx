@@ -235,9 +235,9 @@ export default function Fluxo() {
 
       setProgressoTotal(operacoes.length);
 
-      // Processar sequencialmente para evitar rate limit
-      const BATCH_SIZE = 3;
-      const DELAY_MS = 2000;
+      // Processar em lotes otimizados
+      const BATCH_SIZE = 20;
+      const DELAY_MS = 500;
       let processadas = 0;
 
       for (let i = 0; i < operacoes.length; i += BATCH_SIZE) {
