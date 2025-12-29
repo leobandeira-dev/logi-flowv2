@@ -189,46 +189,78 @@ export default function Fluxo() {
       let etapasCriadas = 0;
       let etapasAtualizadas = 0;
 
-      setProgressoTotal(ordensPeriodo.length);
-      console.log('🚀 Processando', ordensPeriodo.length, 'ordens...');
+      // Preparar arrays para bulk operations
+      const etapasParaCriar = [];
+      const etapasParaAtualizar = [];
 
-      // 2. Para cada ordem, garantir que todas as etapas existam e estejam concluídas
-      for (let i = 0; i < ordensPeriodo.length; i++) {
-        const ordem = ordensPeriodo[i];
-        
+      console.log('📋 Preparando operações em lote...');
+
+      // Preparar todas as operações primeiro (sem fazer chamadas à API)
+      for (const ordem of ordensPeriodo) {
         for (const etapaConfig of etapasAtivas) {
-          // Verificar se já existe
           const ordemEtapaExistente = todasEtapasOrdem.find(
             oe => oe.ordem_id === ordem.id && oe.etapa_id === etapaConfig.id
           );
 
           if (!ordemEtapaExistente) {
-            // Criar etapa já como concluída
-            await base44.entities.OrdemEtapa.create({
+            etapasParaCriar.push({
               ordem_id: ordem.id,
               etapa_id: etapaConfig.id,
               status: "concluida",
               data_inicio: dataAtual,
               data_conclusao: dataAtual
             });
-            etapasCriadas++;
-            totalEtapasProcessadas++;
           } else if (ordemEtapaExistente.status !== "concluida" && ordemEtapaExistente.status !== "cancelada") {
-            // Atualizar para concluída
-            await base44.entities.OrdemEtapa.update(ordemEtapaExistente.id, {
-              status: "concluida",
-              data_conclusao: dataAtual,
-              data_inicio: ordemEtapaExistente.data_inicio || dataAtual
-            });
-            etapasAtualizadas++;
-            totalEtapasProcessadas++;
+            etapasParaAtualizar.push(ordemEtapaExistente.id);
           }
         }
+      }
 
-        setProgressoAtual(i + 1);
+      const totalOperacoes = etapasParaCriar.length + etapasParaAtualizar.length;
+      setProgressoTotal(totalOperacoes);
+      console.log(`🎯 ${etapasParaCriar.length} etapas para criar, ${etapasParaAtualizar.length} para atualizar`);
+
+      // Processar criações em lotes de 50
+      const BATCH_SIZE = 50;
+      const DELAY_MS = 500; // 500ms entre lotes
+      
+      for (let i = 0; i < etapasParaCriar.length; i += BATCH_SIZE) {
+        const batch = etapasParaCriar.slice(i, i + BATCH_SIZE);
         
-        if ((i + 1) % 10 === 0 || i === ordensPeriodo.length - 1) {
-          console.log(`⏳ ${i + 1}/${ordensPeriodo.length} ordens processadas`);
+        await Promise.all(
+          batch.map(etapa => base44.entities.OrdemEtapa.create(etapa))
+        );
+        
+        etapasCriadas += batch.length;
+        totalEtapasProcessadas += batch.length;
+        setProgressoAtual(totalEtapasProcessadas);
+        
+        console.log(`✅ Criadas ${etapasCriadas}/${etapasParaCriar.length}`);
+        
+        if (i + BATCH_SIZE < etapasParaCriar.length) {
+          await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+        }
+      }
+
+      // Processar atualizações em lotes de 50
+      for (let i = 0; i < etapasParaAtualizar.length; i += BATCH_SIZE) {
+        const batch = etapasParaAtualizar.slice(i, i + BATCH_SIZE);
+        
+        await Promise.all(
+          batch.map(id => base44.entities.OrdemEtapa.update(id, {
+            status: "concluida",
+            data_conclusao: dataAtual
+          }))
+        );
+        
+        etapasAtualizadas += batch.length;
+        totalEtapasProcessadas += batch.length;
+        setProgressoAtual(totalEtapasProcessadas);
+        
+        console.log(`✅ Atualizadas ${etapasAtualizadas}/${etapasParaAtualizar.length}`);
+        
+        if (i + BATCH_SIZE < etapasParaAtualizar.length) {
+          await new Promise(resolve => setTimeout(resolve, DELAY_MS));
         }
       }
 
