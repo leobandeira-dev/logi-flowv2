@@ -1430,6 +1430,13 @@ export default function Fluxo() {
                                 </span>
                               </div>
 
+                              {/* Data de criação */}
+                              {ordem.created_date && (
+                                <div className="text-[9px] mb-1" style={{ color: theme.textMuted }}>
+                                  📅 {format(new Date(ordem.created_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                                </div>
+                              )}
+
                               {/* Linha 1: Motorista e Placas lado a lado */}
                               <div className="flex items-center gap-1.5 min-h-[20px]">
                                 {(motorista || ordem.motorista_nome_temp) ? (
