@@ -30,7 +30,6 @@ import Parceiros from './pages/Parceiros';
 import PortalTransul from './pages/PortalTransul';
 import Precificacao from './pages/Precificacao';
 import Procedimentos from './pages/Procedimentos';
-import ProcessarEtapasNovembro from './pages/ProcessarEtapasNovembro';
 import Recebimento from './pages/Recebimento';
 import SAC from './pages/SAC';
 import SolicitacaoColeta from './pages/SolicitacaoColeta';
@@ -39,6 +38,7 @@ import TrackingTV from './pages/TrackingTV';
 import Unitizacao from './pages/Unitizacao';
 import Usuarios from './pages/Usuarios';
 import Veiculos from './pages/Veiculos';
+import ProcessarEtapasNovembro from './pages/ProcessarEtapasNovembro';
 import __Layout from './Layout.jsx';
 
 
@@ -75,7 +75,6 @@ export const PAGES = {
     "PortalTransul": PortalTransul,
     "Precificacao": Precificacao,
     "Procedimentos": Procedimentos,
-    "ProcessarEtapasNovembro": ProcessarEtapasNovembro,
     "Recebimento": Recebimento,
     "SAC": SAC,
     "SolicitacaoColeta": SolicitacaoColeta,
@@ -84,6 +83,7 @@ export const PAGES = {
     "Unitizacao": Unitizacao,
     "Usuarios": Usuarios,
     "Veiculos": Veiculos,
+    "ProcessarEtapasNovembro": ProcessarEtapasNovembro,
 }
 
 export const pagesConfig = {

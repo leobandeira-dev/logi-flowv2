@@ -147,14 +147,7 @@ export default function Fluxo() {
 
     try {
       console.log('🔍 INICIANDO PROCESSAMENTO');
-      console.log('📅 Período solicitado:', dataInicioConcluir, 'até', dataFimConcluir);
-
-      // Validar datas
-      if (!dataInicioConcluir || !dataFimConcluir) {
-        toast.error('Erro: Datas não informadas corretamente');
-        setProcessandoNovembro(false);
-        return;
-      }
+      console.log('📅 Período selecionado:', dataInicioConcluir, 'até', dataFimConcluir);
 
       const [todasOrdens, todasEtapasOrdem, todasEtapasConfig] = await Promise.all([
         base44.entities.OrdemDeCarregamento.list(),
@@ -162,132 +155,86 @@ export default function Fluxo() {
         base44.entities.Etapa.list("ordem")
       ]);
 
-      console.log('📦 Total ordens sistema:', todasOrdens.length);
-      console.log('📋 Total OrdemEtapa sistema:', todasEtapasOrdem.length);
+      console.log('📦 Total ordens:', todasOrdens.length);
+      console.log('📋 Total OrdemEtapa:', todasEtapasOrdem.length);
       console.log('⚙️ Total Etapas config:', todasEtapasConfig.length);
 
-      // Parse das datas
       const [anoInicio, mesInicio, diaInicio] = dataInicioConcluir.split('-').map(n => parseInt(n));
       const [anoFim, mesFim, diaFim] = dataFimConcluir.split('-').map(n => parseInt(n));
-
+      
       const inicio = new Date(anoInicio, mesInicio - 1, diaInicio, 0, 0, 0);
       const fim = new Date(anoFim, mesFim - 1, diaFim, 23, 59, 59);
+      
+      console.log('🎯 Período:', inicio.toISOString(), 'até', fim.toISOString());
 
-      console.log('🎯 Filtro período:');
-      console.log('   Data início:', inicio.toISOString());
-      console.log('   Data fim:', fim.toISOString());
-
-      // 1. Buscar ORDENS criadas no período E filtrar por tipo
+      // 1. Buscar ORDENS criadas no período
       const ordensPeriodo = todasOrdens.filter(ordem => {
         if (!ordem.created_date) return false;
-        
-        // Filtro de data
         const dataOrdem = new Date(ordem.created_date);
-        const dentroPerido = dataOrdem >= inicio && dataOrdem <= fim;
-        if (!dentroPerido) return false;
-        
-        // FILTRO CRÍTICO: Excluir coletas/recebimentos/entregas
-        // Excluir por numero_coleta (qualquer ordem com COL- é coleta)
-        if (ordem.numero_coleta && ordem.numero_coleta.startsWith("COL-")) {
-          return false;
-        }
-        
-        // Excluir por tipo_registro
-        const tiposExcluidos = ["coleta_solicitada", "coleta_aprovada", "coleta_reprovada", "recebimento", "ordem_entrega"];
-        if (tiposExcluidos.includes(ordem.tipo_registro)) {
-          return false;
-        }
-        
-        // Excluir por tipo_ordem
-        const tiposOrdemExcluidos = ["coleta", "recebimento", "entrega"];
-        if (tiposOrdemExcluidos.includes(ordem.tipo_ordem)) {
-          return false;
-        }
-        
-        // Log das ordens que PASSARAM no filtro
-        console.log('✅', ordem.numero_carga || ordem.id.slice(-6), 
-                    '| Data:', dataOrdem.toISOString().split('T')[0],
-                    '| Tipo:', ordem.tipo_ordem || ordem.tipo_registro || 'carregamento');
-        
-        return true;
+        return dataOrdem >= inicio && dataOrdem <= fim;
       });
 
-      const ordensPeriodoFiltradas = ordensPeriodo;
+      console.log('📦 Ordens no período:', ordensPeriodo.length);
 
-      console.log('');
-      console.log('🚚 Ordens de CARREGAMENTO no período:', ordensPeriodoFiltradas.length);
-      console.log('');
-
-      if (ordensPeriodoFiltradas.length === 0) {
-        toast.warning('Nenhuma ordem de carregamento encontrada no período');
+      if (ordensPeriodo.length === 0) {
+        toast.warning('Nenhuma ordem encontrada no período');
         setProcessandoNovembro(false);
         setProgressoTotal(0);
         return;
       }
 
       const dataAtual = new Date().toISOString();
-      
-      // IDs das ordens do período (apenas carregamentos)
-      const ordensIds = new Set(ordensPeriodoFiltradas.map(o => o.id));
+      const etapasAtivas = todasEtapasConfig.filter(e => e.ativo);
+      let totalEtapasProcessadas = 0;
+      let etapasCriadas = 0;
+      let etapasAtualizadas = 0;
 
-      // Estatísticas detalhadas
-      const todasEtapasDasOrdens = todasEtapasOrdem.filter(e => ordensIds.has(e.ordem_id));
-      const etapasConcluidas = todasEtapasDasOrdens.filter(e => e.status === "concluida");
-      const etapasNaoConcluidas = todasEtapasDasOrdens.filter(e => 
-        e.status !== "concluida" && e.status !== "cancelada"
-      );
+      setProgressoTotal(ordensPeriodo.length);
+      console.log('🚀 Processando', ordensPeriodo.length, 'ordens...');
 
-      console.log('📊 ESTATÍSTICAS DO PERÍODO:');
-      console.log(`   Total de etapas: ${todasEtapasDasOrdens.length}`);
-      console.log(`   ✅ Concluídas: ${etapasConcluidas.length}`);
-      console.log(`   ⏳ Não concluídas: ${etapasNaoConcluidas.length}`);
-      console.log(`   📋 Status encontrados:`, [...new Set(todasEtapasDasOrdens.map(e => e.status))]);
-
-      if (etapasNaoConcluidas.length === 0) {
-        toast.info('Nenhuma etapa não concluída encontrada no período');
-        setProcessandoNovembro(false);
-        setProgressoTotal(0);
-        return;
-      }
-
-      setProgressoTotal(etapasNaoConcluidas.length);
-
-      // Processar em lotes otimizados
-      const BATCH_SIZE = 20;
-      const DELAY_MS = 500;
-      let processadas = 0;
-
-      for (let i = 0; i < etapasNaoConcluidas.length; i += BATCH_SIZE) {
-        const batch = etapasNaoConcluidas.slice(i, i + BATCH_SIZE);
+      // 2. Para cada ordem, garantir que todas as etapas existam e estejam concluídas
+      for (let i = 0; i < ordensPeriodo.length; i++) {
+        const ordem = ordensPeriodo[i];
         
-        try {
-          await Promise.all(
-            batch.map(etapa => 
-              base44.entities.OrdemEtapa.update(etapa.id, {
-                status: "concluida",
-                data_conclusao: dataAtual,
-                data_inicio: etapa.data_inicio || dataAtual
-              })
-            )
+        for (const etapaConfig of etapasAtivas) {
+          // Verificar se já existe
+          const ordemEtapaExistente = todasEtapasOrdem.find(
+            oe => oe.ordem_id === ordem.id && oe.etapa_id === etapaConfig.id
           );
-          
-          processadas += batch.length;
-          setProgressoAtual(processadas);
-          console.log(`✅ ${processadas}/${etapasNaoConcluidas.length}`);
-        } catch (error) {
-          console.error(`❌ Erro no lote:`, error);
+
+          if (!ordemEtapaExistente) {
+            // Criar etapa já como concluída
+            await base44.entities.OrdemEtapa.create({
+              ordem_id: ordem.id,
+              etapa_id: etapaConfig.id,
+              status: "concluida",
+              data_inicio: dataAtual,
+              data_conclusao: dataAtual
+            });
+            etapasCriadas++;
+            totalEtapasProcessadas++;
+          } else if (ordemEtapaExistente.status !== "concluida" && ordemEtapaExistente.status !== "cancelada") {
+            // Atualizar para concluída
+            await base44.entities.OrdemEtapa.update(ordemEtapaExistente.id, {
+              status: "concluida",
+              data_conclusao: dataAtual,
+              data_inicio: ordemEtapaExistente.data_inicio || dataAtual
+            });
+            etapasAtualizadas++;
+            totalEtapasProcessadas++;
+          }
         }
+
+        setProgressoAtual(i + 1);
         
-        if (i + BATCH_SIZE < etapasNaoConcluidas.length) {
-          await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+        if ((i + 1) % 10 === 0 || i === ordensPeriodo.length - 1) {
+          console.log(`⏳ ${i + 1}/${ordensPeriodo.length} ordens processadas`);
         }
       }
-
-      const totalEtapasProcessadas = processadas;
 
       console.log('✅ PROCESSAMENTO COMPLETO!');
-      console.log(`📊 Total: ${totalEtapasProcessadas} etapas atualizadas`);
-      toast.success(`✅ ${totalEtapasProcessadas} etapas concluídas!`);
+      console.log(`📊 Criadas: ${etapasCriadas}, Atualizadas: ${etapasAtualizadas}, Total: ${totalEtapasProcessadas}`);
+      toast.success(`✅ ${totalEtapasProcessadas} etapas processadas! (${etapasCriadas} criadas, ${etapasAtualizadas} atualizadas)`);
       setShowModalConcluir(false);
       setDataInicioConcluir("");
       setDataFimConcluir("");
