@@ -133,13 +133,24 @@ export default function Fluxo() {
   };
 
   const concluirEtapasFiltradas = async () => {
+    console.log('🚀 CONCLUIR ETAPAS - Iniciando...');
+    console.log('📊 Estado atual:', {
+      etapasPendentesCount,
+      ordensFiltradasCount: filteredOrdens.length,
+      periodoSelecionado,
+      anoSelecionado,
+      mesSelecionado
+    });
+
     if (etapasPendentesCount === 0) {
       toast.error('Nenhuma etapa pendente para processar');
       return;
     }
 
     const confirmar = window.confirm(
-      `Deseja concluir ${etapasPendentesCount} etapa(s) pendente(s) de ${filteredOrdens.length} ordem(ns) filtrada(s)?\n\nEsta ação não pode ser desfeita.`
+      `Deseja concluir ${etapasPendentesCount} etapa(s) pendente(s) de ${filteredOrdens.length} ordem(ns) filtrada(s)?\n\n` +
+      `Período: ${periodoSelecionado === 'mes_especifico' ? `${mesSelecionado}/${anoSelecionado}` : periodoSelecionado}\n\n` +
+      `Esta ação não pode ser desfeita.`
     );
 
     if (!confirmar) return;
@@ -152,6 +163,7 @@ export default function Fluxo() {
       toast.loading('Carregando dados...');
       console.log('🔍 INICIANDO PROCESSAMENTO');
       console.log('📦 Ordens filtradas:', filteredOrdens.length);
+      console.log('📅 Período:', { periodoSelecionado, anoSelecionado, mesSelecionado });
 
       // 1. Buscar todas as etapas das ordens filtradas
       const idsOrdens = filteredOrdens.map(o => o.id);
@@ -783,13 +795,6 @@ export default function Fluxo() {
     return true;
   });
 
-  console.log('📊 FLUXO - Estado dos filtros:', {
-    periodoSelecionado,
-    dataInicio: filters.dataInicio,
-    dataFim: filters.dataFim,
-    totalOrdens: filteredOrdensByAtribuicao.length
-  });
-
   // Filtrar por período de data primeiro
   const ordensFiltradaPorPeriodo = filteredOrdensByAtribuicao.filter(ordem => {
     if (!ordem.created_date) return false;
@@ -965,14 +970,29 @@ export default function Fluxo() {
       });
       setEtapasPendentesCount(etapasNaoConcluidas.length);
 
-      // Debug
+      // Debug detalhado
+      console.log('🔍 CONTAGEM ETAPAS:', {
+        ordensTotal: filteredOrdens.length,
+        etapasTotal: ordensetapas.length,
+        etapasNaoConcluidas: etapasNaoConcluidas.length,
+        periodo: periodoSelecionado,
+        ano: anoSelecionado,
+        mes: mesSelecionado
+      });
+
       if (etapasNaoConcluidas.length > 0) {
-        console.log('🔍 Etapas não concluídas detectadas:', etapasNaoConcluidas.length);
+        console.log('📋 Primeiras 5 etapas não concluídas:');
+        etapasNaoConcluidas.slice(0, 5).forEach((e, idx) => {
+          const ordem = filteredOrdens.find(o => o.id === e.ordem_id);
+          const etapa = etapas.find(et => et.id === e.etapa_id);
+          console.log(`  ${idx + 1}. Ordem: ${ordem?.numero_carga} - Etapa: ${etapa?.nome} - Status: ${e.status}`);
+        });
       }
     } else {
       setEtapasPendentesCount(0);
+      console.log('⚠️ Nenhuma ordem filtrada ou etapa carregada');
     }
-  }, [filteredOrdens, ordensetapas]);
+  }, [filteredOrdens.length, ordensetapas.length, periodoSelecionado, anoSelecionado, mesSelecionado]);
 
   const getOrdensporEtapa = (etapaId) => {
     const ordensIds = ordensetapas
