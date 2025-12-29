@@ -1412,30 +1412,30 @@ export default function Fluxo() {
                               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#dbeafe'}
                               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                             >
-                              <div className="flex items-center gap-1.5 mb-1">
-                                <Badge className={`text-[9px] h-4 px-1.5 font-bold border-2 flex-shrink-0 ${
-                                  isOferta
-                                    ? "bg-green-600 text-white border-green-700 dark:bg-green-700 dark:border-green-600"
-                                    : isNegociando
-                                      ? "bg-yellow-600 text-white border-yellow-700 dark:bg-yellow-700 dark:border-yellow-600"
-                                      : "bg-blue-600 text-white border-blue-700 dark:bg-blue-700 dark:border-blue-600"
-                                }`}>
-                                  {isOferta ? "Oferta" : isNegociando ? "Negociando" : "Alocado"}
-                                </Badge>
-                                <span className="font-bold text-xs flex-shrink-0" style={{ color: isDark ? '#60a5fa' : '#1d4ed8' }}>
-                                  {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
-                                </span>
-                                <span className="text-[10px] font-medium truncate" style={{ color: theme.textMuted }}>
-                                  {ordem.cliente}
-                                </span>
-                              </div>
-
-                              {/* Data de criação */}
-                              {ordem.created_date && (
-                                <div className="text-[9px] mb-1" style={{ color: theme.textMuted }}>
-                                  📅 {format(new Date(ordem.created_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                              <div className="flex items-center justify-between gap-1.5 mb-1">
+                                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                  <Badge className={`text-[9px] h-4 px-1.5 font-bold border-2 flex-shrink-0 ${
+                                    isOferta
+                                      ? "bg-green-600 text-white border-green-700 dark:bg-green-700 dark:border-green-600"
+                                      : isNegociando
+                                        ? "bg-yellow-600 text-white border-yellow-700 dark:bg-yellow-700 dark:border-yellow-600"
+                                        : "bg-blue-600 text-white border-blue-700 dark:bg-blue-700 dark:border-blue-600"
+                                  }`}>
+                                    {isOferta ? "Oferta" : isNegociando ? "Negociando" : "Alocado"}
+                                  </Badge>
+                                  <span className="font-bold text-xs flex-shrink-0" style={{ color: isDark ? '#60a5fa' : '#1d4ed8' }}>
+                                    {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
+                                  </span>
+                                  <span className="text-[10px] font-medium truncate" style={{ color: theme.textMuted }}>
+                                    {ordem.cliente}
+                                  </span>
                                 </div>
-                              )}
+                                {ordem.created_date && (
+                                  <span className="text-[9px] flex-shrink-0" style={{ color: theme.textMuted }}>
+                                    {format(new Date(ordem.created_date), "dd/MM HH:mm", { locale: ptBR })}
+                                  </span>
+                                )}
+                              </div>
 
                               {/* Linha 1: Motorista e Placas lado a lado */}
                               <div className="flex items-center gap-1.5 min-h-[20px]">
