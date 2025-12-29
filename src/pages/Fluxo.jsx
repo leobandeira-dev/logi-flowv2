@@ -102,6 +102,9 @@ export default function Fluxo() {
   // Estado para processar etapas de novembro (ADMIN)
   const [processandoNovembro, setProcessandoNovembro] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showModalConcluir, setShowModalConcluir] = useState(false);
+  const [dataInicioConcluir, setDataInicioConcluir] = useState("");
+  const [dataFimConcluir, setDataFimConcluir] = useState("");
 
   // Listener para detectar mudanças no dark mode
   useEffect(() => {
@@ -129,13 +132,30 @@ export default function Fluxo() {
     }
   };
 
-  const processarEtapasNovembro = async () => {
-    if (!window.confirm('⚠️ Isto irá concluir TODAS as etapas não concluídas de novembro/2025. Deseja continuar?')) {
+  const processarEtapasPorPeriodo = async () => {
+    if (!dataInicioConcluir || !dataFimConcluir) {
+      toast.error('Informe o período de datas');
+      return;
+    }
+
+    const inicio = new Date(dataInicioConcluir);
+    const fim = new Date(dataFimConcluir);
+    fim.setHours(23, 59, 59, 999);
+
+    if (inicio > fim) {
+      toast.error('Data inicial não pode ser maior que data final');
+      return;
+    }
+
+    const confirmMsg = `⚠️ Isto irá concluir TODAS as etapas não concluídas das ordens criadas entre ${format(inicio, 'dd/MM/yyyy', { locale: ptBR })} e ${format(fim, 'dd/MM/yyyy', { locale: ptBR })}.\n\nDeseja continuar?`;
+    
+    if (!window.confirm(confirmMsg)) {
       return;
     }
 
     setProcessandoNovembro(true);
-    toast.loading('Processando etapas de novembro...');
+    setShowModalConcluir(false);
+    toast.loading('Processando etapas...');
 
     try {
       const [todasOrdens, todasEtapas] = await Promise.all([
@@ -146,7 +166,7 @@ export default function Fluxo() {
       const ordensPeriodo = todasOrdens.filter(ordem => {
         if (!ordem.created_date) return false;
         const data = new Date(ordem.created_date);
-        return data.getMonth() + 1 === 11 && data.getFullYear() === 2025;
+        return data >= inicio && data <= fim;
       });
 
       const ordensIds = new Set(ordensPeriodo.map(o => o.id));
@@ -172,7 +192,7 @@ export default function Fluxo() {
         }
       }
 
-      toast.success(`✅ ${atualizadas} etapas de ${ordensPeriodo.length} ordens de novembro concluídas!`);
+      toast.success(`✅ ${atualizadas} etapas de ${ordensPeriodo.length} ordens concluídas!`);
       await loadData();
     } catch (error) {
       console.error('Erro ao processar:', error);
@@ -1012,7 +1032,7 @@ export default function Fluxo() {
               </Link>
               {isAdmin && (
                 <Button
-                  onClick={processarEtapasNovembro}
+                  onClick={() => setShowModalConcluir(true)}
                   disabled={processandoNovembro}
                   className="bg-orange-600 hover:bg-orange-700 text-white"
                 >
@@ -1024,7 +1044,7 @@ export default function Fluxo() {
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Concluir Nov/2025
+                      Concluir Etapas
                     </>
                   )}
                 </Button>
@@ -1869,6 +1889,64 @@ export default function Fluxo() {
           isDark={isDark}
         />
       )}
+
+      {/* Modal para Concluir Etapas por Período */}
+      <Dialog open={showModalConcluir} onOpenChange={setShowModalConcluir}>
+        <DialogContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <DialogHeader>
+            <DialogTitle style={{ color: theme.text }}>Concluir Etapas Pendentes</DialogTitle>
+            <DialogDescription style={{ color: theme.textMuted }}>
+              Selecione o período para concluir todas as etapas não finalizadas das ordens criadas nesse intervalo.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div>
+              <Label className="mb-2 block" style={{ color: theme.text }}>Data Inicial</Label>
+              <Input
+                type="date"
+                value={dataInicioConcluir}
+                onChange={(e) => setDataInicioConcluir(e.target.value)}
+                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+              />
+            </div>
+            
+            <div>
+              <Label className="mb-2 block" style={{ color: theme.text }}>Data Final</Label>
+              <Input
+                type="date"
+                value={dataFimConcluir}
+                onChange={(e) => setDataFimConcluir(e.target.value)}
+                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+              />
+            </div>
+
+            <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+              <p className="text-xs text-orange-800 dark:text-orange-400 font-medium">
+                ⚠️ Esta ação marcará como <strong>concluídas</strong> todas as etapas pendentes, em andamento ou bloqueadas das ordens criadas no período selecionado.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowModalConcluir(false)}
+              style={{ borderColor: theme.inputBorder, color: theme.text }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={processarEtapasPorPeriodo}
+              disabled={!dataInicioConcluir || !dataFimConcluir}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Concluir Etapas
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
