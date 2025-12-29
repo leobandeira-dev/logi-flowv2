@@ -13,52 +13,47 @@ Deno.serve(async (req) => {
     const mes = body.mes || 11;
     const ano = body.ano || 2025;
 
-    console.log(`📅 Iniciando conclusão de etapas de ${mes}/${ano}`);
+    console.log(`📅 Processando etapas de ${mes}/${ano}`);
 
-    // Buscar TODAS as OrdemEtapa com status não concluído
-    const etapasResponse = await base44.asServiceRole.entities.OrdemEtapa.filter({
-      status: { $in: ["pendente", "em_andamento", "bloqueada"] }
-    }, null, 10000);
+    // Calcular intervalo do mês
+    const dataInicio = new Date(Date.UTC(ano, mes - 1, 1, 0, 0, 0));
+    const dataFim = new Date(Date.UTC(ano, mes, 0, 23, 59, 59));
+    
+    console.log(`📆 De ${dataInicio.toISOString()} até ${dataFim.toISOString()}`);
 
-    const todasEtapas = Array.isArray(etapasResponse) ? etapasResponse : [];
-    console.log(`📋 ${todasEtapas.length} etapas não concluídas no sistema`);
+    // Buscar todas as ordens e etapas
+    const [todasOrdens, todasEtapas] = await Promise.all([
+      base44.asServiceRole.entities.OrdemDeCarregamento.list(),
+      base44.asServiceRole.entities.OrdemEtapa.list()
+    ]);
 
-    // Buscar as ordens relacionadas apenas às etapas não concluídas
-    const ordensIdsUnicos = [...new Set(todasEtapas.map(e => e.ordem_id))];
-    console.log(`🔍 ${ordensIdsUnicos.length} ordens únicas para verificar`);
+    console.log(`📊 ${todasOrdens.length} ordens e ${todasEtapas.length} etapas carregadas`);
 
-    // Buscar todas as ordens de uma vez
-    const ordensResponse = await base44.asServiceRole.entities.OrdemDeCarregamento.list();
-    const todasOrdens = Array.isArray(ordensResponse) ? ordensResponse : [];
-    console.log(`📦 ${todasOrdens.length} ordens carregadas`);
-
-    // Criar mapa de ordens por ID
-    const ordensMap = {};
-    todasOrdens.forEach(o => {
-      ordensMap[o.id] = o;
+    // Filtrar ordens do período
+    const ordensPeriodo = todasOrdens.filter(ordem => {
+      if (!ordem.created_date) return false;
+      const dataOrdem = new Date(ordem.created_date);
+      return dataOrdem >= dataInicio && dataOrdem <= dataFim;
     });
 
-    // Filtrar etapas de ordens do período solicitado
-    const etapasParaConcluir = todasEtapas.filter(etapa => {
-      const ordem = ordensMap[etapa.ordem_id];
-      if (!ordem || !ordem.created_date) return false;
-      
-      const data = new Date(ordem.created_date);
-      const mesOrdem = data.getMonth() + 1; // 1-12
-      const anoOrdem = data.getFullYear();
-      
-      return mesOrdem === mes && anoOrdem === ano;
-    });
+    console.log(`✅ ${ordensPeriodo.length} ordens em ${mes}/${ano}`);
 
-    console.log(`✅ ${etapasParaConcluir.length} etapas de ${mes}/${ano} para concluir`);
+    // IDs das ordens do período
+    const ordensIds = new Set(ordensPeriodo.map(o => o.id));
 
-    // Contar ordens únicas
-    const ordensAfetadas = [...new Set(etapasParaConcluir.map(e => e.ordem_id))];
-    console.log(`📦 Afetando ${ordensAfetadas.length} ordens`);
+    // Filtrar apenas etapas NÃO concluídas dessas ordens
+    const etapasParaConcluir = todasEtapas.filter(oe => 
+      ordensIds.has(oe.ordem_id) && 
+      oe.status !== "concluida" && 
+      oe.status !== "cancelada"
+    );
 
-    // Atualizar etapas
+    console.log(`📋 ${etapasParaConcluir.length} etapas não concluídas para processar`);
+
+    // Atualizar em lote
     const dataAtual = new Date().toISOString();
     let atualizadas = 0;
+    let erros = 0;
     
     for (const etapa of etapasParaConcluir) {
       try {
@@ -70,30 +65,29 @@ Deno.serve(async (req) => {
         atualizadas++;
         
         if (atualizadas % 100 === 0) {
-          console.log(`⏳ ${atualizadas}/${etapasParaConcluir.length} concluídas...`);
+          console.log(`⏳ ${atualizadas}/${etapasParaConcluir.length}`);
         }
       } catch (error) {
-        console.error(`❌ Erro: ${error.message}`);
+        erros++;
       }
     }
 
-    console.log(`✅ ${atualizadas} etapas concluídas com sucesso`);
+    console.log(`✅ ${atualizadas} etapas concluídas (${erros} erros)`);
 
     return Response.json({
       sucesso: true,
       mes,
       ano,
-      ordensAfetadas: ordensAfetadas.length,
-      etapasEncontradas: etapasParaConcluir.length,
+      ordensNoPeriodo: ordensPeriodo.length,
       etapasAtualizadas: atualizadas,
-      mensagem: `✅ ${atualizadas} etapas de ${ordensAfetadas.length} ordens de ${mes}/${ano} foram concluídas`
+      etapasComErro: erros,
+      mensagem: `✅ ${atualizadas} etapas de ${ordensPeriodo.length} ordens de ${mes}/${ano} concluídas`
     });
 
   } catch (error) {
-    console.error('❌ Erro crítico:', error);
+    console.error('❌ Erro:', error);
     return Response.json({ 
-      error: error.message,
-      stack: error.stack 
+      error: error.message 
     }, { status: 500 });
   }
 });
