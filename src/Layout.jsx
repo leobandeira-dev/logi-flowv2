@@ -365,6 +365,41 @@ export default function Layout({ children, currentPageName }) {
     }
   }, [darkMode]);
 
+  // Limpeza automática de cache antigo - roda 1x por dia
+  React.useEffect(() => {
+    const limparCacheAntigo = () => {
+      const hoje = new Date().toDateString();
+      const ultimaLimpeza = localStorage.getItem('ultima_limpeza_cache');
+
+      if (ultimaLimpeza !== hoje) {
+        const diasExpiracao = 30;
+        const agora = Date.now();
+
+        // Limpar filtros e rascunhos antigos (mais de 30 dias)
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('filtros_') || key.startsWith('conferencia_rascunho_') || key.startsWith('enderecamento_')) {
+            try {
+              const data = JSON.parse(localStorage.getItem(key));
+              if (data?.timestamp) {
+                const idade = (agora - new Date(data.timestamp).getTime()) / (1000 * 60 * 60 * 24);
+                if (idade > diasExpiracao) {
+                  localStorage.removeItem(key);
+                  console.log(`🗑️ Cache removido: ${key} (${Math.floor(idade)} dias)`);
+                }
+              }
+            } catch (e) {
+              // Ignorar erros
+            }
+          }
+        });
+
+        localStorage.setItem('ultima_limpeza_cache', hoje);
+      }
+    };
+
+    limparCacheAntigo();
+  }, []);
+
   React.useEffect(() => {
     const loadUser = async () => {
       setLoadingUser(true);
