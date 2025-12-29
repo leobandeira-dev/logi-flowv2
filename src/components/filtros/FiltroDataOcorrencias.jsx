@@ -136,14 +136,20 @@ export default function FiltroDataOcorrencias({
             <Select
               value={mesSelecionado}
               onValueChange={(mes) => {
-                console.log('📅 Mês selecionado:', mes);
+                console.log('📅 Mês selecionado (raw):', mes);
                 setMesSelecionado(mes);
                 const ano = anoSelecionado || new Date().getFullYear().toString();
-                const primeiro = new Date(parseInt(ano), parseInt(mes), 1);
-                const ultimo = new Date(parseInt(ano), parseInt(mes) + 1, 0);
+                const mesInt = parseInt(mes);
+                console.log('📅 Calculando datas para:', { mesInt, ano });
+                const primeiro = new Date(parseInt(ano), mesInt, 1);
+                const ultimo = new Date(parseInt(ano), mesInt + 1, 0);
+                console.log('📅 Objetos Date criados:', { 
+                  primeiro: primeiro.toISOString(), 
+                  ultimo: ultimo.toISOString() 
+                });
                 const inicio = primeiro.toISOString().split('T')[0];
                 const fim = ultimo.toISOString().split('T')[0];
-                console.log('📅 Datas calculadas:', { inicio, fim, mes, ano });
+                console.log('📅 Datas calculadas finais:', { inicio, fim, mes, ano });
                 onDataInicioChange(inicio);
                 onDataFimChange(fim);
               }}
@@ -172,14 +178,20 @@ export default function FiltroDataOcorrencias({
             <Select
               value={anoSelecionado}
               onValueChange={(ano) => {
-                console.log('📅 Ano selecionado:', ano);
+                console.log('📅 Ano selecionado (raw):', ano);
                 setAnoSelecionado(ano);
                 const mes = mesSelecionado || new Date().getMonth().toString();
-                const primeiro = new Date(parseInt(ano), parseInt(mes), 1);
-                const ultimo = new Date(parseInt(ano), parseInt(mes) + 1, 0);
+                const mesInt = parseInt(mes);
+                console.log('📅 Calculando datas para:', { mesInt, ano });
+                const primeiro = new Date(parseInt(ano), mesInt, 1);
+                const ultimo = new Date(parseInt(ano), mesInt + 1, 0);
+                console.log('📅 Objetos Date criados:', { 
+                  primeiro: primeiro.toISOString(), 
+                  ultimo: ultimo.toISOString() 
+                });
                 const inicio = primeiro.toISOString().split('T')[0];
                 const fim = ultimo.toISOString().split('T')[0];
-                console.log('📅 Datas calculadas:', { inicio, fim, mes, ano });
+                console.log('📅 Datas calculadas finais:', { inicio, fim, mes, ano });
                 onDataInicioChange(inicio);
                 onDataFimChange(fim);
               }}
