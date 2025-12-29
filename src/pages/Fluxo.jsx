@@ -105,6 +105,8 @@ export default function Fluxo() {
   const [showModalConcluir, setShowModalConcluir] = useState(false);
   const [dataInicioConcluir, setDataInicioConcluir] = useState("");
   const [dataFimConcluir, setDataFimConcluir] = useState("");
+  const [progressoTotal, setProgressoTotal] = useState(0);
+  const [progressoAtual, setProgressoAtual] = useState(0);
 
   // Listener para detectar mudanças no dark mode
   useEffect(() => {
@@ -147,17 +149,13 @@ export default function Fluxo() {
       return;
     }
 
-    const confirmMsg = `⚠️ Isto irá concluir TODAS as etapas não concluídas das ordens criadas entre ${format(inicio, 'dd/MM/yyyy', { locale: ptBR })} e ${format(fim, 'dd/MM/yyyy', { locale: ptBR })}.\n\nDeseja continuar?`;
-    
-    if (!window.confirm(confirmMsg)) {
-      return;
-    }
-
     setProcessandoNovembro(true);
-    setShowModalConcluir(false);
-    toast.loading('Processando etapas...');
+    setProgressoAtual(0);
+    setProgressoTotal(0);
 
     try {
+      toast.loading('Carregando dados...');
+
       const [todasOrdens, todasEtapas] = await Promise.all([
         base44.entities.OrdemDeCarregamento.list(),
         base44.entities.OrdemEtapa.list()
@@ -176,8 +174,21 @@ export default function Fluxo() {
         oe.status !== "cancelada"
       );
 
+      if (etapasParaConcluir.length === 0) {
+        toast.info('Nenhuma etapa pendente encontrada neste período');
+        setProcessandoNovembro(false);
+        return;
+      }
+
+      const confirmMsg = `⚠️ Serão concluídas ${etapasParaConcluir.length} etapas de ${ordensPeriodo.length} ordens.\n\nDeseja continuar?`;
+      
+      if (!window.confirm(confirmMsg)) {
+        setProcessandoNovembro(false);
+        return;
+      }
+
+      setProgressoTotal(etapasParaConcluir.length);
       const dataAtual = new Date().toISOString();
-      let atualizadas = 0;
 
       for (const etapa of etapasParaConcluir) {
         await base44.entities.OrdemEtapa.update(etapa.id, {
@@ -185,20 +196,19 @@ export default function Fluxo() {
           data_conclusao: dataAtual,
           data_inicio: etapa.data_inicio || dataAtual
         });
-        atualizadas++;
-
-        if (atualizadas % 50 === 0) {
-          toast.loading(`Processando: ${atualizadas}/${etapasParaConcluir.length}`);
-        }
+        setProgressoAtual(prev => prev + 1);
       }
 
-      toast.success(`✅ ${atualizadas} etapas de ${ordensPeriodo.length} ordens concluídas!`);
+      toast.success(`✅ ${etapasParaConcluir.length} etapas concluídas!`);
+      setShowModalConcluir(false);
       await loadData();
     } catch (error) {
       console.error('Erro ao processar:', error);
       toast.error(`❌ Erro: ${error.message}`);
     } finally {
       setProcessandoNovembro(false);
+      setProgressoAtual(0);
+      setProgressoTotal(0);
     }
   };
 
@@ -1891,7 +1901,11 @@ export default function Fluxo() {
       )}
 
       {/* Modal para Concluir Etapas por Período */}
-      <Dialog open={showModalConcluir} onOpenChange={setShowModalConcluir}>
+      <Dialog open={showModalConcluir} onOpenChange={(open) => {
+        if (!processandoNovembro) {
+          setShowModalConcluir(open);
+        }
+      }}>
         <DialogContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
           <DialogHeader>
             <DialogTitle style={{ color: theme.text }}>Concluir Etapas Pendentes</DialogTitle>
@@ -1907,6 +1921,7 @@ export default function Fluxo() {
                 type="date"
                 value={dataInicioConcluir}
                 onChange={(e) => setDataInicioConcluir(e.target.value)}
+                disabled={processandoNovembro}
                 style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
               />
             </div>
@@ -1917,32 +1932,63 @@ export default function Fluxo() {
                 type="date"
                 value={dataFimConcluir}
                 onChange={(e) => setDataFimConcluir(e.target.value)}
+                disabled={processandoNovembro}
                 style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
               />
             </div>
 
-            <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
-              <p className="text-xs text-orange-800 dark:text-orange-400 font-medium">
-                ⚠️ Esta ação marcará como <strong>concluídas</strong> todas as etapas pendentes, em andamento ou bloqueadas das ordens criadas no período selecionado.
-              </p>
-            </div>
+            {processandoNovembro && progressoTotal > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm" style={{ color: theme.text }}>
+                  <span>Processando etapas...</span>
+                  <span className="font-bold">{progressoAtual} / {progressoTotal}</span>
+                </div>
+                <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#334155' : '#e5e7eb' }}>
+                  <div
+                    className="h-full bg-orange-600 transition-all duration-300"
+                    style={{ width: `${(progressoAtual / progressoTotal) * 100}%` }}
+                  />
+                </div>
+                <p className="text-xs text-center" style={{ color: theme.textMuted }}>
+                  {Math.round((progressoAtual / progressoTotal) * 100)}% concluído
+                </p>
+              </div>
+            )}
+
+            {!processandoNovembro && (
+              <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+                <p className="text-xs text-orange-800 dark:text-orange-400 font-medium">
+                  ⚠️ Esta ação marcará como <strong>concluídas</strong> todas as etapas pendentes, em andamento ou bloqueadas das ordens criadas no período selecionado.
+                </p>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setShowModalConcluir(false)}
+              disabled={processandoNovembro}
               style={{ borderColor: theme.inputBorder, color: theme.text }}
             >
-              Cancelar
+              {processandoNovembro ? 'Processando...' : 'Cancelar'}
             </Button>
             <Button
               onClick={processarEtapasPorPeriodo}
-              disabled={!dataInicioConcluir || !dataFimConcluir}
+              disabled={!dataInicioConcluir || !dataFimConcluir || processandoNovembro}
               className="bg-orange-600 hover:bg-orange-700 text-white"
             >
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Concluir Etapas
+              {processandoNovembro ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Concluir Etapas
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
