@@ -1745,7 +1745,10 @@ export default function Fluxo() {
         etapas={etapas}
         operacoes={operacoes}
         periodoSelecionado={periodoSelecionado}
-        onPeriodoChange={setPeriodoSelecionado}
+        onPeriodoChange={(valor) => {
+          console.log('📅 FLUXO FilterModal - Período alterado para:', valor);
+          setPeriodoSelecionado(valor);
+        }}
         isDark={isDark}
       />
 
