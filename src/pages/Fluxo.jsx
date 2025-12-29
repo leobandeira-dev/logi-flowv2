@@ -229,8 +229,7 @@ export default function Fluxo() {
       }
 
       console.log('✅ PROCESSAMENTO COMPLETO!');
-      console.log(`📊 Criadas: ${etapasCriadas}, Atualizadas: ${etapasAtualizadas}, Total: ${totalEtapasProcessadas}`);
-      toast.success(`✅ ${totalEtapasProcessadas} etapas processadas! (${etapasCriadas} criadas, ${etapasAtualizadas} atualizadas)`);
+      toast.success(`✅ ${etapasNaoConcluidas.length} etapas concluídas com sucesso!`);
       setShowModalConcluir(false);
       setDataInicioConcluir("");
       setDataFimConcluir("");
