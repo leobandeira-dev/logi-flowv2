@@ -171,11 +171,19 @@ export default function Fluxo() {
       const ordensPeriodo = todasOrdens.filter(ordem => {
         if (!ordem.created_date) return false;
         const dataOrdem = new Date(ordem.created_date);
-        return dataOrdem >= inicio && dataOrdem <= fim;
+        const dentroPerido = dataOrdem >= inicio && dataOrdem <= fim;
+        
+        if (dentroPerido) {
+          console.log('✅', ordem.numero_carga || ordem.id.slice(-6), 
+                      '| Data:', dataOrdem.toISOString().split('T')[0],
+                      '| Tipo:', ordem.tipo_ordem || ordem.tipo_registro || 'indefinido',
+                      '| Coleta?', ordem.numero_coleta || 'não');
+        }
+        
+        return dentroPerido;
       });
 
-      console.log('✅ Ordens encontradas no período:', ordensPeriodo.length);
-      console.log('📊 IDs das primeiras 5 ordens:', ordensPeriodo.slice(0, 5).map(o => o.numero_carga || o.id.slice(-6)));
+      console.log('📅 Ordens BRUTAS no período:', ordensPeriodo.length);
 
       // Filtrar para excluir coletas, recebimentos e entregas
       const ordensPeriodoFiltradas = ordensPeriodo.filter(ordem => {
