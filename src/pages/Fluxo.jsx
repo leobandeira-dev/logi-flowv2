@@ -149,49 +149,54 @@ export default function Fluxo() {
       console.log('🔍 INICIANDO PROCESSAMENTO');
       console.log('📅 Período selecionado:', dataInicioConcluir, 'até', dataFimConcluir);
 
-      const todasEtapas = await base44.entities.OrdemEtapa.list();
+      const [todasOrdens, todasEtapas] = await Promise.all([
+        base44.entities.OrdemDeCarregamento.list(),
+        base44.entities.OrdemEtapa.list()
+      ]);
 
-      console.log('📋 Total de etapas no sistema:', todasEtapas.length);
+      console.log('📦 Total ordens:', todasOrdens.length);
+      console.log('📋 Total etapas:', todasEtapas.length);
 
-      // Filtrar etapas criadas no período (input date retorna YYYY-MM-DD)
+      // IMPORTANTE: Filtrar ORDENS criadas no período, depois pegar TODAS as etapas dessas ordens
       const [anoInicio, mesInicio, diaInicio] = dataInicioConcluir.split('-').map(n => parseInt(n));
       const [anoFim, mesFim, diaFim] = dataFimConcluir.split('-').map(n => parseInt(n));
       
       const inicio = new Date(anoInicio, mesInicio - 1, diaInicio, 0, 0, 0);
       const fim = new Date(anoFim, mesFim - 1, diaFim, 23, 59, 59);
       
-      console.log('🎯 Buscando etapas entre:', inicio.toISOString(), 'e', fim.toISOString());
+      console.log('🎯 Período:', inicio.toISOString(), 'até', fim.toISOString());
 
-      // Exemplo de formato de created_date
-      if (todasEtapas.length > 0) {
-        console.log('📝 Exemplo de etapa (created_date):', todasEtapas[0].created_date);
-      }
-
-      // Filtrar etapas que foram criadas no período
-      const etapasDoPeriodo = todasEtapas.filter(etapa => {
-        if (!etapa.created_date) {
-          console.log('⚠️ Etapa sem created_date:', etapa.id);
-          return false;
-        }
-        const dataEtapa = new Date(etapa.created_date);
-        return dataEtapa >= inicio && dataEtapa <= fim;
+      // 1. Buscar ORDENS criadas no período
+      const ordensPeriodo = todasOrdens.filter(ordem => {
+        if (!ordem.created_date) return false;
+        const dataOrdem = new Date(ordem.created_date);
+        return dataOrdem >= inicio && dataOrdem <= fim;
       });
 
-      console.log('📊 Etapas criadas no período:', etapasDoPeriodo.length);
+      console.log('📦 Ordens criadas no período:', ordensPeriodo.length);
 
-      if (etapasDoPeriodo.length > 0) {
-        console.log('Status das etapas do período:', etapasDoPeriodo.reduce((acc, e) => {
-          acc[e.status] = (acc[e.status] || 0) + 1;
-          return acc;
-        }, {}));
-        console.log('Primeiras 3 etapas do período:');
-        etapasDoPeriodo.slice(0, 3).forEach(e => {
-          console.log('  - ID:', e.id.slice(-6), 'Status:', e.status, 'Created:', new Date(e.created_date).toLocaleString());
-        });
+      if (ordensPeriodo.length === 0) {
+        toast.warning('Nenhuma ordem encontrada no período');
+        setProcessandoNovembro(false);
+        setProgressoTotal(0);
+        return;
       }
+
+      // 2. Pegar IDs das ordens
+      const ordensIds = new Set(ordensPeriodo.map(o => o.id));
+      console.log('📋 IDs das ordens (primeiros 5):', Array.from(ordensIds).slice(0, 5).map(id => id.slice(-6)));
+
+      // 3. Buscar TODAS as etapas dessas ordens (não importa quando a etapa foi criada)
+      const todasEtapasDasOrdens = todasEtapas.filter(etapa => ordensIds.has(etapa.ordem_id));
       
-      // Filtrar apenas as que precisam ser concluídas
-      const etapasParaConcluir = etapasDoPeriodo.filter(etapa => 
+      console.log('📊 Total etapas das ordens do período:', todasEtapasDasOrdens.length);
+      console.log('Status de todas as etapas:', todasEtapasDasOrdens.reduce((acc, e) => {
+        acc[e.status] = (acc[e.status] || 0) + 1;
+        return acc;
+      }, {}));
+      
+      // 4. Filtrar apenas as que precisam ser concluídas
+      const etapasParaConcluir = todasEtapasDasOrdens.filter(etapa => 
         etapa.status === "pendente" || 
         etapa.status === "em_andamento" || 
         etapa.status === "bloqueada"
@@ -199,10 +204,14 @@ export default function Fluxo() {
 
       console.log('⏳ Etapas a concluir:', etapasParaConcluir.length);
       if (etapasParaConcluir.length > 0) {
-        console.log('Detalhamento por status:', etapasParaConcluir.reduce((acc, e) => {
+        console.log('Por status:', etapasParaConcluir.reduce((acc, e) => {
           acc[e.status] = (acc[e.status] || 0) + 1;
           return acc;
         }, {}));
+        console.log('Primeiras 5 etapas:');
+        etapasParaConcluir.slice(0, 5).forEach((e, idx) => {
+          console.log(`  ${idx + 1}. ID: ${e.id.slice(-6)}, Status: ${e.status}, Ordem: ${e.ordem_id.slice(-6)}`);
+        });
       }
 
       if (etapasParaConcluir.length === 0) {
