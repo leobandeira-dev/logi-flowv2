@@ -183,52 +183,48 @@ export default function Fluxo() {
         return;
       }
 
+      // 2. Buscar IDs das ordens do período
+      const ordensIds = new Set(ordensPeriodo.map(o => o.id));
+
+      // 3. Buscar TODAS as etapas NÃO CONCLUÍDAS dessas ordens
+      const etapasNaoConcluidas = todasEtapasOrdem.filter(etapa => 
+        ordensIds.has(etapa.ordem_id) && 
+        etapa.status !== "concluida" && 
+        etapa.status !== "cancelada"
+      );
+
+      console.log('⏳ Etapas não concluídas encontradas:', etapasNaoConcluidas.length);
+      
+      if (etapasNaoConcluidas.length > 0) {
+        console.log('Status:', etapasNaoConcluidas.reduce((acc, e) => {
+          acc[e.status] = (acc[e.status] || 0) + 1;
+          return acc;
+        }, {}));
+      }
+
+      if (etapasNaoConcluidas.length === 0) {
+        toast.info('Nenhuma etapa pendente encontrada no período');
+        setProcessandoNovembro(false);
+        setProgressoTotal(0);
+        return;
+      }
+
       const dataAtual = new Date().toISOString();
-      const etapasAtivas = todasEtapasConfig.filter(e => e.ativo);
-      let totalEtapasProcessadas = 0;
-      let etapasCriadas = 0;
-      let etapasAtualizadas = 0;
+      setProgressoTotal(etapasNaoConcluidas.length);
+      console.log('🚀 Concluindo', etapasNaoConcluidas.length, 'etapas...');
 
-      setProgressoTotal(ordensPeriodo.length);
-      console.log('🚀 Processando', ordensPeriodo.length, 'ordens...');
-
-      // 2. Para cada ordem, garantir que todas as etapas existam e estejam concluídas
-      for (let i = 0; i < ordensPeriodo.length; i++) {
-        const ordem = ordensPeriodo[i];
-        
-        for (const etapaConfig of etapasAtivas) {
-          // Verificar se já existe
-          const ordemEtapaExistente = todasEtapasOrdem.find(
-            oe => oe.ordem_id === ordem.id && oe.etapa_id === etapaConfig.id
-          );
-
-          if (!ordemEtapaExistente) {
-            // Criar etapa já como concluída
-            await base44.entities.OrdemEtapa.create({
-              ordem_id: ordem.id,
-              etapa_id: etapaConfig.id,
-              status: "concluida",
-              data_inicio: dataAtual,
-              data_conclusao: dataAtual
-            });
-            etapasCriadas++;
-            totalEtapasProcessadas++;
-          } else if (ordemEtapaExistente.status !== "concluida" && ordemEtapaExistente.status !== "cancelada") {
-            // Atualizar para concluída
-            await base44.entities.OrdemEtapa.update(ordemEtapaExistente.id, {
-              status: "concluida",
-              data_conclusao: dataAtual,
-              data_inicio: ordemEtapaExistente.data_inicio || dataAtual
-            });
-            etapasAtualizadas++;
-            totalEtapasProcessadas++;
-          }
-        }
-
+      // 4. Concluir todas as etapas
+      for (let i = 0; i < etapasNaoConcluidas.length; i++) {
+        const etapa = etapasNaoConcluidas[i];
+        await base44.entities.OrdemEtapa.update(etapa.id, {
+          status: "concluida",
+          data_conclusao: dataAtual,
+          data_inicio: etapa.data_inicio || dataAtual
+        });
         setProgressoAtual(i + 1);
         
-        if ((i + 1) % 10 === 0 || i === ordensPeriodo.length - 1) {
-          console.log(`⏳ ${i + 1}/${ordensPeriodo.length} ordens processadas`);
+        if ((i + 1) % 10 === 0 || i === etapasNaoConcluidas.length - 1) {
+          console.log(`✅ ${i + 1}/${etapasNaoConcluidas.length} etapas concluídas`);
         }
       }
 

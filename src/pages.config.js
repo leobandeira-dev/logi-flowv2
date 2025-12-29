@@ -12,7 +12,6 @@ import Configuracoes from './pages/Configuracoes';
 import Dashboard from './pages/Dashboard';
 import DashboardTV from './pages/DashboardTV';
 import EtiquetasMae from './pages/EtiquetasMae';
-import Fluxo from './pages/Fluxo';
 import FluxoTV from './pages/FluxoTV';
 import Gamificacao from './pages/Gamificacao';
 import GestaoDeCTe from './pages/GestaoDeCTe';
@@ -30,6 +29,7 @@ import Parceiros from './pages/Parceiros';
 import PortalTransul from './pages/PortalTransul';
 import Precificacao from './pages/Precificacao';
 import Procedimentos from './pages/Procedimentos';
+import ProcessarEtapasNovembro from './pages/ProcessarEtapasNovembro';
 import Recebimento from './pages/Recebimento';
 import SAC from './pages/SAC';
 import SolicitacaoColeta from './pages/SolicitacaoColeta';
@@ -38,7 +38,7 @@ import TrackingTV from './pages/TrackingTV';
 import Unitizacao from './pages/Unitizacao';
 import Usuarios from './pages/Usuarios';
 import Veiculos from './pages/Veiculos';
-import ProcessarEtapasNovembro from './pages/ProcessarEtapasNovembro';
+import Fluxo from './pages/Fluxo';
 import __Layout from './Layout.jsx';
 
 
@@ -57,7 +57,6 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "DashboardTV": DashboardTV,
     "EtiquetasMae": EtiquetasMae,
-    "Fluxo": Fluxo,
     "FluxoTV": FluxoTV,
     "Gamificacao": Gamificacao,
     "GestaoDeCTe": GestaoDeCTe,
@@ -75,6 +74,7 @@ export const PAGES = {
     "PortalTransul": PortalTransul,
     "Precificacao": Precificacao,
     "Procedimentos": Procedimentos,
+    "ProcessarEtapasNovembro": ProcessarEtapasNovembro,
     "Recebimento": Recebimento,
     "SAC": SAC,
     "SolicitacaoColeta": SolicitacaoColeta,
@@ -83,7 +83,7 @@ export const PAGES = {
     "Unitizacao": Unitizacao,
     "Usuarios": Usuarios,
     "Veiculos": Veiculos,
-    "ProcessarEtapasNovembro": ProcessarEtapasNovembro,
+    "Fluxo": Fluxo,
 }
 
 export const pagesConfig = {
