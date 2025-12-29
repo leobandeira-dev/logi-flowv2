@@ -10,34 +10,44 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
+    // Obter parâmetros do request
+    const { mes = 11, ano = 2025 } = await req.json().catch(() => ({ mes: 11, ano: 2025 }));
+
+    console.log(`📅 Buscando ordens de ${mes}/${ano}`);
+
     // Buscar todas as ordens - usando filter com limite alto
     const todasOrdensRaw = await base44.asServiceRole.entities.OrdemDeCarregamento.filter({}, null, 10000);
     const todasOrdens = Array.isArray(todasOrdensRaw) ? todasOrdensRaw : [];
     
     console.log(`📊 Total de ordens carregadas: ${todasOrdens.length}`);
     
-    const ordensNovembro = todasOrdens.filter(ordem => {
+    const ordensPeriodo = todasOrdens.filter(ordem => {
       if (!ordem.created_date) return false;
       const data = new Date(ordem.created_date);
-      const mes = data.getMonth(); // 0-11
-      const ano = data.getFullYear();
+      const mesOrdem = data.getMonth() + 1; // 1-12
+      const anoOrdem = data.getFullYear();
       
-      // Novembro = mês 10 (0-indexed)
-      return mes === 10 && (ano === 2024 || ano === 2025);
+      return mesOrdem === mes && anoOrdem === ano;
     });
 
-    console.log(`📅 Encontradas ${ordensNovembro.length} ordens de novembro`);
+    console.log(`📅 Encontradas ${ordensPeriodo.length} ordens de ${mes}/${ano}`);
 
     // Buscar todas as OrdemEtapa
     const todasOrdemEtapasRaw = await base44.asServiceRole.entities.OrdemEtapa.filter({}, null, 10000);
     const todasOrdemEtapas = Array.isArray(todasOrdemEtapasRaw) ? todasOrdemEtapasRaw : [];
     
-    const ordensIds = ordensNovembro.map(o => o.id);
+    const ordensIds = ordensPeriodo.map(o => o.id);
     const etapasParaConcluir = todasOrdemEtapas.filter(oe => 
-      ordensIds.includes(oe.ordem_id) && oe.status !== "concluida"
+      ordensIds.includes(oe.ordem_id) && 
+      oe.status !== "concluida" && 
+      oe.status !== "cancelada"
     );
 
-    console.log(`📋 Encontradas ${etapasParaConcluir.length} etapas para concluir`);
+    console.log(`📋 Encontradas ${etapasParaConcluir.length} etapas NÃO concluídas para processar`);
+    console.log(`📊 Status das etapas: ${JSON.stringify(etapasParaConcluir.reduce((acc, e) => {
+      acc[e.status] = (acc[e.status] || 0) + 1;
+      return acc;
+    }, {}))}`);
 
     // Atualizar todas as etapas para concluída
     const dataAtual = new Date().toISOString();
@@ -50,13 +60,17 @@ Deno.serve(async (req) => {
         data_inicio: etapa.data_inicio || dataAtual
       });
       atualizadas++;
+      
+      if (atualizadas % 50 === 0) {
+        console.log(`⏳ Processadas ${atualizadas}/${etapasParaConcluir.length} etapas...`);
+      }
     }
 
     return Response.json({
       sucesso: true,
-      ordensNovembro: ordensNovembro.length,
+      ordensPeriodo: ordensPeriodo.length,
       etapasAtualizadas: atualizadas,
-      mensagem: `✅ ${atualizadas} etapas de ${ordensNovembro.length} ordens de novembro foram marcadas como concluídas`
+      mensagem: `✅ ${atualizadas} etapas não concluídas de ${ordensPeriodo.length} ordens de ${mes}/${ano} foram marcadas como concluídas`
     });
 
   } catch (error) {
