@@ -679,14 +679,14 @@ export default function Fluxo() {
     return true;
   });
 
-  const filteredOrdens = filteredOrdensByAtribuicao.filter(ordem => {
-    console.log('🔍 FLUXO - Analisando ordem:', {
-      numero: ordem.numero_carga,
-      created_date: ordem.created_date?.split('T')[0],
-      filtroInicio: filters.dataInicio,
-      filtroFim: filters.dataFim
-    });
+  console.log('📊 FLUXO - Estado dos filtros:', {
+    periodoSelecionado,
+    dataInicio: filters.dataInicio,
+    dataFim: filters.dataFim,
+    totalOrdens: filteredOrdensByAtribuicao.length
+  });
 
+  const filteredOrdens = filteredOrdensByAtribuicao.filter(ordem => {
     // REGRA: Excluir coletas, recebimentos e entregas - apenas ordens de carregamento
     
     // Excluir por numero_coleta (qualquer ordem com COL- é coleta)
@@ -736,26 +736,28 @@ export default function Fluxo() {
     if (filters.dataInicio && filters.dataInicio !== "" && ordem.created_date) {
       const dataOrdem = new Date(ordem.created_date);
       const dataInicio = new Date(filters.dataInicio);
-      console.log('🔍 Filtrando por data início:', { 
-        ordem: ordem.numero_carga, 
-        dataOrdem: dataOrdem.toISOString().split('T')[0], 
-        dataInicio: filters.dataInicio,
-        passa: dataOrdem >= dataInicio
-      });
-      if (dataOrdem < dataInicio) return false;
+      if (dataOrdem < dataInicio) {
+        console.log('❌ Ordem rejeitada por dataInicio:', {
+          ordem: ordem.numero_carga,
+          dataOrdem: dataOrdem.toISOString().split('T')[0],
+          dataInicio: filters.dataInicio
+        });
+        return false;
+      }
     }
 
     if (filters.dataFim && filters.dataFim !== "" && ordem.created_date) {
       const dataOrdem = new Date(ordem.created_date);
       const dataFim = new Date(filters.dataFim);
       dataFim.setHours(23, 59, 59, 999);
-      console.log('🔍 Filtrando por data fim:', { 
-        ordem: ordem.numero_carga, 
-        dataOrdem: dataOrdem.toISOString().split('T')[0], 
-        dataFim: filters.dataFim,
-        passa: dataOrdem <= dataFim
-      });
-      if (dataOrdem > dataFim) return false;
+      if (dataOrdem > dataFim) {
+        console.log('❌ Ordem rejeitada por dataFim:', {
+          ordem: ordem.numero_carga,
+          dataOrdem: dataOrdem.toISOString().split('T')[0],
+          dataFim: filters.dataFim
+        });
+        return false;
+      }
     }
 
     if (filters.etapaId && filters.etapaId !== "") {
