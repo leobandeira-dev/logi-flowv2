@@ -164,15 +164,37 @@ export default function Fluxo() {
       console.log('📦 Ordens filtradas:', filteredOrdens.length);
       console.log('📅 Período:', { periodoSelecionado, anoSelecionado, mesSelecionado });
 
-      // Usar as MESMAS etapas que os cartões estão usando (ordensetapas já carregadas)
-      const idsOrdens = filteredOrdens.map(o => o.id);
+      // Coletar TODAS as etapas não concluídas (mesma lógica dos cartões)
+      const etapasParaConcluir = [];
 
-      // Filtrar etapas das ordens filtradas que NÃO estão concluídas
-      const etapasNaoConcluidas = ordensetapas.filter(etapa => {
-        const ordemFiltrada = idsOrdens.includes(etapa.ordem_id);
-        const naoEstaConcluida = etapa.status !== "concluida" && etapa.status !== "cancelada";
-        return ordemFiltrada && naoEstaConcluida;
+      filteredOrdens.forEach(ordem => {
+        etapas.forEach(etapa => {
+          const ordemEtapa = ordensetapas.find(
+            oe => oe.ordem_id === ordem.id && oe.etapa_id === etapa.id
+          );
+
+          if (!ordemEtapa) {
+            // Se não tem a etapa criada, precisa criar como concluída
+            etapasParaConcluir.push({
+              tipo: 'criar',
+              ordem_id: ordem.id,
+              etapa_id: etapa.id,
+              ordem: ordem,
+              etapa: etapa
+            });
+          } else if (ordemEtapa.status !== "concluida" && ordemEtapa.status !== "cancelada") {
+            // Se tem a etapa mas não está concluída, atualizar
+            etapasParaConcluir.push({
+              tipo: 'atualizar',
+              ordemEtapa: ordemEtapa,
+              ordem: ordem,
+              etapa: etapa
+            });
+          }
+        });
       });
+
+      const etapasNaoConcluidas = etapasParaConcluir;
 
       console.log('⏳ Etapas NÃO concluídas encontradas:', etapasNaoConcluidas.length);
       toast.dismiss();
@@ -205,21 +227,32 @@ export default function Fluxo() {
       console.log('🚀 Iniciando conclusão de', etapasNaoConcluidas.length, 'etapas...');
       toast.success(`Processando ${etapasNaoConcluidas.length} etapas...`);
 
-      // 3. Concluir TODAS as etapas pendentes (ignorando validações de campos obrigatórios)
+      // 3. Processar TODAS as etapas pendentes (criar ou atualizar)
       for (let i = 0; i < etapasNaoConcluidas.length; i++) {
-        const etapa = etapasNaoConcluidas[i];
+        const item = etapasNaoConcluidas[i];
 
-        // Atualizar para concluída SEM validar campos obrigatórios
-        await base44.entities.OrdemEtapa.update(etapa.id, {
-          status: "concluida",
-          data_conclusao: dataAtual,
-          data_inicio: etapa.data_inicio || dataAtual
-        });
+        if (item.tipo === 'criar') {
+          // Criar nova OrdemEtapa já concluída
+          await base44.entities.OrdemEtapa.create({
+            ordem_id: item.ordem_id,
+            etapa_id: item.etapa_id,
+            status: "concluida",
+            data_inicio: dataAtual,
+            data_conclusao: dataAtual
+          });
+        } else {
+          // Atualizar OrdemEtapa existente
+          await base44.entities.OrdemEtapa.update(item.ordemEtapa.id, {
+            status: "concluida",
+            data_conclusao: dataAtual,
+            data_inicio: item.ordemEtapa.data_inicio || dataAtual
+          });
+        }
 
         setProgressoAtual(i + 1);
 
         if ((i + 1) % 10 === 0 || i === etapasNaoConcluidas.length - 1) {
-          console.log(`✅ ${i + 1}/${etapasNaoConcluidas.length} etapas marcadas como concluídas`);
+          console.log(`✅ ${i + 1}/${etapasNaoConcluidas.length} etapas processadas`);
         }
       }
 
@@ -955,40 +988,33 @@ export default function Fluxo() {
   const fim = inicio + limite;
   const ordensLimitadas = filteredOrdens.slice(inicio, fim);
 
-  // Calcular etapas NÃO concluídas das ordens filtradas
+  // Calcular etapas NÃO concluídas das ordens filtradas (mesma lógica dos cartões)
   React.useEffect(() => {
-    if (filteredOrdens.length > 0 && ordensetapas.length > 0) {
-      const idsOrdensFiltradas = filteredOrdens.map(o => o.id);
-      const etapasNaoConcluidas = ordensetapas.filter(etapa => {
-        const ordemFiltrada = idsOrdensFiltradas.includes(etapa.ordem_id);
-        const naoEstaConcluida = etapa.status !== "concluida" && etapa.status !== "cancelada";
-        return ordemFiltrada && naoEstaConcluida;
-      });
-      setEtapasPendentesCount(etapasNaoConcluidas.length);
+    if (filteredOrdens.length > 0 && etapas.length > 0) {
+      let totalEtapasNaoConcluidas = 0;
 
-      // Debug detalhado
-      console.log('🔍 CONTAGEM ETAPAS:', {
-        ordensTotal: filteredOrdens.length,
-        etapasTotal: ordensetapas.length,
-        etapasNaoConcluidas: etapasNaoConcluidas.length,
-        periodo: periodoSelecionado,
-        ano: anoSelecionado,
-        mes: mesSelecionado
-      });
+      // Para cada ordem filtrada, contar quantas etapas não estão concluídas
+      filteredOrdens.forEach(ordem => {
+        etapas.forEach(etapa => {
+          const ordemEtapa = ordensetapas.find(
+            oe => oe.ordem_id === ordem.id && oe.etapa_id === etapa.id
+          );
 
-      if (etapasNaoConcluidas.length > 0) {
-        console.log('📋 Primeiras 5 etapas não concluídas:');
-        etapasNaoConcluidas.slice(0, 5).forEach((e, idx) => {
-          const ordem = filteredOrdens.find(o => o.id === e.ordem_id);
-          const etapa = etapas.find(et => et.id === e.etapa_id);
-          console.log(`  ${idx + 1}. Ordem: ${ordem?.numero_carga} - Etapa: ${etapa?.nome} - Status: ${e.status}`);
+          // Se não tem a etapa criada, conta como pendente
+          if (!ordemEtapa) {
+            totalEtapasNaoConcluidas++;
+          } else if (ordemEtapa.status !== "concluida" && ordemEtapa.status !== "cancelada") {
+            // Se tem a etapa mas não está concluída/cancelada, conta
+            totalEtapasNaoConcluidas++;
+          }
         });
-      }
+      });
+
+      setEtapasPendentesCount(totalEtapasNaoConcluidas);
     } else {
       setEtapasPendentesCount(0);
-      console.log('⚠️ Nenhuma ordem filtrada ou etapa carregada');
     }
-  }, [filteredOrdens.length, ordensetapas.length, periodoSelecionado, anoSelecionado, mesSelecionado]);
+  }, [filteredOrdens.length, ordensetapas.length, etapas.length, periodoSelecionado, anoSelecionado, mesSelecionado]);
 
   const getOrdensporEtapa = (etapaId) => {
     const ordensIds = ordensetapas
