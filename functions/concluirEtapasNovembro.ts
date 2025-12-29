@@ -10,8 +10,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    // Buscar todas as ordens criadas em novembro (2024 ou 2025)
-    const todasOrdens = await base44.asServiceRole.entities.OrdemDeCarregamento.filter({}, null, 10000);
+    // Buscar todas as ordens - usando filter com limite alto
+    const todasOrdensRaw = await base44.asServiceRole.entities.OrdemDeCarregamento.filter({}, null, 10000);
+    const todasOrdens = Array.isArray(todasOrdensRaw) ? todasOrdensRaw : [];
+    
+    console.log(`📊 Total de ordens carregadas: ${todasOrdens.length}`);
     
     const ordensNovembro = todasOrdens.filter(ordem => {
       if (!ordem.created_date) return false;
@@ -25,8 +28,9 @@ Deno.serve(async (req) => {
 
     console.log(`📅 Encontradas ${ordensNovembro.length} ordens de novembro`);
 
-    // Buscar todas as OrdemEtapa relacionadas a essas ordens
-    const todasOrdemEtapas = await base44.asServiceRole.entities.OrdemEtapa.filter({}, null, 10000);
+    // Buscar todas as OrdemEtapa
+    const todasOrdemEtapasRaw = await base44.asServiceRole.entities.OrdemEtapa.filter({}, null, 10000);
+    const todasOrdemEtapas = Array.isArray(todasOrdemEtapasRaw) ? todasOrdemEtapasRaw : [];
     
     const ordensIds = ordensNovembro.map(o => o.id);
     const etapasParaConcluir = todasOrdemEtapas.filter(oe => 
