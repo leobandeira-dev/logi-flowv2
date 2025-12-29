@@ -1926,7 +1926,7 @@ export default function Fluxo() {
           <DialogHeader>
             <DialogTitle style={{ color: theme.text }}>Concluir Etapas Pendentes</DialogTitle>
             <DialogDescription style={{ color: theme.textMuted }}>
-              Selecione o período para concluir todas as etapas não finalizadas das ordens criadas nesse intervalo.
+              Selecione o período para concluir todas as etapas não finalizadas que foram criadas nesse intervalo.
             </DialogDescription>
           </DialogHeader>
           
