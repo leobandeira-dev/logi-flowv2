@@ -52,6 +52,7 @@ import {
 import { format, differenceInHours, differenceInDays, differenceInMinutes, addHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import FilterModal from "../components/dashboard/FilterModal";
+import FiltroDataOcorrencias from "../components/filtros/FiltroDataOcorrencias";
 
 
 export default function Fluxo() {
@@ -883,7 +884,7 @@ export default function Fluxo() {
           </div>
 
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3 w-full lg:w-auto">
-            <FiltroDataPeriodo
+            <FiltroDataOcorrencias
               periodoSelecionado={periodoSelecionado}
               onPeriodoChange={setPeriodoSelecionado}
               dataInicio={filters.dataInicio}
