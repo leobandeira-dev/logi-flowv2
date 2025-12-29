@@ -86,7 +86,6 @@ export default function Tracking() {
   const [limite, setLimite] = useState(50);
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [exportando, setExportando] = useState(false);
-  const [periodoSelecionado, setPeriodoSelecionado] = useState("mes_atual");
   
   // Calcular datas do mês atual
   const hoje = new Date();
