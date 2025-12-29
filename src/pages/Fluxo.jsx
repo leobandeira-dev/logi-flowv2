@@ -140,30 +140,35 @@ export default function Fluxo() {
       return;
     }
 
-    const inicio = new Date(dataInicioConcluir);
-    const fim = new Date(dataFimConcluir);
-    fim.setHours(23, 59, 59, 999);
-
-    if (inicio > fim) {
-      toast.error('Data inicial não pode ser maior que data final');
-      return;
-    }
-
-    // Iniciar processamento imediatamente
+    // Iniciar processamento
     setProcessandoNovembro(true);
     setProgressoAtual(0);
     setProgressoTotal(1);
 
     try {
+      console.log('🔍 INICIANDO PROCESSAMENTO');
+      console.log('Período:', dataInicioConcluir, 'até', dataFimConcluir);
+
       const [todasOrdens, todasEtapas] = await Promise.all([
         base44.entities.OrdemDeCarregamento.list(),
         base44.entities.OrdemEtapa.list()
       ]);
 
+      console.log('📦 Total ordens:', todasOrdens.length);
+      console.log('📋 Total etapas:', todasEtapas.length);
+
+      // Filtrar ordens do período (apenas comparar data sem hora)
       const ordensPeriodo = todasOrdens.filter(ordem => {
         if (!ordem.created_date) return false;
-        const data = new Date(ordem.created_date);
-        return data >= inicio && data <= fim;
+        
+        const dataOrdem = ordem.created_date.split('T')[0]; // Apenas a data YYYY-MM-DD
+        
+        return dataOrdem >= dataInicioConcluir && dataOrdem <= dataFimConcluir;
+      });
+
+      console.log('🎯 Ordens no período:', ordensPeriodo.length);
+      ordensPeriodo.forEach(o => {
+        console.log('  -', o.numero_carga, 'criada em', o.created_date.split('T')[0]);
       });
 
       const ordensIds = new Set(ordensPeriodo.map(o => o.id));
@@ -173,16 +178,23 @@ export default function Fluxo() {
         oe.status !== "cancelada"
       );
 
+      console.log('⏳ Etapas a concluir:', etapasParaConcluir.length);
+      console.log('Status:', etapasParaConcluir.reduce((acc, e) => {
+        acc[e.status] = (acc[e.status] || 0) + 1;
+        return acc;
+      }, {}));
+
       if (etapasParaConcluir.length === 0) {
-        toast.info('Nenhuma etapa pendente encontrada neste período');
+        toast.info('Nenhuma etapa pendente encontrada');
         setProcessandoNovembro(false);
         setProgressoTotal(0);
         return;
       }
 
       setProgressoTotal(etapasParaConcluir.length);
-      
       const dataAtual = new Date().toISOString();
+
+      console.log('🚀 Atualizando', etapasParaConcluir.length, 'etapas...');
 
       for (let i = 0; i < etapasParaConcluir.length; i++) {
         const etapa = etapasParaConcluir[i];
@@ -192,16 +204,21 @@ export default function Fluxo() {
           data_inicio: etapa.data_inicio || dataAtual
         });
         setProgressoAtual(i + 1);
+        
+        if ((i + 1) % 10 === 0 || i === etapasParaConcluir.length - 1) {
+          console.log(`✅ ${i + 1}/${etapasParaConcluir.length} concluídas`);
+        }
       }
 
+      console.log('✅ PROCESSAMENTO COMPLETO!');
       toast.success(`✅ ${etapasParaConcluir.length} etapas concluídas!`);
       setShowModalConcluir(false);
       setDataInicioConcluir("");
       setDataFimConcluir("");
       await loadData();
     } catch (error) {
-      console.error('Erro ao processar:', error);
-      toast.error(`❌ Erro: ${error.message}`);
+      console.error('❌ ERRO:', error);
+      toast.error(`Erro: ${error.message}`);
     } finally {
       setProcessandoNovembro(false);
       setProgressoAtual(0);
