@@ -147,7 +147,14 @@ export default function Fluxo() {
 
     try {
       console.log('🔍 INICIANDO PROCESSAMENTO');
-      console.log('📅 Período selecionado:', dataInicioConcluir, 'até', dataFimConcluir);
+      console.log('📅 Período solicitado:', dataInicioConcluir, 'até', dataFimConcluir);
+
+      // Validar datas
+      if (!dataInicioConcluir || !dataFimConcluir) {
+        toast.error('Erro: Datas não informadas corretamente');
+        setProcessandoNovembro(false);
+        return;
+      }
 
       const [todasOrdens, todasEtapasOrdem, todasEtapasConfig] = await Promise.all([
         base44.entities.OrdemDeCarregamento.list(),
@@ -159,13 +166,16 @@ export default function Fluxo() {
       console.log('📋 Total OrdemEtapa sistema:', todasEtapasOrdem.length);
       console.log('⚙️ Total Etapas config:', todasEtapasConfig.length);
 
+      // Parse das datas
       const [anoInicio, mesInicio, diaInicio] = dataInicioConcluir.split('-').map(n => parseInt(n));
       const [anoFim, mesFim, diaFim] = dataFimConcluir.split('-').map(n => parseInt(n));
-      
+
       const inicio = new Date(anoInicio, mesInicio - 1, diaInicio, 0, 0, 0);
       const fim = new Date(anoFim, mesFim - 1, diaFim, 23, 59, 59);
-      
-      console.log('🎯 Período filtro:', inicio.toISOString(), 'até', fim.toISOString());
+
+      console.log('🎯 Filtro período:');
+      console.log('   Data início:', inicio.toISOString());
+      console.log('   Data fim:', fim.toISOString());
 
       // 1. Buscar ORDENS criadas no período
       const ordensPeriodo = todasOrdens.filter(ordem => {
