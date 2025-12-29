@@ -140,9 +140,16 @@ export default function Fluxo() {
       return;
     }
 
-    const inicio = new Date(dataInicioConcluir);
-    const fim = new Date(dataFimConcluir);
-    fim.setHours(23, 59, 59, 999);
+    // Garantir parsing correto das datas (considerando timezone local)
+    const inicio = new Date(dataInicioConcluir + 'T00:00:00');
+    const fim = new Date(dataFimConcluir + 'T23:59:59');
+
+    console.log('📅 Datas selecionadas:', {
+      dataInicioConcluir,
+      dataFimConcluir,
+      inicioObj: inicio,
+      fimObj: fim
+    });
 
     if (inicio > fim) {
       toast.error('Data inicial não pode ser maior que data final');
@@ -154,32 +161,46 @@ export default function Fluxo() {
       setProgressoAtual(0);
       setProgressoTotal(1);
 
-      console.log('🔍 Buscando ordens entre:', format(inicio, 'dd/MM/yyyy'), 'e', format(fim, 'dd/MM/yyyy'));
+      console.log('🔍 Buscando ordens entre:', format(inicio, 'dd/MM/yyyy HH:mm'), 'e', format(fim, 'dd/MM/yyyy HH:mm'));
 
       const [todasOrdens, todasEtapas] = await Promise.all([
         base44.entities.OrdemDeCarregamento.list(),
         base44.entities.OrdemEtapa.list()
       ]);
 
-      console.log('📦 Total de ordens:', todasOrdens.length);
-      console.log('📋 Total de etapas:', todasEtapas.length);
+      console.log('📦 Total de ordens no sistema:', todasOrdens.length);
+      console.log('📋 Total de etapas no sistema:', todasEtapas.length);
 
       const ordensPeriodo = todasOrdens.filter(ordem => {
         if (!ordem.created_date) return false;
-        const data = new Date(ordem.created_date);
-        return data >= inicio && data <= fim;
+        const dataOrdem = new Date(ordem.created_date);
+        const dentroIntervalo = dataOrdem >= inicio && dataOrdem <= fim;
+        
+        if (dentroIntervalo) {
+          console.log('✅ Ordem incluída:', ordem.numero_carga, 'criada em:', format(dataOrdem, 'dd/MM/yyyy HH:mm'));
+        }
+        
+        return dentroIntervalo;
       });
 
-      console.log('✅ Ordens no período:', ordensPeriodo.length);
+      console.log('🎯 Ordens encontradas no período:', ordensPeriodo.length);
+      console.log('📋 Detalhes:', ordensPeriodo.map(o => ({
+        numero: o.numero_carga,
+        created: o.created_date
+      })));
 
       const ordensIds = new Set(ordensPeriodo.map(o => o.id));
-      const etapasParaConcluir = todasEtapas.filter(oe => 
-        ordensIds.has(oe.ordem_id) && 
-        oe.status !== "concluida" && 
-        oe.status !== "cancelada"
-      );
+      const etapasParaConcluir = todasEtapas.filter(oe => {
+        const pertenceOrdem = ordensIds.has(oe.ordem_id);
+        const naoConcluida = oe.status !== "concluida" && oe.status !== "cancelada";
+        return pertenceOrdem && naoConcluida;
+      });
 
-      console.log('⏳ Etapas pendentes:', etapasParaConcluir.length);
+      console.log('⏳ Etapas pendentes encontradas:', etapasParaConcluir.length);
+      console.log('📊 Status das etapas:', etapasParaConcluir.reduce((acc, e) => {
+        acc[e.status] = (acc[e.status] || 0) + 1;
+        return acc;
+      }, {}));
 
       if (etapasParaConcluir.length === 0) {
         toast.info('Nenhuma etapa pendente encontrada neste período');
@@ -201,6 +222,8 @@ export default function Fluxo() {
 
       const dataAtual = new Date().toISOString();
 
+      console.log('🚀 Iniciando processamento de', etapasParaConcluir.length, 'etapas...');
+
       for (let i = 0; i < etapasParaConcluir.length; i++) {
         const etapa = etapasParaConcluir[i];
         await base44.entities.OrdemEtapa.update(etapa.id, {
@@ -209,15 +232,20 @@ export default function Fluxo() {
           data_inicio: etapa.data_inicio || dataAtual
         });
         setProgressoAtual(i + 1);
+        
+        if ((i + 1) % 10 === 0) {
+          console.log(`✅ Processadas ${i + 1}/${etapasParaConcluir.length} etapas`);
+        }
       }
 
+      console.log('✅ Processamento concluído!');
       toast.success(`✅ ${etapasParaConcluir.length} etapas concluídas!`);
       setShowModalConcluir(false);
       setDataInicioConcluir("");
       setDataFimConcluir("");
       await loadData();
     } catch (error) {
-      console.error('Erro ao processar:', error);
+      console.error('❌ Erro ao processar:', error);
       toast.error(`❌ Erro: ${error.message}`);
     } finally {
       setProcessandoNovembro(false);
