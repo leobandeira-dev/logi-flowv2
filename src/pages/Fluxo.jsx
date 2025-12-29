@@ -215,11 +215,7 @@ export default function Fluxo() {
       const ordensPeriodoFiltradas = ordensPeriodo;
 
       console.log('');
-      console.log('🚚 Ordens de CARREGAMENTO (após filtros):', ordensPeriodoFiltradas.length);
-      console.log('❌ Excluídas (coletas/recebimentos/entregas):', ordensPeriodo.length - ordensPeriodoFiltradas.length);
-      console.log('📋 Amostras carregamento:', ordensPeriodoFiltradas.slice(0, 10).map(o => 
-        `${o.numero_carga || o.id.slice(-6)} - ${o.tipo_ordem || o.tipo_registro}`
-      ));
+      console.log('🚚 Ordens de CARREGAMENTO no período:', ordensPeriodoFiltradas.length);
       console.log('');
 
       if (ordensPeriodoFiltradas.length === 0) {
