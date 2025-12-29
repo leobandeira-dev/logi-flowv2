@@ -149,10 +149,6 @@ export default function Fluxo() {
       return;
     }
 
-    setProcessandoNovembro(true);
-    setProgressoAtual(0);
-    setProgressoTotal(0);
-
     try {
       toast.loading('Carregando dados...');
 
@@ -176,31 +172,36 @@ export default function Fluxo() {
 
       if (etapasParaConcluir.length === 0) {
         toast.info('Nenhuma etapa pendente encontrada neste período');
-        setProcessandoNovembro(false);
         return;
       }
 
       const confirmMsg = `⚠️ Serão concluídas ${etapasParaConcluir.length} etapas de ${ordensPeriodo.length} ordens.\n\nDeseja continuar?`;
       
       if (!window.confirm(confirmMsg)) {
-        setProcessandoNovembro(false);
         return;
       }
 
+      // Iniciar processamento
+      setProcessandoNovembro(true);
       setProgressoTotal(etapasParaConcluir.length);
+      setProgressoAtual(0);
+
       const dataAtual = new Date().toISOString();
 
-      for (const etapa of etapasParaConcluir) {
+      for (let i = 0; i < etapasParaConcluir.length; i++) {
+        const etapa = etapasParaConcluir[i];
         await base44.entities.OrdemEtapa.update(etapa.id, {
           status: "concluida",
           data_conclusao: dataAtual,
           data_inicio: etapa.data_inicio || dataAtual
         });
-        setProgressoAtual(prev => prev + 1);
+        setProgressoAtual(i + 1);
       }
 
       toast.success(`✅ ${etapasParaConcluir.length} etapas concluídas!`);
       setShowModalConcluir(false);
+      setDataInicioConcluir("");
+      setDataFimConcluir("");
       await loadData();
     } catch (error) {
       console.error('Erro ao processar:', error);
