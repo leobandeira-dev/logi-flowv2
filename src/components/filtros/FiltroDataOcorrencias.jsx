@@ -12,13 +12,37 @@ export default function FiltroDataOcorrencias({
   onDataFimChange,
   isDark
 }) {
+  const [mesSelecionado, setMesSelecionado] = React.useState("");
+  const [anoSelecionado, setAnoSelecionado] = React.useState("");
+
+  // Sincronizar com dataInicio quando o período muda
+  React.useEffect(() => {
+    if (periodoSelecionado === "mes_especifico" && dataInicio) {
+      const data = new Date(dataInicio);
+      setMesSelecionado(data.getMonth().toString());
+      setAnoSelecionado(data.getFullYear().toString());
+    }
+  }, [periodoSelecionado, dataInicio]);
+
   const handlePeriodoChange = (valor) => {
     onPeriodoChange(valor);
     
-    if (valor !== "personalizado") {
+    if (valor === "mes_atual" || valor === "ano_atual") {
       const periodo = getPeriodoParaValor(valor);
       onDataInicioChange(periodo.inicio);
       onDataFimChange(periodo.fim);
+    } else if (valor === "mes_especifico") {
+      // Inicializar com mês atual
+      const hoje = new Date();
+      const mes = hoje.getMonth();
+      const ano = hoje.getFullYear();
+      const primeiro = new Date(ano, mes, 1);
+      const ultimo = new Date(ano, mes + 1, 0);
+      
+      setMesSelecionado(mes.toString());
+      setAnoSelecionado(ano.toString());
+      onDataInicioChange(primeiro.toISOString().split('T')[0]);
+      onDataFimChange(ultimo.toISOString().split('T')[0]);
     }
   };
 
@@ -106,11 +130,12 @@ export default function FiltroDataOcorrencias({
           <div className="w-32">
             <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Mês</Label>
             <Select
-              value={dataInicio ? new Date(dataInicio).getMonth().toString() : ""}
+              value={mesSelecionado}
               onValueChange={(mes) => {
-                const ano = dataInicio ? new Date(dataInicio).getFullYear() : new Date().getFullYear();
-                const primeiro = new Date(ano, parseInt(mes), 1);
-                const ultimo = new Date(ano, parseInt(mes) + 1, 0);
+                setMesSelecionado(mes);
+                const ano = anoSelecionado || new Date().getFullYear().toString();
+                const primeiro = new Date(parseInt(ano), parseInt(mes), 1);
+                const ultimo = new Date(parseInt(ano), parseInt(mes) + 1, 0);
                 onDataInicioChange(primeiro.toISOString().split('T')[0]);
                 onDataFimChange(ultimo.toISOString().split('T')[0]);
               }}
@@ -137,11 +162,12 @@ export default function FiltroDataOcorrencias({
           <div className="w-28">
             <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Ano</Label>
             <Select
-              value={dataInicio ? new Date(dataInicio).getFullYear().toString() : ""}
+              value={anoSelecionado}
               onValueChange={(ano) => {
-                const mes = dataInicio ? new Date(dataInicio).getMonth() : new Date().getMonth();
-                const primeiro = new Date(parseInt(ano), mes, 1);
-                const ultimo = new Date(parseInt(ano), mes + 1, 0);
+                setAnoSelecionado(ano);
+                const mes = mesSelecionado || new Date().getMonth().toString();
+                const primeiro = new Date(parseInt(ano), parseInt(mes), 1);
+                const ultimo = new Date(parseInt(ano), parseInt(mes) + 1, 0);
                 onDataInicioChange(primeiro.toISOString().split('T')[0]);
                 onDataFimChange(ultimo.toISOString().split('T')[0]);
               }}
