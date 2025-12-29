@@ -229,7 +229,11 @@ export default function Fluxo() {
       setShowModalConcluir(false);
       setDataInicioConcluir("");
       setDataFimConcluir("");
-      await loadData();
+      
+      // Forçar reload completo da página para garantir dados atualizados
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.error('❌ ERRO:', error);
       toast.error(`Erro: ${error.message}`);
