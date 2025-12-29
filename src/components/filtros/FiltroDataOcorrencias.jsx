@@ -19,7 +19,7 @@ export default function FiltroDataOcorrencias({
   React.useEffect(() => {
     if (periodoSelecionado === "mes_especifico" && dataInicio) {
       const data = new Date(dataInicio);
-      setMesSelecionado(data.getMonth().toString());
+      setMesSelecionado((data.getMonth() + 1).toString()); // 1-12 ao invés de 0-11
       setAnoSelecionado(data.getFullYear().toString());
     }
   }, [periodoSelecionado, dataInicio]);
@@ -36,13 +36,13 @@ export default function FiltroDataOcorrencias({
     } else if (valor === "mes_especifico") {
       // Inicializar com mês atual
       const hoje = new Date();
-      const mes = hoje.getMonth();
+      const mes = hoje.getMonth() + 1; // 1-12 ao invés de 0-11
       const ano = hoje.getFullYear();
-      const primeiro = new Date(ano, mes, 1);
-      const ultimo = new Date(ano, mes + 1, 0);
-      
+      const primeiro = new Date(ano, mes - 1, 1); // mes-1 porque Date usa 0-11
+      const ultimo = new Date(ano, mes, 0); // último dia do mês
+
       console.log('📅 Inicializando mês específico:', { mes, ano, inicio: primeiro.toISOString().split('T')[0], fim: ultimo.toISOString().split('T')[0] });
-      
+
       setMesSelecionado(mes.toString());
       setAnoSelecionado(ano.toString());
       onDataInicioChange(primeiro.toISOString().split('T')[0]);
@@ -136,20 +136,20 @@ export default function FiltroDataOcorrencias({
             <Select
               value={mesSelecionado}
               onValueChange={(mes) => {
-                console.log('📅 Mês selecionado (raw):', mes);
+                console.log('📅 Mês selecionado (1-12):', mes);
                 setMesSelecionado(mes);
                 const ano = anoSelecionado || new Date().getFullYear().toString();
                 const mesInt = parseInt(mes);
                 console.log('📅 Calculando datas para:', { mesInt, ano });
-                const primeiro = new Date(parseInt(ano), mesInt, 1);
-                const ultimo = new Date(parseInt(ano), mesInt + 1, 0);
+                const primeiro = new Date(parseInt(ano), mesInt - 1, 1); // mesInt-1 porque Date usa 0-11
+                const ultimo = new Date(parseInt(ano), mesInt, 0); // último dia do mês
                 console.log('📅 Objetos Date criados:', { 
                   primeiro: primeiro.toISOString(), 
                   ultimo: ultimo.toISOString() 
                 });
                 const inicio = primeiro.toISOString().split('T')[0];
                 const fim = ultimo.toISOString().split('T')[0];
-                console.log('📅 Datas calculadas finais:', { inicio, fim, mes, ano });
+                console.log('📅 Datas finais aplicadas:', { inicio, fim, mes, ano });
                 onDataInicioChange(inicio);
                 onDataFimChange(fim);
               }}
@@ -158,18 +158,18 @@ export default function FiltroDataOcorrencias({
                 <SelectValue placeholder="Mês" />
               </SelectTrigger>
               <SelectContent style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}>
-                <SelectItem value="0" style={{ color: theme.text }}>Jan</SelectItem>
-                <SelectItem value="1" style={{ color: theme.text }}>Fev</SelectItem>
-                <SelectItem value="2" style={{ color: theme.text }}>Mar</SelectItem>
-                <SelectItem value="3" style={{ color: theme.text }}>Abr</SelectItem>
-                <SelectItem value="4" style={{ color: theme.text }}>Mai</SelectItem>
-                <SelectItem value="5" style={{ color: theme.text }}>Jun</SelectItem>
-                <SelectItem value="6" style={{ color: theme.text }}>Jul</SelectItem>
-                <SelectItem value="7" style={{ color: theme.text }}>Ago</SelectItem>
-                <SelectItem value="8" style={{ color: theme.text }}>Set</SelectItem>
-                <SelectItem value="9" style={{ color: theme.text }}>Out</SelectItem>
-                <SelectItem value="10" style={{ color: theme.text }}>Nov</SelectItem>
-                <SelectItem value="11" style={{ color: theme.text }}>Dez</SelectItem>
+                <SelectItem value="1" style={{ color: theme.text }}>Jan</SelectItem>
+                <SelectItem value="2" style={{ color: theme.text }}>Fev</SelectItem>
+                <SelectItem value="3" style={{ color: theme.text }}>Mar</SelectItem>
+                <SelectItem value="4" style={{ color: theme.text }}>Abr</SelectItem>
+                <SelectItem value="5" style={{ color: theme.text }}>Mai</SelectItem>
+                <SelectItem value="6" style={{ color: theme.text }}>Jun</SelectItem>
+                <SelectItem value="7" style={{ color: theme.text }}>Jul</SelectItem>
+                <SelectItem value="8" style={{ color: theme.text }}>Ago</SelectItem>
+                <SelectItem value="9" style={{ color: theme.text }}>Set</SelectItem>
+                <SelectItem value="10" style={{ color: theme.text }}>Out</SelectItem>
+                <SelectItem value="11" style={{ color: theme.text }}>Nov</SelectItem>
+                <SelectItem value="12" style={{ color: theme.text }}>Dez</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -178,20 +178,20 @@ export default function FiltroDataOcorrencias({
             <Select
               value={anoSelecionado}
               onValueChange={(ano) => {
-                console.log('📅 Ano selecionado (raw):', ano);
+                console.log('📅 Ano selecionado:', ano);
                 setAnoSelecionado(ano);
-                const mes = mesSelecionado || new Date().getMonth().toString();
+                const mes = mesSelecionado || (new Date().getMonth() + 1).toString(); // 1-12 ao invés de 0-11
                 const mesInt = parseInt(mes);
                 console.log('📅 Calculando datas para:', { mesInt, ano });
-                const primeiro = new Date(parseInt(ano), mesInt, 1);
-                const ultimo = new Date(parseInt(ano), mesInt + 1, 0);
+                const primeiro = new Date(parseInt(ano), mesInt - 1, 1); // mesInt-1 porque Date usa 0-11
+                const ultimo = new Date(parseInt(ano), mesInt, 0); // último dia do mês
                 console.log('📅 Objetos Date criados:', { 
                   primeiro: primeiro.toISOString(), 
                   ultimo: ultimo.toISOString() 
                 });
                 const inicio = primeiro.toISOString().split('T')[0];
                 const fim = ultimo.toISOString().split('T')[0];
-                console.log('📅 Datas calculadas finais:', { inicio, fim, mes, ano });
+                console.log('📅 Datas finais aplicadas:', { inicio, fim, mes, ano });
                 onDataInicioChange(inicio);
                 onDataFimChange(fim);
               }}
