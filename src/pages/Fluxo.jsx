@@ -177,8 +177,33 @@ export default function Fluxo() {
       console.log('✅ Ordens encontradas no período:', ordensPeriodo.length);
       console.log('📊 IDs das primeiras 5 ordens:', ordensPeriodo.slice(0, 5).map(o => o.numero_carga || o.id.slice(-6)));
 
-      if (ordensPeriodo.length === 0) {
-        toast.warning('Nenhuma ordem encontrada no período');
+      // Filtrar para excluir coletas, recebimentos e entregas
+      const ordensPeriodoFiltradas = ordensPeriodo.filter(ordem => {
+        // Excluir por numero_coleta (qualquer ordem com COL- é coleta)
+        if (ordem.numero_coleta && ordem.numero_coleta.startsWith("COL-")) {
+          return false;
+        }
+        
+        // Excluir por tipo_registro
+        const tiposExcluidos = ["coleta_solicitada", "coleta_aprovada", "coleta_reprovada", "recebimento", "ordem_entrega"];
+        if (tiposExcluidos.includes(ordem.tipo_registro)) {
+          return false;
+        }
+        
+        // Excluir por tipo_ordem
+        const tiposOrdemExcluidos = ["coleta", "recebimento", "entrega"];
+        if (tiposOrdemExcluidos.includes(ordem.tipo_ordem)) {
+          return false;
+        }
+        
+        return true;
+      });
+
+      console.log('🚚 Ordens de carregamento (após excluir coletas/recebimentos):', ordensPeriodoFiltradas.length);
+      console.log('❌ Ordens excluídas (coletas/recebimentos/entregas):', ordensPeriodo.length - ordensPeriodoFiltradas.length);
+
+      if (ordensPeriodoFiltradas.length === 0) {
+        toast.warning('Nenhuma ordem de carregamento encontrada no período');
         setProcessandoNovembro(false);
         setProgressoTotal(0);
         return;
@@ -186,8 +211,8 @@ export default function Fluxo() {
 
       const dataAtual = new Date().toISOString();
       
-      // IDs das ordens do período
-      const ordensIds = new Set(ordensPeriodo.map(o => o.id));
+      // IDs das ordens do período (apenas carregamentos)
+      const ordensIds = new Set(ordensPeriodoFiltradas.map(o => o.id));
 
       // Estatísticas detalhadas
       const todasEtapasDasOrdens = todasEtapasOrdem.filter(e => ordensIds.has(e.ordem_id));
