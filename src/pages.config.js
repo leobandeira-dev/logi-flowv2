@@ -12,6 +12,7 @@ import Configuracoes from './pages/Configuracoes';
 import Dashboard from './pages/Dashboard';
 import DashboardTV from './pages/DashboardTV';
 import EtiquetasMae from './pages/EtiquetasMae';
+import Fluxo from './pages/Fluxo';
 import FluxoTV from './pages/FluxoTV';
 import Gamificacao from './pages/Gamificacao';
 import GestaoDeCTe from './pages/GestaoDeCTe';
@@ -38,7 +39,6 @@ import TrackingTV from './pages/TrackingTV';
 import Unitizacao from './pages/Unitizacao';
 import Usuarios from './pages/Usuarios';
 import Veiculos from './pages/Veiculos';
-import Fluxo from './pages/Fluxo';
 import __Layout from './Layout.jsx';
 
 
@@ -57,6 +57,7 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "DashboardTV": DashboardTV,
     "EtiquetasMae": EtiquetasMae,
+    "Fluxo": Fluxo,
     "FluxoTV": FluxoTV,
     "Gamificacao": Gamificacao,
     "GestaoDeCTe": GestaoDeCTe,
@@ -83,7 +84,6 @@ export const PAGES = {
     "Unitizacao": Unitizacao,
     "Usuarios": Usuarios,
     "Veiculos": Veiculos,
-    "Fluxo": Fluxo,
 }
 
 export const pagesConfig = {

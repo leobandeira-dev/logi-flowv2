@@ -99,12 +99,9 @@ export default function Fluxo() {
   // Estado para iniciar fluxo de ofertas
   const [iniciandoFluxo, setIniciandoFluxo] = useState(false);
 
-  // Estado para processar etapas de novembro (ADMIN)
-  const [processandoNovembro, setProcessandoNovembro] = useState(false);
+  // Estado para processar etapas (ADMIN)
+  const [processandoEtapas, setProcessandoEtapas] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showModalConcluir, setShowModalConcluir] = useState(false);
-  const [dataInicioConcluir, setDataInicioConcluir] = useState("");
-  const [dataFimConcluir, setDataFimConcluir] = useState("");
   const [progressoTotal, setProgressoTotal] = useState(0);
   const [progressoAtual, setProgressoAtual] = useState(0);
 
@@ -134,64 +131,39 @@ export default function Fluxo() {
     }
   };
 
-  const processarEtapasPorPeriodo = async () => {
-    if (!dataInicioConcluir || !dataFimConcluir) {
-      toast.error('Informe o período de datas');
+  const concluirEtapasFiltradas = async () => {
+    if (filteredOrdens.length === 0) {
+      toast.error('Nenhuma ordem filtrada para processar');
       return;
     }
 
-    setProcessandoNovembro(true);
+    const confirmar = window.confirm(
+      `Deseja concluir todas as etapas pendentes de ${filteredOrdens.length} ordem(ns) filtrada(s)?\n\nEsta ação não pode ser desfeita.`
+    );
+
+    if (!confirmar) return;
+
+    setProcessandoEtapas(true);
     setProgressoAtual(0);
     setProgressoTotal(1);
 
     try {
       console.log('🔍 INICIANDO PROCESSAMENTO');
-      console.log('📅 Período selecionado:', dataInicioConcluir, 'até', dataFimConcluir);
+      console.log('📦 Ordens filtradas:', filteredOrdens.length);
 
-      const [anoInicio, mesInicio, diaInicio] = dataInicioConcluir.split('-').map(n => parseInt(n));
-      const [anoFim, mesFim, diaFim] = dataFimConcluir.split('-').map(n => parseInt(n));
-
-      const inicio = new Date(anoInicio, mesInicio - 1, diaInicio, 0, 0, 0);
-      const fim = new Date(anoFim, mesFim - 1, diaFim, 23, 59, 59);
-
-      console.log('🎯 Período:', inicio.toISOString(), 'até', fim.toISOString());
-
-      // 1. Buscar TODAS as ordens criadas no período (FILTRO PELA DATA DA ORDEM)
-      const todasOrdens = await base44.entities.OrdemDeCarregamento.list("-created_date", 10000);
-      console.log('📦 Total de ordens carregadas:', todasOrdens.length);
-
-      const ordensNoPeriodo = todasOrdens.filter(ordem => {
-        if (!ordem.created_date) return false;
-        const dataOrdem = new Date(ordem.created_date);
-        return dataOrdem >= inicio && dataOrdem <= fim;
-      });
-
-      console.log('📦 Ordens criadas no período (baseado em ordem.created_date):', ordensNoPeriodo.length);
-      console.log('📦 Exemplos de ordens do período:');
-      ordensNoPeriodo.slice(0, 5).forEach((o, idx) => {
-        console.log(`  ${idx + 1}. ${o.numero_carga} - Criada em: ${format(new Date(o.created_date), 'dd/MM/yyyy HH:mm')}`);
-      });
-
-      if (ordensNoPeriodo.length === 0) {
-        toast.info('Nenhuma ordem encontrada no período');
-        setProcessandoNovembro(false);
-        setProgressoTotal(0);
-        return;
-      }
-
-      // 2. Buscar TODAS as etapas dessas ordens
-      const idsOrdens = ordensNoPeriodo.map(o => o.id);
+      // 1. Buscar todas as etapas das ordens filtradas
+      const idsOrdens = filteredOrdens.map(o => o.id);
       const todasEtapasOrdem = await base44.entities.OrdemEtapa.list(null, 10000);
       console.log('📋 Total OrdemEtapa carregadas:', todasEtapasOrdem.length);
 
-      // 3. Filtrar apenas etapas das ordens do período que NÃO estão concluídas
+      // 2. Filtrar apenas etapas das ordens filtradas que NÃO estão concluídas
       const etapasNaoConcluidas = todasEtapasOrdem.filter(etapa => {
-        const ordemNoPeriodo = idsOrdens.includes(etapa.ordem_id);
+        const ordemFiltrada = idsOrdens.includes(etapa.ordem_id);
         const statusPendente = etapa.status !== "concluida" && etapa.status !== "cancelada";
-        return ordemNoPeriodo && statusPendente;
+        return ordemFiltrada && statusPendente;
       });
 
-      console.log('⏳ Etapas não concluídas das ordens do período:', etapasNaoConcluidas.length);
+      console.log('⏳ Etapas não concluídas das ordens filtradas:', etapasNaoConcluidas.length);
 
       if (etapasNaoConcluidas.length > 0) {
         const statusFiltradas = etapasNaoConcluidas.reduce((acc, e) => {
@@ -199,17 +171,11 @@ export default function Fluxo() {
           return acc;
         }, {});
         console.log('📊 Status das etapas a serem concluídas:', statusFiltradas);
-
-        console.log('📝 Primeiras 10 etapas encontradas:');
-        etapasNaoConcluidas.slice(0, 10).forEach((e, idx) => {
-          const ordem = ordensNoPeriodo.find(o => o.id === e.ordem_id);
-          console.log(`  ${idx + 1}. Ordem: ${ordem?.numero_carga || e.ordem_id.slice(-6)}, Status: ${e.status}`);
-        });
       }
 
       if (etapasNaoConcluidas.length === 0) {
-        toast.info('Nenhuma etapa pendente encontrada nas ordens do período');
-        setProcessandoNovembro(false);
+        toast.info('Nenhuma etapa pendente encontrada nas ordens filtradas');
+        setProcessandoEtapas(false);
         setProgressoTotal(0);
         return;
       }
@@ -218,7 +184,7 @@ export default function Fluxo() {
       setProgressoTotal(etapasNaoConcluidas.length);
       console.log('🚀 Iniciando conclusão de', etapasNaoConcluidas.length, 'etapas...');
 
-      // 4. Concluir todas as etapas
+      // 3. Concluir todas as etapas
       for (let i = 0; i < etapasNaoConcluidas.length; i++) {
         const etapa = etapasNaoConcluidas[i];
         await base44.entities.OrdemEtapa.update(etapa.id, {
@@ -235,9 +201,6 @@ export default function Fluxo() {
 
       console.log('✅ PROCESSAMENTO COMPLETO!');
       toast.success(`✅ ${etapasNaoConcluidas.length} etapas concluídas com sucesso!`);
-      setShowModalConcluir(false);
-      setDataInicioConcluir("");
-      setDataFimConcluir("");
 
       setTimeout(() => {
         window.location.reload();
@@ -246,7 +209,7 @@ export default function Fluxo() {
       console.error('❌ ERRO:', error);
       toast.error(`Erro: ${error.message}`);
     } finally {
-      setProcessandoNovembro(false);
+      setProcessandoEtapas(false);
       setProgressoAtual(0);
       setProgressoTotal(0);
     }
@@ -1082,19 +1045,20 @@ export default function Fluxo() {
               </Link>
               {isAdmin && (
                 <Button
-                  onClick={() => setShowModalConcluir(true)}
-                  disabled={processandoNovembro}
+                  onClick={concluirEtapasFiltradas}
+                  disabled={processandoEtapas || filteredOrdens.length === 0}
                   className="bg-orange-600 hover:bg-orange-700 text-white"
+                  title={`Concluir todas etapas pendentes de ${filteredOrdens.length} ordem(ns) filtrada(s)`}
                 >
-                  {processandoNovembro ? (
+                  {processandoEtapas ? (
                     <>
                       <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Processando...
+                      {progressoTotal > 1 ? `${progressoAtual}/${progressoTotal}` : 'Processando...'}
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Concluir Etapas
+                      Concluir Etapas ({filteredOrdens.length})
                     </>
                   )}
                 </Button>
@@ -1954,103 +1918,7 @@ export default function Fluxo() {
         />
       )}
 
-      {/* Modal para Concluir Etapas por Período */}
-      <Dialog open={showModalConcluir} onOpenChange={(open) => {
-        if (!processandoNovembro) {
-          setShowModalConcluir(open);
-        }
-      }}>
-        <DialogContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-          <DialogHeader>
-            <DialogTitle style={{ color: theme.text }}>Concluir Etapas Pendentes</DialogTitle>
-            <DialogDescription style={{ color: theme.textMuted }}>
-              Selecione o período para concluir todas as etapas não finalizadas que foram criadas nesse intervalo.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div>
-              <Label className="mb-2 block" style={{ color: theme.text }}>Data Inicial</Label>
-              <Input
-                type="date"
-                value={dataInicioConcluir}
-                onChange={(e) => setDataInicioConcluir(e.target.value)}
-                disabled={processandoNovembro}
-                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-              />
-            </div>
-            
-            <div>
-              <Label className="mb-2 block" style={{ color: theme.text }}>Data Final</Label>
-              <Input
-                type="date"
-                value={dataFimConcluir}
-                onChange={(e) => setDataFimConcluir(e.target.value)}
-                disabled={processandoNovembro}
-                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-              />
-            </div>
 
-            {processandoNovembro && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm" style={{ color: theme.text }}>
-                  <span>{progressoTotal === 1 ? 'Carregando dados...' : 'Processando etapas...'}</span>
-                  {progressoTotal > 1 && (
-                    <span className="font-bold">{progressoAtual} / {progressoTotal}</span>
-                  )}
-                </div>
-                <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#334155' : '#e5e7eb' }}>
-                  <div
-                    className="h-full bg-orange-600 transition-all duration-300"
-                    style={{ width: progressoTotal === 1 ? '100%' : `${(progressoAtual / progressoTotal) * 100}%` }}
-                  />
-                </div>
-                {progressoTotal > 1 && (
-                  <p className="text-xs text-center" style={{ color: theme.textMuted }}>
-                    {Math.round((progressoAtual / progressoTotal) * 100)}% concluído
-                  </p>
-                )}
-              </div>
-            )}
-
-            {!processandoNovembro && (
-              <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
-                <p className="text-xs text-orange-800 dark:text-orange-400 font-medium">
-                  ⚠️ Esta ação marcará como <strong>concluídas</strong> todas as etapas pendentes, em andamento ou bloqueadas das ordens criadas no período selecionado.
-                </p>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowModalConcluir(false)}
-              disabled={processandoNovembro}
-              style={{ borderColor: theme.inputBorder, color: theme.text }}
-            >
-              {processandoNovembro ? 'Processando...' : 'Cancelar'}
-            </Button>
-            <Button
-              onClick={processarEtapasPorPeriodo}
-              disabled={!dataInicioConcluir || !dataFimConcluir || processandoNovembro}
-              className="bg-orange-600 hover:bg-orange-700 text-white"
-            >
-              {processandoNovembro ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Processando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Concluir Etapas
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
