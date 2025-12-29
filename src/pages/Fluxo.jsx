@@ -155,8 +155,8 @@ export default function Fluxo() {
         base44.entities.Etapa.list("ordem")
       ]);
 
-      console.log('📦 Total ordens:', todasOrdens.length);
-      console.log('📋 Total OrdemEtapa:', todasEtapasOrdem.length);
+      console.log('📦 Total ordens sistema:', todasOrdens.length);
+      console.log('📋 Total OrdemEtapa sistema:', todasEtapasOrdem.length);
       console.log('⚙️ Total Etapas config:', todasEtapasConfig.length);
 
       const [anoInicio, mesInicio, diaInicio] = dataInicioConcluir.split('-').map(n => parseInt(n));
@@ -165,7 +165,7 @@ export default function Fluxo() {
       const inicio = new Date(anoInicio, mesInicio - 1, diaInicio, 0, 0, 0);
       const fim = new Date(anoFim, mesFim - 1, diaFim, 23, 59, 59);
       
-      console.log('🎯 Período:', inicio.toISOString(), 'até', fim.toISOString());
+      console.log('🎯 Período filtro:', inicio.toISOString(), 'até', fim.toISOString());
 
       // 1. Buscar ORDENS criadas no período
       const ordensPeriodo = todasOrdens.filter(ordem => {
@@ -174,7 +174,8 @@ export default function Fluxo() {
         return dataOrdem >= inicio && dataOrdem <= fim;
       });
 
-      console.log('📦 Ordens no período:', ordensPeriodo.length);
+      console.log('✅ Ordens encontradas no período:', ordensPeriodo.length);
+      console.log('📊 IDs das primeiras 5 ordens:', ordensPeriodo.slice(0, 5).map(o => o.numero_carga || o.id.slice(-6)));
 
       if (ordensPeriodo.length === 0) {
         toast.warning('Nenhuma ordem encontrada no período');
