@@ -148,10 +148,6 @@ export default function Fluxo() {
       console.log('🔍 INICIANDO PROCESSAMENTO');
       console.log('📅 Período selecionado:', dataInicioConcluir, 'até', dataFimConcluir);
 
-      // Carregar TODAS as etapas sem limite
-      const todasEtapasOrdem = await base44.entities.OrdemEtapa.list(null, 10000);
-      console.log('📋 Total OrdemEtapa carregadas:', todasEtapasOrdem.length);
-
       const [anoInicio, mesInicio, diaInicio] = dataInicioConcluir.split('-').map(n => parseInt(n));
       const [anoFim, mesFim, diaFim] = dataFimConcluir.split('-').map(n => parseInt(n));
 
@@ -160,44 +156,55 @@ export default function Fluxo() {
 
       console.log('🎯 Período:', inicio.toISOString(), 'até', fim.toISOString());
 
-      // Log de todas as etapas para debug
-      const todasStatus = todasEtapasOrdem.reduce((acc, e) => {
-        acc[e.status] = (acc[e.status] || 0) + 1;
-        return acc;
-      }, {});
-      console.log('📊 Todas etapas por status:', todasStatus);
+      // 1. Buscar TODAS as ordens criadas no período
+      const todasOrdens = await base44.entities.OrdemDeCarregamento.list("-created_date", 10000);
+      console.log('📦 Total de ordens carregadas:', todasOrdens.length);
 
-      // Filtrar etapas não concluídas criadas no período
-      const etapasNaoConcluidas = todasEtapasOrdem.filter(etapa => {
-        if (!etapa.created_date) {
-          console.log('⚠️ Etapa sem created_date:', etapa.id.slice(-6));
-          return false;
-        }
-
-        const dataEtapa = new Date(etapa.created_date);
-        const dentroPerido = dataEtapa >= inicio && dataEtapa <= fim;
-        const statusPendente = etapa.status !== "concluida" && etapa.status !== "cancelada";
-
-        return dentroPerido && statusPendente;
+      const ordensNoPeriodo = todasOrdens.filter(ordem => {
+        if (!ordem.created_date) return false;
+        const dataOrdem = new Date(ordem.created_date);
+        return dataOrdem >= inicio && dataOrdem <= fim;
       });
 
-      console.log('⏳ Etapas não concluídas do período:', etapasNaoConcluidas.length);
+      console.log('📦 Ordens criadas no período:', ordensNoPeriodo.length);
+
+      if (ordensNoPeriodo.length === 0) {
+        toast.info('Nenhuma ordem encontrada no período');
+        setProcessandoNovembro(false);
+        setProgressoTotal(0);
+        return;
+      }
+
+      // 2. Buscar TODAS as etapas dessas ordens
+      const idsOrdens = ordensNoPeriodo.map(o => o.id);
+      const todasEtapasOrdem = await base44.entities.OrdemEtapa.list(null, 10000);
+      console.log('📋 Total OrdemEtapa carregadas:', todasEtapasOrdem.length);
+
+      // 3. Filtrar apenas etapas das ordens do período que NÃO estão concluídas
+      const etapasNaoConcluidas = todasEtapasOrdem.filter(etapa => {
+        const ordemNoPeriodo = idsOrdens.includes(etapa.ordem_id);
+        const statusPendente = etapa.status !== "concluida" && etapa.status !== "cancelada";
+        return ordemNoPeriodo && statusPendente;
+      });
+
+      console.log('⏳ Etapas não concluídas das ordens do período:', etapasNaoConcluidas.length);
 
       if (etapasNaoConcluidas.length > 0) {
         const statusFiltradas = etapasNaoConcluidas.reduce((acc, e) => {
           acc[e.status] = (acc[e.status] || 0) + 1;
           return acc;
         }, {});
-        console.log('📊 Status das etapas filtradas:', statusFiltradas);
+        console.log('📊 Status das etapas a serem concluídas:', statusFiltradas);
 
         console.log('📝 Primeiras 10 etapas encontradas:');
         etapasNaoConcluidas.slice(0, 10).forEach((e, idx) => {
-          console.log(`  ${idx + 1}. ID: ${e.id.slice(-6)}, Status: ${e.status}, Created: ${format(new Date(e.created_date), 'dd/MM/yyyy HH:mm')}`);
+          const ordem = ordensNoPeriodo.find(o => o.id === e.ordem_id);
+          console.log(`  ${idx + 1}. Ordem: ${ordem?.numero_carga || e.ordem_id.slice(-6)}, Status: ${e.status}`);
         });
       }
 
       if (etapasNaoConcluidas.length === 0) {
-        toast.info('Nenhuma etapa pendente encontrada no período');
+        toast.info('Nenhuma etapa pendente encontrada nas ordens do período');
         setProcessandoNovembro(false);
         setProgressoTotal(0);
         return;
@@ -207,7 +214,7 @@ export default function Fluxo() {
       setProgressoTotal(etapasNaoConcluidas.length);
       console.log('🚀 Iniciando conclusão de', etapasNaoConcluidas.length, 'etapas...');
 
-      // Concluir todas as etapas
+      // 4. Concluir todas as etapas
       for (let i = 0; i < etapasNaoConcluidas.length; i++) {
         const etapa = etapasNaoConcluidas[i];
         await base44.entities.OrdemEtapa.update(etapa.id, {
