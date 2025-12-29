@@ -7,7 +7,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -17,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { X } from "lucide-react";
+import FiltroDataOcorrencias from "../filtros/FiltroDataOcorrencias";
 
 export default function FilterModal({ 
   open, 
@@ -26,6 +26,19 @@ export default function FilterModal({
   usuarios,
   tiposOcorrencia
 }) {
+  const [periodo, setPeriodo] = React.useState("personalizado");
+  const [isDark, setIsDark] = React.useState(document.documentElement.classList.contains('dark'));
+
+  React.useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    };
+    checkDarkMode();
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
   const handleClearFilters = () => {
     setFilters({
       status: "",
@@ -141,25 +154,16 @@ export default function FilterModal({
           </div>
 
           <div className="col-span-2">
-            <Label>Período</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Input
-                  type="date"
-                  value={filters.dataInicio}
-                  onChange={(e) => setFilters({ ...filters, dataInicio: e.target.value })}
-                  placeholder="Data início"
-                />
-              </div>
-              <div>
-                <Input
-                  type="date"
-                  value={filters.dataFim}
-                  onChange={(e) => setFilters({ ...filters, dataFim: e.target.value })}
-                  placeholder="Data fim"
-                />
-              </div>
-            </div>
+            <Label className="mb-2 block">Filtro de Data</Label>
+            <FiltroDataOcorrencias
+              periodoSelecionado={periodo}
+              onPeriodoChange={setPeriodo}
+              dataInicio={filters.dataInicio || ""}
+              dataFim={filters.dataFim || ""}
+              onDataInicioChange={(valor) => setFilters({ ...filters, dataInicio: valor })}
+              onDataFimChange={(valor) => setFilters({ ...filters, dataFim: valor })}
+              isDark={isDark}
+            />
           </div>
         </div>
 
