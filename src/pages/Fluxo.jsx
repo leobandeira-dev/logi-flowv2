@@ -184,47 +184,18 @@ export default function Fluxo() {
       }
 
       const dataAtual = new Date().toISOString();
-      const etapasAtivas = todasEtapasConfig.filter(e => e.ativo);
       
-      // Preparar todas as operações
-      const operacoes = [];
+      // IDs das ordens do período
+      const ordensIds = new Set(ordensPeriodo.map(o => o.id));
 
-      console.log('📋 Analisando ordens e etapas...');
+      // Buscar APENAS etapas existentes e não concluídas
+      const etapasNaoConcluidas = todasEtapasOrdem.filter(etapa => 
+        ordensIds.has(etapa.ordem_id) && 
+        etapa.status !== "concluida" && 
+        etapa.status !== "cancelada"
+      );
 
-      for (const ordem of ordensPeriodo) {
-        for (const etapaConfig of etapasAtivas) {
-          const ordemEtapaExistente = todasEtapasOrdem.find(
-            oe => oe.ordem_id === ordem.id && oe.etapa_id === etapaConfig.id
-          );
-
-          if (!ordemEtapaExistente) {
-            // Criar etapa concluída
-            operacoes.push({
-              tipo: 'criar',
-              dados: {
-                ordem_id: ordem.id,
-                etapa_id: etapaConfig.id,
-                status: "concluida",
-                data_inicio: dataAtual,
-                data_conclusao: dataAtual
-              }
-            });
-          } else if (ordemEtapaExistente.status !== "concluida" && ordemEtapaExistente.status !== "cancelada") {
-            // Atualizar etapa existente
-            operacoes.push({
-              tipo: 'atualizar',
-              id: ordemEtapaExistente.id,
-              dados: {
-                status: "concluida",
-                data_conclusao: dataAtual,
-                data_inicio: ordemEtapaExistente.data_inicio || dataAtual
-              }
-            });
-          }
-        }
-      }
-
-      console.log(`🎯 ${operacoes.length} operações a processar`);
+      console.log(`📋 Etapas existentes não concluídas: ${etapasNaoConcluidas.length}`);
 
       if (operacoes.length === 0) {
         toast.info('Nenhuma etapa para processar');
