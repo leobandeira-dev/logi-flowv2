@@ -152,18 +152,25 @@ export default function Fluxo() {
     try {
       setProcessandoNovembro(true);
       setProgressoAtual(0);
-      setProgressoTotal(1); // Mostrar barra durante carregamento
+      setProgressoTotal(1);
+
+      console.log('🔍 Buscando ordens entre:', format(inicio, 'dd/MM/yyyy'), 'e', format(fim, 'dd/MM/yyyy'));
 
       const [todasOrdens, todasEtapas] = await Promise.all([
         base44.entities.OrdemDeCarregamento.list(),
         base44.entities.OrdemEtapa.list()
       ]);
 
+      console.log('📦 Total de ordens:', todasOrdens.length);
+      console.log('📋 Total de etapas:', todasEtapas.length);
+
       const ordensPeriodo = todasOrdens.filter(ordem => {
         if (!ordem.created_date) return false;
         const data = new Date(ordem.created_date);
         return data >= inicio && data <= fim;
       });
+
+      console.log('✅ Ordens no período:', ordensPeriodo.length);
 
       const ordensIds = new Set(ordensPeriodo.map(o => o.id));
       const etapasParaConcluir = todasEtapas.filter(oe => 
@@ -172,9 +179,12 @@ export default function Fluxo() {
         oe.status !== "cancelada"
       );
 
+      console.log('⏳ Etapas pendentes:', etapasParaConcluir.length);
+
       if (etapasParaConcluir.length === 0) {
         toast.info('Nenhuma etapa pendente encontrada neste período');
         setProcessandoNovembro(false);
+        setProgressoTotal(0);
         return;
       }
 
@@ -186,7 +196,6 @@ export default function Fluxo() {
         return;
       }
 
-      // Iniciar processamento real
       setProgressoTotal(etapasParaConcluir.length);
       setProgressoAtual(0);
 
