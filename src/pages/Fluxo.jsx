@@ -726,8 +726,8 @@ export default function Fluxo() {
       if (!tiposFiltrados.includes(tipoNormalizado)) return false;
     }
 
-    if (filters.dataInicio && filters.dataInicio !== "" && ordem.data_solicitacao) {
-      const dataOrdem = new Date(ordem.data_solicitacao);
+    if (filters.dataInicio && filters.dataInicio !== "" && ordem.created_date) {
+      const dataOrdem = new Date(ordem.created_date);
       const dataInicio = new Date(filters.dataInicio);
       console.log('🔍 Filtrando por data início:', { 
         ordem: ordem.numero_carga, 
@@ -738,8 +738,8 @@ export default function Fluxo() {
       if (dataOrdem < dataInicio) return false;
     }
 
-    if (filters.dataFim && filters.dataFim !== "" && ordem.data_solicitacao) {
-      const dataOrdem = new Date(ordem.data_solicitacao);
+    if (filters.dataFim && filters.dataFim !== "" && ordem.created_date) {
+      const dataOrdem = new Date(ordem.created_date);
       const dataFim = new Date(filters.dataFim);
       dataFim.setHours(23, 59, 59, 999);
       console.log('🔍 Filtrando por data fim:', { 
