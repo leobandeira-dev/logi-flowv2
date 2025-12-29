@@ -15,9 +15,8 @@ Deno.serve(async (req) => {
 
     console.log(`📅 Buscando ordens de ${mes}/${ano}`);
 
-    // Buscar todas as ordens - usando filter com limite alto
-    const todasOrdensRaw = await base44.asServiceRole.entities.OrdemDeCarregamento.filter({}, null, 10000);
-    const todasOrdens = Array.isArray(todasOrdensRaw) ? todasOrdensRaw : [];
+    // Buscar todas as ordens
+    const todasOrdens = await base44.asServiceRole.entities.OrdemDeCarregamento.list();
     
     console.log(`📊 Total de ordens carregadas: ${todasOrdens.length}`);
     
@@ -33,8 +32,7 @@ Deno.serve(async (req) => {
     console.log(`📅 Encontradas ${ordensPeriodo.length} ordens de ${mes}/${ano}`);
 
     // Buscar todas as OrdemEtapa
-    const todasOrdemEtapasRaw = await base44.asServiceRole.entities.OrdemEtapa.filter({}, null, 10000);
-    const todasOrdemEtapas = Array.isArray(todasOrdemEtapasRaw) ? todasOrdemEtapasRaw : [];
+    const todasOrdemEtapas = await base44.asServiceRole.entities.OrdemEtapa.list();
     
     const ordensIds = ordensPeriodo.map(o => o.id);
     const etapasParaConcluir = todasOrdemEtapas.filter(oe => 
