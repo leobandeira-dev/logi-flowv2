@@ -680,6 +680,13 @@ export default function Fluxo() {
   });
 
   const filteredOrdens = filteredOrdensByAtribuicao.filter(ordem => {
+    console.log('🔍 FLUXO - Analisando ordem:', {
+      numero: ordem.numero_carga,
+      created_date: ordem.created_date?.split('T')[0],
+      filtroInicio: filters.dataInicio,
+      filtroFim: filters.dataFim
+    });
+
     // REGRA: Excluir coletas, recebimentos e entregas - apenas ordens de carregamento
     
     // Excluir por numero_coleta (qualquer ordem com COL- é coleta)
