@@ -104,6 +104,7 @@ export default function Fluxo() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [progressoTotal, setProgressoTotal] = useState(0);
   const [progressoAtual, setProgressoAtual] = useState(0);
+  const [etapasPendentesCount, setEtapasPendentesCount] = useState(0);
 
   // Listener para detectar mudanças no dark mode
   useEffect(() => {
@@ -132,13 +133,13 @@ export default function Fluxo() {
   };
 
   const concluirEtapasFiltradas = async () => {
-    if (filteredOrdens.length === 0) {
-      toast.error('Nenhuma ordem filtrada para processar');
+    if (etapasPendentesCount === 0) {
+      toast.error('Nenhuma etapa pendente para processar');
       return;
     }
 
     const confirmar = window.confirm(
-      `Deseja concluir todas as etapas pendentes de ${filteredOrdens.length} ordem(ns) filtrada(s)?\n\nEsta ação não pode ser desfeita.`
+      `Deseja concluir ${etapasPendentesCount} etapa(s) pendente(s) de ${filteredOrdens.length} ordem(ns) filtrada(s)?\n\nEsta ação não pode ser desfeita.`
     );
 
     if (!confirmar) return;
@@ -148,6 +149,7 @@ export default function Fluxo() {
     setProgressoTotal(1);
 
     try {
+      toast.loading('Carregando dados...');
       console.log('🔍 INICIANDO PROCESSAMENTO');
       console.log('📦 Ordens filtradas:', filteredOrdens.length);
 
@@ -164,6 +166,7 @@ export default function Fluxo() {
       });
 
       console.log('⏳ Etapas não concluídas das ordens filtradas:', etapasNaoConcluidas.length);
+      toast.dismiss();
 
       if (etapasNaoConcluidas.length > 0) {
         const statusFiltradas = etapasNaoConcluidas.reduce((acc, e) => {
@@ -183,6 +186,7 @@ export default function Fluxo() {
       const dataAtual = new Date().toISOString();
       setProgressoTotal(etapasNaoConcluidas.length);
       console.log('🚀 Iniciando conclusão de', etapasNaoConcluidas.length, 'etapas...');
+      toast.success(`Processando ${etapasNaoConcluidas.length} etapas...`);
 
       // 3. Concluir todas as etapas
       for (let i = 0; i < etapasNaoConcluidas.length; i++) {
@@ -204,7 +208,7 @@ export default function Fluxo() {
 
       setTimeout(() => {
         window.location.reload();
-      }, 1000);
+      }, 1500);
     } catch (error) {
       console.error('❌ ERRO:', error);
       toast.error(`Erro: ${error.message}`);
@@ -796,6 +800,21 @@ export default function Fluxo() {
     return true;
   });
 
+  // Calcular etapas pendentes das ordens filtradas
+  React.useEffect(() => {
+    if (filteredOrdens.length > 0 && ordensetapas.length > 0) {
+      const idsOrdensFiltradas = filteredOrdens.map(o => o.id);
+      const etapasPendentes = ordensetapas.filter(etapa => {
+        const ordemFiltrada = idsOrdensFiltradas.includes(etapa.ordem_id);
+        const statusPendente = etapa.status !== "concluida" && etapa.status !== "cancelada";
+        return ordemFiltrada && statusPendente;
+      });
+      setEtapasPendentesCount(etapasPendentes.length);
+    } else {
+      setEtapasPendentesCount(0);
+    }
+  }, [filteredOrdens, ordensetapas]);
+
   const filteredOrdens = ordensFiltradaPorPeriodo.filter(ordem => {
     // REGRA: Excluir coletas, recebimentos e entregas - apenas ordens de carregamento
     
@@ -1044,24 +1063,39 @@ export default function Fluxo() {
                 </Button>
               </Link>
               {isAdmin && (
-                <Button
-                  onClick={concluirEtapasFiltradas}
-                  disabled={processandoEtapas || filteredOrdens.length === 0}
-                  className="bg-orange-600 hover:bg-orange-700 text-white"
-                  title={`Concluir todas etapas pendentes de ${filteredOrdens.length} ordem(ns) filtrada(s)`}
-                >
-                  {processandoEtapas ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      {progressoTotal > 1 ? `${progressoAtual}/${progressoTotal}` : 'Processando...'}
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Concluir Etapas ({filteredOrdens.length})
-                    </>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={concluirEtapasFiltradas}
+                    disabled={processandoEtapas || etapasPendentesCount === 0}
+                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                    title={`Concluir ${etapasPendentesCount} etapa(s) pendente(s) de ${filteredOrdens.length} ordem(ns) filtrada(s)`}
+                  >
+                    {processandoEtapas ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        {progressoTotal > 1 ? `${progressoAtual}/${progressoTotal}` : 'Carregando...'}
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Concluir {etapasPendentesCount} Etapas
+                      </>
+                    )}
+                  </Button>
+                  {processandoEtapas && progressoTotal > 1 && (
+                    <div className="w-full space-y-1">
+                      <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#334155' : '#e5e7eb' }}>
+                        <div
+                          className="h-full bg-orange-600 transition-all duration-300"
+                          style={{ width: `${(progressoAtual / progressoTotal) * 100}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-center font-medium" style={{ color: theme.text }}>
+                        {Math.round((progressoAtual / progressoTotal) * 100)}% concluído
+                      </p>
+                    </div>
                   )}
-                </Button>
+                </div>
               )}
               <div className="relative flex-1 lg:w-64">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
