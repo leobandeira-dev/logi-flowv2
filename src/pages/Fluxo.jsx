@@ -157,13 +157,21 @@ export default function Fluxo() {
       console.log('📦 Total ordens:', todasOrdens.length);
       console.log('📋 Total etapas:', todasEtapas.length);
 
-      // Filtrar ordens do período (apenas comparar data sem hora)
+      // Filtrar ordens do período
+      const [anoInicio, mesInicio, diaInicio] = dataInicioConcluir.split('/').reverse();
+      const [anoFim, mesFim, diaFim] = dataFimConcluir.split('/').reverse();
+      
+      const inicio = new Date(parseInt(anoInicio), parseInt(mesInicio) - 1, parseInt(diaInicio), 0, 0, 0);
+      const fim = new Date(parseInt(anoFim), parseInt(mesFim) - 1, parseInt(diaFim), 23, 59, 59);
+      
+      console.log('📅 Período convertido:', inicio, 'até', fim);
+
       const ordensPeriodo = todasOrdens.filter(ordem => {
         if (!ordem.created_date) return false;
         
-        const dataOrdem = ordem.created_date.split('T')[0]; // Apenas a data YYYY-MM-DD
+        const dataOrdem = new Date(ordem.created_date);
         
-        return dataOrdem >= dataInicioConcluir && dataOrdem <= dataFimConcluir;
+        return dataOrdem >= inicio && dataOrdem <= fim;
       });
 
       console.log('🎯 Ordens no período:', ordensPeriodo.length);
