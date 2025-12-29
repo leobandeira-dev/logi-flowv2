@@ -149,15 +149,16 @@ export default function Fluxo() {
       console.log('🔍 INICIANDO PROCESSAMENTO');
       console.log('📅 Período selecionado:', dataInicioConcluir, 'até', dataFimConcluir);
 
-      const [todasOrdens, todasEtapas] = await Promise.all([
+      const [todasOrdens, todasEtapasOrdem, todasEtapasConfig] = await Promise.all([
         base44.entities.OrdemDeCarregamento.list(),
-        base44.entities.OrdemEtapa.list()
+        base44.entities.OrdemEtapa.list(),
+        base44.entities.Etapa.list("ordem")
       ]);
 
       console.log('📦 Total ordens:', todasOrdens.length);
-      console.log('📋 Total etapas:', todasEtapas.length);
+      console.log('📋 Total OrdemEtapa:', todasEtapasOrdem.length);
+      console.log('⚙️ Total Etapas config:', todasEtapasConfig.length);
 
-      // IMPORTANTE: Filtrar ORDENS criadas no período, depois pegar TODAS as etapas dessas ordens
       const [anoInicio, mesInicio, diaInicio] = dataInicioConcluir.split('-').map(n => parseInt(n));
       const [anoFim, mesFim, diaFim] = dataFimConcluir.split('-').map(n => parseInt(n));
       
@@ -173,7 +174,7 @@ export default function Fluxo() {
         return dataOrdem >= inicio && dataOrdem <= fim;
       });
 
-      console.log('📦 Ordens criadas no período:', ordensPeriodo.length);
+      console.log('📦 Ordens no período:', ordensPeriodo.length);
 
       if (ordensPeriodo.length === 0) {
         toast.warning('Nenhuma ordem encontrada no período');
@@ -182,61 +183,52 @@ export default function Fluxo() {
         return;
       }
 
-      // 2. Pegar IDs das ordens
-      const ordensIds = new Set(ordensPeriodo.map(o => o.id));
-      console.log('📋 IDs das ordens (primeiros 5):', Array.from(ordensIds).slice(0, 5).map(id => id.slice(-6)));
-
-      // 3. Buscar TODAS as etapas dessas ordens (não importa quando a etapa foi criada)
-      const todasEtapasDasOrdens = todasEtapas.filter(etapa => ordensIds.has(etapa.ordem_id));
-      
-      console.log('📊 Total etapas das ordens do período:', todasEtapasDasOrdens.length);
-      console.log('Status de todas as etapas:', todasEtapasDasOrdens.reduce((acc, e) => {
-        acc[e.status] = (acc[e.status] || 0) + 1;
-        return acc;
-      }, {}));
-      
-      // 4. Filtrar apenas as que precisam ser concluídas
-      const etapasParaConcluir = todasEtapasDasOrdens.filter(etapa => 
-        etapa.status === "pendente" || 
-        etapa.status === "em_andamento" || 
-        etapa.status === "bloqueada"
-      );
-
-      console.log('⏳ Etapas a concluir:', etapasParaConcluir.length);
-      if (etapasParaConcluir.length > 0) {
-        console.log('Por status:', etapasParaConcluir.reduce((acc, e) => {
-          acc[e.status] = (acc[e.status] || 0) + 1;
-          return acc;
-        }, {}));
-        console.log('Primeiras 5 etapas:');
-        etapasParaConcluir.slice(0, 5).forEach((e, idx) => {
-          console.log(`  ${idx + 1}. ID: ${e.id.slice(-6)}, Status: ${e.status}, Ordem: ${e.ordem_id.slice(-6)}`);
-        });
-      }
-
-      if (etapasParaConcluir.length === 0) {
-        toast.info('Nenhuma etapa pendente encontrada');
-        setProcessandoNovembro(false);
-        setProgressoTotal(0);
-        return;
-      }
-
-      setProgressoTotal(etapasParaConcluir.length);
       const dataAtual = new Date().toISOString();
+      const etapasAtivas = todasEtapasConfig.filter(e => e.ativo);
+      let totalEtapasProcessadas = 0;
+      let etapasCriadas = 0;
+      let etapasAtualizadas = 0;
 
-      console.log('🚀 Atualizando', etapasParaConcluir.length, 'etapas...');
+      setProgressoTotal(ordensPeriodo.length);
+      console.log('🚀 Processando', ordensPeriodo.length, 'ordens...');
 
-      for (let i = 0; i < etapasParaConcluir.length; i++) {
-        const etapa = etapasParaConcluir[i];
-        await base44.entities.OrdemEtapa.update(etapa.id, {
-          status: "concluida",
-          data_conclusao: dataAtual,
-          data_inicio: etapa.data_inicio || dataAtual
-        });
+      // 2. Para cada ordem, garantir que todas as etapas existam e estejam concluídas
+      for (let i = 0; i < ordensPeriodo.length; i++) {
+        const ordem = ordensPeriodo[i];
+        
+        for (const etapaConfig of etapasAtivas) {
+          // Verificar se já existe
+          const ordemEtapaExistente = todasEtapasOrdem.find(
+            oe => oe.ordem_id === ordem.id && oe.etapa_id === etapaConfig.id
+          );
+
+          if (!ordemEtapaExistente) {
+            // Criar etapa já como concluída
+            await base44.entities.OrdemEtapa.create({
+              ordem_id: ordem.id,
+              etapa_id: etapaConfig.id,
+              status: "concluida",
+              data_inicio: dataAtual,
+              data_conclusao: dataAtual
+            });
+            etapasCriadas++;
+            totalEtapasProcessadas++;
+          } else if (ordemEtapaExistente.status !== "concluida" && ordemEtapaExistente.status !== "cancelada") {
+            // Atualizar para concluída
+            await base44.entities.OrdemEtapa.update(ordemEtapaExistente.id, {
+              status: "concluida",
+              data_conclusao: dataAtual,
+              data_inicio: ordemEtapaExistente.data_inicio || dataAtual
+            });
+            etapasAtualizadas++;
+            totalEtapasProcessadas++;
+          }
+        }
+
         setProgressoAtual(i + 1);
         
-        if ((i + 1) % 10 === 0 || i === etapasParaConcluir.length - 1) {
-          console.log(`✅ ${i + 1}/${etapasParaConcluir.length} concluídas`);
+        if ((i + 1) % 10 === 0 || i === ordensPeriodo.length - 1) {
+          console.log(`⏳ ${i + 1}/${ordensPeriodo.length} ordens processadas`);
         }
       }
 
