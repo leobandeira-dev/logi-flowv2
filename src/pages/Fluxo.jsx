@@ -899,32 +899,19 @@ export default function Fluxo() {
             <FiltroDataOcorrencias
               periodoSelecionado={periodoSelecionado}
               onPeriodoChange={(valor) => {
+                console.log('📅 FLUXO - Período alterado para:', valor);
                 setPeriodoSelecionado(valor);
-                
-                if (valor === "mes_atual") {
-                  const hoje = new Date();
-                  const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-                  const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-                  setFilters({
-                    ...filters,
-                    dataInicio: primeiroDia.toISOString().split('T')[0],
-                    dataFim: ultimoDia.toISOString().split('T')[0]
-                  });
-                } else if (valor === "ano_atual") {
-                  const hoje = new Date();
-                  const primeiroDia = new Date(hoje.getFullYear(), 0, 1);
-                  const ultimoDia = new Date(hoje.getFullYear(), 11, 31);
-                  setFilters({
-                    ...filters,
-                    dataInicio: primeiroDia.toISOString().split('T')[0],
-                    dataFim: ultimoDia.toISOString().split('T')[0]
-                  });
-                }
               }}
               dataInicio={filters.dataInicio}
               dataFim={filters.dataFim}
-              onDataInicioChange={(val) => setFilters({...filters, dataInicio: val})}
-              onDataFimChange={(val) => setFilters({...filters, dataFim: val})}
+              onDataInicioChange={(val) => {
+                console.log('📅 FLUXO - dataInicio alterado:', val);
+                setFilters({...filters, dataInicio: val});
+              }}
+              onDataFimChange={(val) => {
+                console.log('📅 FLUXO - dataFim alterado:', val);
+                setFilters({...filters, dataFim: val});
+              }}
               isDark={isDark}
             />
             <div className="flex items-center gap-2 w-full lg:w-auto">

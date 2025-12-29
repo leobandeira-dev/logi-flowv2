@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
-import FiltroDataPeriodo from "../filtros/FiltroDataPeriodo";
+import FiltroDataOcorrencias from "../filtros/FiltroDataOcorrencias";
 
 export default function FilterModal({ open, onClose, filters, onFiltersChange, motoristas, etapas, operacoes, periodoSelecionado, onPeriodoChange, isDark }) {
   const handleFilterChange = (field, value) => {
@@ -35,7 +35,8 @@ export default function FilterModal({ open, onClose, filters, onFiltersChange, m
 
         <div className="grid grid-cols-2 gap-4 py-4">
           <div className="col-span-2">
-            <FiltroDataPeriodo
+            <Label className="text-sm font-semibold mb-2 block">Período de Filtro</Label>
+            <FiltroDataOcorrencias
               periodoSelecionado={periodoSelecionado}
               onPeriodoChange={onPeriodoChange}
               dataInicio={filters.dataInicio}
