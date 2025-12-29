@@ -173,22 +173,30 @@ export default function Fluxo() {
       });
 
       console.log('🎯 Ordens no período:', ordensPeriodo.length);
-      ordensPeriodo.forEach(o => {
-        console.log('  -', o.numero_carga, 'criada em', o.created_date.split('T')[0]);
-      });
+      if (ordensPeriodo.length > 0) {
+        console.log('Exemplos (primeiras 5):');
+        ordensPeriodo.slice(0, 5).forEach(o => {
+          console.log('  -', o.numero_carga, 'criada em', new Date(o.created_date).toLocaleString());
+        });
+      }
 
       const ordensIds = new Set(ordensPeriodo.map(o => o.id));
-      const etapasParaConcluir = todasEtapas.filter(oe => 
-        ordensIds.has(oe.ordem_id) && 
+      console.log('📋 IDs das ordens:', Array.from(ordensIds).slice(0, 5));
+      
+      // Verificar todas as etapas dessas ordens (independente do status)
+      const todasEtapasDasOrdens = todasEtapas.filter(oe => ordensIds.has(oe.ordem_id));
+      console.log('📊 Total de etapas das ordens no período:', todasEtapasDasOrdens.length);
+      console.log('Status de todas as etapas:', todasEtapasDasOrdens.reduce((acc, e) => {
+        acc[e.status] = (acc[e.status] || 0) + 1;
+        return acc;
+      }, {}));
+      
+      const etapasParaConcluir = todasEtapasDasOrdens.filter(oe => 
         oe.status !== "concluida" && 
         oe.status !== "cancelada"
       );
 
-      console.log('⏳ Etapas a concluir:', etapasParaConcluir.length);
-      console.log('Status:', etapasParaConcluir.reduce((acc, e) => {
-        acc[e.status] = (acc[e.status] || 0) + 1;
-        return acc;
-      }, {}));
+      console.log('⏳ Etapas a concluir (não concluídas/canceladas):', etapasParaConcluir.length);
 
       if (etapasParaConcluir.length === 0) {
         toast.info('Nenhuma etapa pendente encontrada');
