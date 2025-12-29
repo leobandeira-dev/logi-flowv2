@@ -886,7 +886,29 @@ export default function Fluxo() {
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3 w-full lg:w-auto">
             <FiltroDataOcorrencias
               periodoSelecionado={periodoSelecionado}
-              onPeriodoChange={setPeriodoSelecionado}
+              onPeriodoChange={(valor) => {
+                setPeriodoSelecionado(valor);
+                
+                if (valor === "mes_atual") {
+                  const hoje = new Date();
+                  const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+                  const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+                  setFilters({
+                    ...filters,
+                    dataInicio: primeiroDia.toISOString().split('T')[0],
+                    dataFim: ultimoDia.toISOString().split('T')[0]
+                  });
+                } else if (valor === "ano_atual") {
+                  const hoje = new Date();
+                  const primeiroDia = new Date(hoje.getFullYear(), 0, 1);
+                  const ultimoDia = new Date(hoje.getFullYear(), 11, 31);
+                  setFilters({
+                    ...filters,
+                    dataInicio: primeiroDia.toISOString().split('T')[0],
+                    dataFim: ultimoDia.toISOString().split('T')[0]
+                  });
+                }
+              }}
               dataInicio={filters.dataInicio}
               dataFim={filters.dataFim}
               onDataInicioChange={(val) => setFilters({...filters, dataInicio: val})}
