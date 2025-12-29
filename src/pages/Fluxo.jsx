@@ -197,40 +197,42 @@ export default function Fluxo() {
 
       console.log(`📋 Etapas existentes não concluídas: ${etapasNaoConcluidas.length}`);
 
-      if (operacoes.length === 0) {
-        toast.info('Nenhuma etapa para processar');
+      if (etapasNaoConcluidas.length === 0) {
+        toast.info('Nenhuma etapa não concluída encontrada no período');
         setProcessandoNovembro(false);
         setProgressoTotal(0);
         return;
       }
 
-      setProgressoTotal(operacoes.length);
+      setProgressoTotal(etapasNaoConcluidas.length);
 
       // Processar em lotes otimizados
       const BATCH_SIZE = 20;
       const DELAY_MS = 500;
       let processadas = 0;
 
-      for (let i = 0; i < operacoes.length; i += BATCH_SIZE) {
-        const batch = operacoes.slice(i, i + BATCH_SIZE);
+      for (let i = 0; i < etapasNaoConcluidas.length; i += BATCH_SIZE) {
+        const batch = etapasNaoConcluidas.slice(i, i + BATCH_SIZE);
         
         try {
           await Promise.all(
-            batch.map(op => 
-              op.tipo === 'criar'
-                ? base44.entities.OrdemEtapa.create(op.dados)
-                : base44.entities.OrdemEtapa.update(op.id, op.dados)
+            batch.map(etapa => 
+              base44.entities.OrdemEtapa.update(etapa.id, {
+                status: "concluida",
+                data_conclusao: dataAtual,
+                data_inicio: etapa.data_inicio || dataAtual
+              })
             )
           );
           
           processadas += batch.length;
           setProgressoAtual(processadas);
-          console.log(`✅ ${processadas}/${operacoes.length}`);
+          console.log(`✅ ${processadas}/${etapasNaoConcluidas.length}`);
         } catch (error) {
           console.error(`❌ Erro no lote:`, error);
         }
         
-        if (i + BATCH_SIZE < operacoes.length) {
+        if (i + BATCH_SIZE < etapasNaoConcluidas.length) {
           await new Promise(resolve => setTimeout(resolve, DELAY_MS));
         }
       }
