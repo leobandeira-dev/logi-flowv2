@@ -952,6 +952,25 @@ export default function Fluxo() {
                   Configurar Etapas
                 </Button>
               </Link>
+              {isAdmin && (
+                <Button
+                  onClick={processarEtapasNovembro}
+                  disabled={processandoNovembro}
+                  className="bg-orange-600 hover:bg-orange-700 text-white"
+                >
+                  {processandoNovembro ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Processando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Concluir Nov/2025
+                    </>
+                  )}
+                </Button>
+              )}
               <div className="relative flex-1 lg:w-64">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
                 <Input
