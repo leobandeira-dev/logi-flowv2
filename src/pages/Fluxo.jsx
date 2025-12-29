@@ -189,14 +189,18 @@ export default function Fluxo() {
       // IDs das ordens do período
       const ordensIds = new Set(ordensPeriodo.map(o => o.id));
 
-      // Buscar APENAS etapas existentes e não concluídas
-      const etapasNaoConcluidas = todasEtapasOrdem.filter(etapa => 
-        ordensIds.has(etapa.ordem_id) && 
-        etapa.status !== "concluida" && 
-        etapa.status !== "cancelada"
+      // Estatísticas detalhadas
+      const todasEtapasDasOrdens = todasEtapasOrdem.filter(e => ordensIds.has(e.ordem_id));
+      const etapasConcluidas = todasEtapasDasOrdens.filter(e => e.status === "concluida");
+      const etapasNaoConcluidas = todasEtapasDasOrdens.filter(e => 
+        e.status !== "concluida" && e.status !== "cancelada"
       );
 
-      console.log(`📋 Etapas existentes não concluídas: ${etapasNaoConcluidas.length}`);
+      console.log('📊 ESTATÍSTICAS DO PERÍODO:');
+      console.log(`   Total de etapas: ${todasEtapasDasOrdens.length}`);
+      console.log(`   ✅ Concluídas: ${etapasConcluidas.length}`);
+      console.log(`   ⏳ Não concluídas: ${etapasNaoConcluidas.length}`);
+      console.log(`   📋 Status encontrados:`, [...new Set(todasEtapasDasOrdens.map(e => e.status))]);
 
       if (etapasNaoConcluidas.length === 0) {
         toast.info('Nenhuma etapa não concluída encontrada no período');
