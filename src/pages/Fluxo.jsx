@@ -177,26 +177,16 @@ export default function Fluxo() {
       console.log('   Data início:', inicio.toISOString());
       console.log('   Data fim:', fim.toISOString());
 
-      // 1. Buscar ORDENS criadas no período
+      // 1. Buscar ORDENS criadas no período E filtrar por tipo
       const ordensPeriodo = todasOrdens.filter(ordem => {
         if (!ordem.created_date) return false;
+        
+        // Filtro de data
         const dataOrdem = new Date(ordem.created_date);
         const dentroPerido = dataOrdem >= inicio && dataOrdem <= fim;
+        if (!dentroPerido) return false;
         
-        if (dentroPerido) {
-          console.log('✅', ordem.numero_carga || ordem.id.slice(-6), 
-                      '| Data:', dataOrdem.toISOString().split('T')[0],
-                      '| Tipo:', ordem.tipo_ordem || ordem.tipo_registro || 'indefinido',
-                      '| Coleta?', ordem.numero_coleta || 'não');
-        }
-        
-        return dentroPerido;
-      });
-
-      console.log('📅 Ordens BRUTAS no período:', ordensPeriodo.length);
-
-      // Filtrar para excluir coletas, recebimentos e entregas
-      const ordensPeriodoFiltradas = ordensPeriodo.filter(ordem => {
+        // FILTRO CRÍTICO: Excluir coletas/recebimentos/entregas
         // Excluir por numero_coleta (qualquer ordem com COL- é coleta)
         if (ordem.numero_coleta && ordem.numero_coleta.startsWith("COL-")) {
           return false;
@@ -214,8 +204,15 @@ export default function Fluxo() {
           return false;
         }
         
+        // Log das ordens que PASSARAM no filtro
+        console.log('✅', ordem.numero_carga || ordem.id.slice(-6), 
+                    '| Data:', dataOrdem.toISOString().split('T')[0],
+                    '| Tipo:', ordem.tipo_ordem || ordem.tipo_registro || 'carregamento');
+        
         return true;
       });
+
+      const ordensPeriodoFiltradas = ordensPeriodo;
 
       console.log('');
       console.log('🚚 Ordens de CARREGAMENTO (após filtros):', ordensPeriodoFiltradas.length);
