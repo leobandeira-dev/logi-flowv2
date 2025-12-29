@@ -207,8 +207,13 @@ export default function Fluxo() {
         return true;
       });
 
-      console.log('🚚 Ordens de carregamento (após excluir coletas/recebimentos):', ordensPeriodoFiltradas.length);
-      console.log('❌ Ordens excluídas (coletas/recebimentos/entregas):', ordensPeriodo.length - ordensPeriodoFiltradas.length);
+      console.log('');
+      console.log('🚚 Ordens de CARREGAMENTO (após filtros):', ordensPeriodoFiltradas.length);
+      console.log('❌ Excluídas (coletas/recebimentos/entregas):', ordensPeriodo.length - ordensPeriodoFiltradas.length);
+      console.log('📋 Amostras carregamento:', ordensPeriodoFiltradas.slice(0, 10).map(o => 
+        `${o.numero_carga || o.id.slice(-6)} - ${o.tipo_ordem || o.tipo_registro}`
+      ));
+      console.log('');
 
       if (ordensPeriodoFiltradas.length === 0) {
         toast.warning('Nenhuma ordem de carregamento encontrada no período');
