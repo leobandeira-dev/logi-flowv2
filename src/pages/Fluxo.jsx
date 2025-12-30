@@ -1837,8 +1837,6 @@ export default function Fluxo() {
                   return ordemEtapa.status !== "concluida" && ordemEtapa.status !== "cancelada";
                 });
 
-                if (ordensNaEtapa.length === 0) return null;
-
                 return (
                   <div key={etapa.id}>
                     <div className="flex items-center gap-2 mb-2 px-2">
@@ -1867,7 +1865,14 @@ export default function Fluxo() {
                               </tr>
                             </thead>
                             <tbody className="divide-y" style={{ borderColor: theme.cardBorder }}>
-                              {ordensNaEtapa.map((ordem, idx) => {
+                              {ordensNaEtapa.length === 0 ? (
+                                <tr>
+                                  <td colSpan="9" className="px-3 py-8 text-center">
+                                    <p className="text-sm font-medium" style={{ color: theme.textMuted }}>Nenhuma ordem pendente nesta etapa</p>
+                                  </td>
+                                </tr>
+                              ) : (
+                                ordensNaEtapa.map((ordem, idx) => {
                                 const motorista = getMotorista(ordem.motorista_id);
                                 const cavalo = getVeiculo(ordem.cavalo_id);
                                 const implemento1 = getVeiculo(ordem.implemento1_id);
@@ -2001,9 +2006,10 @@ export default function Fluxo() {
                                       </Button>
                                     </td>
                                   </tr>
-                                );
-                              })}
-                            </tbody>
+                                  );
+                                  })
+                                  )}
+                                  </tbody>
                           </table>
                         </div>
                       </CardContent>
