@@ -67,6 +67,7 @@ export default function Gamificacao() {
   const [periodoSelecionado, setPeriodoSelecionado] = useState("mes_atual");
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
+  const [tipoCampoData, setTipoCampoData] = useState("criacao");
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -210,28 +211,48 @@ export default function Gamificacao() {
         : [];
 
       // FILTRAR APENAS ocorrências que NÃO são do tipo "tarefa" para cálculo de SLA
+      // Ocorrências SEMPRE filtradas por data de criação (data_inicio)
       const ocorrenciasUsuario = ocorrencias.filter(o => {
-        const dataOcorrencia = new Date(o.data_inicio);
+        const dataOcorrencia = o.data_inicio ? new Date(o.data_inicio) : null;
+        if (!dataOcorrencia) return false;
+        
         const expurgado = expurgadosMetricaAtual.some(r => r.registro_id === o.id);
-        const isTarefa = o.categoria === "tarefa"; // Nova verificação
+        const isTarefa = o.categoria === "tarefa";
+        
         return !expurgado && 
-               !isTarefa && // Excluir tarefas do cálculo de SLA
+               !isTarefa && 
                (o.responsavel_id === currentUser.id || o.registrado_por === currentUser.id) &&
                dataOcorrencia >= inicioMes && dataOcorrencia <= fimMes;
       });
 
+      // Filtrar ordens baseado no tipo de campo de data selecionado
       const ordensUsuario = ordens.filter(o => {
-        const dataSolicitacao = o.data_solicitacao ? new Date(o.data_solicitacao) : null;
         const expurgado = expurgadosMetricaAtual.some(r => r.registro_id === o.id);
-        return !expurgado && o.created_by === currentUser.email && dataSolicitacao && 
-               dataSolicitacao >= inicioMes && dataSolicitacao <= fimMes;
+        if (expurgado || o.created_by !== currentUser.email) return false;
+        
+        let dataOrdem = null;
+        if (tipoCampoData === "criacao") {
+          dataOrdem = o.created_date ? new Date(o.created_date) : null;
+        } else if (tipoCampoData === "agenda_carga") {
+          dataOrdem = o.carregamento_agendamento_data ? new Date(o.carregamento_agendamento_data) : null;
+        } else if (tipoCampoData === "agenda_descarga") {
+          dataOrdem = o.descarga_agendamento_data ? new Date(o.descarga_agendamento_data) : null;
+        }
+        
+        if (!dataOrdem) return false;
+        return dataOrdem >= inicioMes && dataOrdem <= fimMes;
       });
 
+      // Etapas filtradas por data de conclusão
       const etapasUsuario = ordensEtapas.filter(oe => {
         const dataConclusao = oe.data_conclusao ? new Date(oe.data_conclusao) : null;
         const expurgado = expurgadosMetricaAtual.some(r => r.registro_id === oe.id);
-        return !expurgado && oe.responsavel_id === currentUser.id && dataConclusao && 
-               dataConclusao >= inicioMes && dataConclusao <= fimMes;
+        
+        return !expurgado && 
+               oe.responsavel_id === currentUser.id && 
+               dataConclusao && 
+               dataConclusao >= inicioMes && 
+               dataConclusao <= fimMes;
       });
 
       const ocorrenciasAbertas = ocorrenciasUsuario.filter(o => o.status === 'aberta').length;
@@ -288,15 +309,26 @@ export default function Gamificacao() {
         }
       }
 
+      // Calcular média da empresa usando o mesmo filtro de data
       const todosUsuarios = usuarios.filter(u => u.empresa_id === currentUser.empresa_id);
       let totalOrdensEmpresa = 0;
       let totalEtapasEmpresa = 0;
 
       for (const usuario of todosUsuarios) {
         const ordensUsuarioEmpresa = ordens.filter(o => {
-          const dataSolicitacao = o.data_solicitacao ? new Date(o.data_solicitacao) : null;
-          return o.created_by === usuario.email && dataSolicitacao && 
-                 dataSolicitacao >= inicioMes && dataSolicitacao <= fimMes;
+          if (o.created_by !== usuario.email) return false;
+          
+          let dataOrdem = null;
+          if (tipoCampoData === "criacao") {
+            dataOrdem = o.created_date ? new Date(o.created_date) : null;
+          } else if (tipoCampoData === "agenda_carga") {
+            dataOrdem = o.carregamento_agendamento_data ? new Date(o.carregamento_agendamento_data) : null;
+          } else if (tipoCampoData === "agenda_descarga") {
+            dataOrdem = o.descarga_agendamento_data ? new Date(o.descarga_agendamento_data) : null;
+          }
+          
+          if (!dataOrdem) return false;
+          return dataOrdem >= inicioMes && dataOrdem <= fimMes;
         }).length;
 
         const etapasUsuarioEmpresa = ordensEtapas.filter(oe => {
@@ -313,18 +345,20 @@ export default function Gamificacao() {
       const mediaEtapasEmpresa = todosUsuarios.length > 0 ? totalEtapasEmpresa / todosUsuarios.length : 0;
 
       // ==================== CÁLCULO SLA TRACKING ====================
-      // Filtrar ordens que tiveram carregamento/entrega finalizados no mês
+      // Filtrar ordens baseado no campo de data selecionado
       const ordensTracking = ordens.filter(o => {
-        // Verificar se houve carregamento OU entrega no mês
-        const carregamentoNoMes = o.fim_carregamento && 
-          new Date(o.fim_carregamento) >= inicioMes && 
-          new Date(o.fim_carregamento) <= fimMes;
+        let dataOrdem = null;
         
-        const entregaNoMes = o.descarga_realizada_data && 
-          new Date(o.descarga_realizada_data) >= inicioMes && 
-          new Date(o.descarga_realizada_data) <= fimMes;
+        if (tipoCampoData === "criacao") {
+          dataOrdem = o.created_date ? new Date(o.created_date) : null;
+        } else if (tipoCampoData === "agenda_carga") {
+          dataOrdem = o.carregamento_agendamento_data ? new Date(o.carregamento_agendamento_data) : null;
+        } else if (tipoCampoData === "agenda_descarga") {
+          dataOrdem = o.descarga_agendamento_data ? new Date(o.descarga_agendamento_data) : null;
+        }
 
-        return carregamentoNoMes || entregaNoMes;
+        if (!dataOrdem) return false;
+        return dataOrdem >= inicioMes && dataOrdem <= fimMes;
       });
 
       let carregamentosTotal = 0;
@@ -580,6 +614,8 @@ export default function Gamificacao() {
               onDataInicioChange={setDataInicio}
               onDataFimChange={setDataFim}
               isDark={isDark}
+              tipoCampoData={tipoCampoData}
+              onTipoCampoDataChange={setTipoCampoData}
             />
             <Button onClick={loadData} variant="outline" size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
