@@ -180,7 +180,17 @@ export default function Gamificacao() {
         setTodosUsuarios(allUsers);
       }
 
-      const ordensCalculadas = await calcularMetricasEmTempoReal(currentUser, mesAtual, gamificacaoData[0], configs[0], inicioMes, fimMes);
+      // Passar filtros adicionais para o cálculo
+      const ordensCalculadas = await calcularMetricasEmTempoReal(
+        currentUser, 
+        mesAtual, 
+        gamificacaoData[0], 
+        configs[0], 
+        inicioMes, 
+        fimMes,
+        usuarioFilter,
+        operacaoFilter
+      );
       setOrdensUsuario(ordensCalculadas || []);
 
     } catch (error) {
@@ -191,7 +201,7 @@ export default function Gamificacao() {
     }
   };
 
-  const calcularMetricasEmTempoReal = async (currentUser, mesAtual, gamif, config, inicioMesProp, fimMesProp) => {
+  const calcularMetricasEmTempoReal = async (currentUser, mesAtual, gamif, config, inicioMesProp, fimMesProp, usuarioFilterProp = "", operacaoFilterProp = "") => {
     try {
       const inicioMes = inicioMesProp || new Date(`${mesAtual}-01`);
       const fimMes = fimMesProp || (() => {
@@ -289,12 +299,12 @@ export default function Gamificacao() {
       });
 
       // 4. Aplicar filtros adicionais (usuário e operação) se informados
-      if (usuarioFilter) {
-        ordensUsuario = ordensUsuario.filter(o => o.created_by === usuarioFilter);
+      if (usuarioFilterProp) {
+        ordensUsuario = ordensUsuario.filter(o => o.created_by === usuarioFilterProp);
       }
       
-      if (operacaoFilter) {
-        ordensUsuario = ordensUsuario.filter(o => o.operacao_id === operacaoFilter);
+      if (operacaoFilterProp) {
+        ordensUsuario = ordensUsuario.filter(o => o.operacao_id === operacaoFilterProp);
       }
 
       // Ordens criadas PELO USUÁRIO no período (para métrica individual de produtividade)

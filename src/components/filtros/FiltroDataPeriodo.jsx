@@ -149,25 +149,78 @@ export default function FiltroDataPeriodo({
       )}
 
       {periodoSelecionado === "mes_especifico" && (
-        <div className="w-40">
-          <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Selecione o Mês</Label>
-          <Input
-            type="month"
-            value={dataInicio ? dataInicio.slice(0, 7) : ""}
-            onChange={(e) => {
-              const anoMes = e.target.value;
-              if (anoMes) {
-                const [ano, mes] = anoMes.split('-');
-                const primeiro = new Date(parseInt(ano), parseInt(mes) - 1, 1);
-                const ultimo = new Date(parseInt(ano), parseInt(mes), 0);
+        <>
+          <div className="w-32">
+            <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Mês</Label>
+            <Select
+              value={dataInicio ? new Date(dataInicio).getMonth().toString() : ""}
+              onValueChange={(mes) => {
+                const ano = dataInicio ? new Date(dataInicio).getFullYear() : new Date().getFullYear();
+                const primeiro = new Date(ano, parseInt(mes), 1);
+                const ultimo = new Date(ano, parseInt(mes) + 1, 0);
                 onDataInicioChange(primeiro.toISOString().split('T')[0]);
                 onDataFimChange(ultimo.toISOString().split('T')[0]);
-              }
-            }}
-            className="h-8 text-sm"
-            style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-          />
-        </div>
+              }}
+              className="h-8 text-sm"
+            >
+              <SelectTrigger 
+                className="h-8 text-sm"
+                style={{ 
+                  backgroundColor: theme.inputBg, 
+                  borderColor: theme.inputBorder, 
+                  color: theme.text 
+                }}
+              >
+                <SelectValue placeholder="Selecione o mês" />
+              </SelectTrigger>
+              <SelectContent style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}>
+                <SelectItem value="0" style={{ color: theme.text }}>Janeiro</SelectItem>
+                <SelectItem value="1" style={{ color: theme.text }}>Fevereiro</SelectItem>
+                <SelectItem value="2" style={{ color: theme.text }}>Março</SelectItem>
+                <SelectItem value="3" style={{ color: theme.text }}>Abril</SelectItem>
+                <SelectItem value="4" style={{ color: theme.text }}>Maio</SelectItem>
+                <SelectItem value="5" style={{ color: theme.text }}>Junho</SelectItem>
+                <SelectItem value="6" style={{ color: theme.text }}>Julho</SelectItem>
+                <SelectItem value="7" style={{ color: theme.text }}>Agosto</SelectItem>
+                <SelectItem value="8" style={{ color: theme.text }}>Setembro</SelectItem>
+                <SelectItem value="9" style={{ color: theme.text }}>Outubro</SelectItem>
+                <SelectItem value="10" style={{ color: theme.text }}>Novembro</SelectItem>
+                <SelectItem value="11" style={{ color: theme.text }}>Dezembro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-24">
+            <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Ano</Label>
+            <Select
+              value={dataInicio ? new Date(dataInicio).getFullYear().toString() : new Date().getFullYear().toString()}
+              onValueChange={(ano) => {
+                const mes = dataInicio ? new Date(dataInicio).getMonth() : new Date().getMonth();
+                const primeiro = new Date(parseInt(ano), mes, 1);
+                const ultimo = new Date(parseInt(ano), mes + 1, 0);
+                onDataInicioChange(primeiro.toISOString().split('T')[0]);
+                onDataFimChange(ultimo.toISOString().split('T')[0]);
+              }}
+            >
+              <SelectTrigger 
+                className="h-8 text-sm"
+                style={{ 
+                  backgroundColor: theme.inputBg, 
+                  borderColor: theme.inputBorder, 
+                  color: theme.text 
+                }}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}>
+                {[2025, 2024, 2023, 2022, 2021].map((ano) => (
+                  <SelectItem key={ano} value={ano.toString()} style={{ color: theme.text }}>
+                    {ano}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </>
       )}
     </div>
   );
