@@ -71,7 +71,7 @@ export default function Fluxo() {
   const [ordemParaEditar, setOrdemParaEditar] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-  const [limite, setLimite] = useState(20);
+  const [limite, setLimite] = useState(50);
   const [filtroAtribuicao, setFiltroAtribuicao] = useState("todos");
 
   const [periodoSelecionado, setPeriodoSelecionado] = useState("mes_atual");
