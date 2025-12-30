@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -154,6 +153,7 @@ export default function Gamificacao() {
         new Date(`${mesAtual}-01`), 
         new Date(new Date(`${mesAtual}-01`).getFullYear(), new Date(`${mesAtual}-01`).getMonth() + 1, 0)
       ];
+      fimMes.setHours(23, 59, 59, 999);
 
       const [ocorrencias, ordens, ordensEtapas, usuarios, tiposOcorrencia, etapas, registrosExpurgados] = await Promise.all([
         base44.entities.Ocorrencia.list(),
@@ -280,10 +280,58 @@ export default function Gamificacao() {
       const mediaOrdensEmpresa = todosUsuarios.length > 0 ? totalOrdensEmpresa / todosUsuarios.length : 0;
       const mediaEtapasEmpresa = todosUsuarios.length > 0 ? totalEtapasEmpresa / todosUsuarios.length : 0;
 
+      // ==================== CÁLCULO SLA TRACKING ====================
+      // Filtrar ordens que tiveram carregamento/entrega finalizados no mês
+      const ordensTracking = ordens.filter(o => {
+        // Verificar se houve carregamento OU entrega no mês
+        const carregamentoNoMes = o.fim_carregamento && 
+          new Date(o.fim_carregamento) >= inicioMes && 
+          new Date(o.fim_carregamento) <= fimMes;
+        
+        const entregaNoMes = o.descarga_realizada_data && 
+          new Date(o.descarga_realizada_data) >= inicioMes && 
+          new Date(o.descarga_realizada_data) <= fimMes;
+
+        return carregamentoNoMes || entregaNoMes;
+      });
+
+      let carregamentosTotal = 0;
+      let carregamentosNoPrazo = 0;
+      let entregasTotal = 0;
+      let entregasNoPrazo = 0;
+
+      ordensTracking.forEach(ordem => {
+        // CARREGAMENTO
+        if (ordem.fim_carregamento && ordem.carregamento_agendamento_data && !ordem.carregamento_expurgado) {
+          carregamentosTotal++;
+          const agendado = new Date(ordem.carregamento_agendamento_data);
+          const realizado = new Date(ordem.fim_carregamento);
+          
+          if (realizado <= agendado) {
+            carregamentosNoPrazo++;
+          }
+        }
+
+        // ENTREGA
+        if (ordem.descarga_realizada_data && ordem.prazo_entrega && !ordem.entrega_expurgada) {
+          entregasTotal++;
+          const prazo = new Date(ordem.prazo_entrega);
+          const realizado = new Date(ordem.descarga_realizada_data);
+          
+          if (realizado <= prazo) {
+            entregasNoPrazo++;
+          }
+        }
+      });
+
+      const slaCarregamento = carregamentosTotal > 0 ? (carregamentosNoPrazo / carregamentosTotal) * 100 : 100;
+      const slaEntrega = entregasTotal > 0 ? (entregasNoPrazo / entregasTotal) * 100 : 100;
+      const slaTracking = ((slaCarregamento + slaEntrega) / 2);
+
+      // ==================== CÁLCULO QUALIDADE (Ocorrências) ====================
       const cfg = config || {};
       let pontosQualidade = 100;
 
-      // Penalizar apenas ocorrências que NÃO são tarefas
       pontosQualidade += (ocorrenciasUsuario.filter(o => o.gravidade === 'baixa').length * (cfg.pontos_ocorrencia_baixa || -5));
       pontosQualidade += (ocorrenciasUsuario.filter(o => o.gravidade === 'media').length * (cfg.pontos_ocorrencia_media || -10));
       pontosQualidade += (ocorrenciasUsuario.filter(o => o.gravidade === 'alta').length * (cfg.pontos_ocorrencia_alta || -20));
@@ -314,15 +362,18 @@ export default function Gamificacao() {
 
       pontosProdutividade = Math.max(0, Math.min(100, pontosProdutividade));
 
-      const pesoQualidade = (cfg.peso_qualidade || 60) / 100;
-      const pesoProdutividade = (cfg.peso_produtividade || 40) / 100;
+      // ==================== CÁLCULO SLA FINAL ====================
+      const pesoQualidade = (cfg.peso_qualidade || 30) / 100;
+      const pesoProdutividade = (cfg.peso_produtividade || 30) / 100;
+      const pesoTracking = (cfg.peso_tracking || 40) / 100;
 
-      const slaFinal = (pontosQualidade * pesoQualidade) + (pontosProdutividade * pesoProdutividade);
+      const slaFinal = (pontosQualidade * pesoQualidade) + (pontosProdutividade * pesoProdutividade) + (slaTracking * pesoTracking);
 
       await base44.entities.GamificacaoUsuario.update(gamif.id, {
         sla_mes_atual: Math.round(slaFinal * 100) / 100,
         pontos_qualidade_mes: Math.round(pontosQualidade * 100) / 100,
         pontos_produtividade_mes: Math.round(pontosProdutividade * 100) / 100,
+        sla_tracking_mes: Math.round(slaTracking * 100) / 100,
         ordens_criadas_mes: ordensCriadas,
         etapas_concluidas_mes: etapasConcluidas,
         ocorrencias_resolvidas_mes: ocorrenciasResolvidas,
@@ -347,6 +398,13 @@ export default function Gamificacao() {
         sla_final: Math.round(slaFinal * 100) / 100,
         pontos_qualidade: Math.round(pontosQualidade * 100) / 100,
         pontos_produtividade: Math.round(pontosProdutividade * 100) / 100,
+        sla_tracking: Math.round(slaTracking * 100) / 100,
+        sla_carregamento: Math.round(slaCarregamento * 100) / 100,
+        sla_entrega: Math.round(slaEntrega * 100) / 100,
+        carregamentos_total: carregamentosTotal,
+        carregamentos_no_prazo: carregamentosNoPrazo,
+        entregas_total: entregasTotal,
+        entregas_no_prazo: entregasNoPrazo,
         ocorrencias_total: ocorrenciasUsuario.length,
         ocorrencias_resolvidas: ocorrenciasResolvidas,
         ocorrencias_atrasadas: ocorrenciasAtrasadas,
@@ -456,8 +514,8 @@ export default function Gamificacao() {
   }
 
   const slaAtual = gamificacao?.sla_mes_atual || 100;
-  const metaMinima = configuracaoSLA?.sla_minimo || 95;
-  const metaIdeal = configuracaoSLA?.sla_ideal || 100;
+  const metaMinima = configuracaoSLA?.sla_minimo || 90;
+  const metaIdeal = configuracaoSLA?.sla_ideal || 95;
 
   const bgSLA = slaAtual >= metaIdeal 
     ? 'from-green-400 to-green-600' 
@@ -535,7 +593,18 @@ export default function Gamificacao() {
 
               <div className="mt-4 space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span>Qualidade ({configuracaoSLA?.peso_qualidade || 60}%)</span>
+                  <span>SLA Tracking ({configuracaoSLA?.peso_tracking || 40}%)</span>
+                  <span className="font-semibold">{(gamificacao?.sla_tracking_mes || 100).toFixed(1)}%</span>
+                </div>
+                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-white rounded-full"
+                    style={{ width: `${gamificacao?.sla_tracking_mes || 100}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span>Qualidade ({configuracaoSLA?.peso_qualidade || 30}%)</span>
                   <span className="font-semibold">{(gamificacao?.pontos_qualidade_mes || 0).toFixed(1)} pts</span>
                 </div>
                 <div className="h-2 bg-white/20 rounded-full overflow-hidden">
@@ -546,7 +615,7 @@ export default function Gamificacao() {
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-                  <span>Produtividade ({configuracaoSLA?.peso_produtividade || 40}%)</span>
+                  <span>Produtividade ({configuracaoSLA?.peso_produtividade || 30}%)</span>
                   <span className="font-semibold">{(gamificacao?.pontos_produtividade_mes || 0).toFixed(1)} pts</span>
                 </div>
                 <div className="h-2 bg-white/20 rounded-full overflow-hidden">
@@ -559,7 +628,22 @@ export default function Gamificacao() {
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Clock className="w-5 h-5 text-cyan-600" />
+                  <span className="text-2xl font-bold text-cyan-600">
+                    {(gamificacao?.sla_tracking_mes || 100).toFixed(1)}%
+                  </span>
+                </div>
+                <p className="text-xs font-medium" style={{ color: theme.textMuted }}>SLA Tracking</p>
+                <p className="text-[10px] mt-1" style={{ color: theme.textMuted }}>
+                  Meta: 95%
+                </p>
+              </CardContent>
+            </Card>
+
             <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
@@ -646,6 +730,76 @@ export default function Gamificacao() {
             </TabsList>
 
             <TabsContent value="sla_mensal" className="space-y-4">
+              <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2" style={{ color: theme.text }}>
+                    <Clock className="w-5 h-5 text-cyan-600" />
+                    SLA de Tracking
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center py-4">
+                    <p className="text-5xl font-bold text-cyan-600">
+                      {(gamificacao?.sla_tracking_mes || 100).toFixed(1)}%
+                    </p>
+                    <p className="text-sm mt-2" style={{ color: theme.textMuted }}>Índice de Pontualidade</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-3 p-4 rounded-lg bg-cyan-50 dark:bg-cyan-900/20">
+                      <p className="text-xs font-bold text-cyan-700 dark:text-cyan-400">Carregamento</p>
+                      <div className="flex items-center justify-between text-sm">
+                        <span style={{ color: theme.textMuted }}>No Prazo</span>
+                        <Badge className="bg-green-600 text-white">
+                          {metricaMensal?.carregamentos_no_prazo || 0}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span style={{ color: theme.textMuted }}>Total</span>
+                        <Badge variant="outline">
+                          {metricaMensal?.carregamentos_total || 0}
+                        </Badge>
+                      </div>
+                      {metricaMensal?.carregamentos_total > 0 && (
+                        <p className="text-xs font-bold text-cyan-700 dark:text-cyan-400">
+                          {((metricaMensal.carregamentos_no_prazo / metricaMensal.carregamentos_total) * 100).toFixed(1)}%
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-3 p-4 rounded-lg bg-teal-50 dark:bg-teal-900/20">
+                      <p className="text-xs font-bold text-teal-700 dark:text-teal-400">Entrega</p>
+                      <div className="flex items-center justify-between text-sm">
+                        <span style={{ color: theme.textMuted }}>No Prazo</span>
+                        <Badge className="bg-green-600 text-white">
+                          {metricaMensal?.entregas_no_prazo || 0}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span style={{ color: theme.textMuted }}>Total</span>
+                        <Badge variant="outline">
+                          {metricaMensal?.entregas_total || 0}
+                        </Badge>
+                      </div>
+                      {metricaMensal?.entregas_total > 0 && (
+                        <p className="text-xs font-bold text-teal-700 dark:text-teal-400">
+                          {((metricaMensal.entregas_no_prazo / metricaMensal.entregas_total) * 100).toFixed(1)}%
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                    <p className="text-xs text-blue-700 dark:text-blue-400 font-medium mb-2">
+                      ⭐ Impacto no SLA: {configuracaoSLA?.peso_tracking || 40}% do total
+                    </p>
+                    <p className="text-sm" style={{ color: theme.text }}>
+                      Este índice mede a pontualidade em carregamentos e entregas. Meta: <strong>95%</strong> (Aceitável: 90%)
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
               <div className="grid md:grid-cols-2 gap-4">
                 <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
                   <CardHeader>
