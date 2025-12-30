@@ -83,6 +83,8 @@ export default function Gamificacao() {
     loadData();
   }, []);
 
+  const [ordensUsuario, setOrdensUsuario] = useState([]);
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -169,7 +171,8 @@ export default function Gamificacao() {
         setTodosUsuarios(allUsers);
       }
 
-      await calcularMetricasEmTempoReal(currentUser, mesAtual, gamificacaoData[0], configs[0], inicioMes, fimMes);
+      const ordensCalculadas = await calcularMetricasEmTempoReal(currentUser, mesAtual, gamificacaoData[0], configs[0], inicioMes, fimMes);
+      setOrdensUsuario(ordensCalculadas || []);
 
     } catch (error) {
       console.error("Erro ao carregar gamificação:", error);
@@ -225,10 +228,32 @@ export default function Gamificacao() {
                dataOcorrencia >= inicioMes && dataOcorrencia <= fimMes;
       });
 
-      // Filtrar ordens baseado no tipo de campo de data selecionado
-      const ordensUsuario = ordens.filter(o => {
+      // Filtrar TODAS as ordens do período (mesma lógica de /Tracking e /Fluxo)
+      let ordensVisiveis = ordens;
+      
+      // Aplicar filtro de permissões (mesma lógica de Tracking/Fluxo)
+      if (currentUser.tipo_perfil === "fornecedor") {
+        ordensVisiveis = ordens.filter(o => o.cliente_cnpj === currentUser.cnpj_associado);
+      } else if (currentUser.tipo_perfil === "cliente") {
+        ordensVisiveis = ordens.filter(o => o.destinatario_cnpj === currentUser.cnpj_associado);
+      } else if (currentUser.tipo_perfil === "operador" && currentUser.role !== "admin") {
+        ordensVisiveis = currentUser.empresa_id 
+          ? ordens.filter(o => o.empresa_id === currentUser.empresa_id || !o.empresa_id)
+          : ordens;
+      }
+      
+      // Excluir coletas não aprovadas (mesma regra de /Tracking)
+      ordensVisiveis = ordensVisiveis.filter(o => {
+        if (o.tipo_registro === "coleta_solicitada" || o.tipo_registro === "coleta_reprovada") {
+          return false;
+        }
+        return true;
+      });
+
+      // Filtrar por período baseado no campo de data selecionado
+      const ordensUsuario = ordensVisiveis.filter(o => {
         const expurgado = expurgadosMetricaAtual.some(r => r.registro_id === o.id);
-        if (expurgado || o.created_by !== currentUser.email) return false;
+        if (expurgado) return false;
         
         let dataOrdem = null;
         if (tipoCampoData === "criacao") {
@@ -242,6 +267,9 @@ export default function Gamificacao() {
         if (!dataOrdem) return false;
         return dataOrdem >= inicioMes && dataOrdem <= fimMes;
       });
+
+      // Ordens criadas PELO USUÁRIO (para métrica individual de produtividade)
+      const ordensCriadasPeloUsuario = ordensUsuario.filter(o => o.created_by === currentUser.email).length;
 
       // Etapas filtradas por data de conclusão
       const etapasUsuario = ordensEtapas.filter(oe => {
@@ -285,7 +313,7 @@ export default function Gamificacao() {
         ? totalTempoResolucao / ocorrenciasResolvidasList.length 
         : 0;
 
-      const ordensCriadas = ordensUsuario.length;
+      const totalOrdensNoPeriodo = ordensUsuario.length;
       const etapasConcluidas = etapasUsuario.length;
 
       let etapasNoPrazo = 0;
@@ -412,13 +440,15 @@ export default function Gamificacao() {
       pontosQualidade += (resolucoesRapidas * (cfg.pontos_resolucao_rapida || 10));
       pontosQualidade = Math.max(0, Math.min(100, pontosQualidade));
 
+      // ==================== CÁLCULO PRODUTIVIDADE ====================
       let pontosProdutividade = 0;
 
-      pontosProdutividade += (ordensCriadas * (cfg.pontos_ordem_criada || 10));
+      // Usar ordens criadas PELO USUÁRIO para pontuação individual
+      pontosProdutividade += (ordensCriadasPeloUsuario * (cfg.pontos_ordem_criada || 10));
       pontosProdutividade += (etapasConcluidas * (cfg.pontos_etapa_concluida || 5));
       pontosProdutividade += (etapasNoPrazo * (cfg.pontos_etapa_no_prazo || 3));
 
-      if (ordensCriadas > mediaOrdensEmpresa * 1.2) {
+      if (ordensCriadasPeloUsuario > mediaOrdensEmpresa * 1.2) {
         pontosProdutividade += (cfg.pontos_acima_media || 20);
       }
 
@@ -440,7 +470,7 @@ export default function Gamificacao() {
         pontos_qualidade_mes: Math.round(pontosQualidade * 100) / 100,
         pontos_produtividade_mes: Math.round(pontosProdutividade * 100) / 100,
         sla_tracking_mes: Math.round(slaTracking * 100) / 100,
-        ordens_criadas_mes: ordensCriadas,
+        ordens_criadas_mes: ordensCriadasPeloUsuario,
         etapas_concluidas_mes: etapasConcluidas,
         ocorrencias_resolvidas_mes: ocorrenciasResolvidas,
         ocorrencias_abertas_mes: ocorrenciasAbertas,
@@ -452,9 +482,9 @@ export default function Gamificacao() {
       });
 
       const percentualNoPrazo = etapasConcluidas > 0 ? (etapasNoPrazo / etapasConcluidas) * 100 : 100;
-      const comparativoMedia = ordensCriadas >= mediaOrdensEmpresa * 1.1 
+      const comparativoMedia = ordensCriadasPeloUsuario >= mediaOrdensEmpresa * 1.1 
         ? 'acima' 
-        : ordensCriadas >= mediaOrdensEmpresa * 0.9 
+        : ordensCriadasPeloUsuario >= mediaOrdensEmpresa * 0.9 
           ? 'na_media' 
           : 'abaixo';
 
@@ -476,7 +506,7 @@ export default function Gamificacao() {
         ocorrencias_atrasadas: ocorrenciasAtrasadas,
         ocorrencias_criticas: ocorrenciasCriticas,
         tempo_medio_resolucao: Math.round(tempoMedioResolucao * 100) / 100,
-        ordens_criadas: ordensCriadas,
+        ordens_criadas: ordensCriadasPeloUsuario,
         etapas_concluidas: etapasConcluidas,
         etapas_no_prazo: etapasNoPrazo,
         etapas_atrasadas: etapasAtrasadas,
@@ -511,8 +541,12 @@ export default function Gamificacao() {
       const metricaAtualizadaNaoExpurgada = metricaAtualizada.find(m => !m.expurgada);
       setMetricaMensal(metricaAtualizadaNaoExpurgada);
 
+      // Retornar ordens para exibição
+      return ordensUsuario;
+
     } catch (error) {
       console.error("Erro ao calcular métricas:", error);
+      return [];
     }
   };
 
@@ -732,15 +766,13 @@ export default function Gamificacao() {
                 <div className="flex items-center justify-between mb-2">
                   <Package className="w-5 h-5 text-blue-600" />
                   <span className="text-2xl font-bold" style={{ color: theme.text }}>
-                    {gamificacao?.ordens_criadas_mes || 0}
+                    {ordensUsuario?.length || 0}
                   </span>
                 </div>
-                <p className="text-xs font-medium" style={{ color: theme.textMuted }}>Ordens Criadas</p>
-                {metricaMensal?.media_empresa_ordens && (
-                  <p className="text-[10px] mt-1" style={{ color: theme.textMuted }}>
-                    Média: {metricaMensal.media_empresa_ordens.toFixed(1)}
-                  </p>
-                )}
+                <p className="text-xs font-medium" style={{ color: theme.textMuted }}>Ordens no Período</p>
+                <p className="text-[10px] mt-1" style={{ color: theme.textMuted }}>
+                  Criadas por você: {gamificacao?.ordens_criadas_mes || 0}
+                </p>
               </CardContent>
             </Card>
 
