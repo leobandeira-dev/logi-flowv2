@@ -68,6 +68,8 @@ export default function Gamificacao() {
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
   const [tipoCampoData, setTipoCampoData] = useState("criacao");
+  const [usuarioFilter, setUsuarioFilter] = useState("");
+  const [operacaoFilter, setOperacaoFilter] = useState("");
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -84,6 +86,8 @@ export default function Gamificacao() {
   }, []);
 
   const [ordensUsuario, setOrdensUsuario] = useState([]);
+  const [todosUsuariosFilter, setTodosUsuariosFilter] = useState([]);
+  const [todasOperacoes, setTodasOperacoes] = useState([]);
 
   const loadData = async () => {
     setLoading(true);
@@ -162,11 +166,16 @@ export default function Gamificacao() {
       const rankingData = await base44.entities.GamificacaoUsuario.list("-sla_mes_atual", 20);
       setRanking(rankingData);
 
+      // Carregar usuários e operações para filtros
+      const [allUsers, allOperacoes] = await Promise.all([
+        base44.entities.User.list(),
+        base44.entities.Operacao.list()
+      ]);
+      setTodosUsuariosFilter(allUsers);
+      setTodasOperacoes(allOperacoes);
+
       if (currentUser.role === 'admin') {
-        const [allMetricas, allUsers] = await Promise.all([
-          base44.entities.MetricaMensal.list("-mes_referencia"),
-          base44.entities.User.list()
-        ]);
+        const allMetricas = await base44.entities.MetricaMensal.list("-mes_referencia");
         setTodasMetricas(allMetricas);
         setTodosUsuarios(allUsers);
       }
@@ -191,14 +200,15 @@ export default function Gamificacao() {
         return fim;
       })();
 
-      const [ocorrencias, ordens, ordensEtapas, usuarios, tiposOcorrencia, etapas, registrosExpurgados] = await Promise.all([
+      const [ocorrencias, ordens, ordensEtapas, usuarios, tiposOcorrencia, etapas, registrosExpurgados, operacoes] = await Promise.all([
         base44.entities.Ocorrencia.list(),
         base44.entities.OrdemDeCarregamento.list(),
         base44.entities.OrdemEtapa.list(),
         base44.entities.User.list(),
         base44.entities.TipoOcorrencia.list(),
         base44.entities.Etapa.list(),
-        base44.entities.RegistroSLAExpurgado.list()
+        base44.entities.RegistroSLAExpurgado.list(),
+        base44.entities.Operacao.list()
       ]);
 
       const metricasAtuais = await base44.entities.MetricaMensal.filter({
@@ -213,18 +223,21 @@ export default function Gamificacao() {
         ? registrosExpurgados.filter(r => r.metrica_mensal_id === metricaAtualId)
         : [];
 
-      // FILTRAR APENAS ocorrências que NÃO são do tipo "tarefa" para cálculo de SLA
-      // Ocorrências SEMPRE filtradas por data de criação (data_inicio)
+      // ==================== FILTRO DE OCORRÊNCIAS ====================
+      // SEMPRE filtradas por data de criação (data_inicio), independente do tipo de filtro de data das ordens
       const ocorrenciasUsuario = ocorrencias.filter(o => {
-        const dataOcorrencia = o.data_inicio ? new Date(o.data_inicio) : null;
+        const dataOcorrencia = o.created_date ? new Date(o.created_date) : null;
         if (!dataOcorrencia) return false;
         
         const expurgado = expurgadosMetricaAtual.some(r => r.registro_id === o.id);
         const isTarefa = o.categoria === "tarefa";
         
+        // Contar ocorrências abertas pelo usuário OU atribuídas ao usuário
+        const pertenceAoUsuario = o.responsavel_id === currentUser.id || o.registrado_por === currentUser.id;
+        
         return !expurgado && 
                !isTarefa && 
-               (o.responsavel_id === currentUser.id || o.registrado_por === currentUser.id) &&
+               pertenceAoUsuario &&
                dataOcorrencia >= inicioMes && dataOcorrencia <= fimMes;
       });
 
@@ -258,7 +271,7 @@ export default function Gamificacao() {
       });
 
       // 3. Filtrar por período baseado no campo de data selecionado
-      const ordensUsuario = ordensVisiveis.filter(o => {
+      let ordensUsuario = ordensVisiveis.filter(o => {
         const expurgado = expurgadosMetricaAtual.some(r => r.registro_id === o.id);
         if (expurgado) return false;
         
@@ -274,6 +287,15 @@ export default function Gamificacao() {
         if (!dataOrdem) return false;
         return dataOrdem >= inicioMes && dataOrdem <= fimMes;
       });
+
+      // 4. Aplicar filtros adicionais (usuário e operação) se informados
+      if (usuarioFilter) {
+        ordensUsuario = ordensUsuario.filter(o => o.created_by === usuarioFilter);
+      }
+      
+      if (operacaoFilter) {
+        ordensUsuario = ordensUsuario.filter(o => o.operacao_id === operacaoFilter);
+      }
 
       // Ordens criadas PELO USUÁRIO no período (para métrica individual de produtividade)
       const ordensCriadasPeloUsuario = ordensUsuario.filter(o => o.created_by === currentUser.email).length;
@@ -642,7 +664,7 @@ export default function Gamificacao() {
               Acompanhe seu SLA mensal e desenvolvimento profissional
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <FiltroDataPeriodo
               periodoSelecionado={periodoSelecionado}
               onPeriodoChange={setPeriodoSelecionado}
@@ -654,7 +676,40 @@ export default function Gamificacao() {
               tipoCampoData={tipoCampoData}
               onTipoCampoDataChange={setTipoCampoData}
             />
-            <Button onClick={loadData} variant="outline" size="sm">
+            
+            <select
+              value={usuarioFilter}
+              onChange={(e) => setUsuarioFilter(e.target.value)}
+              className="h-8 px-3 py-1 rounded-lg border text-sm"
+              style={{ 
+                backgroundColor: theme.cardBg, 
+                borderColor: theme.cardBorder, 
+                color: theme.text 
+              }}
+            >
+              <option value="">Todos os Usuários</option>
+              {todosUsuariosFilter.map(u => (
+                <option key={u.id} value={u.email}>{u.full_name}</option>
+              ))}
+            </select>
+
+            <select
+              value={operacaoFilter}
+              onChange={(e) => setOperacaoFilter(e.target.value)}
+              className="h-8 px-3 py-1 rounded-lg border text-sm"
+              style={{ 
+                backgroundColor: theme.cardBg, 
+                borderColor: theme.cardBorder, 
+                color: theme.text 
+              }}
+            >
+              <option value="">Todas as Operações</option>
+              {todasOperacoes.map(op => (
+                <option key={op.id} value={op.id}>{op.nome}</option>
+              ))}
+            </select>
+            
+            <Button onClick={loadData} variant="outline" size="sm" className="h-8">
               <RefreshCw className="w-4 h-4 mr-2" />
               Atualizar
             </Button>
