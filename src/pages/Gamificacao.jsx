@@ -197,7 +197,8 @@ export default function Gamificacao() {
         inicioMes, 
         fimMes,
         usuarioFilter,
-        operacaoFilter
+        operacaoFilter,
+        tipoCampoData
       );
       setOrdensUsuario(ordensCalculadas || []);
 
@@ -209,7 +210,7 @@ export default function Gamificacao() {
     }
   };
 
-  const calcularMetricasEmTempoReal = async (currentUser, mesAtual, gamif, config, inicioMesProp, fimMesProp, usuarioFilterProp = "", operacaoFilterProp = "") => {
+  const calcularMetricasEmTempoReal = async (currentUser, mesAtual, gamif, config, inicioMesProp, fimMesProp, usuarioFilterProp = "", operacaoFilterProp = "", tipoCampoDataProp = "criacao") => {
     try {
       const inicioMes = inicioMesProp || new Date(`${mesAtual}-01`);
       const fimMes = fimMesProp || (() => {
@@ -294,11 +295,11 @@ export default function Gamificacao() {
         if (expurgado) return false;
         
         let dataOrdem = null;
-        if (tipoCampoData === "criacao") {
+        if (tipoCampoDataProp === "criacao") {
           dataOrdem = o.created_date ? new Date(o.created_date) : null;
-        } else if (tipoCampoData === "agenda_carga") {
+        } else if (tipoCampoDataProp === "agenda_carga") {
           dataOrdem = o.carregamento_agendamento_data ? new Date(o.carregamento_agendamento_data) : null;
-        } else if (tipoCampoData === "agenda_descarga") {
+        } else if (tipoCampoDataProp === "agenda_descarga") {
           dataOrdem = o.descarga_agendamento_data ? new Date(o.descarga_agendamento_data) : null;
         }
         
@@ -403,11 +404,11 @@ export default function Gamificacao() {
           if (["coleta", "recebimento", "entrega"].includes(o.tipo_ordem)) return false;
           
           let dataOrdem = null;
-          if (tipoCampoData === "criacao") {
+          if (tipoCampoDataProp === "criacao") {
             dataOrdem = o.created_date ? new Date(o.created_date) : null;
-          } else if (tipoCampoData === "agenda_carga") {
+          } else if (tipoCampoDataProp === "agenda_carga") {
             dataOrdem = o.carregamento_agendamento_data ? new Date(o.carregamento_agendamento_data) : null;
-          } else if (tipoCampoData === "agenda_descarga") {
+          } else if (tipoCampoDataProp === "agenda_descarga") {
             dataOrdem = o.descarga_agendamento_data ? new Date(o.descarga_agendamento_data) : null;
           }
           
