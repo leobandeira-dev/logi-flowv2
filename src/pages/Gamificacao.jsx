@@ -43,7 +43,7 @@ import { format, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import DetalhesMetricaSLA from "../components/gamificacao/DetalhesMetricaSLA";
-import FiltroDataPeriodo from "../components/filtros/FiltroDataPeriodo";
+import FiltroPeriodo from "../components/filtros/FiltroPeriodo";
 
 export default function Gamificacao() {
   const [loading, setLoading] = useState(true);
@@ -65,8 +65,10 @@ export default function Gamificacao() {
   const [selectedMetricaDetalhes, setSelectedMetricaDetalhes] = useState(null);
 
   const [periodoSelecionado, setPeriodoSelecionado] = useState("mes_atual");
-  const [dataInicio, setDataInicio] = useState("");
-  const [dataFim, setDataFim] = useState("");
+  const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
+  const [mesSelecionado, setMesSelecionado] = useState(new Date().getMonth() + 1);
+  const [dataInicioPersonalizada, setDataInicioPersonalizada] = useState("");
+  const [dataFimPersonalizada, setDataFimPersonalizada] = useState("");
   const [tipoCampoData, setTipoCampoData] = useState("criacao");
   const [usuarioFilter, setUsuarioFilter] = useState("");
   const [operacaoFilter, setOperacaoFilter] = useState("");
@@ -95,31 +97,30 @@ export default function Gamificacao() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      // Calcular período baseado no filtro
+      // Calcular período baseado no filtro (mesma lógica de /Fluxo)
       let mesAtual;
       let inicioMes;
       let fimMes;
 
-      if (periodoSelecionado === "personalizado" && dataInicio && dataFim) {
-        inicioMes = new Date(dataInicio);
-        fimMes = new Date(dataFim);
+      if (periodoSelecionado === "personalizado" && dataInicioPersonalizada && dataFimPersonalizada) {
+        inicioMes = new Date(dataInicioPersonalizada);
+        fimMes = new Date(dataFimPersonalizada);
         fimMes.setHours(23, 59, 59, 999);
         mesAtual = format(inicioMes, "yyyy-MM");
-      } else if (periodoSelecionado === "mes_especifico" && dataInicio) {
-        inicioMes = new Date(dataInicio);
-        fimMes = new Date(inicioMes.getFullYear(), inicioMes.getMonth() + 1, 0);
+      } else if (periodoSelecionado === "mes_especifico") {
+        inicioMes = new Date(anoSelecionado, mesSelecionado - 1, 1);
+        fimMes = new Date(anoSelecionado, mesSelecionado, 0);
         fimMes.setHours(23, 59, 59, 999);
         mesAtual = format(inicioMes, "yyyy-MM");
+      } else if (periodoSelecionado === "ano_atual") {
+        inicioMes = new Date(anoSelecionado, 0, 1);
+        fimMes = new Date(anoSelecionado, 11, 31, 23, 59, 59, 999);
+        mesAtual = format(new Date(anoSelecionado, 0, 1), "yyyy-MM");
       } else {
-        // mes_atual ou ano_atual
+        // mes_atual
         const hoje = new Date();
-        if (periodoSelecionado === "ano_atual") {
-          inicioMes = new Date(hoje.getFullYear(), 0, 1);
-          fimMes = new Date(hoje.getFullYear(), 11, 31, 23, 59, 59, 999);
-        } else {
-          inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-          fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59, 999);
-        }
+        inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59, 999);
         mesAtual = format(hoje, "yyyy-MM");
       }
 
@@ -675,17 +676,34 @@ export default function Gamificacao() {
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <FiltroDataPeriodo
-              periodoSelecionado={periodoSelecionado}
+            <FiltroPeriodo
+              periodoFiltro={periodoSelecionado}
               onPeriodoChange={setPeriodoSelecionado}
-              dataInicio={dataInicio}
-              dataFim={dataFim}
-              onDataInicioChange={setDataInicio}
-              onDataFimChange={setDataFim}
+              anoSelecionado={anoSelecionado}
+              onAnoChange={setAnoSelecionado}
+              mesSelecionado={mesSelecionado}
+              onMesChange={setMesSelecionado}
+              dataInicioPersonalizada={dataInicioPersonalizada}
+              onDataInicioPersonalizadaChange={setDataInicioPersonalizada}
+              dataFimPersonalizada={dataFimPersonalizada}
+              onDataFimPersonalizadaChange={setDataFimPersonalizada}
               isDark={isDark}
-              tipoCampoData={tipoCampoData}
-              onTipoCampoDataChange={setTipoCampoData}
             />
+            
+            <select
+              value={tipoCampoData}
+              onChange={(e) => setTipoCampoData(e.target.value)}
+              className="h-8 px-3 py-1 rounded-lg border text-sm"
+              style={{ 
+                backgroundColor: theme.cardBg, 
+                borderColor: theme.cardBorder, 
+                color: theme.text 
+              }}
+            >
+              <option value="criacao">Data de Criação</option>
+              <option value="agenda_carga">Agenda Carregamento</option>
+              <option value="agenda_descarga">Agenda Descarga</option>
+            </select>
             
             <select
               value={usuarioFilter}
@@ -743,9 +761,13 @@ export default function Gamificacao() {
                     <div>
                       <h2 className="text-3xl font-bold">SLA {periodoSelecionado === "ano_atual" ? "Anual" : "do Período"}</h2>
                       <p className="text-white/80">
-                        {periodoSelecionado === "personalizado" && dataInicio && dataFim
-                          ? `${format(new Date(dataInicio), "dd/MM/yy")} - ${format(new Date(dataFim), "dd/MM/yy")}`
-                          : format(new Date(), "MMMM yyyy", { locale: ptBR })}
+                        {periodoSelecionado === "personalizado" && dataInicioPersonalizada && dataFimPersonalizada
+                          ? `${format(new Date(dataInicioPersonalizada), "dd/MM/yy")} - ${format(new Date(dataFimPersonalizada), "dd/MM/yy")}`
+                          : periodoSelecionado === "mes_especifico"
+                            ? format(new Date(anoSelecionado, mesSelecionado - 1, 1), "MMMM yyyy", { locale: ptBR })
+                            : periodoSelecionado === "ano_atual"
+                              ? `Ano ${anoSelecionado}`
+                              : format(new Date(), "MMMM yyyy", { locale: ptBR })}
                       </p>
                     </div>
                   </div>
