@@ -1779,11 +1779,17 @@ export default function Fluxo() {
                                       </QuickStatusPopover>
 
                                       {timeInfo && status === "em_andamento" && (
-                                        <div className="mt-0.5">
-                                          <div className="h-0.5 rounded-full overflow-hidden"
-                                            style={{ backgroundColor: isDark ? '#1e293b' : '#e5e7eb' }}>
+                                        <div 
+                                          className="mt-0.5"
+                                          title={`${timeInfo.atrasado ? 'ATRASADO' : 'No prazo'} - ${formatTimeRemaining(timeInfo.minutosRestantes)}`}
+                                        >
+                                          <div className="h-1.5 rounded-full overflow-hidden border shadow-sm"
+                                            style={{ 
+                                              backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+                                              borderColor: timeInfo.atrasado ? '#ef4444' : (timeInfo.percentual > 75 ? '#f59e0b' : '#10b981')
+                                            }}>
                                             <div
-                                              className={`h-full ${timeInfo.atrasado ? 'bg-red-500' : timeInfo.percentual > 75 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                                              className={`h-full transition-all ${timeInfo.atrasado ? 'bg-red-500' : timeInfo.percentual > 75 ? 'bg-yellow-500' : 'bg-green-500'}`}
                                               style={{ width: `${Math.min(100, timeInfo.percentual)}%` }}
                                             />
                                           </div>
@@ -1979,16 +1985,28 @@ export default function Fluxo() {
                                     </td>
                                     <td className="px-3 py-2">
                                       {timeInfo ? (
-                                        <div className="space-y-1">
-                                          <div className="h-1 rounded-full overflow-hidden w-24"
-                                            style={{ backgroundColor: isDark ? '#334155' : '#e5e7eb' }}>
+                                        <div 
+                                          className="space-y-1"
+                                          title={`Prazo: ${formatTimeRemaining(timeInfo.minutosRestantes)}`}
+                                        >
+                                          <div className="h-2 rounded-full overflow-hidden w-24 border shadow-sm"
+                                            style={{ 
+                                              backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+                                              borderColor: timeInfo.atrasado ? '#ef4444' : (timeInfo.percentual > 75 ? '#f59e0b' : '#10b981')
+                                            }}>
                                             <div
-                                              className={`h-full ${timeInfo.atrasado ? 'bg-red-500' : timeInfo.percentual > 75 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                                              className={`h-full transition-all ${timeInfo.atrasado ? 'bg-red-500' : timeInfo.percentual > 75 ? 'bg-yellow-500' : 'bg-green-500'}`}
                                               style={{ width: `${Math.min(100, timeInfo.percentual)}%` }}
                                             />
                                           </div>
-                                          <p className={`text-[9px] font-bold ${timeInfo.atrasado ? 'text-red-600' : 'text-green-600'}`}>
-                                            {formatTimeRemaining(timeInfo.minutosRestantes)}
+                                          <p className={`text-[10px] font-bold flex items-center gap-0.5 ${
+                                            timeInfo.atrasado ? 'text-red-600 dark:text-red-400' : 
+                                            timeInfo.percentual > 75 ? 'text-yellow-600 dark:text-yellow-400' : 
+                                            'text-green-600 dark:text-green-400'
+                                          }`}>
+                                            {timeInfo.atrasado && '⚠️'}
+                                            {timeInfo.percentual > 75 && !timeInfo.atrasado && '⏰'}
+                                            <span>{formatTimeRemaining(timeInfo.minutosRestantes)}</span>
                                           </p>
                                         </div>
                                       ) : (
@@ -2086,7 +2104,9 @@ export default function Fluxo() {
                                 className="p-1.5 border rounded transition-all cursor-pointer"
                                 style={{
                                   backgroundColor: theme.cardBg,
-                                  borderColor: timeInfo && timeInfo.atrasado ? (isDark ? '#b91c1c' : '#f87171') : theme.cardBorder
+                                  borderColor: timeInfo && timeInfo.atrasado ? '#ef4444' : (timeInfo && timeInfo.percentual > 75 ? '#f59e0b' : theme.cardBorder),
+                                  borderWidth: timeInfo && timeInfo.atrasado ? '2px' : '1px',
+                                  boxShadow: timeInfo && timeInfo.atrasado ? '0 0 0 2px rgba(239, 68, 68, 0.1)' : 'none'
                                 }}
                                 onClick={() => handleOrdemClick(ordem)}
                                 onMouseEnter={(e) => {
@@ -2174,17 +2194,29 @@ export default function Fluxo() {
                                   )}
 
                                   {timeInfo && (
-                                    <div className="mt-1 pt-1 border-t" style={{ borderColor: theme.cardBorder }}>
-                                      <div className="h-0.5 rounded-full overflow-hidden mb-0.5"
-                                        style={{ backgroundColor: isDark ? '#334155' : '#e5e7eb' }}>
+                                    <div 
+                                      className="mt-1 pt-1 border-t" 
+                                      style={{ borderColor: theme.cardBorder }}
+                                      title={`Prazo: ${formatTimeRemaining(timeInfo.minutosRestantes)}`}
+                                    >
+                                      <div className="h-1.5 rounded-full overflow-hidden mb-1 border shadow-sm"
+                                        style={{ 
+                                          backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+                                          borderColor: timeInfo.atrasado ? '#ef4444' : (timeInfo.percentual > 75 ? '#f59e0b' : '#10b981')
+                                        }}>
                                         <div
-                                          className={`h-full ${timeInfo.atrasado ? 'bg-red-500' : timeInfo.percentual > 75 ? 'bg-yellow-500' : 'bg-blue-500'}`}
+                                          className={`h-full transition-all ${timeInfo.atrasado ? 'bg-red-500' : timeInfo.percentual > 75 ? 'bg-yellow-500' : 'bg-green-500'}`}
                                           style={{ width: `${Math.min(100, timeInfo.percentual)}%` }}
                                         />
                                       </div>
-                                      <p className={`text-[9px] font-bold ${timeInfo.atrasado ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
-                                        {timeInfo.atrasado && '⚠️ '}
-                                        {formatTimeRemaining(timeInfo.minutosRestantes)}
+                                      <p className={`text-[9px] font-bold flex items-center gap-0.5 ${
+                                        timeInfo.atrasado ? 'text-red-600 dark:text-red-400' : 
+                                        timeInfo.percentual > 75 ? 'text-yellow-600 dark:text-yellow-400' : 
+                                        'text-green-600 dark:text-green-400'
+                                      }`}>
+                                        {timeInfo.atrasado && '⚠️'}
+                                        {timeInfo.percentual > 75 && !timeInfo.atrasado && '⏰'}
+                                        <span>{formatTimeRemaining(timeInfo.minutosRestantes)}</span>
                                       </p>
                                     </div>
                                   )}
