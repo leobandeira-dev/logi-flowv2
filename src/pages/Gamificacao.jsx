@@ -43,6 +43,7 @@ import { format, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import DetalhesMetricaSLA from "../components/gamificacao/DetalhesMetricaSLA";
+import FiltroDataPeriodo from "../components/filtros/FiltroDataPeriodo";
 
 export default function Gamificacao() {
   const [loading, setLoading] = useState(true);
@@ -62,6 +63,10 @@ export default function Gamificacao() {
   const [mesFilter, setMesFilter] = useState("");
   const [anoFilter, setAnoFilter] = useState("");
   const [selectedMetricaDetalhes, setSelectedMetricaDetalhes] = useState(null);
+
+  const [periodoSelecionado, setPeriodoSelecionado] = useState("mes_atual");
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -83,7 +88,33 @@ export default function Gamificacao() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const mesAtual = format(new Date(), "yyyy-MM");
+      // Calcular período baseado no filtro
+      let mesAtual;
+      let inicioMes;
+      let fimMes;
+
+      if (periodoSelecionado === "personalizado" && dataInicio && dataFim) {
+        inicioMes = new Date(dataInicio);
+        fimMes = new Date(dataFim);
+        fimMes.setHours(23, 59, 59, 999);
+        mesAtual = format(inicioMes, "yyyy-MM");
+      } else if (periodoSelecionado === "mes_especifico" && dataInicio) {
+        inicioMes = new Date(dataInicio);
+        fimMes = new Date(inicioMes.getFullYear(), inicioMes.getMonth() + 1, 0);
+        fimMes.setHours(23, 59, 59, 999);
+        mesAtual = format(inicioMes, "yyyy-MM");
+      } else {
+        // mes_atual ou ano_atual
+        const hoje = new Date();
+        if (periodoSelecionado === "ano_atual") {
+          inicioMes = new Date(hoje.getFullYear(), 0, 1);
+          fimMes = new Date(hoje.getFullYear(), 11, 31, 23, 59, 59, 999);
+        } else {
+          inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+          fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59, 999);
+        }
+        mesAtual = format(hoje, "yyyy-MM");
+      }
 
       let gamificacaoData = await base44.entities.GamificacaoUsuario.filter({ user_id: currentUser.id });
       
@@ -137,7 +168,7 @@ export default function Gamificacao() {
         setTodosUsuarios(allUsers);
       }
 
-      await calcularMetricasEmTempoReal(currentUser, mesAtual, gamificacaoData[0], configs[0]);
+      await calcularMetricasEmTempoReal(currentUser, mesAtual, gamificacaoData[0], configs[0], inicioMes, fimMes);
 
     } catch (error) {
       console.error("Erro ao carregar gamificação:", error);
@@ -147,13 +178,14 @@ export default function Gamificacao() {
     }
   };
 
-  const calcularMetricasEmTempoReal = async (currentUser, mesAtual, gamif, config) => {
+  const calcularMetricasEmTempoReal = async (currentUser, mesAtual, gamif, config, inicioMesProp, fimMesProp) => {
     try {
-      const [inicioMes, fimMes] = [
-        new Date(`${mesAtual}-01`), 
-        new Date(new Date(`${mesAtual}-01`).getFullYear(), new Date(`${mesAtual}-01`).getMonth() + 1, 0)
-      ];
-      fimMes.setHours(23, 59, 59, 999);
+      const inicioMes = inicioMesProp || new Date(`${mesAtual}-01`);
+      const fimMes = fimMesProp || (() => {
+        const fim = new Date(new Date(`${mesAtual}-01`).getFullYear(), new Date(`${mesAtual}-01`).getMonth() + 1, 0);
+        fim.setHours(23, 59, 59, 999);
+        return fim;
+      })();
 
       const [ocorrencias, ordens, ordensEtapas, usuarios, tiposOcorrencia, etapas, registrosExpurgados] = await Promise.all([
         base44.entities.Ocorrencia.list(),
@@ -529,20 +561,31 @@ export default function Gamificacao() {
     <div className="min-h-screen transition-colors" style={{ backgroundColor: theme.bg }}>
       <div className="p-6">
         <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-3" style={{ color: theme.text }}>
-                <Target className="w-8 h-8 text-blue-600" />
-                Performance & Melhoria Contínua
-              </h1>
-              <p className="mt-1" style={{ color: theme.textMuted }}>
-                Acompanhe seu SLA mensal e desenvolvimento profissional
-              </p>
-            </div>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-3" style={{ color: theme.text }}>
+              <Target className="w-8 h-8 text-blue-600" />
+              Performance & Melhoria Contínua
+            </h1>
+            <p className="mt-1" style={{ color: theme.textMuted }}>
+              Acompanhe seu SLA mensal e desenvolvimento profissional
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <FiltroDataPeriodo
+              periodoSelecionado={periodoSelecionado}
+              onPeriodoChange={setPeriodoSelecionado}
+              dataInicio={dataInicio}
+              dataFim={dataFim}
+              onDataInicioChange={setDataInicio}
+              onDataFimChange={setDataFim}
+              isDark={isDark}
+            />
             <Button onClick={loadData} variant="outline" size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
               Atualizar
             </Button>
+          </div>
           </div>
 
           <motion.div
@@ -560,8 +603,12 @@ export default function Gamificacao() {
                   <div className="flex items-center gap-3 mb-2">
                     <Target className="w-12 h-12" />
                     <div>
-                      <h2 className="text-3xl font-bold">SLA Mensal</h2>
-                      <p className="text-white/80">{format(new Date(), "MMMM yyyy", { locale: ptBR })}</p>
+                      <h2 className="text-3xl font-bold">SLA {periodoSelecionado === "ano_atual" ? "Anual" : "do Período"}</h2>
+                      <p className="text-white/80">
+                        {periodoSelecionado === "personalizado" && dataInicio && dataFim
+                          ? `${format(new Date(dataInicio), "dd/MM/yy")} - ${format(new Date(dataFim), "dd/MM/yy")}`
+                          : format(new Date(), "MMMM yyyy", { locale: ptBR })}
+                      </p>
                     </div>
                   </div>
                 </div>
