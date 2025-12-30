@@ -1393,6 +1393,9 @@ export default function Fluxo() {
             <TabsTrigger value="list" style={{ color: viewMode === 'list' ? theme.text : theme.textMuted }}>
               <LayoutList className="w-4 h-4 mr-2" />Lista
             </TabsTrigger>
+            <TabsTrigger value="kanban" style={{ color: viewMode === 'kanban' ? theme.text : theme.textMuted }}>
+              <List className="w-4 h-4 mr-2" />Kanban
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="timeline" className="mt-4">
@@ -2019,8 +2022,186 @@ export default function Fluxo() {
               })}
             </div>
           </TabsContent>
-        </Tabs>
-      </div>
+
+          <TabsContent value="kanban" className="mt-4">
+            <div className="overflow-x-auto pb-3">
+              <div className="flex gap-3 min-w-max">
+                {etapas.map((etapa) => {
+                  const ordensNaEtapa = filteredOrdens.filter(ordem => {
+                    const ordemEtapa = ordensetapas.find(
+                      oe => oe.ordem_id === ordem.id && oe.etapa_id === etapa.id
+                    );
+
+                    if (!ordemEtapa) return true;
+                    return ordemEtapa.status !== "concluida" && ordemEtapa.status !== "cancelada";
+                  });
+
+                  return (
+                    <Card key={etapa.id} className="w-64 flex-shrink-0 border-t-2 shadow"
+                      style={{ borderTopColor: etapa.cor, backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                      <CardHeader className="pb-1.5 pt-2 px-3" style={{ backgroundColor: theme.cardBg }}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <div
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: etapa.cor }}
+                            />
+                            <CardTitle className="text-xs font-bold" style={{ color: theme.text }}>
+                              {etapa.nome}
+                            </CardTitle>
+                          </div>
+                          <Badge className="text-[10px] h-4 px-1.5 font-bold" style={{ backgroundColor: etapa.cor, color: 'white' }}>
+                            {ordensNaEtapa.length}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-1.5 max-h-[500px] overflow-y-auto p-2">
+                        {ordensNaEtapa.length === 0 ? (
+                          <div className="text-center py-8" style={{ color: theme.textMuted }}>
+                            <p className="text-xs">Nenhuma ordem</p>
+                          </div>
+                        ) : (
+                          ordensNaEtapa.map((ordem) => {
+                            const motorista = getMotorista(ordem.motorista_id);
+                            const cavalo = getVeiculo(ordem.cavalo_id);
+                            const implemento1 = getVeiculo(ordem.implemento1_id);
+                            const implemento2 = getVeiculo(ordem.implemento2_id);
+                            const implemento3 = getVeiculo(ordem.implemento3_id);
+                            const operacao = getOperacao(ordem.operacao_id);
+                            const ordemEtapa = ordensetapas.find(
+                              oe => oe.ordem_id === ordem.id && oe.etapa_id === etapa.id
+                            );
+                            const timeInfo = calculateTimeRemaining(ordemEtapa, etapa, ordem);
+
+                            const placas = [
+                              cavalo?.placa,
+                              implemento1?.placa,
+                              implemento2?.placa,
+                              implemento3?.placa
+                            ].filter(Boolean);
+
+                            return (
+                              <div
+                                key={ordem.id}
+                                className="p-1.5 border rounded transition-all cursor-pointer"
+                                style={{
+                                  backgroundColor: theme.cardBg,
+                                  borderColor: timeInfo && timeInfo.atrasado ? (isDark ? '#b91c1c' : '#f87171') : theme.cardBorder
+                                }}
+                                onClick={() => handleOrdemClick(ordem)}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                                  e.currentTarget.style.borderColor = isDark ? '#3b82f6' : '#93c5fd';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.boxShadow = '';
+                                  e.currentTarget.style.borderColor = timeInfo && timeInfo.atrasado ? (isDark ? '#b91c1c' : '#f87171') : theme.cardBorder;
+                                }}
+                              >
+                                <div className="flex items-start justify-between mb-1">
+                                  <p className="font-bold text-xs text-blue-700 dark:text-blue-400 leading-tight">
+                                    {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
+                                  </p>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-5 p-0"
+                                    style={{ color: theme.textMuted }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEditOrdem(ordem);
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#dbeafe'}
+                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    title="Editar ordem"
+                                  >
+                                    <Edit className="w-2.5 h-2.5" />
+                                  </Button>
+                                </div>
+
+                                <div className="space-y-0.5 text-[10px]">
+                                  <p className="font-semibold truncate leading-tight" style={{ color: theme.text }}>{ordem.cliente}</p>
+                                  <p className="truncate leading-tight" style={{ color: theme.textMuted }}>{ordem.origem} → {ordem.destino}</p>
+
+                                  {ordem.status_tracking && (
+                                    <Badge className={`text-[8px] h-4 px-1 font-bold ${
+                                      ordem.status_tracking === 'aguardando_agendamento' ? 'bg-slate-500 text-white' :
+                                      ordem.status_tracking === 'carregamento_agendado' ? 'bg-blue-500 text-white' :
+                                      ordem.status_tracking === 'em_carregamento' ? 'bg-indigo-500 text-white' :
+                                      ordem.status_tracking === 'carregado' ? 'bg-purple-500 text-white' :
+                                      ordem.status_tracking === 'em_viagem' ? 'bg-cyan-500 text-white' :
+                                      ordem.status_tracking === 'chegada_destino' ? 'bg-teal-500 text-white' :
+                                      ordem.status_tracking === 'descarga_agendada' ? 'bg-amber-500 text-white' :
+                                      ordem.status_tracking === 'em_descarga' ? 'bg-orange-500 text-white' :
+                                      ordem.status_tracking === 'descarga_realizada' ? 'bg-green-500 text-white' :
+                                      'bg-gray-500 text-white'
+                                    }`}>
+                                      {ordem.status_tracking === 'aguardando_agendamento' ? 'Aguard. Agend.' :
+                                       ordem.status_tracking === 'carregamento_agendado' ? 'Carreg. Agend.' :
+                                       ordem.status_tracking === 'em_carregamento' ? 'Em Carreg.' :
+                                       ordem.status_tracking === 'em_viagem' ? 'Em Viagem' :
+                                       ordem.status_tracking === 'chegada_destino' ? 'Chegou' :
+                                       ordem.status_tracking === 'descarga_agendada' ? 'Desc. Agend.' :
+                                       ordem.status_tracking === 'em_descarga' ? 'Em Desc.' :
+                                       ordem.status_tracking === 'descarga_realizada' ? 'Desc. Realiz.' :
+                                       ordem.status_tracking}
+                                    </Badge>
+                                  )}
+
+                                  {operacao && (
+                                    <Badge variant="outline" className="text-[8px] h-4 px-1 truncate"
+                                      style={{ borderColor: theme.cardBorder, backgroundColor: theme.cardBg, color: theme.text }}>
+                                      {operacao.nome}
+                                    </Badge>
+                                  )}
+
+                                  {(motorista || ordem.motorista_nome_temp) && (
+                                    <p className="flex items-center gap-0.5 truncate leading-tight" style={{ color: theme.textMuted }}>
+                                      <User className="w-2.5 h-2.5 flex-shrink-0" />
+                                      <span className="truncate">{motorista ? formatarNomeMotorista(motorista.nome) : ordem.motorista_nome_temp}</span>
+                                    </p>
+                                  )}
+                                  {(placas.length > 0 || ordem.cavalo_placa_temp || ordem.implemento1_placa_temp) && (
+                                    <div className="flex items-start gap-0.5 leading-tight" style={{ color: theme.textMuted }}>
+                                      <Truck className="w-2.5 h-2.5 flex-shrink-0 mt-0.5" />
+                                      <span className="text-[9px] font-mono font-bold break-words" style={{ color: theme.text }}>
+                                        {placas.length > 0 
+                                          ? placas.join(' • ')
+                                          : [ordem.cavalo_placa_temp, ordem.implemento1_placa_temp, ordem.implemento2_placa_temp].filter(Boolean).join(' • ')
+                                        }
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  {timeInfo && (
+                                    <div className="mt-1 pt-1 border-t" style={{ borderColor: theme.cardBorder }}>
+                                      <div className="h-0.5 rounded-full overflow-hidden mb-0.5"
+                                        style={{ backgroundColor: isDark ? '#334155' : '#e5e7eb' }}>
+                                        <div
+                                          className={`h-full ${timeInfo.atrasado ? 'bg-red-500' : timeInfo.percentual > 75 ? 'bg-yellow-500' : 'bg-blue-500'}`}
+                                          style={{ width: `${Math.min(100, timeInfo.percentual)}%` }}
+                                        />
+                                      </div>
+                                      <p className={`text-[9px] font-bold ${timeInfo.atrasado ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                                        {timeInfo.atrasado && '⚠️ '}
+                                        {formatTimeRemaining(timeInfo.minutosRestantes)}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </TabsContent>
+          </Tabs>
+          </div>
 
       {selectedOrdem && (
         <OrdemDetails
