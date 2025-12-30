@@ -228,10 +228,10 @@ export default function Gamificacao() {
                dataOcorrencia >= inicioMes && dataOcorrencia <= fimMes;
       });
 
-      // Filtrar TODAS as ordens do período (mesma lógica de /Tracking e /Fluxo)
+      // ==================== FILTRO DE ORDENS (MESMA LÓGICA DE /TRACKING E /FLUXO) ====================
       let ordensVisiveis = ordens;
       
-      // Aplicar filtro de permissões (mesma lógica de Tracking/Fluxo)
+      // 1. Filtro de permissões por perfil
       if (currentUser.tipo_perfil === "fornecedor") {
         ordensVisiveis = ordens.filter(o => o.cliente_cnpj === currentUser.cnpj_associado);
       } else if (currentUser.tipo_perfil === "cliente") {
@@ -242,15 +242,22 @@ export default function Gamificacao() {
           : ordens;
       }
       
-      // Excluir coletas não aprovadas (mesma regra de /Tracking)
+      // 2. Excluir coletas não aprovadas e tipos específicos (mesma regra de /Tracking e /Fluxo)
       ordensVisiveis = ordensVisiveis.filter(o => {
-        if (o.tipo_registro === "coleta_solicitada" || o.tipo_registro === "coleta_reprovada") {
-          return false;
-        }
+        // Excluir coletas não aprovadas
+        const tiposExcluidos = ["coleta_solicitada", "coleta_reprovada"];
+        if (tiposExcluidos.includes(o.tipo_registro)) return false;
+        
+        // Excluir coletas, recebimentos e entregas pelo numero ou tipo
+        if (o.numero_coleta?.startsWith("COL-")) return false;
+        if (o.numero_carga?.startsWith("REC-")) return false;
+        if (o.numero_carga?.startsWith("ENT-")) return false;
+        if (["coleta", "recebimento", "entrega"].includes(o.tipo_ordem)) return false;
+        
         return true;
       });
 
-      // Filtrar por período baseado no campo de data selecionado
+      // 3. Filtrar por período baseado no campo de data selecionado
       const ordensUsuario = ordensVisiveis.filter(o => {
         const expurgado = expurgadosMetricaAtual.some(r => r.registro_id === o.id);
         if (expurgado) return false;
@@ -268,7 +275,7 @@ export default function Gamificacao() {
         return dataOrdem >= inicioMes && dataOrdem <= fimMes;
       });
 
-      // Ordens criadas PELO USUÁRIO (para métrica individual de produtividade)
+      // Ordens criadas PELO USUÁRIO no período (para métrica individual de produtividade)
       const ordensCriadasPeloUsuario = ordensUsuario.filter(o => o.created_by === currentUser.email).length;
 
       // Etapas filtradas por data de conclusão
@@ -337,14 +344,23 @@ export default function Gamificacao() {
         }
       }
 
-      // Calcular média da empresa usando o mesmo filtro de data
+      // Calcular média da empresa (total de ordens CRIADAS, não visíveis)
       const todosUsuarios = usuarios.filter(u => u.empresa_id === currentUser.empresa_id);
       let totalOrdensEmpresa = 0;
       let totalEtapasEmpresa = 0;
 
       for (const usuario of todosUsuarios) {
+        // Contar apenas ordens CRIADAS por cada usuário
         const ordensUsuarioEmpresa = ordens.filter(o => {
           if (o.created_by !== usuario.email) return false;
+          
+          // Aplicar mesmos filtros de exclusão
+          const tiposExcluidos = ["coleta_solicitada", "coleta_reprovada"];
+          if (tiposExcluidos.includes(o.tipo_registro)) return false;
+          if (o.numero_coleta?.startsWith("COL-")) return false;
+          if (o.numero_carga?.startsWith("REC-")) return false;
+          if (o.numero_carga?.startsWith("ENT-")) return false;
+          if (["coleta", "recebimento", "entrega"].includes(o.tipo_ordem)) return false;
           
           let dataOrdem = null;
           if (tipoCampoData === "criacao") {
@@ -373,21 +389,8 @@ export default function Gamificacao() {
       const mediaEtapasEmpresa = todosUsuarios.length > 0 ? totalEtapasEmpresa / todosUsuarios.length : 0;
 
       // ==================== CÁLCULO SLA TRACKING ====================
-      // Filtrar ordens baseado no campo de data selecionado
-      const ordensTracking = ordens.filter(o => {
-        let dataOrdem = null;
-        
-        if (tipoCampoData === "criacao") {
-          dataOrdem = o.created_date ? new Date(o.created_date) : null;
-        } else if (tipoCampoData === "agenda_carga") {
-          dataOrdem = o.carregamento_agendamento_data ? new Date(o.carregamento_agendamento_data) : null;
-        } else if (tipoCampoData === "agenda_descarga") {
-          dataOrdem = o.descarga_agendamento_data ? new Date(o.descarga_agendamento_data) : null;
-        }
-
-        if (!dataOrdem) return false;
-        return dataOrdem >= inicioMes && dataOrdem <= fimMes;
-      });
+      // Usar as mesmas ordens já filtradas (ordensUsuario) para garantir consistência
+      const ordensTracking = ordensUsuario;
 
       let carregamentosTotal = 0;
       let carregamentosNoPrazo = 0;
@@ -766,12 +769,12 @@ export default function Gamificacao() {
                 <div className="flex items-center justify-between mb-2">
                   <Package className="w-5 h-5 text-blue-600" />
                   <span className="text-2xl font-bold" style={{ color: theme.text }}>
-                    {ordensUsuario?.length || 0}
+                    {gamificacao?.ordens_criadas_mes || 0}
                   </span>
                 </div>
-                <p className="text-xs font-medium" style={{ color: theme.textMuted }}>Ordens no Período</p>
+                <p className="text-xs font-medium" style={{ color: theme.textMuted }}>Ordens Criadas</p>
                 <p className="text-[10px] mt-1" style={{ color: theme.textMuted }}>
-                  Criadas por você: {gamificacao?.ordens_criadas_mes || 0}
+                  Total no período: {ordensUsuario?.length || 0}
                 </p>
               </CardContent>
             </Card>
@@ -851,8 +854,8 @@ export default function Gamificacao() {
                     <Clock className="w-5 h-5 text-cyan-600" />
                     SLA de Tracking
                   </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                   <div className="text-center py-4">
                     <p className="text-5xl font-bold text-cyan-600">
                       {(gamificacao?.sla_tracking_mes || 100).toFixed(1)}%
@@ -877,7 +880,7 @@ export default function Gamificacao() {
                       </div>
                       {metricaMensal?.carregamentos_total > 0 && (
                         <p className="text-xs font-bold text-cyan-700 dark:text-cyan-400">
-                          {((metricaMensal.carregamentos_no_prazo / metricaMensal.carregamentos_total) * 100).toFixed(1)}%
+                          {metricaMensal.sla_carregamento?.toFixed(1)}%
                         </p>
                       )}
                     </div>
@@ -898,7 +901,7 @@ export default function Gamificacao() {
                       </div>
                       {metricaMensal?.entregas_total > 0 && (
                         <p className="text-xs font-bold text-teal-700 dark:text-teal-400">
-                          {((metricaMensal.entregas_no_prazo / metricaMensal.entregas_total) * 100).toFixed(1)}%
+                          {metricaMensal.sla_entrega?.toFixed(1)}%
                         </p>
                       )}
                     </div>
@@ -910,6 +913,9 @@ export default function Gamificacao() {
                     </p>
                     <p className="text-sm" style={{ color: theme.text }}>
                       Este índice mede a pontualidade em carregamentos e entregas. Meta: <strong>95%</strong> (Aceitável: 90%)
+                    </p>
+                    <p className="text-xs mt-2" style={{ color: theme.textMuted }}>
+                      Baseado em {ordensUsuario?.length || 0} ordem(ns) no período
                     </p>
                   </div>
                 </CardContent>
@@ -933,13 +939,25 @@ export default function Gamificacao() {
 
                     <div className="space-y-3">
                       <div className="flex items-center justify-between text-sm">
+                        <span style={{ color: theme.textMuted }}>Total de Ocorrências</span>
+                        <Badge variant="outline">
+                          {metricaMensal?.ocorrencias_total || 0}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
                         <span style={{ color: theme.textMuted }}>Ocorrências Abertas</span>
-                        <Badge variant="outline" className="text-red-600">
+                        <Badge variant="outline" className="text-orange-600">
                           {gamificacao?.ocorrencias_abertas_mes || 0}
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between text-sm">
-                        <span style={{ color: theme.textMuted }}>Ocorrências Críticas</span>
+                        <span style={{ color: theme.textMuted }}>Ocorrências Resolvidas</span>
+                        <Badge variant="outline" className="text-green-600">
+                          {gamificacao?.ocorrencias_resolvidas_mes || 0}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span style={{ color: theme.textMuted }}>Críticas</span>
                         <Badge variant="outline" className="text-red-600">
                           {metricaMensal?.ocorrencias_criticas || 0}
                         </Badge>
@@ -977,7 +995,7 @@ export default function Gamificacao() {
 
                     <div className="space-y-3">
                       <div className="flex items-center justify-between text-sm">
-                        <span style={{ color: theme.textMuted }}>Ordens Criadas</span>
+                        <span style={{ color: theme.textMuted }}>Ordens Criadas por Você</span>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline">
                             {gamificacao?.ordens_criadas_mes || 0}
@@ -990,6 +1008,12 @@ export default function Gamificacao() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between text-sm">
+                        <span style={{ color: theme.textMuted }}>Média da Empresa</span>
+                        <Badge variant="outline">
+                          {metricaMensal?.media_empresa_ordens?.toFixed(1) || '0'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
                         <span style={{ color: theme.textMuted }}>Etapas Concluídas</span>
                         <Badge variant="outline">
                           {gamificacao?.etapas_concluidas_mes || 0}
@@ -999,6 +1023,12 @@ export default function Gamificacao() {
                         <span style={{ color: theme.textMuted }}>Etapas no Prazo</span>
                         <Badge variant="outline" className="text-green-600">
                           {gamificacao?.etapas_no_prazo_mes || 0}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span style={{ color: theme.textMuted }}>Etapas Atrasadas</span>
+                        <Badge variant="outline" className="text-red-600">
+                          {gamificacao?.etapas_atrasadas_mes || 0}
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between text-sm">
