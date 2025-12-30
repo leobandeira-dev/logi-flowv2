@@ -87,6 +87,13 @@ export default function Gamificacao() {
     loadData();
   }, []);
 
+  // Recarregar dados quando filtros mudarem
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [periodoSelecionado, anoSelecionado, mesSelecionado, dataInicioPersonalizada, dataFimPersonalizada, tipoCampoData, usuarioFilter, operacaoFilter]);
+
   const [ordensUsuario, setOrdensUsuario] = useState([]);
   const [todosUsuariosFilter, setTodosUsuariosFilter] = useState([]);
   const [todasOperacoes, setTodasOperacoes] = useState([]);
