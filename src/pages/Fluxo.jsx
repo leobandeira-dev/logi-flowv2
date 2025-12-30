@@ -1314,7 +1314,10 @@ export default function Fluxo() {
               <div className="flex items-center justify-between mb-2">
                 <CheckCircle2 className="w-5 h-5 text-green-600" />
                 <span className="text-2xl font-bold text-green-600">
-                  {ordensetapas.filter(oe => oe.status === "concluida").length}
+                  {ordensetapas.filter(oe => {
+                    const ordemFiltrada = filteredOrdens.some(o => o.id === oe.ordem_id);
+                    return ordemFiltrada && oe.status === "concluida";
+                  }).length}
                 </span>
               </div>
               <p className="text-xs font-medium" style={{ color: theme.textMuted }}>Concluídas</p>
