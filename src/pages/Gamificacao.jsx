@@ -219,6 +219,14 @@ export default function Gamificacao() {
         return fim;
       })();
 
+      console.log("🔍 GAMIFICAÇÃO - Calculando métricas:", {
+        mesAtual,
+        periodo: { inicioMes, fimMes },
+        tipoCampoData: tipoCampoDataProp,
+        usuarioFilter: usuarioFilterProp,
+        operacaoFilter: operacaoFilterProp
+      });
+
       const [ocorrencias, ordens, ordensEtapas, usuarios, tiposOcorrencia, etapas, registrosExpurgados, operacoes] = await Promise.all([
         base44.entities.Ocorrencia.list(),
         base44.entities.OrdemDeCarregamento.list(),
@@ -584,6 +592,14 @@ export default function Gamificacao() {
       });
       const metricaAtualizadaNaoExpurgada = metricaAtualizada.find(m => !m.expurgada);
       setMetricaMensal(metricaAtualizadaNaoExpurgada);
+
+      console.log("✅ GAMIFICAÇÃO - Métricas calculadas:", {
+        ordensNoPeriodo: ordensUsuario.length,
+        ordensCriadasPeloUsuario,
+        etapasConcluidas,
+        ocorrenciasTotal: ocorrenciasUsuario.length,
+        slaFinal: slaFinal.toFixed(1)
+      });
 
       // Retornar ordens para exibição
       return ordensUsuario;
