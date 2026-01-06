@@ -7,7 +7,7 @@ import PerfilFotoModal from "./components/usuario/PerfilFotoModal";
 import MeuPerfilModal from "./components/usuario/MeuPerfilModal";
 import NotificacaoOcorrencia from "./components/notificacoes/NotificacaoOcorrencia";
 import TratarOcorrenciaModal from "./components/fluxo/TratarOcorrenciaModal";
-import ChamadoButton from "./components/chamados/ChamadoButton";
+
 import {
   Truck,
   LayoutDashboard,
@@ -1180,10 +1180,7 @@ export default function Layout({ children, currentPageName }) {
         {children}
       </main>
 
-      {/* Botão de Chamados - disponível em todas as páginas */}
-      {user && (
-        <ChamadoButton currentPage={currentPageName} />
-      )}
+
 
       {/* Notificação de Nova Ocorrência */}
       {showNotificacao && novaOcorrencia && (
