@@ -59,6 +59,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
   const [notasExpandidas, setNotasExpandidas] = useState({});
   const [notaEmConferencia, setNotaEmConferencia] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [apenasNotasVinculadas, setApenasNotasVinculadas] = useState(false);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -868,7 +869,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
         </div>
 
         {/* Scanner QR Code */}
-        <div className="border-b p-3" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <div className="border-b p-3 space-y-2" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
           <Button
             onClick={() => {
               // Identificar nota em conferência (primeira com volumes pendentes)
@@ -886,6 +887,26 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
             <Camera className="w-5 h-5 mr-2" />
             Escanear QR Code
           </Button>
+          
+          <div className="flex items-center gap-2 p-2 rounded border" style={{ borderColor: theme.cardBorder }}>
+            <Checkbox
+              id="apenas-vinculadas"
+              checked={apenasNotasVinculadas}
+              onCheckedChange={(checked) => setApenasNotasVinculadas(checked)}
+            />
+            <label
+              htmlFor="apenas-vinculadas"
+              className="text-xs font-medium cursor-pointer flex-1"
+              style={{ color: theme.text }}
+            >
+              Apenas Notas Vinculadas
+            </label>
+            {apenasNotasVinculadas && (
+              <Badge className="bg-blue-600 text-white text-[10px] px-1.5 py-0">
+                Ativo
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Lista Resumida de Notas Fiscais */}
