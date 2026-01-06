@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Trash2, Eye, Package, User, Truck, FileText, Printer, Check, X, Scan, Grid3x3 } from "lucide-react";
+import { Edit, Trash2, Eye, Package, User, Truck, FileText, Printer, Check, X, Scan, Grid3x3, GitBranch } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,7 +58,7 @@ const tipoVeiculoOptions = [
   "CARRETA 7EIXOS", "BITREM", "CARRETA LOC", "PRANCHA", "BI-TRUCK", "FIORINO"
 ];
 
-export default function OrdensTableEditable({ ordens, motoristas, veiculos, operacoes, loading, onEdit, onViewDetails, onDelete, onUpdate, onConferencia, onEnderecamento }) {
+export default function OrdensTableEditable({ ordens, motoristas, veiculos, operacoes, loading, onEdit, onViewDetails, onDelete, onUpdate, onConferencia, onEnderecamento, onCriarOrdemFilha }) {
   const [isDark, setIsDark] = useState(false);
   const [showImpressao, setShowImpressao] = useState(false);
   const [selectedOrdem, setSelectedOrdem] = useState(null);
@@ -945,6 +945,18 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                                 title="Endereçamento de Veículo"
                               >
                                 <Grid3x3 className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
+                            {onCriarOrdemFilha && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onCriarOrdemFilha(ordem)}
+                                className="h-6 w-6 p-0"
+                                style={{ color: '#10b981' }}
+                                title="Criar Ordem Filha"
+                              >
+                                <GitBranch className="w-3.5 h-3.5" />
                               </Button>
                             )}
                             <Button

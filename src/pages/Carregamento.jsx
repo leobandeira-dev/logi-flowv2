@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Filter, ChevronDown, FileText, Package, FileSpreadsheet, X, RefreshCw, Scan, Grid3x3 } from "lucide-react";
+import { Plus, Search, Filter, ChevronDown, FileText, Package, FileSpreadsheet, X, RefreshCw, Scan, Grid3x3, GitBranch } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -26,6 +26,7 @@ import PaginacaoControles from "../components/filtros/PaginacaoControles";
 import FiltroDataPeriodo from "../components/filtros/FiltroDataPeriodo";
 import ConferenciaVolumes from "../components/carregamento/ConferenciaVolumes";
 import EnderecamentoVeiculo from "../components/carregamento/EnderecamentoVeiculo";
+import SubOrdemForm from "../components/ordens/SubOrdemForm";
 
 export default function Carregamento() {
   const [ordens, setOrdens] = useState([]);
@@ -49,6 +50,8 @@ export default function Carregamento() {
   const [showConferencia, setShowConferencia] = useState(false);
   const [showEnderecamento, setShowEnderecamento] = useState(false);
   const [ordemParaConferencia, setOrdemParaConferencia] = useState(null);
+  const [showOrdemFilhaForm, setShowOrdemFilhaForm] = useState(false);
+  const [ordemMae, setOrdemMae] = useState(null);
   
   const hoje = new Date();
   const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -173,6 +176,11 @@ export default function Carregamento() {
       console.error("Erro ao abrir endereçamento:", error);
       toast.error("Erro ao abrir endereçamento");
     }
+  };
+
+  const handleCriarOrdemFilha = (ordem) => {
+    setOrdemMae(ordem);
+    setShowOrdemFilhaForm(true);
   };
 
   const vincularPrimeiraEtapa = async (ordemId) => {
@@ -714,7 +722,7 @@ export default function Carregamento() {
                     </div>
 
                     {/* Actions */}
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                       <Button
                         onClick={() => handleAbrirConferencia(ordem)}
                         size="sm"
@@ -730,6 +738,16 @@ export default function Carregamento() {
                       >
                         <Grid3x3 className="w-4 h-4 mr-2" />
                         Endereçamento
+                      </Button>
+                      <Button
+                        onClick={() => handleCriarOrdemFilha(ordem)}
+                        size="sm"
+                        variant="outline"
+                        className="h-11 text-sm"
+                        style={{ borderColor: theme.cardBorder, color: '#10b981' }}
+                      >
+                        <GitBranch className="w-4 h-4 mr-2" />
+                        Ordem Filha
                       </Button>
                     </div>
                   </CardContent>
@@ -1052,6 +1070,7 @@ export default function Carregamento() {
           onUpdate={loadData}
           onConferencia={handleAbrirConferencia}
           onEnderecamento={handleAbrirEnderecamento}
+          onCriarOrdemFilha={handleCriarOrdemFilha}
         />
       </div>
 
@@ -1144,6 +1163,24 @@ export default function Carregamento() {
           onComplete={async () => {
             setShowEnderecamento(false);
             setOrdemParaConferencia(null);
+            await loadData();
+          }}
+        />
+      )}
+
+      {showOrdemFilhaForm && ordemMae && (
+        <SubOrdemForm
+          open={showOrdemFilhaForm}
+          onClose={() => {
+            setShowOrdemFilhaForm(false);
+            setOrdemMae(null);
+          }}
+          ordemMae={ordemMae}
+          motoristas={motoristas}
+          veiculos={veiculos}
+          onSuccess={async () => {
+            setShowOrdemFilhaForm(false);
+            setOrdemMae(null);
             await loadData();
           }}
         />
