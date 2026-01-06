@@ -117,39 +117,13 @@ export default function Recebimento() {
     
     setLoadingNotas(true);
     try {
-      // Carregar TODAS as notas fiscais do banco sem limit (SDK usa limit 50 por padrão)
-      // Buscar em lotes para evitar timeout
-      let todasNotas = [];
-      let skip = 0;
-      const batchSize = 1000;
-      let hasMore = true;
+      // Carregar todas as notas com limit alto (SDK suporta até 10000 por chamada)
+      const notasData = await base44.entities.NotaFiscal.list("-created_date", 10000);
       
-      while (hasMore) {
-        const notasBatch = await base44.entities.NotaFiscal.list("-created_date", batchSize);
-        
-        if (notasBatch.length === 0) {
-          hasMore = false;
-        } else {
-          todasNotas = [...todasNotas, ...notasBatch];
-          skip += batchSize;
-          
-          // Se retornou menos que o batch size, não há mais registros
-          if (notasBatch.length < batchSize) {
-            hasMore = false;
-          }
-        }
-        
-        // Limitar a 50.000 registros para evitar problemas de memória
-        if (todasNotas.length >= 50000) {
-          console.warn("Limite de 50.000 notas atingido");
-          hasMore = false;
-        }
-      }
+      console.log(`📦 Total de notas fiscais carregadas: ${notasData.length}`);
       
-      console.log(`📦 Total de notas fiscais carregadas: ${todasNotas.length}`);
-      
-      setTodasNotasFiscais(todasNotas);
-      setTotalNotasFiscais(todasNotas.length);
+      setTodasNotasFiscais(notasData);
+      setTotalNotasFiscais(notasData.length);
       setNotasCarregadas(true);
     } catch (error) {
       console.error("Erro ao carregar notas fiscais:", error);
