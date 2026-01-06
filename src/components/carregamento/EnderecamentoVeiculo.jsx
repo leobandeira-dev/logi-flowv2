@@ -2526,65 +2526,51 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     volumesLocal={volumesLocal}
                     onSelecionarNota={async (nota) => {
                       try {
-                        // Verificar se nota já está vinculada à ordem
                         const jaVinculada = notasFiscaisLocal.some(nf => nf.id === nota.id);
 
-                        // Buscar TODOS os volumes da nota PRIMEIRO (evita duplicação)
-                        const volumesNotaDB = await base44.entities.Volume.filter({ nota_fiscal_id: nota.id });
+                        // Buscar volumes em paralelo
+                        const [volumesNotaDB] = await Promise.all([
+                          base44.entities.Volume.filter({ nota_fiscal_id: nota.id })
+                        ]);
 
-                        // Filtrar volumes que já existem localmente
                         const volumesIdsLocais = volumesLocal.map(v => v.id);
                         const volumesNovos = volumesNotaDB.filter(v => !volumesIdsLocais.includes(v.id));
 
                         if (!jaVinculada) {
-                          // Vincular nota à ordem
-                          await base44.entities.NotaFiscal.update(nota.id, {
-                            ordem_id: ordem.id,
-                            status_nf: "aguardando_expedicao"
-                          });
-
-                          // Atualizar ordem com nova nota
                           const notasIds = [...(ordem.notas_fiscais_ids || []), nota.id];
-                          await base44.entities.OrdemDeCarregamento.update(ordem.id, {
-                            notas_fiscais_ids: notasIds
+                          
+                          // Executar updates em paralelo
+                          await Promise.all([
+                            base44.entities.NotaFiscal.update(nota.id, {
+                              ordem_id: ordem.id,
+                              status_nf: "aguardando_expedicao"
+                            }),
+                            base44.entities.OrdemDeCarregamento.update(ordem.id, {
+                              notas_fiscais_ids: notasIds
+                            })
+                          ]);
+
+                          setNotasFiscaisLocal(prev => {
+                            if (prev.find(n => n.id === nota.id)) return prev;
+                            return [...prev, nota];
                           });
-
-                          // Atualizar estados ANTES de buscar volumes
-                          setNotasFiscaisLocal(prev => [...prev, nota]);
                           setNotasOrigem(prev => ({ ...prev, [nota.id]: "Adicionada" }));
-
-                          toast.success(`NF ${nota.numero_nota} vinculada!`);
                         }
 
-                        // Adicionar apenas volumes novos (evita duplicação)
                         if (volumesNovos.length > 0) {
                           setVolumesLocal(prev => [...prev, ...volumesNovos]);
-
-                          localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
-                            notas: jaVinculada ? notasFiscaisLocal : [...notasFiscaisLocal, nota],
-                            volumes: [...volumesLocal, ...volumesNovos],
-                            timestamp: new Date().toISOString()
-                          }));
                         }
 
-                        // Usar todos os volumes carregados (locais + novos)
                         const volumesTotais = [...volumesLocal, ...volumesNovos];
                         const volumesNota = volumesTotais.filter(v => v.nota_fiscal_id === nota.id);
-
-                        const volumesNaoEnderecados = volumesNota.filter(v => {
-                          const idsEnderecados = getEnderecamentosOrdemAtual().map(e => e.volume_id);
-                          return !idsEnderecados.includes(v.id);
-                        });
+                        const idsEnderecados = getEnderecamentosOrdemAtual().map(e => e.volume_id);
+                        const volumesNaoEnderecados = volumesNota.filter(v => !idsEnderecados.includes(v.id));
 
                         setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
                         setNotasBaseBusca("");
                         setAbaAtiva("volumes");
 
-                        if (volumesNaoEnderecados.length > 0) {
-                          toast.success(`${volumesNaoEnderecados.length} vol. selecionado(s)`, { duration: 2000 });
-                        } else {
-                          toast.info("Todos os volumes já endereçados");
-                        }
+                        toast.success(`✓ ${volumesNaoEnderecados.length || volumesNota.length} vol. de NF ${nota.numero_nota}`, { duration: 1500 });
                       } catch (error) {
                         console.error("Erro ao vincular nota:", error);
                         toast.error("Erro ao vincular nota fiscal");
@@ -3098,62 +3084,51 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                           volumesLocal={volumesLocal}
                           onSelecionarNota={async (nota) => {
                         try {
-                          // Verificar se nota já está vinculada à ordem
                           const jaVinculada = notasFiscaisLocal.some(nf => nf.id === nota.id);
                           
-                          // Buscar TODOS os volumes da nota PRIMEIRO (evita duplicação)
-                          const volumesNotaDB = await base44.entities.Volume.filter({ nota_fiscal_id: nota.id });
+                          // Buscar volumes em paralelo
+                          const [volumesNotaDB] = await Promise.all([
+                            base44.entities.Volume.filter({ nota_fiscal_id: nota.id })
+                          ]);
                           
-                          // Filtrar volumes que já existem localmente
                           const volumesIdsLocais = volumesLocal.map(v => v.id);
                           const volumesNovos = volumesNotaDB.filter(v => !volumesIdsLocais.includes(v.id));
                           
                           if (!jaVinculada) {
-                            // Vincular nota à ordem
-                            await base44.entities.NotaFiscal.update(nota.id, {
-                              ordem_id: ordem.id,
-                              status_nf: "aguardando_expedicao"
-                            });
-
-                            // Atualizar ordem com nova nota
                             const notasIds = [...(ordem.notas_fiscais_ids || []), nota.id];
-                            await base44.entities.OrdemDeCarregamento.update(ordem.id, {
-                              notas_fiscais_ids: notasIds
-                            });
-
-                            // Atualizar estados ANTES de buscar volumes
-                            setNotasFiscaisLocal(prev => [...prev, nota]);
-                            setNotasOrigem(prev => ({ ...prev, [nota.id]: "Adicionada" }));
                             
-                            toast.success(`NF ${nota.numero_nota} vinculada!`);
+                            // Executar updates em paralelo
+                            await Promise.all([
+                              base44.entities.NotaFiscal.update(nota.id, {
+                                ordem_id: ordem.id,
+                                status_nf: "aguardando_expedicao"
+                              }),
+                              base44.entities.OrdemDeCarregamento.update(ordem.id, {
+                                notas_fiscais_ids: notasIds
+                              })
+                            ]);
+
+                            setNotasFiscaisLocal(prev => {
+                              if (prev.find(n => n.id === nota.id)) return prev;
+                              return [...prev, nota];
+                            });
+                            setNotasOrigem(prev => ({ ...prev, [nota.id]: "Adicionada" }));
                           }
 
-                          // Adicionar apenas volumes novos (evita duplicação)
                           if (volumesNovos.length > 0) {
                             setVolumesLocal(prev => [...prev, ...volumesNovos]);
                           }
                           
-                          // Usar todos os volumes carregados (locais + novos)
                           const volumesTotais = [...volumesLocal, ...volumesNovos];
                           const volumesNota = volumesTotais.filter(v => v.nota_fiscal_id === nota.id);
-                          
-                          const volumesNaoEnderecados = volumesNota.filter(v => {
-                            const idsEnderecados = getEnderecamentosOrdemAtual().map(e => e.volume_id);
-                            return !idsEnderecados.includes(v.id);
-                          });
+                          const idsEnderecados = getEnderecamentosOrdemAtual().map(e => e.volume_id);
+                          const volumesNaoEnderecados = volumesNota.filter(v => !idsEnderecados.includes(v.id));
                           
                           setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
                           setNotasBaseBusca("");
                           setAbaAtiva("volumes");
                           
-                          if (volumesNaoEnderecados.length > 0) {
-                            toast.success(`${volumesNaoEnderecados.length} vol. selecionado(s)`, { duration: 2000 });
-                          } else {
-                            toast.info("Todos os volumes já endereçados");
-                          }
-                          
-                          // Salvar rascunho de forma assíncrona
-                          salvarRascunho();
+                          toast.success(`✓ ${volumesNaoEnderecados.length || volumesNota.length} vol. de NF ${nota.numero_nota}`, { duration: 1500 });
                         } catch (error) {
                           console.error("Erro ao vincular nota:", error);
                           toast.error("Erro ao vincular nota fiscal");
