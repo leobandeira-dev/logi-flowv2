@@ -175,6 +175,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const [movimentacaoNota, setMovimentacaoNota] = useState(null);
   const [quantidadeMovimentar, setQuantidadeMovimentar] = useState("");
   const [apenasNotasVinculadas, setApenasNotasVinculadas] = useState(false);
+  const [showCameraNotaFiscal, setShowCameraNotaFiscal] = useState(false);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -1378,6 +1379,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     await handleBuscarVolumeOuEtiqueta(codigo);
   };
 
+  const handleScanCodigoBarrasNF = async (codigo) => {
+    setShowCameraNotaFiscal(false);
+    const chave = codigo.trim().replace(/\D/g, '');
+    if (chave.length === 44) {
+      await handlePesquisarChaveNF(chave);
+    } else {
+      toast.error("Código de barras inválido. Deve ter 44 dígitos.");
+    }
+  };
+
   const handleImprimirListaNotas = async () => {
     try {
       const user = await base44.auth.me();
@@ -2379,6 +2390,14 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                   
                   {!usarBase ? (
                     <>
+                      <Button
+                        onClick={() => setShowCameraNotaFiscal(true)}
+                        className="bg-blue-600 hover:bg-blue-700 w-full mb-2 h-8"
+                        size="sm"
+                      >
+                        <Camera className="w-3 h-3 mr-2" />
+                        Escanear Código de Barras
+                      </Button>
                       <Input
                         ref={inputChaveRef}
                         placeholder="Cole ou bipe a chave..."
@@ -2665,12 +2684,22 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           </DialogContent>
         </Dialog>
 
-        {/* Modal de Câmera Mobile */}
+        {/* Modal de Câmera Mobile - Volumes */}
         {showCamera && (
           <CameraScanner
             open={showCamera}
             onClose={() => setShowCamera(false)}
             onScan={handleScanQRCode}
+            isDark={isDark}
+          />
+        )}
+
+        {/* Modal de Câmera Mobile - Nota Fiscal */}
+        {showCameraNotaFiscal && (
+          <CameraScanner
+            open={showCameraNotaFiscal}
+            onClose={() => setShowCameraNotaFiscal(false)}
+            onScan={handleScanCodigoBarrasNF}
             isDark={isDark}
           />
         )}
@@ -2934,6 +2963,14 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 
                 {!usarBase ? (
                   <>
+                    <Button
+                      onClick={() => setShowCameraNotaFiscal(true)}
+                      className="bg-blue-600 hover:bg-blue-700 w-full mb-2 h-7"
+                      size="sm"
+                    >
+                      <Camera className="w-3 h-3 mr-2" />
+                      Escanear Código de Barras
+                    </Button>
                     <Input
                       ref={inputChaveRef}
                       placeholder="44 dígitos - bipe ou cole..."
@@ -3686,12 +3723,22 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         </div>
       </div>
 
-      {/* Modal de Câmera Desktop */}
+      {/* Modal de Câmera Desktop - Volumes */}
       {showCamera && (
         <CameraScanner
           open={showCamera}
           onClose={() => setShowCamera(false)}
           onScan={handleScanQRCode}
+          isDark={isDark}
+        />
+      )}
+
+      {/* Modal de Câmera Desktop - Nota Fiscal */}
+      {showCameraNotaFiscal && (
+        <CameraScanner
+          open={showCameraNotaFiscal}
+          onClose={() => setShowCameraNotaFiscal(false)}
+          onScan={handleScanCodigoBarrasNF}
           isDark={isDark}
         />
       )}
