@@ -1039,7 +1039,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
       const veiculosIds = { cavalo: null, implemento1: null, implemento2: null, implemento3: null };
       let currentVeiculosList = [...veiculos];
 
-      const findOrCreateVeiculo = async (placa, renavam, tipo) => {
+      const findOrCreateVeiculo = async (placa, renavam, antt, tipo) => {
         if (!placa) return null;
         const placaLimpa = placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
         let veiculoObj = currentVeiculosList.find(v =>
@@ -1047,6 +1047,10 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
         );
 
         if (veiculoObj) {
+          // Atualizar ANTT se disponível e não existente
+          if (antt && !veiculoObj.antt_numero) {
+             await base44.entities.Veiculo.update(veiculoObj.id, { antt_numero: antt });
+          }
           return veiculoObj.id;
         } else {
           const novoVeiculo = await base44.entities.Veiculo.create({
@@ -1055,6 +1059,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
             marca: "A definir",
             modelo: "A definir",
             renavam: renavam || "",
+            antt_numero: antt || "",
             status: "disponível"
           });
           currentVeiculosList.push(novoVeiculo);
@@ -1062,7 +1067,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
         }
       };
 
-      veiculosIds.cavalo = await findOrCreateVeiculo(dados.cavalo_placa, dados.cavalo_renavam, "cavalo");
+      veiculosIds.cavalo = await findOrCreateVeiculo(dados.cavalo_placa, dados.cavalo_renavam, dados.cavalo_antt, "cavalo");
       veiculosIds.implemento1 = await findOrCreateVeiculo(dados.implemento1_placa, dados.implemento1_renavam, "semi-reboque");
       veiculosIds.implemento2 = await findOrCreateVeiculo(dados.implemento2_placa, dados.implemento2_renavam, "semi-reboque");
       veiculosIds.implemento3 = await findOrCreateVeiculo(dados.implemento3_placa, dados.implemento3_renavam, "semi-reboque");
