@@ -1015,6 +1015,13 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
 
                             {/* Mobile/Tablet: Botão de ações + botões fixos */}
                             <div className="flex lg:hidden items-center justify-end gap-1">
+                              {/* Ícone de oferta - à esquerda para não desalinhar os botões fixos */}
+                              {tipoRegistro === "oferta" && (
+                                <div className="mr-auto">
+                                  <ExportarOfertaIndividual ordem={ordem} />
+                                </div>
+                              )}
+
                               {/* Dropdown com ações principais */}
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -1050,12 +1057,7 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                                 </DropdownMenuContent>
                               </DropdownMenu>
 
-                              {/* Botões fixos sempre visíveis - alinhados */}
-                              {tipoRegistro === "oferta" && (
-                                <div className="flex items-center">
-                                  <ExportarOfertaIndividual ordem={ordem} />
-                                </div>
-                              )}
+                              {/* Botões fixos sempre visíveis - alinhados à direita */}
                               <Button
                                 variant="ghost"
                                 size="sm"
