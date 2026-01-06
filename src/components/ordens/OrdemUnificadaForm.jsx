@@ -969,32 +969,53 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      const ordemSchema = {
-        type: "object",
-        properties: {
-          motorista_nome: { type: "string" },
-          motorista_cpf: { type: "string" },
-          cavalo_placa: { type: "string" },
-          implemento1_placa: { type: "string" },
-          origem_cidade: { type: "string" },
-          destino_cidade: { type: "string" },
-          coleta_razao_social: { type: "string" },
-          destinatario_razao_social: { type: "string" },
-          produto: { type: "string" },
-          peso: { type: "string" }
-        }
-      };
+      // Usar LLM diretamente para extração (mais flexível)
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analise este PDF de ordem de carregamento e extraia as seguintes informações em formato JSON:
 
-      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-        file_url,
-        json_schema: ordemSchema
+- motorista_nome: Nome completo do motorista
+- motorista_cpf: CPF do motorista
+- cavalo_placa: Placa do cavalo
+- implemento1_placa: Placa do primeiro implemento (se houver)
+- implemento2_placa: Placa do segundo implemento (se houver)
+- origem_cidade: Cidade de origem/coleta
+- destino_cidade: Cidade de destino/entrega
+- coleta_razao_social: Nome da empresa de origem/remetente
+- destinatario_razao_social: Nome da empresa de destino
+- produto: Tipo de produto/mercadoria
+- peso: Peso da carga (em kg ou ton)
+- volumes: Quantidade de volumes
+- pedido_numero: Número do pedido/viagem
+- observacoes: Observações adicionais
+
+Retorne APENAS as informações encontradas. Se algum dado não estiver presente no PDF, não inclua no retorno.
+IMPORTANTE: Retorne valores vazios ("") para campos não encontrados, nunca null.`,
+        file_urls: [file_url],
+        response_json_schema: {
+          type: "object",
+          properties: {
+            motorista_nome: { type: "string" },
+            motorista_cpf: { type: "string" },
+            cavalo_placa: { type: "string" },
+            implemento1_placa: { type: "string" },
+            implemento2_placa: { type: "string" },
+            origem_cidade: { type: "string" },
+            destino_cidade: { type: "string" },
+            coleta_razao_social: { type: "string" },
+            destinatario_razao_social: { type: "string" },
+            produto: { type: "string" },
+            peso: { type: "string" },
+            volumes: { type: "string" },
+            pedido_numero: { type: "string" }
+          }
+        }
       });
 
-      if (result.status !== "success" || !result.output) {
-        throw new Error(result.details || "Não foi possível extrair os dados do PDF. Tente outro arquivo ou preencha manualmente.");
+      if (!result) {
+        throw new Error("Não foi possível extrair os dados do PDF. Verifique se o arquivo contém as informações necessárias.");
       }
 
-      const dados = result.output;
+      const dados = result;
 
       // Buscar ou criar motorista
       let motoristaId = null;
