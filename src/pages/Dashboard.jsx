@@ -151,8 +151,9 @@ export default function Dashboard() {
       } else if (periodoFiltro === "ano_atual") {
         return dataOrdem.getFullYear() === anoSelecionado;
       } else if (periodoFiltro === "mes_especifico") {
-        const inicioMes = new Date(anoSelecionado, mesSelecionado - 1, 1);
-        const fimMes = new Date(anoSelecionado, mesSelecionado, 0, 23, 59, 59, 999);
+        const dataReferencia = new Date(anoSelecionado, mesSelecionado - 1, 15);
+        const inicioMes = startOfMonth(dataReferencia);
+        const fimMes = endOfMonth(dataReferencia);
         return isWithinInterval(dataOrdem, { start: inicioMes, end: fimMes });
       } else if (periodoFiltro === "personalizado") {
         if (!dataInicioPersonalizada || !dataFimPersonalizada) return true;
