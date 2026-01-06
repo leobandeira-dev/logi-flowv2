@@ -70,6 +70,7 @@ export default function Carregamento() {
   });
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [limite, setLimite] = useState(50);
+  const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
 
@@ -87,6 +88,7 @@ export default function Carregamento() {
     const checkDevice = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
+      setIsMobile(width < 768);
       const isTabletSize = width >= 768 && width <= 1280;
       setIsTablet(isTabletSize);
       setIsLandscape(width > height);
@@ -564,8 +566,8 @@ export default function Carregamento() {
     cardBorder: isDark ? '#334155' : '#e5e7eb',
   };
 
-  // Layout Tablet Otimizado
-  if (isTablet) {
+  // Layout Mobile Otimizado
+  if (isMobile || isTablet) {
     return (
       <div className="min-h-screen transition-colors" style={{ backgroundColor: theme.bg }}>
         {/* Header Compacto */}
