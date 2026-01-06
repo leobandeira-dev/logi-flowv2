@@ -5,10 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Trash2, Eye, Package, User, Truck, FileText, Printer, Check, X, Scan, Grid3x3, GitBranch } from "lucide-react";
+import { Edit, Trash2, Eye, Package, User, Truck, FileText, Printer, Check, X, Scan, Grid3x3, GitBranch, MoreVertical } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator 
+} from "@/components/ui/dropdown-menu";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import ImpressaoOrdem from "./ImpressaoOrdem";
@@ -920,88 +927,177 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                         </TableCell>
                         <TableCell className="py-1 px-2 align-middle text-right sticky right-0" style={{ backgroundColor: idx % 2 === 0 ? theme.rowBg : theme.rowBgAlt, borderLeft: `1px solid ${theme.border}` }}>
                           <div className="flex items-center justify-end gap-0.5">
-                            {tipoRegistro === "oferta" && (
-                              <ExportarOfertaIndividual ordem={ordem} />
-                            )}
-                            {onConferencia && (
+                            {/* Desktop: Mostrar todos os botões */}
+                            <div className="hidden lg:flex items-center gap-0.5">
+                              {tipoRegistro === "oferta" && (
+                                <ExportarOfertaIndividual ordem={ordem} />
+                              )}
+                              {onConferencia && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onConferencia(ordem)}
+                                  className="h-6 w-6 p-0"
+                                  style={{ color: '#3b82f6' }}
+                                  title="Conferência de Volumes"
+                                >
+                                  <Scan className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
+                              {onEnderecamento && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onEnderecamento(ordem)}
+                                  className="h-6 w-6 p-0"
+                                  style={{ color: '#9333ea' }}
+                                  title="Endereçamento de Veículo"
+                                >
+                                  <Grid3x3 className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
+                              {onCriarOrdemFilha && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onCriarOrdemFilha(ordem)}
+                                  className="h-6 w-6 p-0"
+                                  style={{ color: '#10b981' }}
+                                  title="Criar Ordem Filha"
+                                >
+                                  <GitBranch className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => onConferencia(ordem)}
+                                onClick={() => {
+                                  setSelectedOrdem(ordem);
+                                  setShowImpressao(true);
+                                }}
                                 className="h-6 w-6 p-0"
-                                style={{ color: '#3b82f6' }}
-                                title="Conferência de Volumes"
+                                style={{ color: theme.textMuted }}
+                                title="Imprimir Ordem"
                               >
-                                <Scan className="w-3.5 h-3.5" />
+                                <Printer className="w-3.5 h-3.5" />
                               </Button>
-                            )}
-                            {onEnderecamento && (
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => onEnderecamento(ordem)}
+                                onClick={() => onViewDetails(ordem)}
                                 className="h-6 w-6 p-0"
-                                style={{ color: '#9333ea' }}
-                                title="Endereçamento de Veículo"
+                                style={{ color: theme.textMuted }}
+                                title="Ver Detalhes"
                               >
-                                <Grid3x3 className="w-3.5 h-3.5" />
+                                <Eye className="w-3.5 h-3.5" />
                               </Button>
-                            )}
-                            {onCriarOrdemFilha && (
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => onCriarOrdemFilha(ordem)}
+                                onClick={() => onEdit(ordem)}
                                 className="h-6 w-6 p-0"
-                                style={{ color: '#10b981' }}
-                                title="Criar Ordem Filha"
+                                style={{ color: theme.textMuted }}
+                                title="Editar Completo"
                               >
-                                <GitBranch className="w-3.5 h-3.5" />
+                                <Edit className="w-3.5 h-3.5" />
                               </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedOrdem(ordem);
-                                setShowImpressao(true);
-                              }}
-                              className="h-6 w-6 p-0"
-                              style={{ color: theme.textMuted }}
-                              title="Imprimir Ordem"
-                            >
-                              <Printer className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onViewDetails(ordem)}
-                              className="h-6 w-6 p-0"
-                              style={{ color: theme.textMuted }}
-                              title="Ver Detalhes"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onEdit(ordem)}
-                              className="h-6 w-6 p-0"
-                              style={{ color: theme.textMuted }}
-                              title="Editar Completo"
-                            >
-                              <Edit className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onDelete(ordem)}
-                              className="h-6 w-6 p-0 hover:bg-red-50 dark:hover:bg-red-950"
-                              style={{ color: theme.textMuted }}
-                              title="Excluir Ordem"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onDelete(ordem)}
+                                className="h-6 w-6 p-0 hover:bg-red-50 dark:hover:bg-red-950"
+                                style={{ color: theme.textMuted }}
+                                title="Excluir Ordem"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+
+                            {/* Mobile/Tablet: Botão de ações + botões fixos */}
+                            <div className="flex lg:hidden items-center gap-0.5">
+                              {/* Dropdown com ações principais */}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    style={{ color: '#3b82f6' }}
+                                    title="Ações"
+                                  >
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
+                                  {onCriarOrdemFilha && (
+                                    <DropdownMenuItem onClick={() => onCriarOrdemFilha(ordem)} style={{ color: theme.text }}>
+                                      <GitBranch className="w-4 h-4 mr-2 text-green-600" />
+                                      Ordem Filha
+                                    </DropdownMenuItem>
+                                  )}
+                                  {onConferencia && (
+                                    <DropdownMenuItem onClick={() => onConferencia(ordem)} style={{ color: theme.text }}>
+                                      <Scan className="w-4 h-4 mr-2 text-blue-600" />
+                                      Conferência
+                                    </DropdownMenuItem>
+                                  )}
+                                  {onEnderecamento && (
+                                    <DropdownMenuItem onClick={() => onEnderecamento(ordem)} style={{ color: theme.text }}>
+                                      <Grid3x3 className="w-4 h-4 mr-2 text-purple-600" />
+                                      Endereçamento
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+
+                              {/* Botões fixos sempre visíveis */}
+                              {tipoRegistro === "oferta" && (
+                                <ExportarOfertaIndividual ordem={ordem} />
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedOrdem(ordem);
+                                  setShowImpressao(true);
+                                }}
+                                className="h-6 w-6 p-0"
+                                style={{ color: theme.textMuted }}
+                                title="Imprimir"
+                              >
+                                <Printer className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onViewDetails(ordem)}
+                                className="h-6 w-6 p-0"
+                                style={{ color: theme.textMuted }}
+                                title="Detalhes"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onEdit(ordem)}
+                                className="h-6 w-6 p-0"
+                                style={{ color: theme.textMuted }}
+                                title="Editar"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onDelete(ordem)}
+                                className="h-6 w-6 p-0 hover:bg-red-50 dark:hover:bg-red-950"
+                                style={{ color: theme.textMuted }}
+                                title="Excluir"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
                           </div>
                         </TableCell>
                       </TableRow>
