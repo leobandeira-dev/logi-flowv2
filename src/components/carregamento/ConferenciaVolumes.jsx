@@ -34,6 +34,7 @@ import CameraScanner from "../etiquetas-mae/CameraScanner";
 import AlertaVolumeModal from "./AlertaVolumeModal";
 import { toast } from "sonner";
 import { sincronizarStatusNotas } from "@/functions/sincronizarStatusNotas";
+import { playSuccessBeep, playErrorBeep } from "../utils/audioFeedback";
 
 export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClose, onComplete }) {
   const [isDark, setIsDark] = useState(false);
@@ -234,6 +235,15 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       notasLocaisTotal: notasFiscaisLocal.length
     });
 
+    // VALIDAÇÃO: Verificar duplicata LOGO NO INÍCIO (antes de qualquer processamento)
+    const volumeExistente = volumesLocal.find(v => v.identificador_unico?.toUpperCase() === codigoLimpo);
+    if (volumeExistente && volumesEmbarcados.includes(volumeExistente.id)) {
+      playErrorBeep();
+      toast.warning(`⚠️ Volume ${codigoLimpo} já embarcado`, { duration: 2000 });
+      setCodigoScanner("");
+      return 'duplicate';
+    }
+
     // 1. Tentar encontrar como ETIQUETA MÃE primeiro
 
     try {
@@ -318,7 +328,8 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
           );
 
           if (volumesJaEmbarcados.length > 0 && volumesParaCarregar.length === 0) {
-            toast.warning(`Todos os ${volumesDaEtiquetaDB.length} volumes da etiqueta ${etiquetaMae.codigo} já foram embarcados!`);
+            playErrorBeep();
+            toast.warning(`⚠️ Todos os ${volumesDaEtiquetaDB.length} volumes da etiqueta ${etiquetaMae.codigo} já embarcados!`, { duration: 2000 });
             setCodigoScanner("");
             return 'duplicate';
           }
@@ -367,6 +378,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
           // Forçar refresh da UI
           setRefreshKey(prev => prev + 1);
 
+          playSuccessBeep();
           toast.success(`✅ ${volumesParaCarregar.length} volumes embarcados!`);
 
           // Atualizar nota em conferência
@@ -565,7 +577,9 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
 
     // Verificação final de duplicata (segurança)
     if (volumesEmbarcados.includes(volume.id)) {
+      playErrorBeep();
       console.log('⚠️ Volume duplicado detectado:', volume.identificador_unico);
+      toast.warning(`⚠️ Volume ${volume.identificador_unico} já embarcado`, { duration: 2000 });
       setCodigoScanner("");
       return 'duplicate';
     }
@@ -641,6 +655,7 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       });
 
       // 7. Feedback consolidado para usuário
+      playSuccessBeep();
       if (notaCompleta) {
         toast.success(`✅ NF ${nota?.numero_nota} COMPLETA - ${volumesNota.length}/${volumesNota.length} volumes`, { 
           duration: 2000,

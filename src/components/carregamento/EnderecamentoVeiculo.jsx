@@ -38,6 +38,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { motion, AnimatePresence } from "framer-motion";
+import { playSuccessBeep, playErrorBeep } from "../utils/audioFeedback";
 
 // Componente auxiliar para exibir lista de notas da base
 const NotasBaseList = ({ notasBaseBusca, notasFiscaisLocal, volumesLocal, onSelecionarNota, theme, isDark }) => {
@@ -1269,7 +1270,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         // Verificar se já está endereçado
         const jaEnderecado = getEnderecamentosOrdemAtual().some(e => e.volume_id === volumeEncontrado.id);
         if (jaEnderecado) {
-          toast.warning(`Volume ${termoUpper} já foi endereçado`);
+          playErrorBeep();
+          toast.warning(`⚠️ Volume ${termoUpper} já foi endereçado`, { duration: 2000 });
           setSearchTerm("");
           setProcessandoBusca(false);
           return;
@@ -1314,7 +1316,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         // Selecionar apenas este volume bipado
         setVolumesSelecionados([volumeEncontrado.id]);
         setSearchTerm("");
-        toast.success(`Volume ${termoUpper} selecionado! (${todosVolumesDaNota.length} vol. disponíveis)`);
+        playSuccessBeep();
+        toast.success(`✅ Volume ${termoUpper} selecionado! (${todosVolumesDaNota.length} vol. disponíveis)`);
         setProcessandoBusca(false);
         return;
       }
@@ -1418,6 +1421,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           // Selecionar volumes não endereçados e finalizar
           setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
           setSearchTerm("");
+          playSuccessBeep();
           toast.success(`✅ ${volumesNaoEnderecados.length} volumes da etiqueta ${etiquetaMae.codigo} selecionados!`);
           setProcessandoBusca(false);
           return;
@@ -1430,10 +1434,12 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       }
 
       // Não encontrou nem como volume nem como etiqueta
-      toast.error(`Não encontrado: ${termoUpper}`);
+      playErrorBeep();
+      toast.error(`❌ Não encontrado: ${termoUpper}`);
       setSearchTerm("");
     } catch (error) {
       console.error("Erro ao buscar:", error);
+      playErrorBeep();
       toast.error("Erro ao processar busca");
       setSearchTerm("");
     } finally {
@@ -2018,23 +2024,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <Label className="text-xs whitespace-nowrap" style={{ color: theme.text }}>Linhas:</Label>
-              <Input
-                type="number"
-                value={numLinhas}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || 1;
-                  setNumLinhas(Math.max(1, Math.min(20, val)));
-                }}
-                className="w-16 h-7 text-sm"
-                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                min={1}
-                max={20}
-              />
-              <div className="flex-1" />
               <Badge className="bg-blue-600 text-white text-xs">
                 {getEnderecamentosOrdemAtual().length}/{volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length} vol.
               </Badge>
+              <div className="flex-1" />
               <Button
                 variant="outline"
                 onClick={handleImprimirLayout}
@@ -2043,8 +2036,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 className="h-7"
                 style={{ borderColor: theme.cardBorder, color: theme.text }}
               >
-                <Printer className="w-3 h-3 mr-1" />
-                Layout
+                <Printer className="w-3 h-3" />
               </Button>
               <Button
                 variant="outline"
@@ -2053,30 +2045,101 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 className="h-7"
                 style={{ borderColor: theme.cardBorder, color: theme.text }}
               >
-                <Printer className="w-3 h-3 mr-1" />
-                Notas
+                <FileText className="w-3 h-3" />
               </Button>
             </div>
           </div>
 
-          <div className="flex-1 flex overflow-hidden">
-            {/* Painel Esquerdo Mobile - Volumes Não Alocados */}
-            <div className="w-32 border-r flex flex-col overflow-hidden" style={{ borderColor: theme.cellBorder, backgroundColor: theme.cardBg }}>
-              <div className="p-2 border-b" style={{ borderColor: theme.cardBorder }}>
-                <h3 className="font-semibold text-xs" style={{ color: theme.text }}>
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Tabs Mobile - Volumes / Notas / Layout */}
+            <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col">
+              <TabsList className="grid w-full grid-cols-3 mx-3 mt-2 h-8">
+                <TabsTrigger value="volumes" className="text-xs">
+                  <Package className="w-3 h-3 mr-1" />
                   Volumes
-                </h3>
-                <p className="text-[9px]" style={{ color: theme.textMuted }}>
-                  {filteredVolumes.length} disponíveis
-                </p>
-              </div>
+                </TabsTrigger>
+                <TabsTrigger value="notas" className="text-xs">
+                  <FileText className="w-3 h-3 mr-1" />
+                  Notas
+                </TabsTrigger>
+                <TabsTrigger value="layout" className="text-xs">
+                  <Grid3x3 className="w-3 h-3 mr-1" />
+                  Layout
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Aba Volumes Mobile */}
+              <TabsContent value="volumes" className="flex-1 overflow-hidden mt-0">
+                <div className="h-full flex flex-col overflow-hidden" style={{ backgroundColor: theme.cardBg }}>
+                  <div className="p-3 border-b space-y-2" style={{ borderColor: theme.cardBorder }}>
+                    <h3 className="font-semibold text-xs flex items-center gap-2" style={{ color: theme.text }}>
+                      <Package className="w-4 h-4" />
+                      Volumes para Carregamento
+                    </h3>
+
+                    {/* Botão de Câmera */}
+                    <Button
+                      onClick={() => setShowCamera(true)}
+                      className="bg-blue-600 hover:bg-blue-700 w-full h-9"
+                      size="sm"
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      Escanear QR Code
+                    </Button>
+                    
+                    <div className="flex items-center gap-2 p-2 rounded border" style={{ borderColor: theme.cardBorder }}>
+                      <Checkbox
+                        id="apenas-vinculadas-volumes-mobile"
+                        checked={apenasNotasVinculadas}
+                        onCheckedChange={(checked) => setApenasNotasVinculadas(checked)}
+                      />
+                      <label
+                        htmlFor="apenas-vinculadas-volumes-mobile"
+                        className="text-xs font-medium cursor-pointer flex-1"
+                        style={{ color: theme.text }}
+                      >
+                        Apenas Notas Vinculadas
+                      </label>
+                      {apenasNotasVinculadas && (
+                        <Badge className="bg-blue-600 text-white text-[10px] px-1.5 py-0">
+                          Ativo
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Campo de Busca */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
+                      <Input
+                        placeholder="Digite volume ou etiqueta..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && searchTerm.trim()) {
+                            handleBuscarVolumeOuEtiqueta(searchTerm);
+                          }
+                        }}
+                        className="pl-10 h-9 text-sm"
+                        style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                        disabled={processandoBusca}
+                      />
+                      {processandoBusca && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[9px] text-center" style={{ color: theme.textMuted }}>
+                      {filteredVolumes.length} volumes disponíveis
+                    </p>
+                  </div>
               
               <Droppable droppableId="volumes-list-mobile">
                 {(provided) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="flex-1 overflow-y-auto p-1 space-y-1"
+                    className="flex-1 overflow-y-auto p-3 space-y-2"
                   >
                     {(() => {
                       // Agrupar volumes por nota fiscal
@@ -2231,15 +2294,112 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     {provided.placeholder}
                     
                     {filteredVolumes.length === 0 && (
-                      <div className="text-center py-4" style={{ color: theme.textMuted }}>
-                        <Package className="w-6 h-6 mx-auto mb-1 opacity-20" />
-                        <p className="text-[9px]">Todos alocados</p>
+                      <div className="text-center py-8" style={{ color: theme.textMuted }}>
+                        <Package className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                        <p className="text-sm">
+                          {getVolumesNaoEnderecados().length === 0
+                            ? "Todos posicionados!"
+                            : "Nenhum volume"}
+                        </p>
                       </div>
                     )}
+                    {provided.placeholder}
                   </div>
                 )}
               </Droppable>
-            </div>
+              </TabsContent>
+
+              {/* Aba Lista de Notas Mobile */}
+              <TabsContent value="notas" className="flex-1 overflow-hidden mt-0">
+                <div className="h-full flex flex-col">
+                  <div className="p-3 border-b" style={{ borderColor: theme.cardBorder }}>
+                    <h3 className="font-semibold text-xs flex items-center gap-2" style={{ color: theme.text }}>
+                      <FileText className="w-4 h-4" />
+                      Notas Fiscais ({notasFiscaisLocal.length})
+                    </h3>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto p-3">
+                    <div className="space-y-2">
+                      {(() => {
+                        const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
+                          if (!acc.find(n => n.id === nota.id)) {
+                            acc.push(nota);
+                          }
+                          return acc;
+                        }, []);
+                        
+                        return notasUnicas.map((nota) => {
+                          const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
+                          const volumesEndNota = enderecamentos.filter(e => e.nota_fiscal_id === nota.id && e.ordem_id === ordem.id);
+                          const origem = notasOrigem[nota.id] || "Vinculada";
+                          const origemColor = origem === "Vinculada" ? (isDark ? '#3b82f6' : '#2563eb') : origem === "Adicionada" ? (isDark ? '#f59e0b' : '#d97706') : (isDark ? '#10b981' : '#059669');
+
+                          return (
+                            <div
+                              key={nota.id}
+                              className="p-2 border rounded"
+                              style={{ borderColor: theme.cardBorder, backgroundColor: theme.cardBg }}
+                            >
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                  <span className="font-bold text-xs whitespace-nowrap" style={{ color: theme.text }}>
+                                    NF {nota.numero_nota}
+                                  </span>
+                                  <Badge
+                                    className="text-[8px] h-3.5 px-1.5 flex-shrink-0"
+                                    style={{ backgroundColor: origemColor, color: 'white' }}
+                                  >
+                                    {origem}
+                                  </Badge>
+                                </div>
+                                <Badge className={`${volumesEndNota.length === volumesNota.length ? 'bg-green-600' : 'bg-orange-500'} text-white text-[10px] h-5 px-2`}>
+                                  {volumesEndNota.length}/{volumesNota.length}
+                                </Badge>
+                              </div>
+                              <p className="text-[10px] truncate mb-1" style={{ color: theme.textMuted }} title={nota.emitente_razao_social}>
+                                {nota.emitente_razao_social}
+                              </p>
+                              <div className="flex items-center justify-between text-[9px]" style={{ color: theme.textMuted }}>
+                                <span className="truncate">{nota.destinatario_cidade}/{nota.destinatario_uf}</span>
+                                <span className="ml-2 font-semibold whitespace-nowrap">{(nota.peso_total_nf || 0).toLocaleString()} kg</span>
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+
+                      {notasFiscaisLocal.length === 0 && (
+                        <div className="text-center py-8" style={{ color: theme.textMuted }}>
+                          <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                          <p className="text-sm">Nenhuma nota vinculada</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Aba Layout Mobile */}
+              <TabsContent value="layout" className="flex-1 overflow-hidden mt-0">
+                <div className="h-full flex flex-col">
+                  <div className="p-3 border-b space-y-2" style={{ borderColor: theme.cardBorder }}>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs whitespace-nowrap" style={{ color: theme.text }}>Linhas:</Label>
+                      <Input
+                        type="number"
+                        value={numLinhas}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 1;
+                          setNumLinhas(Math.max(1, Math.min(20, val)));
+                        }}
+                        className="w-16 h-7 text-sm"
+                        style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                        min={1}
+                        max={20}
+                      />
+                    </div>
+                  </div>
 
             {/* Grid do Veículo Mobile */}
             <div className="flex-1 overflow-auto p-2">
@@ -2420,10 +2580,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     })}
                   </div>
                 ))}
-              </div>
-              </div>
-              </div>
-              </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
 
               {/* Modal de Busca Mobile */}
         <Dialog open={showBuscaModal} onOpenChange={setShowBuscaModal}>
