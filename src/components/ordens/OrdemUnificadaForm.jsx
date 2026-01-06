@@ -958,41 +958,44 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
       const ordemSchema = {
         type: "object",
         properties: {
-          numero_ordem: { type: "string" },
-          motorista_nome: { type: "string" },
-          motorista_cnh: { type: "string" },
-          motorista_cpf: { type: "string" },
-          motorista_rg: { type: "string" },
-          vencimento_cnh: { type: "string" },
-          cavalo_placa: { type: "string" },
-          cavalo_renavam: { type: "string" },
-          implemento1_placa: { type: "string" },
-          implemento1_renavam: { type: "string" },
-          implemento2_placa: { type: "string" },
+          numero_ordem: { type: "string", description: "Número da ordem de carregamento (ex: 2373)" },
+          data_emissao: { type: "string", description: "Data e hora de emissão" },
+          
+          motorista_nome: { type: "string", description: "Nome do motorista (Campo 'Autorizamos o Sr.')" },
+          motorista_cnh: { type: "string", description: "CNH do motorista" },
+          motorista_cpf: { type: "string", description: "CPF do motorista" },
+          motorista_rg: { type: "string", description: "RG do motorista" },
+          vencimento_cnh: { type: "string", description: "Vencimento da CNH" },
+          
+          cavalo_placa: { type: "string", description: "Placa do veículo/cavalo" },
+          cavalo_renavam: { type: "string", description: "Renavam do veículo/cavalo" },
+          cavalo_antt: { type: "string", description: "ANTT do veículo" },
+          
+          implemento1_placa: { type: "string", description: "Placa do primeiro reboque" },
+          implemento1_renavam: { type: "string", description: "Renavam do primeiro reboque" },
+          implemento2_placa: { type: "string", description: "Placa do segundo reboque" },
           implemento2_renavam: { type: "string" },
-          implemento3_placa: { type: "string" },
-          implemento3_renavam: { type: "string" },
-          origem_cidade: { type: "string" },
-          origem_uf: { type: "string" },
-          destino_cidade: { type: "string" },
-          destino_uf: { type: "string" },
-          coleta_razao_social: { type: "string" },
-          coleta_cnpj: { type: "string" },
-          coleta_endereco: { type: "string" },
-          coleta_cep: { type: "string" },
-          destinatario_razao_social: { type: "string" },
-          destinatario_cnpj: { type: "string" },
-          destinatario_endereco: { type: "string" },
-          destinatario_cep: { type: "string" },
-          destinatario_cidade: { type: "string" },
-          destinatario_uf: { type: "string" },
-          produto: { type: "string" },
-          peso: { type: "string" },
-          volumes: { type: "string" },
-          pedido_numero: { type: "string" },
-          observacoes: { type: "string" }
-        },
-        required: ["motorista_nome", "cavalo_placa", "coleta_razao_social", "origem_cidade", "destino_cidade", "produto", "peso"]
+          
+          origem_completo: { type: "string", description: "Campo ORIGEM completo (Cidade/UF)" },
+          destino_completo: { type: "string", description: "Campo DESTINO completo (Cidade/UF)" },
+          
+          remetente_razao_social: { type: "string", description: "Razão social do Remetente" },
+          remetente_cnpj: { type: "string", description: "CNPJ do Remetente" },
+          remetente_endereco: { type: "string", description: "Endereço completo do Remetente" },
+          remetente_cep: { type: "string", description: "CEP do Remetente" },
+          
+          destinatario_razao_social: { type: "string", description: "Razão social do Destinatário" },
+          destinatario_cnpj: { type: "string", description: "CNPJ do Destinatário" },
+          destinatario_endereco: { type: "string", description: "Endereço completo do Destinatário" },
+          destinatario_cep: { type: "string", description: "CEP do Destinatário" },
+          
+          produto: { type: "string", description: "Produto ou Espécie (campo A retirar ou Espécie)" },
+          peso: { type: "string", description: "Peso bruto ou líquido" },
+          volumes: { type: "string", description: "Quantidade ou volumes" },
+          
+          load_num: { type: "string", description: "Load Num/DT" },
+          observacoes: { type: "string", description: "Observações gerais" }
+        }
       };
 
       const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
@@ -1120,32 +1123,72 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
         return apenasNumeros;
       };
 
+      // Processar origem e destino
+      let origemCidade = "", origemUF = "";
+      if (dados.origem_completo) {
+        const parts = dados.origem_completo.split('/');
+        if (parts.length >= 2) {
+          origemCidade = parts[0].trim();
+          origemUF = parts[1].trim();
+        } else {
+          origemCidade = dados.origem_completo;
+        }
+      }
+
+      let destinoCidade = "", destinoUF = "";
+      if (dados.destino_completo) {
+        const parts = dados.destino_completo.split('/');
+        if (parts.length >= 2) {
+          destinoCidade = parts[0].trim();
+          destinoUF = parts[1].trim();
+        } else {
+          destinoCidade = dados.destino_completo;
+        }
+      }
+
       setFormData(prev => ({
         ...prev,
-        cliente: dados.coleta_razao_social || prev.cliente,
-        cliente_cnpj: dados.coleta_cnpj || prev.cliente_cnpj,
-        origem: dados.origem_cidade || prev.origem,
-        origem_uf: dados.origem_uf || prev.origem_uf,
-        origem_endereco: dados.coleta_endereco || prev.origem_endereco,
-        origem_cep: normalizarCEP(dados.coleta_cep) || prev.origem_cep,
-        origem_cidade: dados.origem_cidade || prev.origem_cidade,
-        destino: dados.destinatario_cidade || dados.destino_cidade || prev.destino,
-        destino_uf: dados.destinatario_uf || dados.destino_uf || prev.destino_uf,
+        // Cliente/Remetente
+        cliente: dados.remetente_razao_social || prev.cliente,
+        cliente_cnpj: dados.remetente_cnpj || prev.cliente_cnpj,
+        remetente_razao_social: dados.remetente_razao_social || prev.remetente_razao_social,
+        remetente_cnpj: dados.remetente_cnpj || prev.remetente_cnpj,
+        remetente_endereco: dados.remetente_endereco || prev.remetente_endereco,
+        remetente_cep: normalizarCEP(dados.remetente_cep) || prev.remetente_cep,
+        
+        // Origem
+        origem: origemCidade || prev.origem,
+        origem_cidade: origemCidade || prev.origem_cidade,
+        origem_uf: origemUF || prev.origem_uf,
+        origem_endereco: dados.remetente_endereco || prev.origem_endereco, // Assume endereço do remetente como origem física
+        origem_cep: normalizarCEP(dados.remetente_cep) || prev.origem_cep,
+
+        // Destinatário
         destinatario: dados.destinatario_razao_social || prev.destinatario,
         destinatario_cnpj: dados.destinatario_cnpj || prev.destinatario_cnpj,
+        
+        // Destino
+        destino: destinoCidade || prev.destino,
+        destino_cidade: destinoCidade || prev.destino_cidade,
+        destino_uf: destinoUF || prev.destino_uf,
         destino_endereco: dados.destinatario_endereco || prev.destino_endereco,
         destino_cep: normalizarCEP(dados.destinatario_cep) || prev.destino_cep,
-        destino_cidade: dados.destinatario_cidade || dados.destino_cidade || prev.destino_cidade,
+
+        // Carga
         produto: dados.produto || prev.produto,
         peso: pesoKg || prev.peso,
         volumes: volumesNum || prev.volumes,
+        
+        // Alocação
         motorista_id: motoristaId || prev.motorista_id,
         cavalo_id: veiculosIds.cavalo || prev.cavalo_id,
         implemento1_id: veiculosIds.implemento1 || prev.implemento1_id,
         implemento2_id: veiculosIds.implemento2 || prev.implemento2_id,
         implemento3_id: veiculosIds.implemento3_id || prev.implemento3_id,
-        viagem: dados.pedido_numero || prev.viagem,
-        pedido_cliente: dados.pedido_numero || prev.pedido_cliente,
+        
+        // Outros
+        viagem: dados.load_num || prev.viagem,
+        pedido_cliente: dados.load_num || prev.pedido_cliente,
         numero_oc: dados.numero_ordem || prev.numero_oc,
         observacao_carga: dados.observacoes || prev.observacao_carga
       }));
