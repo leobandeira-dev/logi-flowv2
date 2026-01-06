@@ -2307,6 +2307,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                   </div>
                 )}
               </Droppable>
+                </div>
               </TabsContent>
 
               {/* Aba Lista de Notas Mobile */}
