@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -362,22 +362,25 @@ export default function NotasFiscaisTable({
   // Usar notasFiscaisPaginadas se fornecido (para exibição na tabela), senão usar todas
   const notasParaTabela = notasFiscaisPaginadas || notasFiscais;
   
-  const filteredNotas = notasParaTabela.filter(nota => {
-    const ordem = ordens.find(o => o.id === nota.ordem_id);
-    const numeroCarga = ordem?.numero_carga || '';
-    
-    const matchesSearch = !searchTerm || 
-      nota.numero_nota?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      nota.chave_nota_fiscal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      nota.emitente_razao_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      nota.destinatario_razao_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      numeroCarga.toLowerCase().includes(searchTerm.toLowerCase());
+  // Memoizar filteredNotas para evitar recalcular a cada render
+  const filteredNotas = useMemo(() => {
+    return notasParaTabela.filter(nota => {
+      const ordem = ordens.find(o => o.id === nota.ordem_id);
+      const numeroCarga = ordem?.numero_carga || '';
+      
+      const matchesSearch = !searchTerm || 
+        nota.numero_nota?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        nota.chave_nota_fiscal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        nota.emitente_razao_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        nota.destinatario_razao_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        numeroCarga.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const statusDinamico = calcularStatusDinamico(nota);
-    const matchesStatus = filtroStatus === "todos" || statusDinamico === filtroStatus;
+      const statusDinamico = calcularStatusDinamico(nota);
+      const matchesStatus = filtroStatus === "todos" || statusDinamico === filtroStatus;
 
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    });
+  }, [notasParaTabela, searchTerm, filtroStatus, ordens]);
 
   const theme = {
     cardBg: isDark ? '#1e293b' : '#ffffff',
@@ -498,7 +501,7 @@ export default function NotasFiscaisTable({
         {graficoExpandido && (
         <CardContent>
           <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={(() => {
+            <LineChart data={useMemo(() => {
               if (visualizacaoGrafico === "diario") {
                 // Gráfico por hora do dia de hoje (horário São Paulo)
                 const hoje = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
@@ -594,7 +597,7 @@ export default function NotasFiscaisTable({
 
                 return porDia;
               }
-            })()}>
+            }, [notasFiscais, visualizacaoGrafico, metricaGrafico, mesSelecionado, anoSelecionado, isDark])}>
               <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#e5e7eb'} />
               <XAxis 
                 dataKey={visualizacaoGrafico === "diario" ? "hora" : "dia"}
