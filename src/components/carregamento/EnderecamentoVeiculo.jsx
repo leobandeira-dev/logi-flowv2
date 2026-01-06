@@ -174,6 +174,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const [showQuantidadeModal, setShowQuantidadeModal] = useState(false);
   const [movimentacaoNota, setMovimentacaoNota] = useState(null);
   const [quantidadeMovimentar, setQuantidadeMovimentar] = useState("");
+  const [apenasNotasVinculadas, setApenasNotasVinculadas] = useState(false);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -1104,6 +1105,17 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       
       if (volumesEncontrados.length > 0) {
         const volumeEncontrado = volumesEncontrados[0];
+        
+        // VALIDAÇÃO: Se flag "Apenas Notas Vinculadas" estiver ativa
+        if (apenasNotasVinculadas) {
+          const notaVinculada = notasFiscaisLocal.find(nf => nf.id === volumeEncontrado.nota_fiscal_id);
+          if (!notaVinculada) {
+            toast.error("❌ Volume não pertence a nenhuma nota fiscal vinculada a esta ordem", { duration: 3000 });
+            setSearchTerm("");
+            setProcessandoBusca(false);
+            return;
+          }
+        }
 
         // Verificar se já está endereçado
         const jaEnderecado = getEnderecamentosOrdemAtual().some(e => e.volume_id === volumeEncontrado.id);
@@ -1177,6 +1189,22 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             return;
           }
 
+          // Agrupar volumes por nota fiscal e buscar notas únicas
+          const notasIdsUnicas = [...new Set(volumesDaEtiquetaDB.map(v => v.nota_fiscal_id).filter(Boolean))];
+          
+          // VALIDAÇÃO: Se flag "Apenas Notas Vinculadas" estiver ativa
+          if (apenasNotasVinculadas) {
+            const notasJaVinculadasIds = notasFiscaisLocal.map(nf => nf.id);
+            const notasNaoVinculadas = notasIdsUnicas.filter(id => !notasJaVinculadasIds.includes(id));
+            
+            if (notasNaoVinculadas.length > 0) {
+              toast.error("❌ Etiqueta contém volumes de notas não vinculadas a esta ordem", { duration: 3000 });
+              setSearchTerm("");
+              setProcessandoBusca(false);
+              return;
+            }
+          }
+
           // Verificar quais volumes ainda não foram endereçados
           const idsEnderecados = enderecamentos.map(e => e.volume_id);
           const volumesNaoEnderecados = volumesDaEtiquetaDB.filter(v => !idsEnderecados.includes(v.id));
@@ -1188,8 +1216,6 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             return;
           }
 
-          // Agrupar volumes por nota fiscal e buscar notas únicas
-          const notasIdsUnicas = [...new Set(volumesDaEtiquetaDB.map(v => v.nota_fiscal_id).filter(Boolean))];
           const notasParaVincular = notasIdsUnicas.filter(notaId => 
             !notasFiscaisLocal.some(nf => nf.id === notaId)
           );
@@ -2336,6 +2362,26 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       Escanear QR Code
                     </Button>
                   </div>
+                  
+                  <div className="flex items-center gap-2 p-2 rounded border" style={{ borderColor: theme.cardBorder }}>
+                    <Checkbox
+                      id="apenas-vinculadas-mobile"
+                      checked={apenasNotasVinculadas}
+                      onCheckedChange={(checked) => setApenasNotasVinculadas(checked)}
+                    />
+                    <label
+                      htmlFor="apenas-vinculadas-mobile"
+                      className="text-xs font-medium cursor-pointer flex-1"
+                      style={{ color: theme.text }}
+                    >
+                      Apenas Notas Vinculadas
+                    </label>
+                    {apenasNotasVinculadas && (
+                      <Badge className="bg-blue-600 text-white text-[10px] px-1.5 py-0">
+                        Ativo
+                      </Badge>
+                    )}
+                  </div>
 
                   {/* Campo de Busca Unificado */}
                   <div className="relative">
@@ -2879,7 +2925,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               </div>
             ) : (
               <>
-                <div className="mb-3">
+                <div className="mb-3 space-y-2">
                   <Button
                     onClick={() => setShowCamera(true)}
                     className="bg-blue-600 hover:bg-blue-700 w-full h-9"
@@ -2888,6 +2934,26 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     <Camera className="w-4 h-4 mr-2" />
                     Escanear QR Code
                   </Button>
+                  
+                  <div className="flex items-center gap-2 p-2 rounded border" style={{ borderColor: theme.cardBorder }}>
+                    <Checkbox
+                      id="apenas-vinculadas-desktop"
+                      checked={apenasNotasVinculadas}
+                      onCheckedChange={(checked) => setApenasNotasVinculadas(checked)}
+                    />
+                    <label
+                      htmlFor="apenas-vinculadas-desktop"
+                      className="text-xs font-medium cursor-pointer flex-1"
+                      style={{ color: theme.text }}
+                    >
+                      Apenas Notas Vinculadas
+                    </label>
+                    {apenasNotasVinculadas && (
+                      <Badge className="bg-blue-600 text-white text-[10px] px-1.5 py-0">
+                        Ativo
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
