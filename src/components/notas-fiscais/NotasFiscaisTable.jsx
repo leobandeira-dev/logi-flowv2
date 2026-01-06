@@ -1145,8 +1145,7 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
         </Dialog>
       )}
     </>
-    );
-    }
-    });
+  );
+});
 
-    export default NotasFiscaisTable;
+export default NotasFiscaisTable;
