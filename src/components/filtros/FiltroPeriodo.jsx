@@ -47,7 +47,7 @@ export default function FiltroPeriodo({
           className="px-3 py-1.5 rounded-lg border text-sm font-medium"
           style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
         >
-          {[2025, 2024, 2023, 2022, 2021].map(ano => (
+          {[2026, 2025, 2024, 2023, 2022, 2021].map(ano => (
             <option key={ano} value={ano}>{ano}</option>
           ))}
         </select>
