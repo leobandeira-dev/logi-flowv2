@@ -78,6 +78,7 @@ export default function Recebimento() {
   const [anoSelecionadoRecebimento, setAnoSelecionadoRecebimento] = useState(() => new Date().getFullYear());
   const [mesSelecionadoRecebimento, setMesSelecionadoRecebimento] = useState(() => new Date().getMonth() + 1);
   const [searchTermNotas, setSearchTermNotas] = useState("");
+  const [searchInputNotas, setSearchInputNotas] = useState("");
   const [paginaAtualNotas, setPaginaAtualNotas] = useState(1);
   const [limiteNotas, setLimiteNotas] = useState(50);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -116,11 +117,39 @@ export default function Recebimento() {
     
     setLoadingNotas(true);
     try {
-      // Carregar TODAS as notas fiscais do banco
-      const notasData = await base44.entities.NotaFiscal.list("-created_date");
+      // Carregar TODAS as notas fiscais do banco sem limit (SDK usa limit 50 por padrão)
+      // Buscar em lotes para evitar timeout
+      let todasNotas = [];
+      let skip = 0;
+      const batchSize = 1000;
+      let hasMore = true;
       
-      setTodasNotasFiscais(notasData);
-      setTotalNotasFiscais(notasData.length);
+      while (hasMore) {
+        const notasBatch = await base44.entities.NotaFiscal.list("-created_date", batchSize);
+        
+        if (notasBatch.length === 0) {
+          hasMore = false;
+        } else {
+          todasNotas = [...todasNotas, ...notasBatch];
+          skip += batchSize;
+          
+          // Se retornou menos que o batch size, não há mais registros
+          if (notasBatch.length < batchSize) {
+            hasMore = false;
+          }
+        }
+        
+        // Limitar a 50.000 registros para evitar problemas de memória
+        if (todasNotas.length >= 50000) {
+          console.warn("Limite de 50.000 notas atingido");
+          hasMore = false;
+        }
+      }
+      
+      console.log(`📦 Total de notas fiscais carregadas: ${todasNotas.length}`);
+      
+      setTodasNotasFiscais(todasNotas);
+      setTotalNotasFiscais(todasNotas.length);
       setNotasCarregadas(true);
     } catch (error) {
       console.error("Erro ao carregar notas fiscais:", error);
@@ -1178,15 +1207,44 @@ export default function Recebimento() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
                   <Input
                     placeholder="Buscar notas fiscais..."
-                    value={searchTermNotas}
-                    onChange={(e) => {
-                      setSearchTermNotas(e.target.value);
-                      setPaginaAtualNotas(1);
+                    value={searchInputNotas}
+                    onChange={(e) => setSearchInputNotas(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setSearchTermNotas(searchInputNotas);
+                        setPaginaAtualNotas(1);
+                      }
                     }}
                     className="pl-10 h-9 text-sm"
                     style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
                   />
                 </div>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTermNotas(searchInputNotas);
+                    setPaginaAtualNotas(1);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 h-9"
+                >
+                  <Search className="w-4 h-4" />
+                </Button>
+                {searchTermNotas && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTermNotas("");
+                      setSearchInputNotas("");
+                      setPaginaAtualNotas(1);
+                    }}
+                    className="h-9"
+                    style={{ borderColor: theme.cardBorder, color: theme.text }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Button
