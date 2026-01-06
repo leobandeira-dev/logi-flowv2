@@ -286,6 +286,65 @@ export default function Recebimento() {
     }
   }, [recebimentos, searchTermRecebimentos, filtersRecebimentos, usuarios, visualizacaoGrafico, anoSelecionadoRecebimento, mesSelecionadoRecebimento]);
 
+  // Memoizar indicadores de notas fiscais
+  const indicadoresNotas = useMemo(() => {
+    const hoje = new Date();
+    const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
+
+    const notasMes = todasNotasFiscais.filter(n => {
+      if (!n.created_date || n.status_nf === "cancelada") return false;
+      const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const [, mesNota, anoNota] = dataNota.split('/');
+      return mesNota === mesHojeSP && anoNota === anoHojeSP;
+    });
+
+    const notasHoje = todasNotasFiscais.filter(n => {
+      if (!n.created_date || n.status_nf === "cancelada") return false;
+      const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      return dataNota === dataHojeSP;
+    });
+
+    const volumesTotal = notasMes.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
+    const volumesHoje = notasHoje.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
+    const pesoTotal = notasMes.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0);
+    const valorTotal = notasMes.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
+    const valorHoje = notasHoje.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
+
+    return {
+      totalMes: notasMes.length,
+      totalHoje: notasHoje.length,
+      volumesTotal,
+      volumesHoje,
+      pesoTotal,
+      valorTotal,
+      valorHoje
+    };
+  }, [todasNotasFiscais]);
+
+  // Memoizar filtros de recebimentos
+  const recebimentosFiltrados = useMemo(() => {
+    return recebimentos.filter(rec => {
+      const matchesSearch = !searchTermRecebimentos ||
+        rec.numero_carga?.toLowerCase().includes(searchTermRecebimentos.toLowerCase()) ||
+        rec.cliente?.toLowerCase().includes(searchTermRecebimentos.toLowerCase());
+      
+      const matchesFornecedor = !filtersRecebimentos.fornecedor || 
+        rec.cliente?.toLowerCase().includes(filtersRecebimentos.fornecedor.toLowerCase());
+      
+      const matchesConferente = !filtersRecebimentos.conferente ||
+        usuarios.find(u => u.id === rec.conferente_id)?.full_name?.toLowerCase().includes(filtersRecebimentos.conferente.toLowerCase());
+      
+      const matchesDataInicio = !filtersRecebimentos.dataInicio || 
+        (rec.data_solicitacao && new Date(rec.data_solicitacao) >= new Date(filtersRecebimentos.dataInicio));
+      
+      const matchesDataFim = !filtersRecebimentos.dataFim || 
+        (rec.data_solicitacao && new Date(rec.data_solicitacao) <= new Date(filtersRecebimentos.dataFim + 'T23:59:59'));
+      
+      return matchesSearch && matchesFornecedor && matchesConferente && matchesDataInicio && matchesDataFim;
+    });
+  }, [recebimentos, searchTermRecebimentos, filtersRecebimentos, usuarios]);
+
   useEffect(() => {
     const checkDarkMode = () => {
       setIsDark(document.documentElement.classList.contains('dark'));
@@ -1270,29 +1329,6 @@ export default function Recebimento() {
     coletado: { label: "Coletado", color: "bg-green-500" },
     reprovada: { label: "Reprovada", color: "bg-red-500" }
   };
-
-  // Memoizar filtros de recebimentos para evitar recalcular a cada digitação
-  const recebimentosFiltrados = useMemo(() => {
-    return recebimentos.filter(rec => {
-      const matchesSearch = !searchTermRecebimentos ||
-        rec.numero_carga?.toLowerCase().includes(searchTermRecebimentos.toLowerCase()) ||
-        rec.cliente?.toLowerCase().includes(searchTermRecebimentos.toLowerCase());
-      
-      const matchesFornecedor = !filtersRecebimentos.fornecedor || 
-        rec.cliente?.toLowerCase().includes(filtersRecebimentos.fornecedor.toLowerCase());
-      
-      const matchesConferente = !filtersRecebimentos.conferente ||
-        usuarios.find(u => u.id === rec.conferente_id)?.full_name?.toLowerCase().includes(filtersRecebimentos.conferente.toLowerCase());
-      
-      const matchesDataInicio = !filtersRecebimentos.dataInicio || 
-        (rec.data_solicitacao && new Date(rec.data_solicitacao) >= new Date(filtersRecebimentos.dataInicio));
-      
-      const matchesDataFim = !filtersRecebimentos.dataFim || 
-        (rec.data_solicitacao && new Date(rec.data_solicitacao) <= new Date(filtersRecebimentos.dataFim + 'T23:59:59'));
-      
-      return matchesSearch && matchesFornecedor && matchesConferente && matchesDataInicio && matchesDataFim;
-    });
-  }, [recebimentos, searchTermRecebimentos, filtersRecebimentos, usuarios]);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.bg }}>
