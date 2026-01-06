@@ -151,9 +151,8 @@ export default function Dashboard() {
       } else if (periodoFiltro === "ano_atual") {
         return dataOrdem.getFullYear() === anoSelecionado;
       } else if (periodoFiltro === "mes_especifico") {
-        // Criar datas usando UTC para evitar problemas de timezone
-        const inicioMes = new Date(Date.UTC(anoSelecionado, mesSelecionado - 1, 1, 0, 0, 0));
-        const fimMes = new Date(Date.UTC(anoSelecionado, mesSelecionado, 0, 23, 59, 59));
+        const inicioMes = new Date(anoSelecionado, mesSelecionado - 1, 1);
+        const fimMes = new Date(anoSelecionado, mesSelecionado, 0, 23, 59, 59, 999);
         return isWithinInterval(dataOrdem, { start: inicioMes, end: fimMes });
       } else if (periodoFiltro === "personalizado") {
         if (!dataInicioPersonalizada || !dataFimPersonalizada) return true;
