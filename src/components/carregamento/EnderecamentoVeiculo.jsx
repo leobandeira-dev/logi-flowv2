@@ -2581,15 +2581,14 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     })}
                   </div>
                 ))}
-              </div>
-            </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
-        </TabsContent>
-      </Tabs>
-    </div>
 
-    {/* Modal de Busca Mobile */}
-        <Dialog open={showBuscaModal} onOpenChange={setShowBuscaModal}>
+          {/* Modal de Busca Mobile */}
+          <Dialog open={showBuscaModal} onOpenChange={setShowBuscaModal}>
           <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
             <DialogHeader>
               <DialogTitle style={{ color: theme.text }}>
