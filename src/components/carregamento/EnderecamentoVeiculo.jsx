@@ -2307,11 +2307,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                   </div>
                 )}
               </Droppable>
-                </div>
-              </TabsContent>
+              </div>
+            </TabsContent>
 
-              {/* Aba Lista de Notas Mobile */}
-              <TabsContent value="notas" className="flex-1 overflow-hidden mt-0">
+            {/* Aba Lista de Notas Mobile */}
+            <TabsContent value="notas" className="flex-1 overflow-hidden mt-0">
                 <div className="h-full flex flex-col">
                   <div className="p-3 border-b" style={{ borderColor: theme.cardBorder }}>
                     <h3 className="font-semibold text-xs flex items-center gap-2" style={{ color: theme.text }}>
@@ -2582,12 +2582,12 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                   </div>
                 ))}
                 </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+                </div>
+                </TabsContent>
+                </Tabs>
+                </div>
 
-        {/* Modal de Busca Mobile */}
+                {/* Modal de Busca Mobile */}
         <Dialog open={showBuscaModal} onOpenChange={setShowBuscaModal}>
           <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
             <DialogHeader>
