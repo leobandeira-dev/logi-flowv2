@@ -28,7 +28,8 @@ import {
   AlertTriangle,
   TruckIcon,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Save
 } from "lucide-react";
 import CameraScanner from "../etiquetas-mae/CameraScanner";
 import AlertaVolumeModal from "./AlertaVolumeModal";
