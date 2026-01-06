@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Trash2, Eye, Package, User, Truck, FileText, Printer, Check, X, Scan, Grid3x3, GitBranch, MoreVertical } from "lucide-react";
+import { Edit, Trash2, Eye, Package, User, Truck, FileText, Printer, Check, X, Scan, Grid3x3, GitBranch, Zap } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -1014,18 +1014,18 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                             </div>
 
                             {/* Mobile/Tablet: Botão de ações + botões fixos */}
-                            <div className="flex lg:hidden items-center gap-0.5">
+                            <div className="flex lg:hidden items-center justify-end gap-1">
                               {/* Dropdown com ações principais */}
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
-                                    className="h-6 w-6 p-0"
-                                    style={{ color: '#3b82f6' }}
+                                    className="h-7 w-7 p-0 rounded-lg"
+                                    style={{ borderColor: '#3b82f6', backgroundColor: 'transparent' }}
                                     title="Ações"
                                   >
-                                    <MoreVertical className="w-4 h-4" />
+                                    <Zap className="w-4 h-4" style={{ color: '#3b82f6' }} />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" style={{ backgroundColor: theme.cardBg, borderColor: theme.border }}>
@@ -1050,9 +1050,11 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                                 </DropdownMenuContent>
                               </DropdownMenu>
 
-                              {/* Botões fixos sempre visíveis */}
+                              {/* Botões fixos sempre visíveis - alinhados */}
                               {tipoRegistro === "oferta" && (
-                                <ExportarOfertaIndividual ordem={ordem} />
+                                <div className="flex items-center">
+                                  <ExportarOfertaIndividual ordem={ordem} />
+                                </div>
                               )}
                               <Button
                                 variant="ghost"
@@ -1061,7 +1063,7 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                                   setSelectedOrdem(ordem);
                                   setShowImpressao(true);
                                 }}
-                                className="h-6 w-6 p-0"
+                                className="h-7 w-7 p-0 flex items-center justify-center"
                                 style={{ color: theme.textMuted }}
                                 title="Imprimir"
                               >
@@ -1071,7 +1073,7 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => onViewDetails(ordem)}
-                                className="h-6 w-6 p-0"
+                                className="h-7 w-7 p-0 flex items-center justify-center"
                                 style={{ color: theme.textMuted }}
                                 title="Detalhes"
                               >
@@ -1081,7 +1083,7 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => onEdit(ordem)}
-                                className="h-6 w-6 p-0"
+                                className="h-7 w-7 p-0 flex items-center justify-center"
                                 style={{ color: theme.textMuted }}
                                 title="Editar"
                               >
@@ -1091,7 +1093,7 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => onDelete(ordem)}
-                                className="h-6 w-6 p-0 hover:bg-red-50 dark:hover:bg-red-950"
+                                className="h-7 w-7 p-0 flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-950"
                                 style={{ color: theme.textMuted }}
                                 title="Excluir"
                               >
