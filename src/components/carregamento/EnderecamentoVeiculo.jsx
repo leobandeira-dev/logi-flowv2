@@ -255,7 +255,50 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   useEffect(() => {
     loadEnderecamentos();
     loadNotasOrigem();
+    carregarRascunhoLocal();
   }, [ordem.id]);
+
+  const carregarRascunhoLocal = () => {
+    try {
+      const rascunhoSalvo = localStorage.getItem(`enderecamento_rascunho_${ordem.id}`);
+      if (rascunhoSalvo) {
+        const rascunho = JSON.parse(rascunhoSalvo);
+        
+        // Verificar se o rascunho não é muito antigo (7 dias)
+        const dataRascunho = new Date(rascunho.timestamp);
+        const diasPassados = (Date.now() - dataRascunho.getTime()) / (1000 * 60 * 60 * 24);
+        
+        if (diasPassados > 7) {
+          console.log('🗑️ Rascunho antigo removido');
+          localStorage.removeItem(`enderecamento_rascunho_${ordem.id}`);
+          return;
+        }
+        
+        console.log('📂 Rascunho encontrado:', {
+          enderecamentos: rascunho.enderecamentos?.length || 0,
+          notas: rascunho.notas?.length || 0,
+          volumes: rascunho.volumes?.length || 0,
+          idade: `${Math.floor(diasPassados * 24)}h`
+        });
+        
+        // Restaurar dados do rascunho
+        if (rascunho.notasOrigem) {
+          setNotasOrigem(rascunho.notasOrigem);
+        }
+        
+        // Toast discreto informando que há um rascunho
+        if (rascunho.enderecamentos?.length > 0) {
+          setTimeout(() => {
+            toast.info(`💾 Progresso anterior restaurado: ${rascunho.enderecamentos.length} endereçamentos`, { 
+              duration: 3000 
+            });
+          }, 500);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao carregar rascunho:", error);
+    }
+  };
 
   const loadNotasOrigem = () => {
     const origens = {};
@@ -271,18 +314,41 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const salvarRascunho = () => {
     try {
       const enderecamentosOrdemAtual = enderecamentos.filter(e => e.ordem_id === ordem.id);
-      localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify({
+      const rascunho = {
         enderecamentos: enderecamentosOrdemAtual,
-        timestamp: new Date().toISOString()
-      }));
-      
-      localStorage.setItem(`enderecamento_notas_${ordem.id}`, JSON.stringify({
         notas: notasFiscaisLocal,
         volumes: volumesLocal,
+        notasOrigem: notasOrigem,
         timestamp: new Date().toISOString()
-      }));
+      };
+      
+      localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify(rascunho));
+      console.log(`💾 Rascunho salvo: ${enderecamentosOrdemAtual.length} endereçamentos, ${notasFiscaisLocal.length} notas, ${volumesLocal.length} volumes`);
     } catch (error) {
       console.error("Erro ao salvar rascunho:", error);
+    }
+  };
+
+  const handleSalvarProgresso = async () => {
+    setSaving(true);
+    try {
+      // Salvar no localStorage
+      salvarRascunho();
+      
+      // Opcional: sincronizar dados críticos com o banco (notas vinculadas)
+      const notasIds = notasFiscaisLocal.map(n => n.id);
+      if (notasIds.length > 0) {
+        await base44.entities.OrdemDeCarregamento.update(ordem.id, {
+          notas_fiscais_ids: notasIds
+        });
+      }
+      
+      toast.success("✅ Progresso salvo! Você pode continuar depois.", { duration: 2000 });
+    } catch (error) {
+      console.error("Erro ao salvar progresso:", error);
+      toast.error("Erro ao salvar progresso");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -319,6 +385,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         return acc;
       }, []);
       
+      console.log(`📦 Endereçamentos carregados: ${endereçamentosUnicos.length} únicos (${endData.length} total do banco)`);
       setEnderecamentos(endereçamentosUnicos);
       
       // Buscar notas e volumes relacionados aos endereçamentos únicos
@@ -560,8 +627,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         
         toast.success("Nota fiscal vinculada automaticamente!");
         
-        // Salvar rascunho de forma assíncrona
-        salvarRascunho();
+        // Salvar rascunho automaticamente
+        setTimeout(() => salvarRascunho(), 100);
         setSearchChaveNF("");
         
         // Manter foco no campo
@@ -711,8 +778,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       
       toast.success(`Nota fiscal importada! ${quantidadeVolumes} volume(s) criado(s).`);
       
-      // Salvar rascunho de forma assíncrona
-      salvarRascunho();
+      // Salvar rascunho automaticamente
+      setTimeout(() => salvarRascunho(), 100);
       setSearchChaveNF("");
       
       // Manter foco no campo
@@ -858,8 +925,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
         toast.success(`${volumesParaEnderecearFinal.length} volume(s) alocado(s)!`, { id: 'alocando' });
         
-        // Salvar rascunho de forma assíncrona
-        salvarRascunho();
+        // Salvar rascunho automaticamente
+        setTimeout(() => salvarRascunho(), 100);
         
         // Fechar modal após concluir
         setShowQuantidadeModal(false);
@@ -934,8 +1001,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
       toast.success(`${quantidade} volume(s) movido(s)!`);
       
-      // Salvar rascunho de forma assíncrona
-      salvarRascunho();
+      // Salvar rascunho automaticamente
+      setTimeout(() => salvarRascunho(), 100);
       
       // Fechar modal após concluir
       setShowQuantidadeModal(false);
@@ -1085,8 +1152,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
           toast.success("Volume desalocado!");
           
-          // Salvar rascunho de forma assíncrona
-          salvarRascunho();
+          // Salvar rascunho automaticamente
+          setTimeout(() => salvarRascunho(), 100);
         } catch (error) {
           console.error("Erro ao desalocar volume:", error);
           await loadEnderecamentos();
@@ -1164,8 +1231,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           toast.success("Volume posicionado!");
         }
         
-        // Salvar rascunho de forma assíncrona
-        salvarRascunho();
+        // Salvar rascunho automaticamente
+        setTimeout(() => salvarRascunho(), 100);
       } catch (error) {
         console.error("Erro ao posicionar volume:", error);
         toast.error("Erro ao posicionar volume");
@@ -1241,8 +1308,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           setVolumesLocal(prev => [...prev, ...volumesParaAdicionar]);
         }
 
-        // Salvar rascunho de forma assíncrona sempre
-        salvarRascunho();
+        // Salvar rascunho automaticamente
+        setTimeout(() => salvarRascunho(), 100);
 
         // Selecionar apenas este volume bipado
         setVolumesSelecionados([volumeEncontrado.id]);
@@ -1345,8 +1412,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             setVolumesLocal(prev => [...prev, ...volumesParaAdicionar]);
           }
 
-          // Salvar rascunho de forma assíncrona
-          salvarRascunho();
+          // Salvar rascunho automaticamente
+          setTimeout(() => salvarRascunho(), 100);
 
           // Selecionar volumes não endereçados e finalizar
           setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
@@ -1594,11 +1661,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         });
       }
 
-      // Limpar rascunhos ao finalizar
+      // Limpar rascunho ao finalizar
       localStorage.removeItem(`enderecamento_rascunho_${ordem.id}`);
-      localStorage.removeItem(`enderecamento_notas_${ordem.id}`);
       
-      toast.success("Carregamento finalizado com sucesso!");
+      toast.success("✅ Carregamento finalizado com sucesso!");
       setShowFinalizarModal(false);
       onComplete();
     } catch (error) {
@@ -1931,12 +1997,22 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 </div>
               </div>
               <Button
+                onClick={handleSalvarProgresso}
+                disabled={saving}
+                size="sm"
+                variant="outline"
+                style={{ borderColor: theme.cardBorder, color: theme.text }}
+              >
+                <Save className="w-4 h-4 mr-1" />
+                Salvar
+              </Button>
+              <Button
                 onClick={handleAbrirFinalizacao}
                 disabled={saving}
                 size="sm"
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
-                <Save className="w-4 h-4 mr-1" />
+                <CheckCircle className="w-4 h-4 mr-1" />
                 Finalizar
               </Button>
             </div>
@@ -2885,6 +2961,15 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             >
               <Printer className="w-4 h-4 mr-2" />
               Notas
+            </Button>
+            <Button
+              onClick={handleSalvarProgresso}
+              disabled={saving}
+              variant="outline"
+              style={{ borderColor: theme.cardBorder, color: theme.text }}
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Salvar Progresso
             </Button>
             <Button
               onClick={handleAbrirFinalizacao}
