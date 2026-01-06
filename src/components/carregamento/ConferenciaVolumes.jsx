@@ -861,6 +861,24 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
               </div>
             </div>
             <Button
+              onClick={() => {
+                const rascunho = {
+                  volumesEmbarcados: getVolumesEmbarcadosValidos(),
+                  timestamp: new Date().toISOString()
+                };
+                localStorage.setItem(`conferencia_rascunho_${ordem.id}`, JSON.stringify(rascunho));
+                toast.success("✅ Progresso salvo! Você pode continuar depois.", { duration: 2000 });
+              }}
+              disabled={saving}
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+              style={{ borderColor: theme.cardBorder, color: theme.text }}
+            >
+              <Save className="w-3 h-3 mr-1" />
+              Salvar
+            </Button>
+            <Button
               onClick={handleAbrirFinalizacao}
               disabled={saving}
               size="sm"
