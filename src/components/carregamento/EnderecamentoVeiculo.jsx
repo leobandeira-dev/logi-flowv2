@@ -1152,7 +1152,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
         setEnderecamentos(todosEnderecamentos);
 
-        if (alocacaoExistente) {
+        if (enderecamentosExistentes.length > 0) {
           toast.success("Volume realocado!");
         } else {
           toast.success("Volume posicionado!");
@@ -1162,9 +1162,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         salvarRascunho();
       } catch (error) {
         console.error("Erro ao posicionar volume:", error);
-        // Reverter em caso de erro
-        setEnderecamentos(enderecamentos);
         toast.error("Erro ao posicionar volume");
+        // Recarregar do banco em caso de erro
+        await loadEnderecamentos();
       }
     }
   };
