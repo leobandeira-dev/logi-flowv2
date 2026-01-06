@@ -298,11 +298,31 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const loadEnderecamentos = async () => {
     setLoading(true);
     try {
+      // Buscar apenas endereçamentos desta ordem
       const endData = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
       
-      // Buscar notas e volumes relacionados aos endereçamentos
-      const notasIds = [...new Set(endData.map(e => e.nota_fiscal_id).filter(Boolean))];
-      const volumesIds = [...new Set(endData.map(e => e.volume_id).filter(Boolean))];
+      // CRÍTICO: Remover duplicatas por volume_id (manter apenas o mais recente)
+      const endereçamentosUnicos = endData.reduce((acc, end) => {
+        const existente = acc.find(e => e.volume_id === end.volume_id);
+        if (!existente) {
+          acc.push(end);
+        } else {
+          // Manter o mais recente
+          const dataExistente = new Date(existente.data_enderecamento || existente.created_date);
+          const dataAtual = new Date(end.data_enderecamento || end.created_date);
+          if (dataAtual > dataExistente) {
+            const index = acc.findIndex(e => e.volume_id === end.volume_id);
+            acc[index] = end;
+          }
+        }
+        return acc;
+      }, []);
+      
+      setEnderecamentos(endereçamentosUnicos);
+      
+      // Buscar notas e volumes relacionados aos endereçamentos únicos
+      const notasIds = [...new Set(endereçamentosUnicos.map(e => e.nota_fiscal_id).filter(Boolean))];
+      const volumesIds = [...new Set(endereçamentosUnicos.map(e => e.volume_id).filter(Boolean))];
       
       if (notasIds.length > 0) {
         const notasDB = await base44.entities.NotaFiscal.filter({ id: { $in: notasIds } });
@@ -323,8 +343,6 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           setVolumesLocal(prev => [...prev, ...volumesNovos]);
         }
       }
-      
-      setEnderecamentos(endData);
     } catch (error) {
       console.error("Erro ao carregar endereçamentos:", error);
     } finally {
@@ -374,9 +392,27 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
     try {
       const user = await base44.auth.me();
-      const novosEnderecamentos = [];
 
-      for (const volumeId of volumesSelecionados) {
+      // CRÍTICO: Verificar se volumes já estão endereçados antes de criar
+      const endereçamentosExistentes = await base44.entities.EnderecamentoVolume.filter({
+        ordem_id: ordem.id,
+        volume_id: { $in: volumesSelecionados }
+      });
+
+      const volumesJaEnderecados = endereçamentosExistentes.map(e => e.volume_id);
+      const volumesParaEnderecear = volumesSelecionados.filter(id => !volumesJaEnderecados.includes(id));
+
+      if (volumesParaEnderecear.length === 0) {
+        toast.warning("Todos os volumes selecionados já foram endereçados");
+        setVolumesSelecionados([]);
+        return;
+      }
+
+      if (volumesJaEnderecados.length > 0) {
+        toast.info(`${volumesJaEnderecados.length} volume(s) já endereçado(s), alocando ${volumesParaEnderecear.length}`);
+      }
+
+      for (const volumeId of volumesParaEnderecear) {
         const volume = volumesLocal.find(v => v.id === volumeId);
         if (!volume) continue;
 
@@ -386,7 +422,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linha}-${coluna}`
         });
 
-        const enderecamento = {
+        await base44.entities.EnderecamentoVolume.create({
           ordem_id: ordem.id,
           volume_id: volumeId,
           nota_fiscal_id: volume.nota_fiscal_id,
@@ -395,21 +431,18 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           posicao_celula: `${linha}-${coluna}`,
           data_enderecamento: new Date().toISOString(),
           enderecado_por: user.id
-        };
-
-        const created = await base44.entities.EnderecamentoVolume.create(enderecamento);
-        novosEnderecamentos.push(created);
+        });
       }
 
       // Recarregar endereçamentos do banco para sincronizar (evitar estado inconsistente)
-      const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
+      const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
       setEnderecamentos(todosEnderecamentos);
       
       setVolumesSelecionados([]);
       setShowBuscaModal(false);
       setCelulaAtiva(null);
       
-      toast.success(`${volumesSelecionados.length} volume(s) alocado(s)!`);
+      toast.success(`${volumesParaEnderecear.length} volume(s) alocado(s)!`);
       
       // Salvar rascunho de forma assíncrona
       salvarRascunho();
@@ -754,11 +787,29 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
       try {
         setSaving(true);
-        
+
+        // VERIFICAR duplicatas ANTES de criar
+        const endereçamentosExistentes = await base44.entities.EnderecamentoVolume.filter({
+          ordem_id: ordem.id,
+          volume_id: { $in: volumesParaAlocar.map(v => v.id) }
+        });
+
+        const volumesJaEnderecadosIds = endereçamentosExistentes.map(e => e.volume_id);
+        const volumesParaEnderecearFinal = volumesParaAlocar.filter(v => !volumesJaEnderecadosIds.includes(v.id));
+
+        if (volumesParaEnderecearFinal.length === 0) {
+          toast.warning("Todos os volumes selecionados já foram endereçados", { id: 'alocando' });
+          setSaving(false);
+          setShowQuantidadeModal(false);
+          setMovimentacaoNota(null);
+          setQuantidadeMovimentar("");
+          return;
+        }
+
         // Criar endereçamentos um por um com pequeno delay para animação
-        for (let i = 0; i < volumesParaAlocar.length; i++) {
-          const volume = volumesParaAlocar[i];
-          
+        for (let i = 0; i < volumesParaEnderecearFinal.length; i++) {
+          const volume = volumesParaEnderecearFinal[i];
+
           await base44.entities.Volume.update(volume.id, {
             status_volume: "carregado",
             localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linhaDestino}-${colunaDestino}`
@@ -774,23 +825,37 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             data_enderecamento: new Date().toISOString(),
             enderecado_por: user.id
           });
-          
+
           novosEnderecamentos.push(enderecamento);
-          
-          // Atualizar estado imediatamente para mostrar volume aparecendo
-          setEnderecamentos(prev => [...prev, enderecamento]);
-          
+
           // Pequeno delay para animação suave
-          if (i < volumesParaAlocar.length - 1) {
+          if (i < volumesParaEnderecearFinal.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 120));
           }
         }
 
-        // Recarregar endereçamentos do banco para sincronizar
-        const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
-        setEnderecamentos(todosEnderecamentos);
+        // Recarregar apenas endereçamentos desta ordem
+        const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
 
-        toast.success(`${quantidade} volume(s) alocado(s)!`, { id: 'alocando' });
+        // Remover duplicatas (manter apenas o mais recente por volume_id)
+        const endereçamentosUnicos = todosEnderecamentos.reduce((acc, end) => {
+          const existente = acc.find(e => e.volume_id === end.volume_id);
+          if (!existente) {
+            acc.push(end);
+          } else {
+            const dataExistente = new Date(existente.data_enderecamento || existente.created_date);
+            const dataAtual = new Date(end.data_enderecamento || end.created_date);
+            if (dataAtual > dataExistente) {
+              const index = acc.findIndex(e => e.volume_id === end.volume_id);
+              acc[index] = end;
+            }
+          }
+          return acc;
+        }, []);
+
+        setEnderecamentos(endereçamentosUnicos);
+
+        toast.success(`${volumesParaEnderecearFinal.length} volume(s) alocado(s)!`, { id: 'alocando' });
         
         // Salvar rascunho de forma assíncrona
         salvarRascunho();
@@ -828,7 +893,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         });
 
         // Criar novo endereçamento
-        const novoEnd = await base44.entities.EnderecamentoVolume.create({
+        await base44.entities.EnderecamentoVolume.create({
           ordem_id: ordem.id,
           volume_id: end.volume_id,
           nota_fiscal_id: notaId,
@@ -839,21 +904,32 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           enderecado_por: user.id
         });
 
-        // Atualizar estado imediatamente (progressivo)
-        setEnderecamentos(prev => [
-          ...prev.filter(e => e.id !== end.id),
-          novoEnd
-        ]);
-
         // Pequeno delay para animação suave
         if (i < endsParaMoverSelecionados.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 120));
         }
       }
 
-      // Recarregar endereçamentos do banco para sincronizar
-      const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
-      setEnderecamentos(todosEnderecamentos);
+      // Recarregar apenas endereçamentos desta ordem
+      const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
+      
+      // Remover duplicatas (manter apenas o mais recente por volume_id)
+      const endereçamentosUnicos = todosEnderecamentos.reduce((acc, end) => {
+        const existente = acc.find(e => e.volume_id === end.volume_id);
+        if (!existente) {
+          acc.push(end);
+        } else {
+          const dataExistente = new Date(existente.data_enderecamento || existente.created_date);
+          const dataAtual = new Date(end.data_enderecamento || end.created_date);
+          if (dataAtual > dataExistente) {
+            const index = acc.findIndex(e => e.volume_id === end.volume_id);
+            acc[index] = end;
+          }
+        }
+        return acc;
+      }, []);
+      
+      setEnderecamentos(endereçamentosUnicos);
 
       toast.success(`${quantidade} volume(s) movido(s)!`);
       
@@ -940,8 +1016,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               });
             }
 
-            // Atualizar estado com TODOS os endereçamentos (não apenas da ordem)
-            const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
+            // Recarregar apenas endereçamentos desta ordem
+            const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
             setEnderecamentos(todosEnderecamentos);
 
             toast.success(`Nota fiscal desalocada! ${endsParaRemover.length} volumes removidos.`);
@@ -1002,8 +1078,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             localizacao_atual: null
           });
 
-          // Recarregar endereçamentos do banco para sincronizar
-          const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
+          // Recarregar apenas endereçamentos desta ordem
+          const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
           setEnderecamentos(todosEnderecamentos);
 
           toast.success("Volume desalocado!");
@@ -1072,8 +1148,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           enderecado_por: user.id
         });
 
-        // Recarregar endereçamentos do banco para sincronizar
-        const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
+        // Recarregar apenas endereçamentos desta ordem
+        const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
         setEnderecamentos(todosEnderecamentos);
 
         if (alocacaoExistente) {
@@ -3359,8 +3435,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                       status_nf: "recebida"
                                     });
 
-                                    // Recarregar endereçamentos do banco para sincronizar
-                                    const todosEnderecamentos = await base44.entities.EnderecamentoVolume.list(null, 300);
+                                    // Recarregar apenas endereçamentos desta ordem
+                                    const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
                                     setEnderecamentos(todosEnderecamentos);
 
                                     // Atualizar estados locais
