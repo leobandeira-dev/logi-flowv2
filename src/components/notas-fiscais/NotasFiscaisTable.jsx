@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,7 +54,7 @@ const calcularStatusDinamico = (nota) => {
   return nota.status_nf || "recebida";
 };
 
-export default function NotasFiscaisTable({ 
+const NotasFiscaisTable = React.memo(function NotasFiscaisTable({ 
   notasFiscais = [], 
   notasFiscaisPaginadas = null,
   volumes = [], 
@@ -84,16 +84,16 @@ export default function NotasFiscaisTable({
   const [anoSelecionado, setAnoSelecionado] = useState(() => new Date().getFullYear());
   const [mesSelecionado, setMesSelecionado] = useState(() => new Date().getMonth() + 1);
 
-  const verificarEtiquetasImpressas = (nota) => {
+  const verificarEtiquetasImpressas = useCallback((nota) => {
     const volumesNota = volumes.filter(v => v.nota_fiscal_id === nota.id);
     return volumesNota.length > 0 && volumesNota.every(v => v.etiquetas_impressas);
-  };
+  }, [volumes]);
 
-  const handleViewDetails = (nota) => {
+  const handleViewDetails = useCallback((nota) => {
     setSelectedNota(nota);
     const volumesDaNota = volumes.filter(v => v.nota_fiscal_id === nota.id);
     setNotaVolumes(volumesDaNota);
-  };
+  }, [volumes]);
 
   const handlePrintEtiquetas = async (nota) => {
     try {
@@ -1145,5 +1145,8 @@ export default function NotasFiscaisTable({
         </Dialog>
       )}
     </>
-  );
-}
+    );
+    }
+    });
+
+    export default NotasFiscaisTable;
