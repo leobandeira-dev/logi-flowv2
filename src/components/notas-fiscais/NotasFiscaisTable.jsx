@@ -382,6 +382,85 @@ export default function NotasFiscaisTable({
     });
   }, [notasParaTabela, searchTerm, filtroStatus, ordens]);
 
+  // Memoizar dados do gráfico para evitar recalcular a cada digitação
+  const dadosGrafico = useMemo(() => {
+    if (visualizacaoGrafico === "diario") {
+      const hoje = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const notasHoje = notasFiscais.filter(n => {
+        if (!n.created_date || n.status_nf === "cancelada") return false;
+        const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        return dataNota === hoje;
+      });
+
+      const porHora = Array.from({ length: 24 }, (_, i) => ({ hora: `${String(i).padStart(2, '0')}:00`, quantidade: 0 }));
+      notasHoje.forEach(nota => {
+        const dateUTC = new Date(nota.created_date.includes('Z') ? nota.created_date : nota.created_date + 'Z');
+        const horaStr = dateUTC.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hour12: false });
+        const hora = parseInt(horaStr.split(':')[0]);
+        if (hora >= 0 && hora < 24) {
+          if (metricaGrafico === "notas") {
+            porHora[hora].quantidade++;
+          } else {
+            porHora[hora].quantidade += (nota.quantidade_total_volumes_nf || 0);
+          }
+        }
+      });
+      return porHora;
+    } else if (visualizacaoGrafico === "mensal") {
+      const hoje = new Date();
+      const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const [dia, mes, ano] = dataHojeSP.split('/');
+      const mesAtual = parseInt(mes) - 1;
+      const anoAtual = parseInt(ano);
+      const diasNoMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
+
+      const notasMes = notasFiscais.filter(n => {
+        if (!n.created_date || n.status_nf === "cancelada") return false;
+        const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        const [, mesNota, anoNota] = dataNota.split('/');
+        return mesNota === mes && anoNota === ano;
+      });
+
+      const porDia = Array.from({ length: diasNoMes }, (_, i) => ({ dia: String(i + 1).padStart(2, '0'), quantidade: 0 }));
+      notasMes.forEach(nota => {
+        const dataNota = new Date(nota.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        const [diaNota] = dataNota.split('/');
+        const diaNum = parseInt(diaNota);
+        if (diaNum > 0 && diaNum <= diasNoMes) {
+          if (metricaGrafico === "notas") {
+            porDia[diaNum - 1].quantidade++;
+          } else {
+            porDia[diaNum - 1].quantidade += (nota.quantidade_total_volumes_nf || 0);
+          }
+        }
+      });
+      return porDia;
+    } else {
+      const diasNoMes = new Date(anoSelecionado, mesSelecionado, 0).getDate();
+      const notasMesSelecionado = notasFiscais.filter(n => {
+        if (!n.created_date || n.status_nf === "cancelada") return false;
+        const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        const [, mesNota, anoNota] = dataNota.split('/');
+        return parseInt(mesNota) === mesSelecionado && parseInt(anoNota) === anoSelecionado;
+      });
+
+      const porDia = Array.from({ length: diasNoMes }, (_, i) => ({ dia: String(i + 1).padStart(2, '0'), quantidade: 0 }));
+      notasMesSelecionado.forEach(nota => {
+        const dataNota = new Date(nota.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        const [diaNota] = dataNota.split('/');
+        const diaNum = parseInt(diaNota);
+        if (diaNum > 0 && diaNum <= diasNoMes) {
+          if (metricaGrafico === "notas") {
+            porDia[diaNum - 1].quantidade++;
+          } else {
+            porDia[diaNum - 1].quantidade += (nota.quantidade_total_volumes_nf || 0);
+          }
+        }
+      });
+      return porDia;
+    }
+  }, [notasFiscais, visualizacaoGrafico, metricaGrafico, mesSelecionado, anoSelecionado]);
+
   const theme = {
     cardBg: isDark ? '#1e293b' : '#ffffff',
     cardBorder: isDark ? '#334155' : '#e5e7eb',
@@ -501,103 +580,7 @@ export default function NotasFiscaisTable({
         {graficoExpandido && (
         <CardContent>
           <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={useMemo(() => {
-              if (visualizacaoGrafico === "diario") {
-                // Gráfico por hora do dia de hoje (horário São Paulo)
-                const hoje = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-
-                const notasHoje = notasFiscais.filter(n => {
-                  if (!n.created_date || n.status_nf === "cancelada") return false;
-                  const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                  return dataNota === hoje;
-                });
-
-                const porHora = Array.from({ length: 24 }, (_, i) => ({
-                  hora: `${String(i).padStart(2, '0')}:00`,
-                  quantidade: 0
-                }));
-
-                notasHoje.forEach(nota => {
-                  const dateUTC = new Date(nota.created_date.includes('Z') ? nota.created_date : nota.created_date + 'Z');
-                  const horaStr = dateUTC.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hour12: false });
-                  const hora = parseInt(horaStr.split(':')[0]);
-                  if (hora >= 0 && hora < 24) {
-                    if (metricaGrafico === "notas") {
-                      porHora[hora].quantidade++;
-                    } else {
-                      porHora[hora].quantidade += (nota.quantidade_total_volumes_nf || 0);
-                    }
-                  }
-                });
-
-                return porHora;
-              } else if (visualizacaoGrafico === "mensal") {
-                // Gráfico por dia do mês atual (horário São Paulo)
-                const hoje = new Date();
-                const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                const [dia, mes, ano] = dataHojeSP.split('/');
-                const mesAtual = parseInt(mes) - 1;
-                const anoAtual = parseInt(ano);
-                const diasNoMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
-
-                const notasMes = notasFiscais.filter(n => {
-                  if (!n.created_date || n.status_nf === "cancelada") return false;
-                  const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                  const [, mesNota, anoNota] = dataNota.split('/');
-                  return mesNota === mes && anoNota === ano;
-                });
-
-                const porDia = Array.from({ length: diasNoMes }, (_, i) => ({
-                  dia: String(i + 1).padStart(2, '0'),
-                  quantidade: 0
-                }));
-
-                notasMes.forEach(nota => {
-                  const dataNota = new Date(nota.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                  const [diaNota] = dataNota.split('/');
-                  const diaNum = parseInt(diaNota);
-                  if (diaNum > 0 && diaNum <= diasNoMes) {
-                    if (metricaGrafico === "notas") {
-                      porDia[diaNum - 1].quantidade++;
-                    } else {
-                      porDia[diaNum - 1].quantidade += (nota.quantidade_total_volumes_nf || 0);
-                    }
-                  }
-                });
-
-                return porDia;
-              } else {
-                // Mês específico selecionado (por dia)
-                const diasNoMes = new Date(anoSelecionado, mesSelecionado, 0).getDate();
-
-                const notasMesSelecionado = notasFiscais.filter(n => {
-                  if (!n.created_date || n.status_nf === "cancelada") return false;
-                  const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                  const [, mesNota, anoNota] = dataNota.split('/');
-                  return parseInt(mesNota) === mesSelecionado && parseInt(anoNota) === anoSelecionado;
-                });
-
-                const porDia = Array.from({ length: diasNoMes }, (_, i) => ({
-                  dia: String(i + 1).padStart(2, '0'),
-                  quantidade: 0
-                }));
-
-                notasMesSelecionado.forEach(nota => {
-                  const dataNota = new Date(nota.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                  const [diaNota] = dataNota.split('/');
-                  const diaNum = parseInt(diaNota);
-                  if (diaNum > 0 && diaNum <= diasNoMes) {
-                    if (metricaGrafico === "notas") {
-                      porDia[diaNum - 1].quantidade++;
-                    } else {
-                      porDia[diaNum - 1].quantidade += (nota.quantidade_total_volumes_nf || 0);
-                    }
-                  }
-                });
-
-                return porDia;
-              }
-            }, [notasFiscais, visualizacaoGrafico, metricaGrafico, mesSelecionado, anoSelecionado, isDark])}>
+            <LineChart data={dadosGrafico}>
               <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#e5e7eb'} />
               <XAxis 
                 dataKey={visualizacaoGrafico === "diario" ? "hora" : "dia"}
