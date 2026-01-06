@@ -65,6 +65,7 @@ export default function NotasFiscaisTable({
   showFilters = true
 }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [selectedNota, setSelectedNota] = useState(null);
   const [notaVolumes, setNotaVolumes] = useState([]);
@@ -790,12 +791,25 @@ export default function NotasFiscaisTable({
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
               <Input
                 placeholder="Buscar notas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setSearchTerm(searchInput);
+                  }
+                }}
                 className="pl-10 h-9 text-sm"
                 style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
               />
             </div>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setSearchTerm(searchInput)}
+              className="bg-blue-600 hover:bg-blue-700 h-9"
+            >
+              <Search className="w-4 h-4" />
+            </Button>
             <Button
               variant="outline"
               size="sm"
