@@ -116,6 +116,140 @@ export default function Recebimento() {
     return filtered.length;
   }, [todasNotasFiscais, searchTermNotas]);
 
+  // Memoizar indicadores de recebimentos para evitar recalcular a cada digitação
+  const indicadoresRecebimentos = useMemo(() => {
+    const hoje = new Date();
+    const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
+
+    const recebimentosMes = recebimentos.filter(r => {
+      if (!r.data_solicitacao || r.status === "cancelado") return false;
+      const dataRec = new Date(r.data_solicitacao);
+      const dataRecSP = dataRec.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const [, mesRec, anoRec] = dataRecSP.split('/');
+      return mesRec === mesHojeSP && anoRec === anoHojeSP;
+    });
+
+    const mesNome = new Date(parseInt(anoHojeSP), parseInt(mesHojeSP) - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+    return {
+      totalMes: recebimentosMes.length,
+      mesNome
+    };
+  }, [recebimentos]);
+
+  // Memoizar dados do gráfico de recebimentos
+  const dadosGraficoRecebimentos = useMemo(() => {
+    const todosRecebimentosSemPaginacao = recebimentos.filter(rec => {
+      const matchesSearch = !searchTermRecebimentos ||
+        rec.numero_carga?.toLowerCase().includes(searchTermRecebimentos.toLowerCase()) ||
+        rec.cliente?.toLowerCase().includes(searchTermRecebimentos.toLowerCase());
+      
+      const matchesFornecedor = !filtersRecebimentos.fornecedor || 
+        rec.cliente?.toLowerCase().includes(filtersRecebimentos.fornecedor.toLowerCase());
+      
+      const matchesConferente = !filtersRecebimentos.conferente ||
+        usuarios.find(u => u.id === rec.conferente_id)?.full_name?.toLowerCase().includes(filtersRecebimentos.conferente.toLowerCase());
+      
+      const matchesDataInicio = !filtersRecebimentos.dataInicio || 
+        (rec.data_solicitacao && new Date(rec.data_solicitacao) >= new Date(filtersRecebimentos.dataInicio));
+      
+      const matchesDataFim = !filtersRecebimentos.dataFim || 
+        (rec.data_solicitacao && new Date(rec.data_solicitacao) <= new Date(filtersRecebimentos.dataFim + 'T23:59:59'));
+      
+      return matchesSearch && matchesFornecedor && matchesConferente && matchesDataInicio && matchesDataFim;
+    });
+
+    if (visualizacaoGrafico === "diario") {
+      const hoje = new Date();
+      const offsetSP = -3 * 60;
+      const dataHojeSP = new Date(hoje.getTime() + offsetSP * 60 * 1000);
+      
+      const recebimentosHoje = todosRecebimentosSemPaginacao.filter(r => {
+        if (!r.data_solicitacao || r.status === "cancelado") return false;
+        const dataRec = new Date(r.data_solicitacao);
+        const dataRecSP = new Date(dataRec.getTime() + offsetSP * 60 * 1000);
+        
+        return dataRecSP.getUTCFullYear() === dataHojeSP.getUTCFullYear() &&
+               dataRecSP.getUTCMonth() === dataHojeSP.getUTCMonth() &&
+               dataRecSP.getUTCDate() === dataHojeSP.getUTCDate();
+      });
+
+      const porHora = Array.from({ length: 24 }, (_, i) => ({
+        hora: `${String(i).padStart(2, '0')}:00`,
+        volume: 0
+      }));
+
+      recebimentosHoje.forEach(rec => {
+        const dataRec = new Date(rec.data_solicitacao);
+        const dataRecSP = new Date(dataRec.getTime() + offsetSP * 60 * 1000);
+        const hora = dataRecSP.getUTCHours();
+        if (hora >= 0 && hora < 24) {
+          porHora[hora].volume++;
+        }
+      });
+
+      return porHora;
+    } else if (visualizacaoGrafico === "mensal") {
+      const hoje = new Date();
+      const offsetSP = -3 * 60;
+      const dataHojeSP = new Date(hoje.getTime() + offsetSP * 60 * 1000);
+      const mesAtual = dataHojeSP.getUTCMonth();
+      const anoAtual = dataHojeSP.getUTCFullYear();
+      const diasNoMes = new Date(Date.UTC(anoAtual, mesAtual + 1, 0)).getUTCDate();
+
+      const recebimentosMes = todosRecebimentosSemPaginacao.filter(r => {
+        if (!r.data_solicitacao || r.status === "cancelado") return false;
+        const dataRec = new Date(r.data_solicitacao);
+        const dataRecSP = new Date(dataRec.getTime() + offsetSP * 60 * 1000);
+        return dataRecSP.getUTCMonth() === mesAtual && dataRecSP.getUTCFullYear() === anoAtual;
+      });
+
+      const porDia = Array.from({ length: diasNoMes }, (_, i) => ({
+        dia: String(i + 1).padStart(2, '0'),
+        volume: 0
+      }));
+
+      recebimentosMes.forEach(rec => {
+        const dataRec = new Date(rec.data_solicitacao);
+        const dataRecSP = new Date(dataRec.getTime() + offsetSP * 60 * 1000);
+        const dia = dataRecSP.getUTCDate();
+        if (dia > 0 && dia <= diasNoMes) {
+          porDia[dia - 1].volume++;
+        }
+      });
+
+      return porDia;
+    } else {
+      const diasNoMes = new Date(anoSelecionadoRecebimento, mesSelecionadoRecebimento, 0).getDate();
+
+      const recebimentosMesSelecionado = todosRecebimentosSemPaginacao.filter(r => {
+        if (!r.data_solicitacao || r.status === "cancelado") return false;
+        const dataRec = new Date(r.data_solicitacao);
+        const dataRecSP = dataRec.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        const [, mesRec, anoRec] = dataRecSP.split('/');
+        return parseInt(mesRec) === mesSelecionadoRecebimento && parseInt(anoRec) === anoSelecionadoRecebimento;
+      });
+
+      const porDia = Array.from({ length: diasNoMes }, (_, i) => ({
+        dia: String(i + 1).padStart(2, '0'),
+        volume: 0
+      }));
+
+      recebimentosMesSelecionado.forEach(rec => {
+        const dataRec = new Date(rec.data_solicitacao);
+        const dataRecSP = dataRec.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        const [diaRec] = dataRecSP.split('/');
+        const diaNum = parseInt(diaRec);
+        if (diaNum > 0 && diaNum <= diasNoMes) {
+          porDia[diaNum - 1].volume++;
+        }
+      });
+
+      return porDia;
+    }
+  }, [recebimentos, searchTermRecebimentos, filtersRecebimentos, usuarios, visualizacaoGrafico, anoSelecionadoRecebimento, mesSelecionadoRecebimento]);
+
   // Memoizar cálculos dos indicadores para evitar recalcular a cada digitação
   const indicadoresNotas = useMemo(() => {
     const hoje = new Date();
@@ -1137,26 +1271,28 @@ export default function Recebimento() {
     reprovada: { label: "Reprovada", color: "bg-red-500" }
   };
 
-  // Aplicar filtros uma vez para recebimentos
-  const recebimentosFiltrados = recebimentos.filter(rec => {
-    const matchesSearch = !searchTermRecebimentos ||
-      rec.numero_carga?.toLowerCase().includes(searchTermRecebimentos.toLowerCase()) ||
-      rec.cliente?.toLowerCase().includes(searchTermRecebimentos.toLowerCase());
-    
-    const matchesFornecedor = !filtersRecebimentos.fornecedor || 
-      rec.cliente?.toLowerCase().includes(filtersRecebimentos.fornecedor.toLowerCase());
-    
-    const matchesConferente = !filtersRecebimentos.conferente ||
-      usuarios.find(u => u.id === rec.conferente_id)?.full_name?.toLowerCase().includes(filtersRecebimentos.conferente.toLowerCase());
-    
-    const matchesDataInicio = !filtersRecebimentos.dataInicio || 
-      (rec.data_solicitacao && new Date(rec.data_solicitacao) >= new Date(filtersRecebimentos.dataInicio));
-    
-    const matchesDataFim = !filtersRecebimentos.dataFim || 
-      (rec.data_solicitacao && new Date(rec.data_solicitacao) <= new Date(filtersRecebimentos.dataFim + 'T23:59:59'));
-    
-    return matchesSearch && matchesFornecedor && matchesConferente && matchesDataInicio && matchesDataFim;
-  });
+  // Memoizar filtros de recebimentos para evitar recalcular a cada digitação
+  const recebimentosFiltrados = useMemo(() => {
+    return recebimentos.filter(rec => {
+      const matchesSearch = !searchTermRecebimentos ||
+        rec.numero_carga?.toLowerCase().includes(searchTermRecebimentos.toLowerCase()) ||
+        rec.cliente?.toLowerCase().includes(searchTermRecebimentos.toLowerCase());
+      
+      const matchesFornecedor = !filtersRecebimentos.fornecedor || 
+        rec.cliente?.toLowerCase().includes(filtersRecebimentos.fornecedor.toLowerCase());
+      
+      const matchesConferente = !filtersRecebimentos.conferente ||
+        usuarios.find(u => u.id === rec.conferente_id)?.full_name?.toLowerCase().includes(filtersRecebimentos.conferente.toLowerCase());
+      
+      const matchesDataInicio = !filtersRecebimentos.dataInicio || 
+        (rec.data_solicitacao && new Date(rec.data_solicitacao) >= new Date(filtersRecebimentos.dataInicio));
+      
+      const matchesDataFim = !filtersRecebimentos.dataFim || 
+        (rec.data_solicitacao && new Date(rec.data_solicitacao) <= new Date(filtersRecebimentos.dataFim + 'T23:59:59'));
+      
+      return matchesSearch && matchesFornecedor && matchesConferente && matchesDataInicio && matchesDataFim;
+    });
+  }, [recebimentos, searchTermRecebimentos, filtersRecebimentos, usuarios]);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: theme.bg }}>
@@ -1388,27 +1524,10 @@ export default function Recebimento() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-blue-600">
-                    {(() => {
-                      const hoje = new Date();
-                      const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                      const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
-                      return recebimentos.filter(r => {
-                        if (!r.data_solicitacao || r.status === "cancelado") return false;
-                        const dataRec = new Date(r.data_solicitacao);
-                        const dataRecSP = dataRec.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                        const [, mesRec, anoRec] = dataRecSP.split('/');
-                        return mesRec === mesHojeSP && anoRec === anoHojeSP;
-                      }).length;
-                    })()}
+                    {indicadoresRecebimentos.totalMes}
                   </p>
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
-                    {(() => {
-                      const hoje = new Date();
-                      const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                      const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
-                      const mesNome = new Date(parseInt(anoHojeSP), parseInt(mesHojeSP) - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-                      return `Em ${mesNome}`;
-                    })()}
+                    Em {indicadoresRecebimentos.mesNome}
                   </p>
                 </CardContent>
               </Card>
@@ -1422,37 +1541,10 @@ export default function Recebimento() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-green-600">
-                    {(() => {
-                      const hoje = new Date();
-                      const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                      const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
-                      
-                      // Filtrar NOTAS do mês pela data de CRIAÇÃO da nota
-                      const notasMes = todasNotasFiscais.filter(n => {
-                        if (!n.created_date || n.status_nf === "cancelada") return false;
-                        const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                        const [, mesNota, anoNota] = dataNota.split('/');
-                        return mesNota === mesHojeSP && anoNota === anoHojeSP;
-                      });
-                      
-                      return notasMes.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
-                    })()}
+                    {indicadoresNotas.volumesTotal}
                   </p>
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
-                    {(() => {
-                      const hoje = new Date();
-                      const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                      const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
-                      
-                      const notasMes = todasNotasFiscais.filter(n => {
-                        if (!n.created_date || n.status_nf === "cancelada") return false;
-                        const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                        const [, mesNota, anoNota] = dataNota.split('/');
-                        return mesNota === mesHojeSP && anoNota === anoHojeSP;
-                      });
-                      
-                      return notasMes.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0).toLocaleString();
-                    })()} kg
+                    {indicadoresNotas.pesoTotal.toLocaleString()} kg
                   </p>
                 </CardContent>
               </Card>
@@ -1466,37 +1558,10 @@ export default function Recebimento() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-purple-600">
-                    {(() => {
-                      const hoje = new Date();
-                      const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                      const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
-                      
-                      // Filtrar NOTAS do mês pela data de CRIAÇÃO da nota
-                      const notasMes = todasNotasFiscais.filter(n => {
-                        if (!n.created_date || n.status_nf === "cancelada") return false;
-                        const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                        const [, mesNota, anoNota] = dataNota.split('/');
-                        return mesNota === mesHojeSP && anoNota === anoHojeSP;
-                      });
-                      
-                      return notasMes.length;
-                    })()}
+                    {indicadoresNotas.totalMes}
                   </p>
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
-                    R$ {(() => {
-                      const hoje = new Date();
-                      const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                      const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
-                      
-                      const notasMes = todasNotasFiscais.filter(n => {
-                        if (!n.created_date || n.status_nf === "cancelada") return false;
-                        const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                        const [, mesNota, anoNota] = dataNota.split('/');
-                        return mesNota === mesHojeSP && anoNota === anoHojeSP;
-                      });
-                      
-                      return notasMes.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                    })()}
+                    R$ {indicadoresNotas.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                 </CardContent>
               </Card>
@@ -1589,120 +1654,7 @@ export default function Recebimento() {
               {graficoExpandidoRecebimento && (
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={(() => {
-                    // Buscar TODOS os recebimentos sem filtro de paginação para o gráfico
-                    const todosRecebimentosSemPaginacao = recebimentos.filter(rec => {
-                      const matchesSearch = !searchTermRecebimentos ||
-                        rec.numero_carga?.toLowerCase().includes(searchTermRecebimentos.toLowerCase()) ||
-                        rec.cliente?.toLowerCase().includes(searchTermRecebimentos.toLowerCase());
-                      
-                      const matchesFornecedor = !filtersRecebimentos.fornecedor || 
-                        rec.cliente?.toLowerCase().includes(filtersRecebimentos.fornecedor.toLowerCase());
-                      
-                      const matchesConferente = !filtersRecebimentos.conferente ||
-                        usuarios.find(u => u.id === rec.conferente_id)?.full_name?.toLowerCase().includes(filtersRecebimentos.conferente.toLowerCase());
-                      
-                      const matchesDataInicio = !filtersRecebimentos.dataInicio || 
-                        (rec.data_solicitacao && new Date(rec.data_solicitacao) >= new Date(filtersRecebimentos.dataInicio));
-                      
-                      const matchesDataFim = !filtersRecebimentos.dataFim || 
-                        (rec.data_solicitacao && new Date(rec.data_solicitacao) <= new Date(filtersRecebimentos.dataFim + 'T23:59:59'));
-                      
-                      return matchesSearch && matchesFornecedor && matchesConferente && matchesDataInicio && matchesDataFim;
-                    });
-
-                    if (visualizacaoGrafico === "diario") {
-                      // Gráfico por hora do dia de hoje (São Paulo)
-                      const hoje = new Date();
-                      const offsetSP = -3 * 60; // UTC-3
-                      const dataHojeSP = new Date(hoje.getTime() + offsetSP * 60 * 1000);
-                      
-                      const recebimentosHoje = todosRecebimentosSemPaginacao.filter(r => {
-                        if (!r.data_solicitacao || r.status === "cancelado") return false;
-                        const dataRec = new Date(r.data_solicitacao);
-                        const dataRecSP = new Date(dataRec.getTime() + offsetSP * 60 * 1000);
-                        
-                        return dataRecSP.getUTCFullYear() === dataHojeSP.getUTCFullYear() &&
-                               dataRecSP.getUTCMonth() === dataHojeSP.getUTCMonth() &&
-                               dataRecSP.getUTCDate() === dataHojeSP.getUTCDate();
-                      });
-
-                      const porHora = Array.from({ length: 24 }, (_, i) => ({
-                        hora: `${String(i).padStart(2, '0')}:00`,
-                        volume: 0
-                      }));
-
-                      recebimentosHoje.forEach(rec => {
-                        const dataRec = new Date(rec.data_solicitacao);
-                        const dataRecSP = new Date(dataRec.getTime() + offsetSP * 60 * 1000);
-                        const hora = dataRecSP.getUTCHours();
-                        if (hora >= 0 && hora < 24) {
-                          porHora[hora].volume++;
-                        }
-                      });
-
-                      return porHora;
-                    } else if (visualizacaoGrafico === "mensal") {
-                      // Gráfico por dia do mês atual (São Paulo)
-                      const hoje = new Date();
-                      const offsetSP = -3 * 60;
-                      const dataHojeSP = new Date(hoje.getTime() + offsetSP * 60 * 1000);
-                      const mesAtual = dataHojeSP.getUTCMonth();
-                      const anoAtual = dataHojeSP.getUTCFullYear();
-                      const diasNoMes = new Date(Date.UTC(anoAtual, mesAtual + 1, 0)).getUTCDate();
-
-                      const recebimentosMes = todosRecebimentosSemPaginacao.filter(r => {
-                        if (!r.data_solicitacao || r.status === "cancelado") return false;
-                        const dataRec = new Date(r.data_solicitacao);
-                        const dataRecSP = new Date(dataRec.getTime() + offsetSP * 60 * 1000);
-                        return dataRecSP.getUTCMonth() === mesAtual && dataRecSP.getUTCFullYear() === anoAtual;
-                      });
-
-                      const porDia = Array.from({ length: diasNoMes }, (_, i) => ({
-                        dia: String(i + 1).padStart(2, '0'),
-                        volume: 0
-                      }));
-
-                      recebimentosMes.forEach(rec => {
-                        const dataRec = new Date(rec.data_solicitacao);
-                        const dataRecSP = new Date(dataRec.getTime() + offsetSP * 60 * 1000);
-                        const dia = dataRecSP.getUTCDate();
-                        if (dia > 0 && dia <= diasNoMes) {
-                          porDia[dia - 1].volume++;
-                        }
-                      });
-
-                      return porDia;
-                    } else {
-                      // Mês específico selecionado (por dia)
-                      const diasNoMes = new Date(anoSelecionadoRecebimento, mesSelecionadoRecebimento, 0).getDate();
-
-                      const recebimentosMesSelecionado = todosRecebimentosSemPaginacao.filter(r => {
-                        if (!r.data_solicitacao || r.status === "cancelado") return false;
-                        const dataRec = new Date(r.data_solicitacao);
-                        const dataRecSP = dataRec.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                        const [, mesRec, anoRec] = dataRecSP.split('/');
-                        return parseInt(mesRec) === mesSelecionadoRecebimento && parseInt(anoRec) === anoSelecionadoRecebimento;
-                      });
-
-                      const porDia = Array.from({ length: diasNoMes }, (_, i) => ({
-                        dia: String(i + 1).padStart(2, '0'),
-                        volume: 0
-                      }));
-
-                      recebimentosMesSelecionado.forEach(rec => {
-                        const dataRec = new Date(rec.data_solicitacao);
-                        const dataRecSP = dataRec.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                        const [diaRec] = dataRecSP.split('/');
-                        const diaNum = parseInt(diaRec);
-                        if (diaNum > 0 && diaNum <= diasNoMes) {
-                          porDia[diaNum - 1].volume++;
-                        }
-                      });
-
-                      return porDia;
-                    }
-                  })()}>
+                  <LineChart data={dadosGraficoRecebimentos}>
                     <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#e5e7eb'} />
                     <XAxis 
                       dataKey={visualizacaoGrafico === "diario" ? "hora" : "dia"}
