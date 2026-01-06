@@ -133,6 +133,7 @@ export default function OrdemUnificadaForm({
   
   // Import PDF
   const [importando, setImportando] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
   const [importError, setImportError] = useState(null);
   const [importSuccess, setImportSuccess] = useState(false);
   const pdfInputRef = React.useRef(null);
@@ -949,11 +950,14 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
     if (!file) return;
 
     setImportando(true);
+    setLoadingMessage("Enviando arquivo (1/3)...");
     setImportError(null);
     setImportSuccess(false);
 
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
+
+      setLoadingMessage("IA analisando documento (2/3) - Aguarde...");
 
       const ordemSchema = {
         type: "object",
@@ -1006,6 +1010,8 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
       if (result.status !== "success" || !result.output) {
         throw new Error("Não foi possível extrair os dados do PDF.");
       }
+
+      setLoadingMessage("Processando dados e preenchendo (3/3)...");
 
       const dados = result.output;
 
@@ -1437,9 +1443,18 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
                   <h3 className="text-lg font-semibold mb-2 text-blue-900">Completar Ordem com PDF do ERP</h3>
                   <p className="text-sm text-blue-700 mb-4">Faça upload do PDF para preencher automaticamente</p>
                   <input ref={pdfInputRef} type="file" accept=".pdf" onChange={handleImportarPDF} className="hidden" disabled={importando} />
-                  <Button type="button" onClick={() => pdfInputRef.current?.click()} disabled={importando} className="bg-blue-600">
-                    {importando ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processando...</> : 
-                     <><FileUp className="w-4 h-4 mr-2" />Selecionar PDF</>}
+                  <Button type="button" onClick={() => pdfInputRef.current?.click()} disabled={importando} className="bg-blue-600 min-w-[200px]">
+                    {importando ? (
+                      <div className="flex flex-col items-center py-1">
+                        <div className="flex items-center">
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          <span>Processando...</span>
+                        </div>
+                        {loadingMessage && <span className="text-[10px] opacity-90 mt-1">{loadingMessage}</span>}
+                      </div>
+                    ) : (
+                      <><FileUp className="w-4 h-4 mr-2" />Selecionar PDF</>
+                    )}
                   </Button>
                 </div>
               </div>
