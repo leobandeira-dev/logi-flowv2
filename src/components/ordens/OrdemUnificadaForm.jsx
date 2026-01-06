@@ -948,20 +948,6 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validar se é PDF
-    if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
-      toast.error("Apenas arquivos PDF são suportados");
-      if (pdfInputRef.current) pdfInputRef.current.value = '';
-      return;
-    }
-
-    // Validar tamanho (máx 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Arquivo muito grande. Tamanho máximo: 10MB");
-      if (pdfInputRef.current) pdfInputRef.current.value = '';
-      return;
-    }
-
     setImportando(true);
     setImportError(null);
     setImportSuccess(false);
@@ -969,53 +955,56 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      // Usar LLM diretamente para extração (mais flexível)
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analise este PDF de ordem de carregamento e extraia as seguintes informações em formato JSON:
+      const ordemSchema = {
+        type: "object",
+        properties: {
+          numero_ordem: { type: "string" },
+          motorista_nome: { type: "string" },
+          motorista_cnh: { type: "string" },
+          motorista_cpf: { type: "string" },
+          motorista_rg: { type: "string" },
+          vencimento_cnh: { type: "string" },
+          cavalo_placa: { type: "string" },
+          cavalo_renavam: { type: "string" },
+          implemento1_placa: { type: "string" },
+          implemento1_renavam: { type: "string" },
+          implemento2_placa: { type: "string" },
+          implemento2_renavam: { type: "string" },
+          implemento3_placa: { type: "string" },
+          implemento3_renavam: { type: "string" },
+          origem_cidade: { type: "string" },
+          origem_uf: { type: "string" },
+          destino_cidade: { type: "string" },
+          destino_uf: { type: "string" },
+          coleta_razao_social: { type: "string" },
+          coleta_cnpj: { type: "string" },
+          coleta_endereco: { type: "string" },
+          coleta_cep: { type: "string" },
+          destinatario_razao_social: { type: "string" },
+          destinatario_cnpj: { type: "string" },
+          destinatario_endereco: { type: "string" },
+          destinatario_cep: { type: "string" },
+          destinatario_cidade: { type: "string" },
+          destinatario_uf: { type: "string" },
+          produto: { type: "string" },
+          peso: { type: "string" },
+          volumes: { type: "string" },
+          pedido_numero: { type: "string" },
+          observacoes: { type: "string" }
+        },
+        required: ["motorista_nome", "cavalo_placa", "coleta_razao_social", "origem_cidade", "destino_cidade", "produto", "peso"]
+      };
 
-- motorista_nome: Nome completo do motorista
-- motorista_cpf: CPF do motorista
-- cavalo_placa: Placa do cavalo
-- implemento1_placa: Placa do primeiro implemento (se houver)
-- implemento2_placa: Placa do segundo implemento (se houver)
-- origem_cidade: Cidade de origem/coleta
-- destino_cidade: Cidade de destino/entrega
-- coleta_razao_social: Nome da empresa de origem/remetente
-- destinatario_razao_social: Nome da empresa de destino
-- produto: Tipo de produto/mercadoria
-- peso: Peso da carga (em kg ou ton)
-- volumes: Quantidade de volumes
-- pedido_numero: Número do pedido/viagem
-- observacoes: Observações adicionais
-
-Retorne APENAS as informações encontradas. Se algum dado não estiver presente no PDF, não inclua no retorno.
-IMPORTANTE: Retorne valores vazios ("") para campos não encontrados, nunca null.`,
-        file_urls: [file_url],
-        response_json_schema: {
-          type: "object",
-          properties: {
-            motorista_nome: { type: "string" },
-            motorista_cpf: { type: "string" },
-            cavalo_placa: { type: "string" },
-            implemento1_placa: { type: "string" },
-            implemento2_placa: { type: "string" },
-            origem_cidade: { type: "string" },
-            destino_cidade: { type: "string" },
-            coleta_razao_social: { type: "string" },
-            destinatario_razao_social: { type: "string" },
-            produto: { type: "string" },
-            peso: { type: "string" },
-            volumes: { type: "string" },
-            pedido_numero: { type: "string" }
-          }
-        }
+      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url,
+        json_schema: ordemSchema
       });
 
-      if (!result) {
-        throw new Error("Não foi possível extrair os dados do PDF. Verifique se o arquivo contém as informações necessárias.");
+      if (result.status !== "success" || !result.output) {
+        throw new Error("Não foi possível extrair os dados do PDF.");
       }
 
-      const dados = result;
+      const dados = result.output;
 
       // Buscar ou criar motorista
       let motoristaId = null;
