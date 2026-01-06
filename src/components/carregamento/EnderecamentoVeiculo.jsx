@@ -3374,7 +3374,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
               <div className="flex-1 overflow-y-auto p-4">
                 <div className="space-y-1.5">
-                  {notasFiscaisLocal.map((nota) => {
+                  {(() => {
+                    // CRÍTICO: Remover duplicatas por ID antes de renderizar
+                    const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
+                      if (!acc.find(n => n.id === nota.id)) {
+                        acc.push(nota);
+                      }
+                      return acc;
+                    }, []);
+                    
+                    return notasUnicas.map((nota) => {
                     const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
                     const volumesEndNota = enderecamentos.filter(e => e.nota_fiscal_id === nota.id && e.ordem_id === ordem.id);
                     const origem = notasOrigem[nota.id] || "Vinculada";
@@ -3471,7 +3480,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         </div>
                       </div>
                     );
-                  })}
+                  });
+                  })()}
 
                   {notasFiscaisLocal.length === 0 && (
                     <div className="text-center py-8" style={{ color: theme.textMuted }}>
