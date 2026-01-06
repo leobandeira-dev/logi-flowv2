@@ -2586,6 +2586,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 </TabsContent>
                 </Tabs>
                 </div>
+                </div>
 
                 {/* Modal de Busca Mobile */}
         <Dialog open={showBuscaModal} onOpenChange={setShowBuscaModal}>
