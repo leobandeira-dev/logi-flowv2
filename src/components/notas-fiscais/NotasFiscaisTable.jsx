@@ -64,8 +64,8 @@ export default function NotasFiscaisTable({
   isDark = false,
   showFilters = true
 }) {
-  const [searchTerm, setSearchTerm] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [selectedNota, setSelectedNota] = useState(null);
   const [notaVolumes, setNotaVolumes] = useState([]);
@@ -696,7 +696,9 @@ export default function NotasFiscaisTable({
             <Button
               variant="default"
               size="sm"
-              onClick={() => setSearchTerm(searchInput)}
+              onClick={() => {
+                setSearchTerm(searchInput);
+              }}
               className="bg-blue-600 hover:bg-blue-700 h-9"
             >
               <Search className="w-4 h-4" />
