@@ -256,6 +256,18 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
           // Buscar notas fiscais únicas dos volumes
           const notasIdsUnicas = [...new Set(volumesDaEtiquetaDB.map(v => v.nota_fiscal_id).filter(Boolean))];
           
+          // VALIDAÇÃO: Se flag "Apenas Notas Vinculadas" estiver ativa
+          if (apenasNotasVinculadas) {
+            const notasJaVinculadasIds = notasFiscaisLocal.map(nf => nf.id);
+            const notasNaoVinculadas = notasIdsUnicas.filter(id => !notasJaVinculadasIds.includes(id));
+            
+            if (notasNaoVinculadas.length > 0) {
+              toast.error("❌ Etiqueta contém volumes de notas não vinculadas a esta ordem", { duration: 3000 });
+              setCodigoScanner("");
+              return 'error';
+            }
+          }
+          
           // Verificar quais notas precisam ser vinculadas à ordem
           const notasParaVincular = [];
           for (const notaId of notasIdsUnicas) {
@@ -399,6 +411,16 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       console.log('⚠️ Volume duplicado detectado:', volume.identificador_unico);
       setCodigoScanner("");
       return 'duplicate';
+    }
+    
+    // VALIDAÇÃO: Se flag "Apenas Notas Vinculadas" estiver ativa e volume encontrado localmente
+    if (volume && apenasNotasVinculadas) {
+      const notaVinculada = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+      if (!notaVinculada) {
+        toast.error("❌ Volume não pertence a nenhuma nota fiscal vinculada a esta ordem", { duration: 3000 });
+        setCodigoScanner("");
+        return 'error';
+      }
     }
 
     // Se não encontrou, buscar em TODOS os volumes do estoque
