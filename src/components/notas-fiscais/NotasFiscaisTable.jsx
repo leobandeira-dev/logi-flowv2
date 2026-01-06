@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,16 +84,11 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
   const [anoSelecionado, setAnoSelecionado] = useState(() => new Date().getFullYear());
   const [mesSelecionado, setMesSelecionado] = useState(() => new Date().getMonth() + 1);
 
-  const verificarEtiquetasImpressas = useCallback((nota) => {
-    const volumesNota = volumes.filter(v => v.nota_fiscal_id === nota.id);
-    return volumesNota.length > 0 && volumesNota.every(v => v.etiquetas_impressas);
-  }, [volumes]);
-
-  const handleViewDetails = useCallback((nota) => {
+  const handleViewDetails = (nota) => {
     setSelectedNota(nota);
     const volumesDaNota = volumes.filter(v => v.nota_fiscal_id === nota.id);
     setNotaVolumes(volumesDaNota);
-  }, [volumes]);
+  };
 
   const handlePrintEtiquetas = async (nota) => {
     try {
@@ -885,12 +880,20 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
                             variant="outline"
                             size="sm"
                             onClick={() => handlePrintEtiquetas(nota)}
-                            style={{ 
-                              borderColor: verificarEtiquetasImpressas(nota) ? '#10b981' : theme.inputBorder, 
-                              color: verificarEtiquetasImpressas(nota) ? '#10b981' : theme.text,
-                              backgroundColor: verificarEtiquetasImpressas(nota) ? (isDark ? '#064e3b33' : '#d1fae533') : 'transparent'
-                            }}
-                            title={verificarEtiquetasImpressas(nota) ? "Etiquetas já impressas - clique para reimprimir" : "Imprimir etiquetas"}
+                            style={(() => {
+                              const volumesNota = volumes.filter(v => v.nota_fiscal_id === nota.id);
+                              const impressas = volumesNota.length > 0 && volumesNota.every(v => v.etiquetas_impressas);
+                              return {
+                                borderColor: impressas ? '#10b981' : theme.inputBorder, 
+                                color: impressas ? '#10b981' : theme.text,
+                                backgroundColor: impressas ? (isDark ? '#064e3b33' : '#d1fae533') : 'transparent'
+                              };
+                            })()}
+                            title={(() => {
+                              const volumesNota = volumes.filter(v => v.nota_fiscal_id === nota.id);
+                              const impressas = volumesNota.length > 0 && volumesNota.every(v => v.etiquetas_impressas);
+                              return impressas ? "Etiquetas já impressas - clique para reimprimir" : "Imprimir etiquetas";
+                            })()}
                             className="h-6 w-6 p-0"
                           >
                             <Tag className="w-3 h-3" />
