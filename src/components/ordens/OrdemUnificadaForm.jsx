@@ -1435,29 +1435,49 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
           </DialogHeader>
 
           {/* Import PDF - apenas para carregamento */}
-          {mostrarImportPDF && (
+          {tipo_ordem === 'carregamento' && (
             <div className="mb-4">
-              <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50 hover:bg-blue-100 transition-colors">
-                <div className="text-center">
-                  <FileUp className="w-12 h-12 mx-auto mb-3 text-blue-600" />
-                  <h3 className="text-lg font-semibold mb-2 text-blue-900">Completar Ordem com PDF do ERP</h3>
-                  <p className="text-sm text-blue-700 mb-4">Faça upload do PDF para preencher automaticamente</p>
-                  <input ref={pdfInputRef} type="file" accept=".pdf" onChange={handleImportarPDF} className="hidden" disabled={importando} />
-                  <Button type="button" onClick={() => pdfInputRef.current?.click()} disabled={importando} className="bg-blue-600 min-w-[200px]">
-                    {importando ? (
-                      <div className="flex flex-col items-center py-1">
-                        <div className="flex items-center">
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          <span>Processando...</span>
+              <input ref={pdfInputRef} type="file" accept=".pdf" onChange={handleImportarPDF} className="hidden" disabled={importando} />
+              
+              {mostrarImportPDF ? (
+                <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50 hover:bg-blue-100 transition-colors">
+                  <div className="text-center">
+                    <FileUp className="w-12 h-12 mx-auto mb-3 text-blue-600" />
+                    <h3 className="text-lg font-semibold mb-2 text-blue-900">Completar Ordem com PDF do ERP</h3>
+                    <p className="text-sm text-blue-700 mb-4">Faça upload do PDF para preencher automaticamente</p>
+                    <Button type="button" onClick={() => pdfInputRef.current?.click()} disabled={importando} className="bg-blue-600 min-w-[200px]">
+                      {importando ? (
+                        <div className="flex flex-col items-center py-1">
+                          <div className="flex items-center">
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            <span>Processando...</span>
+                          </div>
+                          {loadingMessage && <span className="text-[10px] opacity-90 mt-1">{loadingMessage}</span>}
                         </div>
-                        {loadingMessage && <span className="text-[10px] opacity-90 mt-1">{loadingMessage}</span>}
-                      </div>
+                      ) : (
+                        <><FileUp className="w-4 h-4 mr-2" />Selecionar PDF</>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-end mb-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => pdfInputRef.current?.click()} 
+                    disabled={importando}
+                    className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 text-xs"
+                  >
+                    {importando ? (
+                      <><Loader2 className="w-3 h-3 mr-2 animate-spin" />Processando...</>
                     ) : (
-                      <><FileUp className="w-4 h-4 mr-2" />Selecionar PDF</>
+                      <><FileUp className="w-3 h-3 mr-2" />Atualizar dados com PDF</>
                     )}
                   </Button>
                 </div>
-              </div>
+              )}
 
               {importError && (
                 <Alert variant="destructive" className="mt-4">
