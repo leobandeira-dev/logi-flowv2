@@ -138,6 +138,42 @@ export default function Recebimento() {
     };
   }, [recebimentos]);
 
+  // Memoizar indicadores de notas fiscais
+  const indicadoresNotas = useMemo(() => {
+    const hoje = new Date();
+    const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
+
+    const notasMes = todasNotasFiscais.filter(n => {
+      if (!n.created_date || n.status_nf === "cancelada") return false;
+      const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const [, mesNota, anoNota] = dataNota.split('/');
+      return mesNota === mesHojeSP && anoNota === anoHojeSP;
+    });
+
+    const notasHoje = todasNotasFiscais.filter(n => {
+      if (!n.created_date || n.status_nf === "cancelada") return false;
+      const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      return dataNota === dataHojeSP;
+    });
+
+    const volumesTotal = notasMes.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
+    const volumesHoje = notasHoje.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
+    const pesoTotal = notasMes.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0);
+    const valorTotal = notasMes.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
+    const valorHoje = notasHoje.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
+
+    return {
+      totalMes: notasMes.length,
+      totalHoje: notasHoje.length,
+      volumesTotal,
+      volumesHoje,
+      pesoTotal,
+      valorTotal,
+      valorHoje
+    };
+  }, [todasNotasFiscais]);
+
   // Memoizar dados do gráfico de recebimentos
   const dadosGraficoRecebimentos = useMemo(() => {
     const todosRecebimentosSemPaginacao = recebimentos.filter(rec => {
