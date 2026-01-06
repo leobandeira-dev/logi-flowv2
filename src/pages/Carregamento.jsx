@@ -570,21 +570,88 @@ export default function Carregamento() {
   if (isMobile || isTablet) {
     return (
       <div className="min-h-screen transition-colors" style={{ backgroundColor: theme.bg }}>
-        {/* Header Compacto */}
-        <div className="sticky top-0 z-10 border-b px-3 py-2.5" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-          {/* Título e Ações */}
-          <div className="flex items-center justify-between gap-2 mb-2.5">
-            <h1 className="text-base font-bold" style={{ color: theme.text }}>Carregamento</h1>
-            <div className="flex gap-1.5">
+        {/* Header Ultra Compacto */}
+        <div className="sticky top-0 z-10 border-b px-2.5 py-2" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          {/* Busca Principal */}
+          <div className="flex items-center gap-1.5 mb-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5" style={{ color: theme.textMuted }} />
+              <Input
+                placeholder="Buscar ordem, cliente..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 pr-2 h-9 text-sm"
+                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+              />
+            </div>
+            <Button
+              variant={showFilters ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="h-9 px-2.5 flex items-center gap-1"
+              style={!showFilters ? { backgroundColor: 'transparent', borderColor: theme.inputBorder, color: theme.text } : {}}
+              title="Filtros"
+            >
+              <Filter className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium">Filtros</span>
+            </Button>
+          </div>
+
+          {/* Filtros Rápidos */}
+          {showFilters && (
+            <div className="space-y-2 mb-2">
+              <div className="flex gap-1.5">
+                <select
+                  value={filters.statusTracking}
+                  onChange={(e) => setFilters({...filters, statusTracking: e.target.value})}
+                  className="flex-1 h-8 px-2 rounded border text-xs font-medium"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                >
+                  <option value="">📦 Status</option>
+                  <option value="em_carregamento">Em Carregamento</option>
+                  <option value="carregado">Carregado</option>
+                  <option value="em_viagem">Em Viagem</option>
+                </select>
+                <select
+                  value={filters.tiposRegistro?.[0] || ""}
+                  onChange={(e) => setFilters({...filters, tiposRegistro: e.target.value ? [e.target.value] : []})}
+                  className="flex-1 h-8 px-2 rounded border text-xs font-medium"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                >
+                  <option value="">🏷️ Tipo</option>
+                  <option value="oferta">Oferta</option>
+                  <option value="negociando">Negociando</option>
+                  <option value="ordem_completa">Alocado</option>
+                </select>
+              </div>
+              {(filters.statusTracking || filters.tiposRegistro?.length > 0) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFilters({ ...filters, statusTracking: "", tiposRegistro: [] })}
+                  className="w-full h-7 text-xs"
+                  style={{ color: '#ef4444' }}
+                >
+                  <X className="w-3 h-3 mr-1" />
+                  Limpar
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Barra de Ações */}
+          <div className="flex items-center justify-between text-[11px]" style={{ color: theme.textMuted }}>
+            <span className="font-medium">{filteredOrdens.length} ordem{filteredOrdens.length !== 1 ? 's' : ''}</span>
+            <div className="flex items-center gap-1">
               <ExportarOfertasPDF ordens={filteredOrdens} />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700 h-8 px-3 text-xs">
-                    <Plus className="w-3.5 h-3.5 mr-1.5" />
+                  <Button className="bg-blue-600 hover:bg-blue-700 h-7 px-2.5 text-xs">
+                    <Plus className="w-3 h-3 mr-1" />
                     Nova
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}>
+                <DropdownMenuContent align="end" className="w-48" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}>
                   <DropdownMenuItem onClick={() => setShowTipoModal(true)} style={{ color: theme.text }}>
                     <FileText className="w-4 h-4 mr-2" />
                     Ordem Completa
@@ -595,93 +662,25 @@ export default function Carregamento() {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setShowOfertaLote(true)} style={{ color: theme.text }}>
                     <FileSpreadsheet className="w-4 h-4 mr-2 text-purple-600" />
-                    Lançamento em Lote
+                    Lançamento Lote
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-          </div>
-          
-          {/* Busca e Filtros */}
-          <div className="flex items-center gap-1.5">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5" style={{ color: theme.textMuted }} />
-              <Input
-                placeholder="Buscar..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 h-8 text-sm"
-                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-              />
-            </div>
-            <Button
-              variant={showFilters ? "default" : "outline"}
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="h-8 w-8 p-0"
-              style={!showFilters ? { backgroundColor: 'transparent', borderColor: theme.inputBorder, color: theme.text } : {}}
-            >
-              <Filter className="w-3.5 h-3.5" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={loadData}
-              className="h-8 w-8 p-0"
-              style={{ borderColor: theme.inputBorder, color: theme.text }}
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-
-          {showFilters && (
-            <div className="mt-3 p-3 rounded-lg border space-y-3" style={{ backgroundColor: theme.inputBg, borderColor: theme.cardBorder }}>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Status</Label>
-                  <select
-                    value={filters.statusTracking}
-                    onChange={(e) => setFilters({...filters, statusTracking: e.target.value})}
-                    className="w-full h-9 px-2 rounded border text-sm"
-                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                  >
-                    <option value="">Todos</option>
-                    <option value="em_carregamento">Em Carregamento</option>
-                    <option value="carregado">Carregado</option>
-                    <option value="em_viagem">Em Viagem</option>
-                  </select>
-                </div>
-                <div>
-                  <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Tipo</Label>
-                  <select
-                    value={filters.tiposRegistro?.[0] || ""}
-                    onChange={(e) => setFilters({...filters, tiposRegistro: e.target.value ? [e.target.value] : []})}
-                    className="w-full h-9 px-2 rounded border text-sm"
-                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                  >
-                    <option value="">Todos</option>
-                    <option value="oferta">Oferta</option>
-                    <option value="negociando">Negociando</option>
-                    <option value="ordem_completa">Alocado</option>
-                  </select>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setFilters({ operacoesIds: [], status: "", tiposRegistro: [], origem: "", destino: "", dataInicio: "", dataFim: "", statusTracking: "" })}
-                className="w-full h-8"
-                style={{ borderColor: theme.inputBorder, color: theme.text }}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={loadData}
+                className="h-7 w-7 p-0"
+                title="Atualizar"
               >
-                <X className="w-3 h-3 mr-2" />
-                Limpar Filtros
+                <RefreshCw className="w-3 h-3" />
               </Button>
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Grid de Ordens - Otimizado para Tablet */}
-        <div className={`p-4 ${isLandscape ? 'grid grid-cols-2 gap-4' : 'space-y-3'}`}>
+        {/* Lista de Ordens Compacta */}
+        <div className={`px-2.5 py-2.5 ${isLandscape && isTablet ? 'grid grid-cols-2 gap-2.5' : 'space-y-2.5'}`}>
           {loading ? (
             <div className="col-span-2 flex items-center justify-center py-12">
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -689,98 +688,73 @@ export default function Carregamento() {
           ) : filteredOrdens.length === 0 ? (
             <div className="col-span-2 text-center py-12" style={{ color: theme.textMuted }}>
               <Package className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p>Nenhuma ordem encontrada</p>
+              <p className="text-sm">Nenhuma ordem encontrada</p>
             </div>
           ) : (
             filteredOrdens.slice(inicio, fim).map(ordem => {
               const qtdNotas = ordem.notas_fiscais_ids?.length || 0;
               const motorista = motoristas.find(m => m.id === ordem.motorista_id);
-              const operacao = operacoes.find(op => op.id === ordem.operacao_id);
               
-              const statusConfig = {
-                em_carregamento: { label: "Em Carregamento", color: "bg-blue-600" },
-                carregado: { label: "Carregado", color: "bg-indigo-600" },
-                em_viagem: { label: "Em Viagem", color: "bg-purple-600" },
-                chegada_destino: { label: "Chegou", color: "bg-yellow-600" },
-                descarga_agendada: { label: "Desc. Agendada", color: "bg-orange-500" },
+              const tipoConfig = {
+                oferta: { label: "Oferta", bg: "bg-green-600" },
+                negociando: { label: "Negociando", bg: "bg-yellow-600" },
+                ordem_completa: { label: "Alocado", bg: "bg-blue-600" }
               };
-              const statusInfo = statusConfig[ordem.status_tracking] || { label: "Ag. Agendamento", color: "bg-gray-500" };
+              const tipoInfo = tipoConfig[ordem.tipo_registro] || { label: "Ordem", bg: "bg-gray-500" };
 
               return (
-                <Card key={ordem.id} style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                  <CardContent className="p-4">
-                    {/* Header */}
-                    <div className="flex items-start justify-between mb-3">
+                <Card key={ordem.id} className="overflow-hidden" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                  <CardContent className="p-2.5">
+                    {/* Header Compacto */}
+                    <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-base mb-1 truncate" style={{ color: theme.text }}>
+                        <h3 className="font-bold text-sm mb-0.5 truncate" style={{ color: theme.text }}>
                           {ordem.numero_carga}
                         </h3>
-                        <p className="text-sm truncate" style={{ color: theme.textMuted }}>
+                        <p className="text-xs truncate leading-tight" style={{ color: theme.textMuted }}>
                           {ordem.cliente}
                         </p>
                       </div>
-                      <Badge className={`${statusInfo.color} text-white text-xs whitespace-nowrap ml-2`}>
-                        {statusInfo.label}
+                      <Badge className={`${tipoInfo.bg} text-white text-[10px] px-1.5 py-0.5 h-5 whitespace-nowrap`}>
+                        {tipoInfo.label}
                       </Badge>
                     </div>
 
-                    {/* Info */}
-                    <div className="space-y-2 text-sm mb-4">
-                      {operacao && (
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs" style={{ borderColor: theme.cardBorder, color: theme.text }}>
-                            {operacao.nome}
-                          </Badge>
-                        </div>
-                      )}
-                      {(motorista?.nome || ordem.motorista_nome_temp) && (
-                        <p style={{ color: theme.textMuted }}>
-                          👤 {motorista?.nome || ordem.motorista_nome_temp}
-                        </p>
-                      )}
-                      {ordem.cavalo_placa_temp && (
-                        <p style={{ color: theme.textMuted }}>
-                          🚛 {ordem.cavalo_placa_temp}
-                          {ordem.implemento1_placa_temp && ` + ${ordem.implemento1_placa_temp}`}
-                        </p>
-                      )}
-                      <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: theme.cardBorder }}>
-                        <span style={{ color: theme.textMuted }}>
-                          {qtdNotas} NF{qtdNotas !== 1 ? 's' : ''}
-                        </span>
-                        <span className="font-semibold" style={{ color: theme.text }}>
-                          {ordem.volumes_total_consolidado || 0}v | {(ordem.peso_total_consolidado || 0).toLocaleString()}kg
-                        </span>
-                      </div>
+                    {/* Info Resumida */}
+                    <div className="flex items-center justify-between text-xs mb-2 py-1.5 px-2 rounded" style={{ backgroundColor: isDark ? '#0f172a' : '#f3f4f6' }}>
+                      <span style={{ color: theme.textMuted }}>{qtdNotas} NF</span>
+                      <span className="font-semibold" style={{ color: theme.text }}>
+                        {ordem.volumes_total_consolidado || 0}v • {(ordem.peso_total_consolidado || 0).toLocaleString()}kg
+                      </span>
                     </div>
 
-                    {/* Actions */}
-                    <div className="grid grid-cols-3 gap-2">
+                    {/* Ações Compactas */}
+                    <div className="grid grid-cols-3 gap-1.5">
                       <Button
                         onClick={() => handleAbrirConferencia(ordem)}
                         size="sm"
-                        className="bg-blue-600 hover:bg-blue-700 h-11 text-sm"
+                        className="bg-blue-600 hover:bg-blue-700 h-9 text-[11px] px-1.5"
                       >
-                        <Scan className="w-4 h-4 mr-2" />
-                        Conferência
+                        <Scan className="w-3.5 h-3.5 mr-1" />
+                        Conf.
                       </Button>
                       <Button
                         onClick={() => handleAbrirEnderecamento(ordem)}
                         size="sm"
-                        className="bg-purple-600 hover:bg-purple-700 h-11 text-sm"
+                        className="bg-purple-600 hover:bg-purple-700 h-9 text-[11px] px-1.5"
                       >
-                        <Grid3x3 className="w-4 h-4 mr-2" />
-                        Endereçamento
+                        <Grid3x3 className="w-3.5 h-3.5 mr-1" />
+                        Ender.
                       </Button>
                       <Button
                         onClick={() => handleCriarOrdemFilha(ordem)}
                         size="sm"
                         variant="outline"
-                        className="h-11 text-sm"
-                        style={{ borderColor: theme.cardBorder, color: '#10b981' }}
+                        className="h-9 text-[11px] px-1.5"
+                        style={{ borderColor: '#10b981', color: '#10b981' }}
                       >
-                        <GitBranch className="w-4 h-4 mr-2" />
-                        Ordem Filha
+                        <GitBranch className="w-3.5 h-3.5 mr-1" />
+                        Filha
                       </Button>
                     </div>
                   </CardContent>
@@ -792,7 +766,7 @@ export default function Carregamento() {
 
         {/* Paginação Fixa no Bottom */}
         {filteredOrdens.length > limite && (
-          <div className="sticky bottom-0 border-t px-4 py-3" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <div className="sticky bottom-0 border-t px-2.5 py-2" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
             <PaginacaoControles
               paginaAtual={paginaAtual}
               totalRegistros={filteredOrdens.length}
