@@ -1102,42 +1102,31 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       const volume = volumesLocal.find(v => v.id === volumeId);
       if (!volume) return;
 
-      // Se o volume já estava alocado, remover alocação anterior
-      const alocacaoExistente = getEnderecamentosOrdemAtual().find(e => e.volume_id === volumeId);
-      
-      // Criar endereçamento temporário para atualização otimista
-      const user = await base44.auth.me();
-      const enderecamentoTemp = {
-        id: `temp-${volumeId}`,
-        ordem_id: ordem.id,
-        volume_id: volumeId,
-        nota_fiscal_id: volume.nota_fiscal_id,
-        linha: parseInt(linha),
-        coluna: coluna,
-        posicao_celula: `${linha}-${coluna}`,
-        data_enderecamento: new Date().toISOString(),
-        enderecado_por: user.id
-      };
-
-      // Atualização otimista do estado - manter TODOS os endereçamentos
-      const enderecamentosAtualizados = [
-        ...enderecamentos.filter(e => e.volume_id !== volumeId || e.ordem_id !== ordem.id),
-        enderecamentoTemp
-      ];
-      setEnderecamentos(enderecamentosAtualizados);
-
       try {
-        if (alocacaoExistente) {
-          await base44.entities.EnderecamentoVolume.delete(alocacaoExistente.id);
+        const user = await base44.auth.me();
+
+        // CRÍTICO: Buscar TODOS os endereçamentos existentes deste volume nesta ordem
+        const enderecamentosExistentes = await base44.entities.EnderecamentoVolume.filter({
+          ordem_id: ordem.id,
+          volume_id: volumeId
+        });
+
+        // Deletar TODOS os endereçamentos antigos (se houver)
+        if (enderecamentosExistentes.length > 0) {
+          console.log(`🗑️ Removendo ${enderecamentosExistentes.length} endereçamento(s) antigo(s) do volume ${volumeId.slice(-6)}`);
+          for (const end of enderecamentosExistentes) {
+            await base44.entities.EnderecamentoVolume.delete(end.id);
+          }
         }
 
-        // Endereçar = conferir automaticamente
+        // Atualizar localização do volume
         await base44.entities.Volume.update(volumeId, {
           status_volume: "carregado",
           localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linha}-${coluna}`
         });
 
-        const created = await base44.entities.EnderecamentoVolume.create({
+        // Criar ÚNICO novo endereçamento
+        await base44.entities.EnderecamentoVolume.create({
           ordem_id: ordem.id,
           volume_id: volumeId,
           nota_fiscal_id: volume.nota_fiscal_id,
@@ -1148,9 +1137,25 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           enderecado_por: user.id
         });
 
-        // Recarregar apenas endereçamentos desta ordem
+        // Recarregar apenas endereçamentos desta ordem e remover duplicatas
         const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
-        setEnderecamentos(todosEnderecamentos);
+        
+        const endereçamentosUnicos = todosEnderecamentos.reduce((acc, end) => {
+          const existente = acc.find(e => e.volume_id === end.volume_id);
+          if (!existente) {
+            acc.push(end);
+          } else {
+            const dataExistente = new Date(existente.data_enderecamento || existente.created_date);
+            const dataAtual = new Date(end.data_enderecamento || end.created_date);
+            if (dataAtual > dataExistente) {
+              const index = acc.findIndex(e => e.volume_id === end.volume_id);
+              acc[index] = end;
+            }
+          }
+          return acc;
+        }, []);
+        
+        setEnderecamentos(endereçamentosUnicos);
 
         if (enderecamentosExistentes.length > 0) {
           toast.success("Volume realocado!");
