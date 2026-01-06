@@ -116,6 +116,42 @@ export default function Recebimento() {
     return filtered.length;
   }, [todasNotasFiscais, searchTermNotas]);
 
+  // Memoizar cálculos dos indicadores para evitar recalcular a cada digitação
+  const indicadoresNotas = useMemo(() => {
+    const hoje = new Date();
+    const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
+
+    const notasMes = todasNotasFiscais.filter(n => {
+      if (!n.created_date || n.status_nf === "cancelada") return false;
+      const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const [, mesNota, anoNota] = dataNota.split('/');
+      return mesNota === mesHojeSP && anoNota === anoHojeSP;
+    });
+
+    const notasHoje = todasNotasFiscais.filter(n => {
+      if (!n.created_date || n.status_nf === "cancelada") return false;
+      const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      return dataNota === dataHojeSP;
+    });
+
+    const volumesTotal = notasMes.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
+    const volumesHoje = notasHoje.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
+    const pesoTotal = notasMes.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0);
+    const valorTotal = notasMes.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
+    const valorHoje = notasHoje.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
+
+    return {
+      totalMes: notasMes.length,
+      totalHoje: notasHoje.length,
+      volumesTotal,
+      volumesHoje,
+      pesoTotal,
+      valorTotal,
+      valorHoje
+    };
+  }, [todasNotasFiscais]);
+
   useEffect(() => {
     const checkDarkMode = () => {
       setIsDark(document.documentElement.classList.contains('dark'));
@@ -1201,6 +1237,56 @@ export default function Recebimento() {
           </TabsList>
 
           <TabsContent value="notas" className="mt-0">
+            {/* Indicadores Memoizados */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+              <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
+                    <FileText className="w-4 h-4 text-blue-600" />
+                    Total de Notas Fiscais
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-blue-600">{indicadoresNotas.totalMes}</p>
+                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                    {indicadoresNotas.totalHoje} recebidas hoje
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
+                    <Package className="w-4 h-4 text-green-600" />
+                    Total de Volumes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-green-600">{indicadoresNotas.volumesTotal}</p>
+                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                    {indicadoresNotas.volumesHoje} volumes hoje
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
+                    <TrendingUp className="w-4 h-4 text-purple-600" />
+                    Valor Total
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-purple-600">
+                    R$ {indicadoresNotas.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                    R$ {indicadoresNotas.valorHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} recebidos hoje
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4">
               <div className="flex gap-2 w-full lg:w-auto flex-1">
                 <div className="relative flex-1 lg:w-64">
@@ -1211,6 +1297,7 @@ export default function Recebimento() {
                     onChange={(e) => setSearchInputNotas(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
+                        e.preventDefault();
                         setSearchTermNotas(searchInputNotas);
                         setPaginaAtualNotas(1);
                       }
