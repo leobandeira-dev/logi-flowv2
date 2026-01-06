@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1233,7 +1233,7 @@ export default function Recebimento() {
                 </Button>
                 <PaginacaoControles
                   paginaAtual={paginaAtualNotas}
-                  totalRegistros={(() => {
+                  totalRegistros={useMemo(() => {
                     const filtered = todasNotasFiscais.filter(nf => {
                       if (!searchTermNotas) return true;
                       const search = searchTermNotas.toLowerCase();
@@ -1242,7 +1242,7 @@ export default function Recebimento() {
                              nf.destinatario_razao_social?.toLowerCase().includes(search);
                     });
                     return filtered.length;
-                  })()}
+                  }, [todasNotasFiscais, searchTermNotas])}
                   limite={limiteNotas}
                   onPaginaAnterior={() => setPaginaAtualNotas(prev => Math.max(1, prev - 1))}
                   onProximaPagina={() => setPaginaAtualNotas(prev => prev + 1)}
@@ -1250,37 +1250,46 @@ export default function Recebimento() {
                 />
               </div>
             </div>
-            {loadingNotas ? (
-              <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardContent className="py-12 text-center">
-                  <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                  <p className="text-sm" style={{ color: theme.textMuted }}>Carregando notas fiscais...</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <NotasFiscaisTable
-                notasFiscais={todasNotasFiscais}
-                notasFiscaisPaginadas={(() => {
-                  const filtered = todasNotasFiscais.filter(nf => {
-                    if (!searchTermNotas) return true;
-                    const search = searchTermNotas.toLowerCase();
-                    return nf.numero_nota?.toLowerCase().includes(search) ||
-                           nf.emitente_razao_social?.toLowerCase().includes(search) ||
-                           nf.destinatario_razao_social?.toLowerCase().includes(search);
-                  });
-                  const inicio = (paginaAtualNotas - 1) * limiteNotas;
-                  const fim = inicio + limiteNotas;
-                  return filtered.slice(inicio, fim);
-                })()}
-                volumes={todosVolumes}
-                ordens={todasOrdens}
-                empresa={empresa}
-                onRefresh={() => carregarNotasFiscaisPaginadas(true)}
-                isDark={isDark}
-                showFilters={false}
-                loading={loadingNotas}
-              />
-            )}
+            {(() => {
+              // Cachear filtragem para evitar recalcular a cada render
+              const notasFiscaisFiltradas = useMemo(() => {
+                const filtered = todasNotasFiscais.filter(nf => {
+                  if (!searchTermNotas) return true;
+                  const search = searchTermNotas.toLowerCase();
+                  return nf.numero_nota?.toLowerCase().includes(search) ||
+                         nf.emitente_razao_social?.toLowerCase().includes(search) ||
+                         nf.destinatario_razao_social?.toLowerCase().includes(search);
+                });
+                const inicio = (paginaAtualNotas - 1) * limiteNotas;
+                const fim = inicio + limiteNotas;
+                return filtered.slice(inicio, fim);
+              }, [todasNotasFiscais, searchTermNotas, paginaAtualNotas, limiteNotas]);
+
+              if (loadingNotas) {
+                return (
+                  <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                    <CardContent className="py-12 text-center">
+                      <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                      <p className="text-sm" style={{ color: theme.textMuted }}>Carregando notas fiscais...</p>
+                    </CardContent>
+                  </Card>
+                );
+              }
+
+              return (
+                <NotasFiscaisTable
+                  notasFiscais={todasNotasFiscais}
+                  notasFiscaisPaginadas={notasFiscaisFiltradas}
+                  volumes={todosVolumes}
+                  ordens={todasOrdens}
+                  empresa={empresa}
+                  onRefresh={() => carregarNotasFiscaisPaginadas(true)}
+                  isDark={isDark}
+                  showFilters={false}
+                  loading={loadingNotas}
+                />
+              );
+            })()}
           </TabsContent>
 
           <TabsContent value="recebimentos" className="mt-0">
