@@ -360,7 +360,7 @@ export default function NotasFiscaisTable({
   };
 
   // Usar notasFiscaisPaginadas se fornecido (para exibição na tabela), senão usar todas
-  const notasParaTabela = notasFiscaisPaginadas || notasFiscais;
+  const notasParaTabela = useMemo(() => notasFiscaisPaginadas || notasFiscais, [notasFiscaisPaginadas, notasFiscais]);
   
   // Memoizar filteredNotas para evitar recalcular a cada render
   const filteredNotas = useMemo(() => {
