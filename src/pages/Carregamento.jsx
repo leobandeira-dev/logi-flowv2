@@ -569,36 +569,67 @@ export default function Carregamento() {
     return (
       <div className="min-h-screen transition-colors" style={{ backgroundColor: theme.bg }}>
         {/* Header Compacto */}
-        <div className="sticky top-0 z-10 border-b px-4 py-3" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-bold truncate" style={{ color: theme.text }}>Carregamento</h1>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={loadData} style={{ borderColor: theme.inputBorder, color: theme.text }}>
-                <RefreshCw className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={showFilters ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowFilters(!showFilters)}
-                style={!showFilters ? { backgroundColor: 'transparent', borderColor: theme.inputBorder, color: theme.text } : {}}
-              >
-                <Filter className="w-4 h-4" />
-              </Button>
+        <div className="sticky top-0 z-10 border-b px-3 py-2.5" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          {/* Título e Ações */}
+          <div className="flex items-center justify-between gap-2 mb-2.5">
+            <h1 className="text-base font-bold" style={{ color: theme.text }}>Carregamento</h1>
+            <div className="flex gap-1.5">
+              <ExportarOfertasPDF ordens={filteredOrdens} />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="bg-blue-600 hover:bg-blue-700 h-8 px-3 text-xs">
+                    <Plus className="w-3.5 h-3.5 mr-1.5" />
+                    Nova
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder }}>
+                  <DropdownMenuItem onClick={() => setShowTipoModal(true)} style={{ color: theme.text }}>
+                    <FileText className="w-4 h-4 mr-2" />
+                    Ordem Completa
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowOfertaForm(true)} style={{ color: theme.text }}>
+                    <Package className="w-4 h-4 mr-2 text-green-600" />
+                    Oferta de Carga
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowOfertaLote(true)} style={{ color: theme.text }}>
+                    <FileSpreadsheet className="w-4 h-4 mr-2 text-purple-600" />
+                    Lançamento em Lote
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           
-          {/* Busca */}
-          <div className="relative mt-3">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
-            <Input
-              placeholder="Buscar ordem..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-10 text-base"
-              style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-            />
+          {/* Busca e Filtros */}
+          <div className="flex items-center gap-1.5">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5" style={{ color: theme.textMuted }} />
+              <Input
+                placeholder="Buscar..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 h-8 text-sm"
+                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+              />
+            </div>
+            <Button
+              variant={showFilters ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="h-8 w-8 p-0"
+              style={!showFilters ? { backgroundColor: 'transparent', borderColor: theme.inputBorder, color: theme.text } : {}}
+            >
+              <Filter className="w-3.5 h-3.5" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={loadData}
+              className="h-8 w-8 p-0"
+              style={{ borderColor: theme.inputBorder, color: theme.text }}
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </Button>
           </div>
 
           {showFilters && (
