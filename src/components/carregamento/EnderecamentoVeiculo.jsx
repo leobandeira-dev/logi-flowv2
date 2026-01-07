@@ -1491,43 +1491,18 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       const volume = volumesLocal.find(v => v.id === volumeId);
       if (!volume) return;
 
-      try {
-        const user = await base44.auth.me();
+      // Executar operação de forma assíncrona
+      (async () => {
+        try {
+          const user = await base44.auth.me();
 
-        // ATUALIZAÇÃO OTIMISTA: Remover endereçamentos antigos e adicionar novo IMEDIATAMENTE
-        const enderecamentosExistentes = enderecamentos.filter(e => 
-          e.volume_id === volumeId && e.ordem_id === ordem.id
-        );
+          // ATUALIZAÇÃO OTIMISTA: Remover endereçamentos antigos e adicionar novo IMEDIATAMENTE
+          const enderecamentosExistentes = enderecamentos.filter(e => 
+            e.volume_id === volumeId && e.ordem_id === ordem.id
+          );
 
-        const novoEnderecamento = {
-          id: `temp-${Date.now()}-${Math.random()}`,
-          ordem_id: ordem.id,
-          volume_id: volumeId,
-          nota_fiscal_id: volume.nota_fiscal_id,
-          linha: parseInt(linha),
-          coluna: coluna,
-          posicao_celula: `${linha}-${coluna}`,
-          data_enderecamento: new Date().toISOString(),
-          enderecado_por: user.id
-        };
-
-        // Atualizar estado imediatamente (remover antigos + adicionar novo)
-        setEnderecamentos(prev => {
-          const semEsteVolume = prev.filter(e => e.volume_id !== volumeId || e.ordem_id !== ordem.id);
-          return [...semEsteVolume, novoEnderecamento];
-        });
-
-        // Chamadas API em paralelo (background)
-        const deletePromises = enderecamentosExistentes
-          .filter(e => !e.id.startsWith('temp-'))
-          .map(e => base44.entities.EnderecamentoVolume.delete(e.id));
-
-        const [updatedVolume, enderecamentoCriado] = await Promise.all([
-          base44.entities.Volume.update(volumeId, {
-            status_volume: "carregado",
-            localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linha}-${coluna}`
-          }),
-          base44.entities.EnderecamentoVolume.create({
+          const novoEnderecamento = {
+            id: `temp-${Date.now()}-${Math.random()}`,
             ordem_id: ordem.id,
             volume_id: volumeId,
             nota_fiscal_id: volume.nota_fiscal_id,
@@ -1536,28 +1511,56 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             posicao_celula: `${linha}-${coluna}`,
             data_enderecamento: new Date().toISOString(),
             enderecado_por: user.id
-          }),
-          ...deletePromises
-        ]);
+          };
 
-        // Substituir endereçamento temporário pelo real
-        setEnderecamentos(prev => {
-          const semTemporario = prev.filter(e => e.id !== novoEnderecamento.id);
-          return [...semTemporario, enderecamentoCriado];
-        });
+          // Atualizar estado imediatamente (remover antigos + adicionar novo)
+          setEnderecamentos(prev => {
+            const semEsteVolume = prev.filter(e => e.volume_id !== volumeId || e.ordem_id !== ordem.id);
+            return [...semEsteVolume, novoEnderecamento];
+          });
 
-        if (enderecamentosExistentes.length > 0) {
-          toast.success("✅ Volume realocado!", { duration: 2000 });
-        } else {
-          toast.success("✅ Volume posicionado!", { duration: 2000 });
+          // Chamadas API em paralelo (background)
+          const deletePromises = enderecamentosExistentes
+            .filter(e => !e.id.startsWith('temp-'))
+            .map(e => base44.entities.EnderecamentoVolume.delete(e.id));
+
+          const [updatedVolume, enderecamentoCriado] = await Promise.all([
+            base44.entities.Volume.update(volumeId, {
+              status_volume: "carregado",
+              localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linha}-${coluna}`
+            }),
+            base44.entities.EnderecamentoVolume.create({
+              ordem_id: ordem.id,
+              volume_id: volumeId,
+              nota_fiscal_id: volume.nota_fiscal_id,
+              linha: parseInt(linha),
+              coluna: coluna,
+              posicao_celula: `${linha}-${coluna}`,
+              data_enderecamento: new Date().toISOString(),
+              enderecado_por: user.id
+            }),
+            ...deletePromises
+          ]);
+
+          // Substituir endereçamento temporário pelo real
+          setEnderecamentos(prev => {
+            const semTemporario = prev.filter(e => e.id !== novoEnderecamento.id);
+            return [...semTemporario, enderecamentoCriado];
+          });
+
+          if (enderecamentosExistentes.length > 0) {
+            toast.success("✅ Volume realocado!", { duration: 2000 });
+          } else {
+            toast.success("✅ Volume posicionado!", { duration: 2000 });
+          }
+          
+          setTimeout(() => salvarRascunho(), 100);
+        } catch (error) {
+          console.error("Erro ao posicionar volume:", error);
+          toast.error("Erro ao posicionar volume");
+          await loadEnderecamentos();
         }
-        
-        setTimeout(() => salvarRascunho(), 100);
-      } catch (error) {
-        console.error("Erro ao posicionar volume:", error);
-        toast.error("Erro ao posicionar volume");
-        await loadEnderecamentos();
-      }
+      })();
     }
   };
 
