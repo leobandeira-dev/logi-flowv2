@@ -4183,8 +4183,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       ref={inputChaveRef}
                       placeholder="44 dígitos - bipe ou cole..."
                       value={searchChaveNF}
-                      onChange={(e) => setSearchChaveNF(e.target.value.replace(/\D/g, '').substring(0, 44))}
-                      className="h-7 text-xs font-mono transition-all"
+                      onChange={(e) => {
+                        setSearchChaveNF(e.target.value.replace(/\D/g, '').substring(0, 44));
+                        if (feedbackNota) setFeedbackNota(null);
+                      }}
+                      className="h-7 text-xs font-mono transition-all duration-300"
                       style={{ 
                         backgroundColor: theme.inputBg, 
                         borderColor: feedbackNota === 'success' ? '#10b981' : 
@@ -4192,6 +4195,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                      feedbackNota === 'error' ? '#ef4444' : 
                                      theme.inputBorder, 
                         borderWidth: feedbackNota ? '3px' : '1px',
+                        boxShadow: feedbackNota === 'success' ? '0 0 0 3px rgba(16, 185, 129, 0.2)' :
+                                   feedbackNota === 'duplicate' ? '0 0 0 3px rgba(168, 85, 247, 0.2)' :
+                                   feedbackNota === 'error' ? '0 0 0 3px rgba(239, 68, 68, 0.2)' :
+                                   'none',
                         color: theme.text 
                       }}
                       disabled={processandoChave}
@@ -4215,7 +4222,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         ref={inputChaveRef}
                         placeholder="Número da NF ou chave (44 dígitos)..."
                         value={notasBaseBusca}
-                        onChange={(e) => setNotasBaseBusca(e.target.value)}
+                        onChange={(e) => {
+                          setNotasBaseBusca(e.target.value);
+                          if (feedbackNota) setFeedbackNota(null);
+                        }}
                         onKeyDown={async (e) => {
                           if (e.key === 'Enter' && notasBaseBusca.trim()) {
                             const valor = notasBaseBusca.trim().replace(/\D/g, '');
@@ -4227,7 +4237,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                             }
                           }
                         }}
-                        className="h-7 text-xs pl-7 transition-all"
+                        className="h-7 text-xs pl-7 transition-all duration-300"
                         style={{ 
                           backgroundColor: theme.inputBg, 
                           borderColor: feedbackNota === 'success' ? '#10b981' : 
@@ -4235,6 +4245,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                        feedbackNota === 'error' ? '#ef4444' : 
                                        theme.inputBorder,
                           borderWidth: feedbackNota ? '3px' : '1px',
+                          boxShadow: feedbackNota === 'success' ? '0 0 0 3px rgba(16, 185, 129, 0.2)' :
+                                     feedbackNota === 'duplicate' ? '0 0 0 3px rgba(168, 85, 247, 0.2)' :
+                                     feedbackNota === 'error' ? '0 0 0 3px rgba(239, 68, 68, 0.2)' :
+                                     'none',
                           color: theme.text 
                         }}
                         autoFocus
@@ -5040,8 +5054,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       ref={inputChaveRef}
                       placeholder="Cole ou bipe a chave..."
                       value={searchChaveNF}
-                      onChange={(e) => setSearchChaveNF(e.target.value.replace(/\D/g, '').substring(0, 44))}
-                      className="h-9 text-sm font-mono transition-all"
+                      onChange={(e) => {
+                        setSearchChaveNF(e.target.value.replace(/\D/g, '').substring(0, 44));
+                        if (feedbackNota) setFeedbackNota(null);
+                      }}
+                      className="h-9 text-sm font-mono transition-all duration-300"
                       style={{ 
                         backgroundColor: theme.inputBg, 
                         borderColor: feedbackNota === 'success' ? '#10b981' : 
@@ -5049,6 +5066,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                      feedbackNota === 'error' ? '#ef4444' : 
                                      theme.inputBorder,
                         borderWidth: feedbackNota ? '3px' : '1px',
+                        boxShadow: feedbackNota === 'success' ? '0 0 0 3px rgba(16, 185, 129, 0.2)' :
+                                   feedbackNota === 'duplicate' ? '0 0 0 3px rgba(168, 85, 247, 0.2)' :
+                                   feedbackNota === 'error' ? '0 0 0 3px rgba(239, 68, 68, 0.2)' :
+                                   'none',
                         color: theme.text 
                       }}
                       disabled={processandoChave}
@@ -5072,7 +5093,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         ref={inputChaveRef}
                         placeholder="Número da NF ou chave (44 dígitos)..."
                         value={notasBaseBusca}
-                        onChange={(e) => setNotasBaseBusca(e.target.value)}
+                        onChange={(e) => {
+                          setNotasBaseBusca(e.target.value);
+                          if (feedbackNota) setFeedbackNota(null);
+                        }}
                         onKeyDown={async (e) => {
                           if (e.key === 'Enter' && notasBaseBusca.trim()) {
                             const valor = notasBaseBusca.trim().replace(/\D/g, '');
@@ -5084,7 +5108,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                             }
                           }
                         }}
-                        className="h-9 text-sm pl-7 transition-all"
+                        className="h-9 text-sm pl-7 transition-all duration-300"
                         style={{ 
                           backgroundColor: theme.inputBg, 
                           borderColor: feedbackNota === 'success' ? '#10b981' : 
@@ -5092,6 +5116,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                        feedbackNota === 'error' ? '#ef4444' : 
                                        theme.inputBorder,
                           borderWidth: feedbackNota ? '3px' : '1px',
+                          boxShadow: feedbackNota === 'success' ? '0 0 0 3px rgba(16, 185, 129, 0.2)' :
+                                     feedbackNota === 'duplicate' ? '0 0 0 3px rgba(168, 85, 247, 0.2)' :
+                                     feedbackNota === 'error' ? '0 0 0 3px rgba(239, 68, 68, 0.2)' :
+                                     'none',
                           color: theme.text 
                         }}
                         autoFocus
