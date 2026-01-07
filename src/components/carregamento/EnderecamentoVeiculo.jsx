@@ -3397,14 +3397,14 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               </div>
             )}
 
-              {/* Lista de Volumes Agrupados por NF ou Notas da Base */}
-              <Droppable droppableId="volumes-list">
-                {(provided) => (
-                  <div 
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className="flex-1 overflow-y-auto p-2 space-y-3"
-                  >
+            {/* Lista de Volumes Agrupados por NF ou Notas da Base */}
+            <Droppable droppableId="volumes-list">
+              {(provided) => (
+                <div 
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className="flex-1 overflow-y-auto space-y-3"
+                >
                       {usarBase && filtroTipo === "nota_fiscal" ? (
                         // Exibir notas da base quando modo "Base" ativado
                         <NotasBaseList
@@ -3710,10 +3710,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                 </Button>
                               )}
                             </div>
-                          )}
-                        </>
-                      )}
-                      {provided.placeholder}
+                        )}
+                      </>
+                    )}
+                    {provided.placeholder}
                   </div>
                 )}
               </Droppable>
