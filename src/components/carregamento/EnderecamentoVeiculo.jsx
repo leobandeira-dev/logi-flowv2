@@ -3746,7 +3746,6 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     </div>
                   )}
                 </div>
-              </div>
             </TabsContent>
           </Tabs>
         </div>
