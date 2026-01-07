@@ -2172,6 +2172,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className="flex-1 overflow-y-auto p-3 space-y-2"
+                    style={{ maxHeight: '60vh' }}
                   >
                     {(() => {
                       // Agrupar volumes por nota fiscal
@@ -2187,7 +2188,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       return Object.entries(volumesPorNota).map(([notaId, volumes]) => {
                         const nota = notasFiscaisLocal.find(nf => nf.id === notaId);
                         const expandKey = `sidebar-mobile-${notaId}`;
-                        const isExpanded = notasExpandidas[expandKey] !== false;
+                        const isExpanded = notasExpandidas[expandKey] === true;
                         
                         return (
                           <div key={notaId} className="border rounded" style={{ borderColor: theme.cardBorder }}>
@@ -3422,6 +3423,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className="flex-1 overflow-y-auto p-4"
+                    style={{ maxHeight: '70vh' }}
                   >
                     <div className="space-y-3">
                       {usarBase && filtroTipo === "nota_fiscal" ? (
@@ -3624,7 +3626,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
                               {/* Lista de Volumes da Nota - com expand/collapse */}
                               <AnimatePresence>
-                                {notasExpandidas[`sidebar-${notaId}`] !== false && (
+                                {notasExpandidas[`sidebar-${notaId}`] === true && (
                                   <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: "auto" }}
