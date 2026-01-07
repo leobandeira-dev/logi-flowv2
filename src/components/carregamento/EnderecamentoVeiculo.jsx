@@ -566,8 +566,6 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       return;
     }
 
-    // Se já estiver processando esta mesma chave, ignora
-    // Mas permite processar se for uma chave diferente (embora a flag processandoChave bloqueie tudo)
     if (processandoChave) return;
 
     setProcessandoChave(true);
@@ -575,7 +573,6 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
     try {
       // 1. Tentar buscar nota localmente primeiro (se já estiver na lista da ordem)
-      // Isso é muito mais rápido que ir no banco
       const notaLocal = notasFiscaisLocal.find(nf => nf.chave_nota_fiscal === chave);
       
       if (notaLocal) {
@@ -589,44 +586,54 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
         setSearchTerm("");
         
-        try { playSuccessBeep(); } catch (e) {}
-        toast.info(`ℹ️ Nota ${notaLocal.numero_nota} já vinculada. Volumes selecionados.`);
+        try { playErrorBeep(); } catch (e) {} // Beep diferente para alertar que já existe
+        toast.info(`⚠️ Nota ${notaLocal.numero_nota} JÁ VINCULADA! Volumes selecionados.`);
         
-        // Limpar ambos os inputs para garantir
         setSearchChaveNF("");
         setNotasBaseBusca("");
         feedbackDado = true;
         return;
       }
 
-      // 2. Buscar nota no banco de dados (pode existir mas não estar vinculada)
+      // 2. Buscar nota no banco de dados
       const notasExistentes = await base44.entities.NotaFiscal.filter({ chave_nota_fiscal: chave });
       
       if (notasExistentes.length > 0) {
         const notaExistente = notasExistentes[0];
         
-        // Vincular nota existente
-        await base44.entities.NotaFiscal.update(notaExistente.id, {
-          ordem_id: ordem.id,
-          status_nf: "aguardando_expedicao"
+        // Proteção extra contra duplicidade no estado local
+        setNotasFiscaisLocal(prev => {
+          if (prev.some(n => n.id === notaExistente.id)) return prev;
+          
+          // Se não existir, prosseguir com a vinculação
+          (async () => {
+            await base44.entities.NotaFiscal.update(notaExistente.id, {
+              ordem_id: ordem.id,
+              status_nf: "aguardando_expedicao"
+            });
+
+            // Atualizar ordem
+            const notasIds = [...(ordem.notas_fiscais_ids || []).filter(id => id !== notaExistente.id), notaExistente.id];
+            await base44.entities.OrdemDeCarregamento.update(ordem.id, {
+              notas_fiscais_ids: notasIds
+            });
+          })();
+
+          return [...prev, notaExistente];
         });
 
-        // Buscar volumes da nota
+        // Buscar volumes
         const volumesNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaExistente.id });
-
-        // Atualizar ordem
-        const notasIds = [...(ordem.notas_fiscais_ids || []).filter(id => id !== notaExistente.id), notaExistente.id];
-        await base44.entities.OrdemDeCarregamento.update(ordem.id, {
-          notas_fiscais_ids: notasIds
+        setVolumesLocal(prev => {
+          // Filtrar volumes que já existem para não duplicar
+          const novos = volumesNota.filter(v => !prev.some(p => p.id === v.id));
+          return [...prev, ...novos];
         });
-
-        // Atualizar estados locais
-        setNotasFiscaisLocal(prev => [...prev, notaExistente]);
-        setVolumesLocal(prev => [...prev, ...volumesNota]);
+        
         setNotasOrigem(prev => ({ ...prev, [notaExistente.id]: "Adicionada" }));
         
         try { playSuccessBeep(); } catch (e) {}
-        toast.success("✅ Nota fiscal vinculada com sucesso!");
+        toast.success(`✅ Nota fiscal ${notaExistente.numero_nota} VINCULADA com sucesso!`);
         
         setSearchChaveNF("");
         setNotasBaseBusca("");
@@ -637,7 +644,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       }
 
       // 3. Nota não existe - Importar via API
-      toast.info("Busca na SEFAZ iniciada...", { duration: 2000 });
+      toast.info("🔍 Buscando na SEFAZ...", { duration: 2000 });
       
       const response = await base44.functions.invoke('buscarNotaFiscalMeuDanfe', {
         chaveAcesso: chave
@@ -721,13 +728,17 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         notas_fiscais_ids: notasIds
       });
 
-      // Atualizar estado
-      setNotasFiscaisLocal(prev => [...prev, novaNF]);
+      // Atualizar estado com proteção contra duplicidade
+      setNotasFiscaisLocal(prev => {
+        if (prev.some(n => n.id === novaNF.id)) return prev;
+        return [...prev, novaNF];
+      });
+      
       setVolumesLocal(prev => [...prev, ...volumesCriados]);
       setNotasOrigem(prev => ({ ...prev, [novaNF.id]: "Importada" }));
       
       try { playSuccessBeep(); } catch (e) {}
-      toast.success(`✅ Nota fiscal ${numeroNota} importada e vinculada!`);
+      toast.success(`✅ Nota fiscal ${numeroNota} IMPORTADA e vinculada!`);
       
       setSearchChaveNF("");
       setNotasBaseBusca("");
@@ -737,7 +748,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
     } catch (error) {
       console.error("Erro ao processar chave NF:", error);
-      toast.error(`Erro: ${error.message || 'Falha ao processar nota'}`);
+      try { playErrorBeep(); } catch (e) {}
+      toast.error(`❌ Erro: ${error.message || 'Falha ao processar nota'}`);
       setSearchChaveNF("");
       setNotasBaseBusca("");
     } finally {
@@ -3377,32 +3389,56 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                           notasFiscaisLocal={notasFiscaisLocal}
                           volumesLocal={volumesLocal}
                           onSelecionarNota={(nota) => {
-                        // UI OTIMISTA: Atualizar interface IMEDIATAMENTE
+                        // Verificação de duplicidade
                         const jaVinculada = notasFiscaisLocal.some(nf => nf.id === nota.id);
                         
-                        if (!jaVinculada) {
-                          setNotasFiscaisLocal(prev => [...prev, nota]);
+                        if (jaVinculada) {
+                          try { playErrorBeep(); } catch (e) {}
+                          toast.info(`⚠️ Nota ${nota.numero_nota} JÁ VINCULADA!`);
+                        } else {
+                          // UI OTIMISTA: Atualizar interface com proteção
+                          setNotasFiscaisLocal(prev => {
+                            if (prev.some(n => n.id === nota.id)) return prev;
+                            return [...prev, nota];
+                          });
                           setNotasOrigem(prev => ({ ...prev, [nota.id]: "Adicionada" }));
+                          try { playSuccessBeep(); } catch (e) {}
+                          toast.success(`✅ Nota ${nota.numero_nota} vinculada!`);
                         }
                         
+                        // Buscar volumes da nota
                         let volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
                         const idsEnderecados = getEnderecamentosOrdemAtual().map(e => e.volume_id);
                         const volumesNaoEnderecados = volumesNota.filter(v => !idsEnderecados.includes(v.id));
                         
-                        setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
+                        // Se não tem volumes locais, tenta buscar (pode ser que ainda não tenham sido carregados)
+                        if (volumesNota.length === 0) {
+                           toast.loading("Carregando volumes...");
+                        } else {
+                           setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
+                        }
+                        
                         setNotasBaseBusca("");
-                        // setAbaAtiva("volumes"); // Manter na guia atual para permitir bipes contínuos
-                        toast.success(`✓ ${volumesNaoEnderecados.length || volumesNota.length} vol.`, { duration: 1200 });
 
                         // Operações de banco em BACKGROUND
                         (async () => {
                           try {
                             const volumesNotaDB = await base44.entities.Volume.filter({ nota_fiscal_id: nota.id });
-                            const volumesIdsLocais = volumesLocal.map(v => v.id);
-                            const volumesNovos = volumesNotaDB.filter(v => !volumesIdsLocais.includes(v.id));
-
-                            if (volumesNovos.length > 0) {
-                              setVolumesLocal(prev => [...prev, ...volumesNovos]);
+                            
+                            // Atualizar volumes locais com proteção contra duplicidade
+                            setVolumesLocal(prev => {
+                              const volumesIdsLocais = prev.map(v => v.id);
+                              const volumesNovos = volumesNotaDB.filter(v => !volumesIdsLocais.includes(v.id));
+                              return [...prev, ...volumesNovos];
+                            });
+                            
+                            // Selecionar volumes recém carregados se necessário
+                            if (volumesNota.length === 0 && volumesNotaDB.length > 0) {
+                               const idsEnd = getEnderecamentosOrdemAtual().map(e => e.volume_id);
+                               const volNaoEnd = volumesNotaDB.filter(v => !idsEnd.includes(v.id));
+                               setVolumesSelecionados(volNaoEnd.map(v => v.id));
+                               toast.dismiss();
+                               toast.success(`${volNaoEnd.length} volumes selecionados`);
                             }
 
                             if (!jaVinculada) {
@@ -3419,6 +3455,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                             }
                           } catch (error) {
                             console.error("Erro ao vincular nota:", error);
+                            toast.error("Erro ao sincronizar dados da nota");
                           }
                         })();
                       }}
