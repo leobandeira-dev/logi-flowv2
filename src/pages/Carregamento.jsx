@@ -41,6 +41,7 @@ export default function Carregamento() {
   const [showForm, setShowForm] = useState(false);
   const [selectedOrdem, setSelectedOrdem] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [editingOrdem, setEditingOrdem] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [showTipoModal, setShowTipoModal] = useState(false);
@@ -127,7 +128,7 @@ export default function Carregamento() {
       const user = await base44.auth.me();
       
       const [ordensData, motoristasData, veiculosData, operacoesData, notasData, volumesData] = await Promise.all([
-        base44.entities.OrdemDeCarregamento.list("-data_solicitacao"),
+        base44.entities.OrdemDeCarregamento.list("-data_solicitacao", 5000),
         base44.entities.Motorista.list(),
         base44.entities.Veiculo.list(),
         base44.entities.Operacao.list(),
@@ -187,6 +188,11 @@ export default function Carregamento() {
   const handleCriarOrdemFilha = (ordem) => {
     setOrdemMae(ordem);
     setShowOrdemFilhaForm(true);
+  };
+
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+    setPaginaAtual(1);
   };
 
   const vincularPrimeiraEtapa = async (ordemId) => {
@@ -578,15 +584,25 @@ export default function Carregamento() {
         <div className="sticky top-0 z-10 border-b px-2.5 py-2" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
           {/* Busca Principal */}
           <div className="flex items-center gap-1.5 mb-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5" style={{ color: theme.textMuted }} />
-              <Input
-                placeholder="Buscar ordem, cliente..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 pr-2 h-9 text-sm"
-                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-              />
+            <div className="flex flex-1 gap-1">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5" style={{ color: theme.textMuted }} />
+                <Input
+                  placeholder="Buscar ordem, cliente..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  className="pl-8 pr-2 h-9 text-sm"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                />
+              </div>
+              <Button 
+                size="sm" 
+                onClick={handleSearch}
+                className="h-9 px-3 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Search className="w-4 h-4" />
+              </Button>
             </div>
             <FiltrosPredefinidos
               rota="carregamento"
@@ -925,15 +941,25 @@ export default function Carregamento() {
           </div>
           
           <div className="flex gap-2 w-full lg:w-auto">
-            <div className="relative flex-1 lg:w-64">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
-              <Input
-                placeholder="Buscar ordens..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-9 text-sm"
-                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-              />
+            <div className="flex flex-1 lg:flex-none gap-1">
+              <div className="relative flex-1 lg:w-64">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
+                <Input
+                  placeholder="Buscar ordens..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  className="pl-10 h-9 text-sm"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                />
+              </div>
+              <Button 
+                size="sm" 
+                onClick={handleSearch}
+                className="h-9 px-3 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Search className="w-4 h-4" />
+              </Button>
             </div>
 
             <FiltrosPredefinidos
