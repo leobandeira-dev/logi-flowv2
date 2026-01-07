@@ -283,9 +283,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         });
         
         // Restaurar dados do rascunho
-        if (rascunho.notasOrigem) {
-          setNotasOrigem(rascunho.notasOrigem);
-        }
+        if (rascunho.notasOrigem) setNotasOrigem(rascunho.notasOrigem);
+        if (rascunho.notas && rascunho.notas.length > 0) setNotasFiscaisLocal(rascunho.notas);
+        if (rascunho.volumes && rascunho.volumes.length > 0) setVolumesLocal(rascunho.volumes);
+        if (rascunho.enderecamentos && rascunho.enderecamentos.length > 0) setEnderecamentos(rascunho.enderecamentos);
         
         // Toast discreto informando que há um rascunho
         if (rascunho.enderecamentos?.length > 0) {
