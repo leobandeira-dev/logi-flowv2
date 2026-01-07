@@ -3175,12 +3175,12 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         {/* Painel Esquerdo - Volumes e Lista de Notas */}
         <div className="w-80 border-r flex flex-col" style={{ borderColor: theme.cardBorder, backgroundColor: theme.cardBg }}>
           <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="grid w-full grid-cols-2 mx-4 mt-4">
-              <TabsTrigger value="volumes" className="text-sm">
+            <TabsList className="grid w-[calc(100%-1rem)] grid-cols-2 mx-auto mt-2">
+              <TabsTrigger value="volumes" className="text-sm h-8">
                 <Package className="w-3 h-3 mr-1" />
                 Volumes
               </TabsTrigger>
-              <TabsTrigger value="notas" className="text-sm">
+              <TabsTrigger value="notas" className="text-sm h-8">
                 <FileText className="w-3 h-3 mr-1" />
                 Lista de Notas
               </TabsTrigger>
@@ -3188,7 +3188,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
             {/* Aba Volumes */}
             <TabsContent value="volumes" className="flex-1 flex flex-col mt-0 overflow-hidden">
-              <div className="p-4 border-b" style={{ borderColor: theme.cardBorder }}>
+              <div className="p-2 border-b" style={{ borderColor: theme.cardBorder }}>
                 <h3 className="font-semibold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
                   <Package className="w-4 h-4" />
                   Volumes para Carregamento
@@ -3628,7 +3628,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
             {/* Aba Lista de Notas */}
             <TabsContent value="notas" className="flex-1 flex flex-col mt-0 overflow-hidden">
-              <div className="p-4 border-b" style={{ borderColor: theme.cardBorder }}>
+              <div className="p-2 border-b" style={{ borderColor: theme.cardBorder }}>
                 <h3 className="font-semibold flex items-center gap-2" style={{ color: theme.text }}>
                   <FileText className="w-4 h-4" />
                   Notas Fiscais ({notasFiscaisLocal.length})
