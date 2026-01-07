@@ -3325,34 +3325,34 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             ) : (
               <div className="flex-shrink-0 space-y-2">
                 <Button
-                    onClick={() => setShowCamera(true)}
-                    className="bg-blue-600 hover:bg-blue-700 w-full h-9"
-                    size="sm"
+                  onClick={() => setShowCamera(true)}
+                  className="bg-blue-600 hover:bg-blue-700 w-full h-9"
+                  size="sm"
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  Escanear QR Code
+                </Button>
+                
+                <div className="flex items-center gap-2 p-2 rounded border" style={{ borderColor: theme.cardBorder }}>
+                  <Checkbox
+                    id="apenas-vinculadas-desktop"
+                    checked={apenasNotasVinculadas}
+                    onCheckedChange={(checked) => setApenasNotasVinculadas(checked)}
+                  />
+                  <label
+                    htmlFor="apenas-vinculadas-desktop"
+                    className="text-xs font-medium cursor-pointer flex-1"
+                    style={{ color: theme.text }}
                   >
-                    <Camera className="w-4 h-4 mr-2" />
-                    Escanear QR Code
-                  </Button>
-                  
-                  <div className="flex items-center gap-2 p-2 rounded border" style={{ borderColor: theme.cardBorder }}>
-                    <Checkbox
-                      id="apenas-vinculadas-desktop"
-                      checked={apenasNotasVinculadas}
-                      onCheckedChange={(checked) => setApenasNotasVinculadas(checked)}
-                    />
-                    <label
-                      htmlFor="apenas-vinculadas-desktop"
-                      className="text-xs font-medium cursor-pointer flex-1"
-                      style={{ color: theme.text }}
-                    >
-                      Apenas Notas Vinculadas
-                    </label>
-                    {apenasNotasVinculadas && (
-                      <Badge className="bg-blue-600 text-white text-[10px] px-1.5 py-0">
-                        Ativo
-                      </Badge>
-                    )}
-                  </div>
+                    Apenas Notas Vinculadas
+                  </label>
+                  {apenasNotasVinculadas && (
+                    <Badge className="bg-blue-600 text-white text-[10px] px-1.5 py-0">
+                      Ativo
+                    </Badge>
+                  )}
                 </div>
+
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
                   <Input
