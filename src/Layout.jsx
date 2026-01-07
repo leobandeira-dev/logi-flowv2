@@ -1088,7 +1088,7 @@ export default function Layout({ children, currentPageName }) {
 
         {mobileMenuOpen && (
           <div
-            className="lg:hidden border-t"
+            className="lg:hidden border-t max-h-[calc(100vh-3.5rem)] overflow-y-auto"
             style={{
               backgroundColor: darkMode ? '#0f172a' : '#ffffff',
               borderTopColor: darkMode ? '#1e293b' : '#e5e7eb'
