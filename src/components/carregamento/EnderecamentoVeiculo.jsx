@@ -3192,8 +3192,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       <div className="flex-1 flex overflow-hidden">
         {/* Painel Esquerdo - Volumes e Lista de Notas */}
         <div className="w-80 border-r flex flex-col" style={{ borderColor: theme.cardBorder, backgroundColor: theme.cardBg }}>
-          <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="grid w-[calc(100%-1rem)] grid-cols-2 mx-auto mt-2 mb-0">
+          <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col overflow-hidden" style={{ gap: 0 }}>
+            <TabsList className="grid w-[calc(100%-1rem)] grid-cols-2 mx-auto" style={{ margin: '0.5rem auto 0 auto' }}>
               <TabsTrigger value="volumes" className="text-sm h-8">
                 <Package className="w-3 h-3 mr-1" />
                 Volumes
@@ -3205,7 +3205,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsList>
 
             {/* Aba Volumes */}
-            <TabsContent value="volumes" className="flex-1 flex flex-col overflow-hidden" style={{ marginTop: 0, paddingTop: 0 }}>
+            <TabsContent value="volumes" className="flex-1 flex flex-col overflow-hidden" style={{ margin: 0, padding: 0 }}>
               <div className="p-2 border-b" style={{ borderColor: theme.cardBorder }}>
                 {/* Tipo de Filtro */}
                 <div className="mb-3">
