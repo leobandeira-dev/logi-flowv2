@@ -3231,21 +3231,20 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsList>
 
             {/* Aba Volumes */}
-            <TabsContent value="volumes" className="flex-1 overflow-hidden" style={{ margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
-              <div className="p-2 border-b flex-shrink-0" style={{ borderColor: theme.cardBorder }}>
-                {/* Tipo de Filtro */}
-                <div className="mb-3">
-                  <Tabs value={filtroTipo} onValueChange={setFiltroTipo}>
-                <TabsList className="grid w-full grid-cols-2 h-8">
-                  <TabsTrigger value="volume" className="text-xs">Volume / Etiq. Mãe</TabsTrigger>
-                  <TabsTrigger value="nota_fiscal" className="text-xs">Nota Fiscal</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
+            <TabsContent value="volumes" className="flex-1 overflow-hidden p-2 space-y-2" style={{ margin: 0, display: 'flex', flexDirection: 'column' }}>
+              {/* Tipo de Filtro */}
+              <div className="flex-shrink-0">
+                <Tabs value={filtroTipo} onValueChange={setFiltroTipo}>
+                  <TabsList className="grid w-full grid-cols-2 h-8">
+                    <TabsTrigger value="volume" className="text-xs">Volume / Etiq. Mãe</TabsTrigger>
+                    <TabsTrigger value="nota_fiscal" className="text-xs">Nota Fiscal</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
 
             {/* Campo de Busca Unificado */}
             {filtroTipo === "nota_fiscal" ? (
-              <div className="mb-3 p-2 border rounded" style={{ borderColor: theme.cardBorder, backgroundColor: isDark ? '#1e3a8a22' : '#eff6ff' }}>
+              <div className="flex-shrink-0 p-2 border rounded" style={{ borderColor: theme.cardBorder, backgroundColor: isDark ? '#1e3a8a22' : '#eff6ff' }}>
                 <div className="flex items-center justify-between mb-2">
                   <Label className="text-xs font-semibold" style={{ color: theme.text }}>
                     Pesquisar Nota Fiscal
@@ -3324,9 +3323,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 )}
               </div>
             ) : (
-              <>
-                <div className="mb-3 space-y-2">
-                  <Button
+              <div className="flex-shrink-0 space-y-2">
+                <Button
                     onClick={() => setShowCamera(true)}
                     className="bg-blue-600 hover:bg-blue-700 w-full h-9"
                     size="sm"
@@ -3379,11 +3377,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 <p className="text-[9px] mt-1 text-center" style={{ color: theme.textMuted }}>
                   Pressione Enter ou escaneie para buscar
                 </p>
-              </>
+              </div>
             )}
 
             {volumesSelecionados.length > 0 && (
-              <div className="mt-3">
+              <div className="flex-shrink-0 flex items-center justify-between">
                 <Badge className="bg-blue-600 text-white">
                   {volumesSelecionados.length} selecionado(s)
                 </Badge>
@@ -3391,14 +3389,13 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                   variant="ghost"
                   size="sm"
                   onClick={() => setVolumesSelecionados([])}
-                  className="ml-2 h-6 text-xs"
+                  className="h-6 text-xs"
                   style={{ color: theme.textMuted }}
                 >
                   Limpar
                 </Button>
               </div>
             )}
-          </div>
 
               {/* Lista de Volumes Agrupados por NF ou Notas da Base */}
               <Droppable droppableId="volumes-list">
