@@ -2101,13 +2101,14 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           <table>
             <thead>
               <tr>
-                <th style="width: 60px;">NF</th>
-                <th style="width: 50px;">Origem</th>
-                <th style="width: 200px;">Remetente / Origem</th>
-                <th style="width: 200px;">Destinatário / Destino</th>
-                <th style="width: 70px;">Volumes<br>Total/End.</th>
-                <th style="width: 70px;">Peso<br>(kg)</th>
-                <th style="width: 80px;">Valor<br>(R$)</th>
+                <th style="width: 50px;">NF</th>
+                <th style="width: 40px;">Origem</th>
+                <th style="width: 180px;">Remetente / Origem</th>
+                <th style="width: 180px;">Destinatário / Destino</th>
+                <th style="width: 60px;">Volumes<br>Total/End.</th>
+                <th style="width: 60px;">Peso<br>(kg)</th>
+                <th style="width: 70px;">Valor<br>(R$)</th>
+                <th style="width: 160px;">Chave NF-e</th>
               </tr>
             </thead>
             <tbody>
@@ -2152,6 +2153,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           <td style="text-align: center;"><strong>${volumesEndNota.length}</strong>/${volumesNota.length}</td>
           <td style="text-align: right;">${(nota.peso_total_nf || 0).toLocaleString('pt-BR')}</td>
           <td style="text-align: right;">${(nota.valor_nota_fiscal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+          <td style="font-size: 7px; font-family: monospace; word-break: break-all; line-height: 1.2;">${nota.chave_nota_fiscal || '-'}</td>
           </tr>
           `;
           });
