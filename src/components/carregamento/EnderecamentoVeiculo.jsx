@@ -792,7 +792,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         setTimeout(() => {
           setFeedbackNota(null);
           setFeedbackMensagem("");
-        }, 3300);
+        }, 5000);
         setProcessandoChave(false);
         return;
       }
@@ -885,7 +885,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         setTimeout(() => {
           setFeedbackNota(null);
           setFeedbackMensagem("");
-        }, 3300);
+        }, 5000);
         setSearchChaveNF("");
         setNotasBaseBusca("");
         setProcessandoChave(false);
