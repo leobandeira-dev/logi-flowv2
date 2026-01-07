@@ -432,10 +432,23 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
   const getVolumesNaoEnderecados = () => {
     const idsEnderecados = getEnderecamentosOrdemAtual().map(e => e.volume_id);
-    return volumesLocal.filter(v => 
+    const volumesDisponiveis = volumesLocal.filter(v => 
       notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id) &&
       !idsEnderecados.includes(v.id)
     );
+    
+    // DEBUG: Log para diagnóstico
+    if (notasFiscaisLocal.length > 0 && volumesDisponiveis.length === 0) {
+      console.log('⚠️ DEBUG Volumes:', {
+        totalNotasVinculadas: notasFiscaisLocal.length,
+        totalVolumesLocal: volumesLocal.length,
+        volumesDasNotas: volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length,
+        volumesJaEnderecados: idsEnderecados.length,
+        notasIds: notasFiscaisLocal.map(n => n.id)
+      });
+    }
+    
+    return volumesDisponiveis;
   };
 
   const getVolumesNaCelula = (linha, coluna) => {
@@ -3679,11 +3692,42 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                           {filteredVolumes.length === 0 && (
                             <div className="text-center py-8" style={{ color: theme.textMuted }}>
                               <Package className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                              <p className="text-sm">
-                                {getVolumesNaoEnderecados().length === 0
+                              <p className="text-sm mb-3">
+                                {getVolumesNaoEnderecados().length === 0 && notasFiscaisLocal.length > 0
                                   ? "Todos os volumes foram posicionados!"
-                                  : "Nenhum volume encontrado"}
+                                  : notasFiscaisLocal.length === 0
+                                  ? "Vincule notas fiscais para carregar volumes"
+                                  : "Carregando volumes..."}
                               </p>
+                              {notasFiscaisLocal.length > 0 && volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length === 0 && (
+                                <Button
+                                  size="sm"
+                                  onClick={async () => {
+                                    toast.loading("Recarregando volumes...", { id: 'reload-vols' });
+                                    try {
+                                      const notasIds = notasFiscaisLocal.map(n => n.id);
+                                      const volumesDB = await base44.entities.Volume.filter({ 
+                                        nota_fiscal_id: { $in: notasIds } 
+                                      });
+
+                                      setVolumesLocal(prev => {
+                                        const volumesIdsLocais = prev.map(v => v.id);
+                                        const volumesNovos = volumesDB.filter(v => !volumesIdsLocais.includes(v.id));
+                                        return [...prev, ...volumesNovos];
+                                      });
+
+                                      toast.success(`✅ ${volumesDB.length} volumes carregados!`, { id: 'reload-vols', duration: 3000 });
+                                    } catch (error) {
+                                      console.error("Erro ao recarregar volumes:", error);
+                                      toast.error("Erro ao carregar volumes", { id: 'reload-vols' });
+                                    }
+                                  }}
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  <Package className="w-4 h-4 mr-2" />
+                                  Recarregar Volumes
+                                </Button>
+                              )}
                             </div>
                           )}
                         </>
