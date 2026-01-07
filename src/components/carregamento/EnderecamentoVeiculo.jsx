@@ -2417,9 +2417,6 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                           <p className="text-sm">Nenhuma nota vinculada</p>
                         </div>
                       )}
-                    </div>
-                  </div>
-                </div>
               </TabsContent>
 
               {/* Aba Layout Mobile */}
