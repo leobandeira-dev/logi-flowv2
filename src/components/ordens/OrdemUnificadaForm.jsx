@@ -1034,17 +1034,24 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
         setProgressoImportacao({ etapa: 'analise', progresso: 30, detalhe: 'Tentando leitura rápida do texto...' });
         
         // TENTATIVA 1: Processamento Rápido via Backend (Extração de Texto)
-        // Isso é muito mais rápido para PDFs gerados por sistemas (não escaneados)
-        const response = await base44.functions.invoke('processarPdfOrdem', {
-          file_url,
-          json_schema: ordemSchema
-        });
+        // Com Timeout de 8s para evitar que a soma dos tempos fique excessiva
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Timeout leitura rápida")), 8000)
+        );
+
+        const response = await Promise.race([
+          base44.functions.invoke('processarPdfOrdem', {
+            file_url,
+            json_schema: ordemSchema
+          }),
+          timeoutPromise
+        ]);
 
         if (response.data && response.data.output) {
           dados = response.data.output;
           console.log("✅ Sucesso na leitura rápida de texto");
         } else {
-          throw new Error("Falha na leitura rápida");
+          throw new Error("Resposta inválida da leitura rápida");
         }
 
       } catch (fastError) {
