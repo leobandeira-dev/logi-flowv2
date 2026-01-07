@@ -4264,12 +4264,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     />
                     {feedbackMensagem && (
                       <div 
-                        className="text-xs font-semibold mt-1 transition-all duration-300"
+                        className="text-sm font-bold mt-2 px-2 py-1.5 rounded"
                         style={{ 
                           color: feedbackNota === 'success' ? '#10b981' : 
                                  feedbackNota === 'duplicate' ? '#a855f7' : 
                                  feedbackNota === 'error' ? '#ef4444' : 
-                                 theme.text 
+                                 theme.text,
+                          backgroundColor: feedbackNota === 'success' ? 'rgba(16, 185, 129, 0.15)' :
+                                          feedbackNota === 'duplicate' ? 'rgba(168, 85, 247, 0.15)' :
+                                          feedbackNota === 'error' ? 'rgba(239, 68, 68, 0.15)' :
+                                          'transparent'
                         }}
                       >
                         {feedbackMensagem}
@@ -4281,9 +4285,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         <span className="text-xs" style={{ color: theme.text }}>Processando...</span>
                       </div>
                     )}
-                    <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
-                      Cole ou bipe a chave - pesquisa automática
-                    </p>
+                    {!feedbackMensagem && !processandoChave && (
+                      <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
+                        Cole ou bipe a chave - pesquisa automática
+                      </p>
+                    )}
                   </>
                 ) : (
                   <>
@@ -4295,7 +4301,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         value={notasBaseBusca}
                         onChange={(e) => {
                           setNotasBaseBusca(e.target.value);
-                          if (feedbackNota) setFeedbackNota(null);
+                          if (feedbackNota) {
+                            setFeedbackNota(null);
+                            setFeedbackMensagem("");
+                          }
                         }}
                         onKeyDown={async (e) => {
                           if (e.key === 'Enter' && notasBaseBusca.trim()) {
@@ -4325,9 +4334,28 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         autoFocus
                       />
                     </div>
-                    <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
-                      Digite número ou bipe chave - Enter para importar
-                    </p>
+                    {feedbackMensagem && (
+                      <div 
+                        className="text-sm font-bold mt-2 px-2 py-1.5 rounded"
+                        style={{ 
+                          color: feedbackNota === 'success' ? '#10b981' : 
+                                 feedbackNota === 'duplicate' ? '#a855f7' : 
+                                 feedbackNota === 'error' ? '#ef4444' : 
+                                 theme.text,
+                          backgroundColor: feedbackNota === 'success' ? 'rgba(16, 185, 129, 0.15)' :
+                                          feedbackNota === 'duplicate' ? 'rgba(168, 85, 247, 0.15)' :
+                                          feedbackNota === 'error' ? 'rgba(239, 68, 68, 0.15)' :
+                                          'transparent'
+                        }}
+                      >
+                        {feedbackMensagem}
+                      </div>
+                    )}
+                    {!feedbackMensagem && (
+                      <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
+                        Digite número ou bipe chave - Enter para importar
+                      </p>
+                    )}
                   </>
                 )}
               </div>
@@ -5151,12 +5179,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     />
                     {feedbackMensagem && (
                       <div 
-                        className="text-xs font-semibold mt-1 transition-all duration-300"
+                        className="text-sm font-bold mt-2 px-2 py-1.5 rounded"
                         style={{ 
                           color: feedbackNota === 'success' ? '#10b981' : 
                                  feedbackNota === 'duplicate' ? '#a855f7' : 
                                  feedbackNota === 'error' ? '#ef4444' : 
-                                 theme.text 
+                                 theme.text,
+                          backgroundColor: feedbackNota === 'success' ? 'rgba(16, 185, 129, 0.15)' :
+                                          feedbackNota === 'duplicate' ? 'rgba(168, 85, 247, 0.15)' :
+                                          feedbackNota === 'error' ? 'rgba(239, 68, 68, 0.15)' :
+                                          'transparent'
                         }}
                       >
                         {feedbackMensagem}
@@ -5168,9 +5200,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         <span className="text-xs" style={{ color: theme.text }}>Processando...</span>
                       </div>
                     )}
-                    <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
-                      Cole ou bipe a chave - pesquisa automática
-                    </p>
+                    {!feedbackMensagem && !processandoChave && (
+                      <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
+                        Cole ou bipe a chave - pesquisa automática
+                      </p>
+                    )}
                   </>
                 ) : (
                   <>
@@ -5212,9 +5246,28 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         autoFocus
                       />
                     </div>
-                    <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
-                      Digite número ou bipe chave - Enter para importar
-                    </p>
+                    {feedbackMensagem && (
+                      <div 
+                        className="text-sm font-bold mt-2 px-2 py-1.5 rounded"
+                        style={{ 
+                          color: feedbackNota === 'success' ? '#10b981' : 
+                                 feedbackNota === 'duplicate' ? '#a855f7' : 
+                                 feedbackNota === 'error' ? '#ef4444' : 
+                                 theme.text,
+                          backgroundColor: feedbackNota === 'success' ? 'rgba(16, 185, 129, 0.15)' :
+                                          feedbackNota === 'duplicate' ? 'rgba(168, 85, 247, 0.15)' :
+                                          feedbackNota === 'error' ? 'rgba(239, 68, 68, 0.15)' :
+                                          'transparent'
+                        }}
+                      >
+                        {feedbackMensagem}
+                      </div>
+                    )}
+                    {!feedbackMensagem && (
+                      <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
+                        Digite número ou bipe chave - Enter para importar
+                      </p>
+                    )}
                   </>
                 )}
               </div>
