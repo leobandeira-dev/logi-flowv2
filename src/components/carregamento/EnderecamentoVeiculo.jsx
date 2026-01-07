@@ -177,6 +177,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const [quantidadeMovimentar, setQuantidadeMovimentar] = useState("");
   const [apenasNotasVinculadas, setApenasNotasVinculadas] = useState(false);
   const [showCameraNotaFiscal, setShowCameraNotaFiscal] = useState(false);
+  const [feedbackNota, setFeedbackNota] = useState(null); // 'success' | 'duplicate' | 'error'
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -740,6 +741,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     }
 
     setProcessandoChave(true);
+    setFeedbackNota(null); // Limpar feedback anterior
     console.log('🔍 INICIANDO PESQUISA NF:', chave);
 
     try {
@@ -763,6 +765,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         
         try { playErrorBeep(); } catch (e) {}
         
+        setFeedbackNota('duplicate');
+        
         toast.warning(
           <div className="flex flex-col gap-1">
             <p className="font-bold text-base">⚠️ NOTA JÁ VINCULADA</p>
@@ -774,15 +778,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             id: 'nota-duplicada',
             duration: 5000,
             style: { 
-              background: isDark ? '#92400e' : '#fef3c7',
-              color: isDark ? '#fef3c7' : '#92400e',
-              border: '2px solid #f59e0b',
+              background: isDark ? '#581c87' : '#f3e8ff',
+              color: isDark ? '#e9d5ff' : '#581c87',
+              border: '2px solid #a855f7',
               padding: '16px',
               fontSize: '14px'
             }
           }
         );
         
+        setTimeout(() => setFeedbackNota(null), 3000);
         setProcessandoChave(false);
         return;
       }
@@ -843,6 +848,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         
         try { playSuccessBeep(); } catch (e) {}
         
+        setFeedbackNota('success');
+        
         toast.success(
           <div className="flex flex-col gap-1.5">
             <p className="font-bold text-lg">✅ NOTA VINCULADA!</p>
@@ -869,6 +876,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           }
         );
         
+        setTimeout(() => setFeedbackNota(null), 3000);
         setSearchChaveNF("");
         setNotasBaseBusca("");
         setProcessandoChave(false);
@@ -974,6 +982,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       
       try { playSuccessBeep(); } catch (e) {}
       
+      setFeedbackNota('success');
+      
       const remetenteNome = emitElements?.getElementsByTagName('xNome')[0]?.textContent || 'N/A';
       const remetenteCidade = emitElements?.getElementsByTagName('xMun')[0]?.textContent || 'N/A';
       const remetenteUF = emitElements?.getElementsByTagName('UF')[0]?.textContent || 'N/A';
@@ -1010,6 +1020,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         }
       );
       
+      setTimeout(() => setFeedbackNota(null), 3000);
       setSearchChaveNF("");
       setNotasBaseBusca("");
       
@@ -1018,6 +1029,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     } catch (error) {
       console.error("❌ ERRO ao processar chave NF:", error);
       try { playErrorBeep(); } catch (e) {}
+      
+      setFeedbackNota('error');
       
       toast.error(
         <div className="flex flex-col gap-1.5">
@@ -1039,6 +1052,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         }
       );
       
+      setTimeout(() => setFeedbackNota(null), 3000);
       setSearchChaveNF("");
       setNotasBaseBusca("");
     } finally {
@@ -3576,8 +3590,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                               }
                             }
                           }}
-                          className="h-9 text-sm pl-7"
-                          style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                          className="h-9 text-sm pl-7 transition-all"
+                          style={{ 
+                            backgroundColor: theme.inputBg, 
+                            borderColor: feedbackNota === 'success' ? '#10b981' : 
+                                         feedbackNota === 'duplicate' ? '#a855f7' : 
+                                         feedbackNota === 'error' ? '#ef4444' : 
+                                         theme.inputBorder,
+                            borderWidth: feedbackNota ? '3px' : '1px',
+                            color: theme.text 
+                          }}
                           autoFocus
                         />
                       </div>
@@ -4162,8 +4184,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       placeholder="44 dígitos - bipe ou cole..."
                       value={searchChaveNF}
                       onChange={(e) => setSearchChaveNF(e.target.value.replace(/\D/g, '').substring(0, 44))}
-                      className="h-7 text-xs font-mono"
-                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                      className="h-7 text-xs font-mono transition-all"
+                      style={{ 
+                        backgroundColor: theme.inputBg, 
+                        borderColor: feedbackNota === 'success' ? '#10b981' : 
+                                     feedbackNota === 'duplicate' ? '#a855f7' : 
+                                     feedbackNota === 'error' ? '#ef4444' : 
+                                     theme.inputBorder, 
+                        borderWidth: feedbackNota ? '3px' : '1px',
+                        color: theme.text 
+                      }}
                       disabled={processandoChave}
                       autoFocus
                     />
@@ -4197,8 +4227,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                             }
                           }
                         }}
-                        className="h-7 text-xs pl-7"
-                        style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                        className="h-7 text-xs pl-7 transition-all"
+                        style={{ 
+                          backgroundColor: theme.inputBg, 
+                          borderColor: feedbackNota === 'success' ? '#10b981' : 
+                                       feedbackNota === 'duplicate' ? '#a855f7' : 
+                                       feedbackNota === 'error' ? '#ef4444' : 
+                                       theme.inputBorder,
+                          borderWidth: feedbackNota ? '3px' : '1px',
+                          color: theme.text 
+                        }}
                         autoFocus
                       />
                     </div>
@@ -5003,8 +5041,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       placeholder="Cole ou bipe a chave..."
                       value={searchChaveNF}
                       onChange={(e) => setSearchChaveNF(e.target.value.replace(/\D/g, '').substring(0, 44))}
-                      className="h-9 text-sm font-mono"
-                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                      className="h-9 text-sm font-mono transition-all"
+                      style={{ 
+                        backgroundColor: theme.inputBg, 
+                        borderColor: feedbackNota === 'success' ? '#10b981' : 
+                                     feedbackNota === 'duplicate' ? '#a855f7' : 
+                                     feedbackNota === 'error' ? '#ef4444' : 
+                                     theme.inputBorder,
+                        borderWidth: feedbackNota ? '3px' : '1px',
+                        color: theme.text 
+                      }}
                       disabled={processandoChave}
                       autoFocus
                     />
@@ -5038,8 +5084,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                             }
                           }
                         }}
-                        className="h-9 text-sm pl-7"
-                        style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                        className="h-9 text-sm pl-7 transition-all"
+                        style={{ 
+                          backgroundColor: theme.inputBg, 
+                          borderColor: feedbackNota === 'success' ? '#10b981' : 
+                                       feedbackNota === 'duplicate' ? '#a855f7' : 
+                                       feedbackNota === 'error' ? '#ef4444' : 
+                                       theme.inputBorder,
+                          borderWidth: feedbackNota ? '3px' : '1px',
+                          color: theme.text 
+                        }}
                         autoFocus
                       />
                     </div>
