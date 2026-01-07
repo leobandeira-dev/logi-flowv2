@@ -566,110 +566,95 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       return;
     }
 
+    // Se já estiver processando esta mesma chave, ignora
+    // Mas permite processar se for uma chave diferente (embora a flag processandoChave bloqueie tudo)
     if (processandoChave) return;
 
     setProcessandoChave(true);
+    let feedbackDado = false;
+
     try {
-      // Buscar nota no banco de dados
+      // 1. Tentar buscar nota localmente primeiro (se já estiver na lista da ordem)
+      // Isso é muito mais rápido que ir no banco
+      const notaLocal = notasFiscaisLocal.find(nf => nf.chave_nota_fiscal === chave);
+      
+      if (notaLocal) {
+        // Já está na lista local = já vinculada
+        const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === notaLocal.id);
+        const volumesNaoEnderecados = volumesNota.filter(v => {
+          const idsEnderecados = enderecamentos.map(e => e.volume_id);
+          return !idsEnderecados.includes(v.id);
+        });
+        
+        setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
+        setSearchTerm("");
+        
+        try { playSuccessBeep(); } catch (e) {}
+        toast.info(`ℹ️ Nota ${notaLocal.numero_nota} já vinculada. Volumes selecionados.`);
+        
+        // Limpar ambos os inputs para garantir
+        setSearchChaveNF("");
+        setNotasBaseBusca("");
+        feedbackDado = true;
+        return;
+      }
+
+      // 2. Buscar nota no banco de dados (pode existir mas não estar vinculada)
       const notasExistentes = await base44.entities.NotaFiscal.filter({ chave_nota_fiscal: chave });
       
       if (notasExistentes.length > 0) {
         const notaExistente = notasExistentes[0];
         
-        // Verificar se já está vinculada a esta ordem
-        if (notaExistente.ordem_id === ordem.id) {
-          // Buscar volumes da nota e selecionar automaticamente
-          const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === notaExistente.id);
-          const volumesNaoEnderecados = volumesNota.filter(v => {
-            const idsEnderecados = enderecamentos.map(e => e.volume_id);
-            return !idsEnderecados.includes(v.id);
-          });
-          
-          setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
-          setSearchTerm("");
-          
-          // Feedback específico para nota já vinculada
-          playSuccessBeep();
-          toast.info(`ℹ️ Nota ${notaExistente.numero_nota} já está na lista. Volumes selecionados.`);
-          setSearchChaveNF("");
-          
-          // Manter foco no campo
-          setTimeout(() => {
-            if (inputChaveRef.current) {
-              inputChaveRef.current.focus();
-            }
-          }, 100);
-          
-          setProcessandoChave(false);
-          return;
-        }
-
-        // Nota existe mas não está vinculada - vincular automaticamente
+        // Vincular nota existente
         await base44.entities.NotaFiscal.update(notaExistente.id, {
           ordem_id: ordem.id,
-          status_nf: "aguardando_expedicao",
-          numero_area: notaExistente.numero_area || "manual"
+          status_nf: "aguardando_expedicao"
         });
 
         // Buscar volumes da nota
         const volumesNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaExistente.id });
 
-        // Atualizar ordem com nova nota
-        const notasIds = [...(ordem.notas_fiscais_ids || []), notaExistente.id];
+        // Atualizar ordem
+        const notasIds = [...(ordem.notas_fiscais_ids || []).filter(id => id !== notaExistente.id), notaExistente.id];
         await base44.entities.OrdemDeCarregamento.update(ordem.id, {
           notas_fiscais_ids: notasIds
         });
 
         // Atualizar estados locais
-        const notasAtualizadas = [...notasFiscaisLocal, notaExistente];
-        const volumesAtualizados = [...volumesLocal, ...volumesNota];
+        setNotasFiscaisLocal(prev => [...prev, notaExistente]);
+        setVolumesLocal(prev => [...prev, ...volumesNota]);
+        setNotasOrigem(prev => ({ ...prev, [notaExistente.id]: "Adicionada" }));
         
-        setNotasFiscaisLocal(notasAtualizadas);
-        setVolumesLocal(volumesAtualizados);
-        setNotasOrigem({ ...notasOrigem, [notaExistente.id]: "Adicionada" });
-        
-        playSuccessBeep();
+        try { playSuccessBeep(); } catch (e) {}
         toast.success("✅ Nota fiscal vinculada com sucesso!");
         
-        // Salvar rascunho automaticamente
-        setTimeout(() => salvarRascunho(), 100);
         setSearchChaveNF("");
+        setNotasBaseBusca("");
+        feedbackDado = true;
         
-        // Manter foco no campo
-        setTimeout(() => {
-          if (inputChaveRef.current) {
-            inputChaveRef.current.focus();
-          }
-        }, 100);
-        
-        setProcessandoChave(false);
+        setTimeout(() => salvarRascunho(), 100);
         return;
       }
 
-      // Nota não existe - importar via API
-      toast.info("Importando nota fiscal...");
+      // 3. Nota não existe - Importar via API
+      toast.info("Busca na SEFAZ iniciada...", { duration: 2000 });
       
       const response = await base44.functions.invoke('buscarNotaFiscalMeuDanfe', {
         chaveAcesso: chave
       });
 
       if (response.data.error) {
-        toast.error("Erro ao importar nota: " + response.data.error);
-        setProcessandoChave(false);
-        return;
+        throw new Error(response.data.error);
       }
 
       if (!response.data.xml) {
-        toast.error("XML não retornado pela API");
-        setProcessandoChave(false);
-        return;
+        throw new Error("XML não retornado pela API");
       }
 
       // Parse do XML
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(response.data.xml, "text/xml");
       
-      // Extrair dados da NF-e
       const getNFeValue = (tag) => {
         const element = xmlDoc.getElementsByTagName(tag)[0];
         return element ? element.textContent : null;
@@ -677,54 +662,31 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       
       const numeroNota = getNFeValue('nNF') || '';
 
-      // Extrair dados do emit
+      // Dados básicos
       const emitElements = xmlDoc.getElementsByTagName('emit')[0];
-      const emitCNPJ = emitElements?.getElementsByTagName('CNPJ')[0]?.textContent || '';
-      const emitNome = emitElements?.getElementsByTagName('xNome')[0]?.textContent || '';
-      const emitFone = emitElements?.getElementsByTagName('fone')[0]?.textContent || '';
-      const emitEnder = emitElements?.getElementsByTagName('enderEmit')[0];
-      
-      // Extrair dados do dest
       const destElements = xmlDoc.getElementsByTagName('dest')[0];
-      const destCNPJ = destElements?.getElementsByTagName('CNPJ')[0]?.textContent || '';
-      const destNome = destElements?.getElementsByTagName('xNome')[0]?.textContent || '';
-      const destFone = destElements?.getElementsByTagName('fone')[0]?.textContent || '';
-      const destEnder = destElements?.getElementsByTagName('enderDest')[0];
-
-      // Extrair informações de volume do XML
       const volElements = xmlDoc.getElementsByTagName('vol')[0];
+      
+      // Valores
       const quantidadeVolumes = parseInt(volElements?.getElementsByTagName('qVol')[0]?.textContent || '1');
       const pesoLiquido = parseFloat(volElements?.getElementsByTagName('pesoL')[0]?.textContent || '0');
       const pesoBruto = parseFloat(volElements?.getElementsByTagName('pesoB')[0]?.textContent || '0');
-      
       const valorNF = parseFloat(getNFeValue('vNF') || '0');
 
-      // Criar nota fiscal no banco
+      // Criar nota fiscal
       const novaNF = await base44.entities.NotaFiscal.create({
         ordem_id: ordem.id,
         chave_nota_fiscal: chave,
-        numero_nota: getNFeValue('nNF') || '',
+        numero_nota: numeroNota,
         serie_nota: getNFeValue('serie') || '',
         data_hora_emissao: getNFeValue('dhEmi') || new Date().toISOString(),
         natureza_operacao: getNFeValue('natOp') || '',
-        emitente_cnpj: emitCNPJ,
-        emitente_razao_social: emitNome,
-        emitente_telefone: emitFone,
-        emitente_uf: emitEnder?.getElementsByTagName('UF')[0]?.textContent || '',
-        emitente_cidade: emitEnder?.getElementsByTagName('xMun')[0]?.textContent || '',
-        emitente_bairro: emitEnder?.getElementsByTagName('xBairro')[0]?.textContent || '',
-        emitente_endereco: emitEnder?.getElementsByTagName('xLgr')[0]?.textContent || '',
-        emitente_numero: emitEnder?.getElementsByTagName('nro')[0]?.textContent || '',
-        emitente_cep: emitEnder?.getElementsByTagName('CEP')[0]?.textContent || '',
-        destinatario_cnpj: destCNPJ,
-        destinatario_razao_social: destNome,
-        destinatario_telefone: destFone,
-        destinatario_uf: destEnder?.getElementsByTagName('UF')[0]?.textContent || '',
-        destinatario_cidade: destEnder?.getElementsByTagName('xMun')[0]?.textContent || '',
-        destinatario_bairro: destEnder?.getElementsByTagName('xBairro')[0]?.textContent || '',
-        destinatario_endereco: destEnder?.getElementsByTagName('xLgr')[0]?.textContent || '',
-        destinatario_numero: destEnder?.getElementsByTagName('nro')[0]?.textContent || '',
-        destinatario_cep: destEnder?.getElementsByTagName('CEP')[0]?.textContent || '',
+        emitente_cnpj: emitElements?.getElementsByTagName('CNPJ')[0]?.textContent || '',
+        emitente_razao_social: emitElements?.getElementsByTagName('xNome')[0]?.textContent || '',
+        destinatario_cnpj: destElements?.getElementsByTagName('CNPJ')[0]?.textContent || '',
+        destinatario_razao_social: destElements?.getElementsByTagName('xNome')[0]?.textContent || '',
+        destinatario_cidade: destElements?.getElementsByTagName('xMun')[0]?.textContent || '',
+        destinatario_uf: destElements?.getElementsByTagName('UF')[0]?.textContent || '',
         valor_nota_fiscal: valorNF,
         xml_content: response.data.xml,
         status_nf: "aguardando_expedicao",
@@ -733,7 +695,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         numero_area: "manual"
       });
 
-      // Criar volumes automaticamente
+      // Criar volumes
       const volumesCriados = [];
       const pesoMedioPorVolume = (pesoBruto > 0 ? pesoBruto : pesoLiquido) / quantidadeVolumes;
       
@@ -753,60 +715,39 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         volumesCriados.push(novoVolume);
       }
 
-      // Atualizar ordem com nova nota e totais recalculados
+      // Vincular à ordem
       const notasIds = [...(ordem.notas_fiscais_ids || []), novaNF.id];
-      const todasNotasOrdem = await base44.entities.NotaFiscal.filter({ 
-        id: { $in: notasIds } 
-      });
-      
-      const pesoTotal = todasNotasOrdem.reduce((sum, nf) => sum + (nf.peso_total_nf || 0), 0);
-      const volumesTotal = todasNotasOrdem.reduce((sum, nf) => sum + (nf.quantidade_total_volumes_nf || 0), 0);
-      const valorTotal = todasNotasOrdem.reduce((sum, nf) => sum + (nf.valor_nota_fiscal || 0), 0);
-      
       await base44.entities.OrdemDeCarregamento.update(ordem.id, {
-        notas_fiscais_ids: notasIds,
-        peso_total_consolidado: pesoTotal,
-        volumes_total_consolidado: volumesTotal,
-        valor_total_consolidado: valorTotal,
-        peso: pesoTotal,
-        volumes: volumesTotal
+        notas_fiscais_ids: notasIds
       });
 
-      // Atualizar estados locais
-      const notasAtualizadas = [...notasFiscaisLocal, novaNF];
-      const volumesAtualizados = [...volumesLocal, ...volumesCriados];
+      // Atualizar estado
+      setNotasFiscaisLocal(prev => [...prev, novaNF]);
+      setVolumesLocal(prev => [...prev, ...volumesCriados]);
+      setNotasOrigem(prev => ({ ...prev, [novaNF.id]: "Importada" }));
       
-      setNotasFiscaisLocal(notasAtualizadas);
-      setVolumesLocal(volumesAtualizados);
-      setNotasOrigem({ ...notasOrigem, [novaNF.id]: "Importada" });
+      try { playSuccessBeep(); } catch (e) {}
+      toast.success(`✅ Nota fiscal ${numeroNota} importada e vinculada!`);
       
-      playSuccessBeep();
-      toast.success(`✅ Nota fiscal importada e vinculada! ${quantidadeVolumes} volume(s) criado(s).`);
-      
-      // Salvar rascunho automaticamente
-      setTimeout(() => salvarRascunho(), 100);
       setSearchChaveNF("");
+      setNotasBaseBusca("");
+      feedbackDado = true;
       
-      // Manter foco no campo
-      setTimeout(() => {
-        if (inputChaveRef.current) {
-          inputChaveRef.current.focus();
-        }
-      }, 100);
-      
+      setTimeout(() => salvarRascunho(), 100);
+
     } catch (error) {
       console.error("Erro ao processar chave NF:", error);
-      toast.error("Erro ao processar nota fiscal");
+      toast.error(`Erro: ${error.message || 'Falha ao processar nota'}`);
       setSearchChaveNF("");
-      
-      // Manter foco no campo
+      setNotasBaseBusca("");
+    } finally {
+      setProcessandoChave(false);
+      // Focar novamente no input apropriado
       setTimeout(() => {
         if (inputChaveRef.current) {
           inputChaveRef.current.focus();
         }
       }, 100);
-    } finally {
-      setProcessandoChave(false);
     }
   };
 
