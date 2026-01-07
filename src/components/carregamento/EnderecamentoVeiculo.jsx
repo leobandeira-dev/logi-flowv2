@@ -1586,7 +1586,21 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             setNotasFiscaisLocal(prev => [...prev, ...notasParaVincular]);
             setVolumesLocal(prev => [...prev, ...volumesDaEtiquetaDB.filter(v => !prev.some(p => p.id === v.id))]);
 
-            toast.success(`${notasParaVincular.length} nota(s) vinculada(s) automaticamente`);
+            // Feedback detalhado para cada nota vinculada
+            notasParaVincular.forEach(nota => {
+              const feedbackMsg = `✅ NF ${nota.numero_nota} AUTO-VINCULADA\n` +
+                `📤 ${nota.emitente_razao_social || 'N/A'}\n` +
+                `📍 ${nota.emitente_cidade || 'N/A'}/${nota.emitente_uf || 'N/A'}\n` +
+                `📥 ${nota.destinatario_razao_social || 'N/A'}\n` +
+                `📍 ${nota.destinatario_cidade || 'N/A'}/${nota.destinatario_uf || 'N/A'}`;
+              
+              toast.success(feedbackMsg, { 
+                duration: 6000,
+                style: { whiteSpace: 'pre-line', fontSize: '12px', lineHeight: '1.4' }
+              });
+            });
+            
+            playSuccessBeep();
           } else {
             // Garantir que os volumes estão no estado local
             const volumesIdsLocais = volumesLocal.map(v => v.id);
@@ -1625,7 +1639,23 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
           salvarRascunho();
           playSuccessBeep();
-          toast.success(`✅ Etiqueta ${etiquetaMae.codigo}: ${volumesParaEnderecear.length} volumes alocados em ${linha}-${coluna}`, { duration: 3000 });
+          
+          // Feedback detalhado da etiqueta mãe
+          const notasEtiqueta = [...new Set(volumesParaEnderecear.map(v => v.nota_fiscal_id))];
+          const notasInfo = notasEtiqueta.map(nId => {
+            const n = notasFiscaisLocal.find(nf => nf.id === nId);
+            return n ? `NF ${n.numero_nota}` : '';
+          }).filter(Boolean).join(', ');
+          
+          const feedbackMsg = `✅ ETIQUETA MÃE ${etiquetaMae.codigo}\n` +
+            `📦 ${volumesParaEnderecear.length} volumes alocados em ${linha}-${coluna}\n` +
+            `📋 ${notasInfo}\n` +
+            `✓ Continue escaneando...`;
+          
+          toast.success(feedbackMsg, { 
+            duration: 5000,
+            style: { whiteSpace: 'pre-line', fontSize: '12px', lineHeight: '1.4', fontWeight: '500' }
+          });
           
           return 'success';
         } else {
@@ -1703,7 +1733,20 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             setNotasFiscaisLocal(prev => [...prev, notaDoVolume]);
             setVolumesLocal(prev => [...prev, ...todosVolumesNota.filter(v => !prev.some(p => p.id === v.id))]);
 
-            toast.info(`📋 NF ${notaDoVolume.numero_nota} adicionada - ${todosVolumesNota.length} volumes`, { duration: 2000 });
+            // Feedback detalhado da nota vinculada
+            const feedbackMsg = `✅ NF ${notaDoVolume.numero_nota} AUTO-VINCULADA\n` +
+              `📤 ${notaDoVolume.emitente_razao_social || 'N/A'}\n` +
+              `📍 ${notaDoVolume.emitente_cidade || 'N/A'}/${notaDoVolume.emitente_uf || 'N/A'}\n` +
+              `📥 ${notaDoVolume.destinatario_razao_social || 'N/A'}\n` +
+              `📍 ${notaDoVolume.destinatario_cidade || 'N/A'}/${notaDoVolume.destinatario_uf || 'N/A'}\n` +
+              `📦 ${todosVolumesNota.length} volumes carregados`;
+            
+            toast.success(feedbackMsg, { 
+              duration: 7000,
+              style: { whiteSpace: 'pre-line', fontSize: '12px', lineHeight: '1.4' }
+            });
+            
+            playSuccessBeep();
           } else {
             // Garantir que TODOS os volumes da nota estão no estado local
             const volumesIdsLocais = volumesLocal.map(v => v.id);
@@ -1768,8 +1811,26 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       setEnderecamentos(todosEnderecamentos);
 
       salvarRascunho();
+      
+      // Buscar informações da nota para feedback detalhado
+      const notaDoVolume = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+      
       playSuccessBeep();
-      toast.success(`✅ Volume ${codigoLimpo} alocado em ${linha}-${coluna}! Continue escaneando...`, { duration: 2000 });
+      
+      if (notaDoVolume) {
+        const feedbackMsg = `✅ Volume alocado em ${linha}-${coluna}\n` +
+          `📋 NF ${notaDoVolume.numero_nota}\n` +
+          `📤 ${notaDoVolume.emitente_razao_social?.substring(0, 30) || 'N/A'}\n` +
+          `📥 ${notaDoVolume.destinatario_razao_social?.substring(0, 30) || 'N/A'}\n` +
+          `📦 Continue escaneando...`;
+        
+        toast.success(feedbackMsg, { 
+          duration: 4000,
+          style: { whiteSpace: 'pre-line', fontSize: '12px', lineHeight: '1.4' }
+        });
+      } else {
+        toast.success(`✅ Volume ${codigoLimpo} alocado em ${linha}-${coluna}! Continue escaneando...`, { duration: 3000 });
+      }
       
       return 'success';
     } catch (error) {
