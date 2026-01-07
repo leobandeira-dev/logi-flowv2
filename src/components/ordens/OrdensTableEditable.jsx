@@ -370,23 +370,23 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent" style={{ borderBottomColor: theme.border }}>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[100px]" style={{ color: theme.textMuted }}>Nº</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[80px]" style={{ color: theme.textMuted }}>Tipo</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[100px]" style={{ color: theme.textMuted }}>Status</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[90px]" style={{ color: theme.textMuted }}>Status Aprov.</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[90px]" style={{ color: theme.textMuted }}>Operação</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[120px]" style={{ color: theme.textMuted }}>Cliente</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[140px]" style={{ color: theme.textMuted }}>Rota</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[80px]" style={{ color: theme.textMuted }}>Modal.</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[100px]" style={{ color: theme.textMuted }}>Tipo Veíc.</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[60px]" style={{ color: theme.textMuted }}>Peso</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[100px]" style={{ color: theme.textMuted }}>Motorista</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[160px]" style={{ color: theme.textMuted }}>Placas</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[90px]" style={{ color: theme.textMuted }}>Frete</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[110px]" style={{ color: theme.textMuted }}>Agend. Carreg.</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[110px]" style={{ color: theme.textMuted }}>Agend. Desc.</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase w-[150px]" style={{ color: theme.textMuted }}>Observações</TableHead>
-                  <TableHead className="h-8 text-[10px] font-bold uppercase text-right w-[110px] sticky right-0" style={{ color: theme.textMuted, backgroundColor: theme.headerBg, borderLeft: `1px solid ${theme.border}` }}>Ações</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[100px] px-2" style={{ color: theme.textMuted }}>Nº</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[90px] px-2" style={{ color: theme.textMuted }}>Tipo</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[110px] px-2" style={{ color: theme.textMuted }}>Status</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[100px] px-2" style={{ color: theme.textMuted }}>Status Aprov.</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[100px] px-2" style={{ color: theme.textMuted }}>Operação</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[130px] px-2" style={{ color: theme.textMuted }}>Cliente</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[150px] px-2" style={{ color: theme.textMuted }}>Rota</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[90px] px-2" style={{ color: theme.textMuted }}>Modal.</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[110px] px-2" style={{ color: theme.textMuted }}>Tipo Veíc.</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[70px] px-2" style={{ color: theme.textMuted }}>Peso</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[110px] px-2" style={{ color: theme.textMuted }}>Motorista</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[170px] px-2" style={{ color: theme.textMuted }}>Placas</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[100px] px-2" style={{ color: theme.textMuted }}>Frete</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[120px] px-2" style={{ color: theme.textMuted }}>Agend. Carreg.</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[120px] px-2" style={{ color: theme.textMuted }}>Agend. Desc.</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[160px] px-2" style={{ color: theme.textMuted }}>Observações</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase text-right min-w-[140px] sticky right-0 px-2" style={{ color: theme.textMuted, backgroundColor: theme.headerBg, borderLeft: `1px solid ${theme.border}` }}>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
