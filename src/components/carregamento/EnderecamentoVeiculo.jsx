@@ -2170,7 +2170,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="flex-1 overflow-y-auto space-y-2"
+                    className="flex-1 overflow-y-auto space-y-2 pb-4"
+                    style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
                   >
                     {(() => {
                       // Agrupar volumes por nota fiscal
