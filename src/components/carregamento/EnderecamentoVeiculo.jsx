@@ -3231,7 +3231,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsList>
 
             {/* Aba Volumes */}
-            <TabsContent value="volumes" className="flex-1 overflow-hidden space-y-2" style={{ margin: 0, padding: '8px', display: 'flex', flexDirection: 'column' }}>
+            <TabsContent value="volumes" className="flex-1 overflow-hidden space-y-2 p-2" style={{ margin: 0, display: 'flex', flexDirection: 'column' }}>
               {/* Tipo de Filtro */}
               <Tabs value={filtroTipo} onValueChange={setFiltroTipo} className="flex-shrink-0">
                 <TabsList className="grid w-full grid-cols-2 h-8">
