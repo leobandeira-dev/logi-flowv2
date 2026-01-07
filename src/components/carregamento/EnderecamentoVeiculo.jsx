@@ -2101,9 +2101,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               </TabsList>
 
               {/* Aba Volumes Mobile */}
-              <TabsContent value="volumes" className="flex-1 overflow-hidden mt-0">
-                <div className="h-full flex flex-col overflow-hidden" style={{ backgroundColor: theme.cardBg }}>
-                  <div className="p-3 border-b space-y-2" style={{ borderColor: theme.cardBorder }}>
+              <TabsContent value="volumes" className="flex-1 overflow-hidden p-3 space-y-2" style={{ margin: 0, display: 'flex', flexDirection: 'column' }}>
+                  <div className="border-b pb-2 space-y-2 flex-shrink-0" style={{ borderColor: theme.cardBorder }}>
                     <h3 className="font-semibold text-xs flex items-center gap-2" style={{ color: theme.text }}>
                       <Package className="w-4 h-4" />
                       Volumes para Carregamento
@@ -2171,8 +2170,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="flex-1 overflow-y-auto p-3 space-y-2"
-                    style={{ maxHeight: '60vh' }}
+                    className="flex-1 overflow-y-auto space-y-2"
                   >
                     {(() => {
                       // Agrupar volumes por nota fiscal
@@ -2340,12 +2338,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                   </div>
                 )}
               </Droppable>
-              </div>
             </TabsContent>
 
             {/* Aba Lista de Notas Mobile */}
-            <TabsContent value="notas" className="flex-1 overflow-hidden mt-0">
-                <div className="h-full flex flex-col">
+            <TabsContent value="notas" className="flex-1 overflow-hidden p-3 space-y-2" style={{ margin: 0, display: 'flex', flexDirection: 'column' }}>
+                <div className="border-b pb-2 flex-shrink-0" style={{ borderColor: theme.cardBorder }}>
                   <div className="p-3 border-b" style={{ borderColor: theme.cardBorder }}>
                     <h3 className="font-semibold text-xs flex items-center gap-2" style={{ color: theme.text }}>
                       <FileText className="w-4 h-4" />
@@ -2353,8 +2350,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     </h3>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-3">
-                    <div className="space-y-2">
+                  <div className="flex-1 overflow-y-auto space-y-2">
                       {(() => {
                         const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
                           if (!acc.find(n => n.id === nota.id)) {
