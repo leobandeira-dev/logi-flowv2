@@ -763,15 +763,25 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         
         try { playErrorBeep(); } catch (e) {}
         
-        const feedbackMsg = `⚠️ NF ${notaLocal.numero_nota} JÁ VINCULADA!\n` +
-          `📋 ${notaLocal.emitente_razao_social || 'N/A'}\n` +
-          `📦 ${volumesNaoEnderecados.length} volumes selecionados`;
-        
-        toast.warning(feedbackMsg, { 
-          id: 'pesquisa-nf',
-          duration: 4000,
-          style: { whiteSpace: 'pre-line', fontSize: '13px', lineHeight: '1.5', fontWeight: '600' }
-        });
+        toast.warning(
+          <div className="flex flex-col gap-1">
+            <p className="font-bold text-base">⚠️ NOTA JÁ VINCULADA</p>
+            <p className="text-sm">NF {notaLocal.numero_nota}</p>
+            <p className="text-xs opacity-90">{notaLocal.emitente_razao_social}</p>
+            <p className="text-xs font-semibold mt-1">{volumesNaoEnderecados.length} volumes selecionados</p>
+          </div>,
+          { 
+            id: 'nota-duplicada',
+            duration: 5000,
+            style: { 
+              background: isDark ? '#92400e' : '#fef3c7',
+              color: isDark ? '#fef3c7' : '#92400e',
+              border: '2px solid #f59e0b',
+              padding: '16px',
+              fontSize: '14px'
+            }
+          }
+        );
         
         setProcessandoChave(false);
         return;
@@ -833,19 +843,31 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         
         try { playSuccessBeep(); } catch (e) {}
         
-        // Feedback visual detalhado
-        const feedbackMsg = `✅ NF ${notaExistente.numero_nota} VINCULADA!\n` +
-          `📤 ${notaExistente.emitente_razao_social || 'N/A'}\n` +
-          `📍 ${notaExistente.emitente_cidade || 'N/A'}/${notaExistente.emitente_uf || 'N/A'}\n` +
-          `📥 ${notaExistente.destinatario_razao_social || 'N/A'}\n` +
-          `📍 ${notaExistente.destinatario_cidade || 'N/A'}/${notaExistente.destinatario_uf || 'N/A'}\n` +
-          `📦 ${volumesNota.length} volumes carregados`;
-        
-        toast.success(feedbackMsg, { 
-          id: 'pesquisa-nf',
-          duration: 7000,
-          style: { whiteSpace: 'pre-line', fontSize: '14px', lineHeight: '1.6', fontWeight: '600' }
-        });
+        toast.success(
+          <div className="flex flex-col gap-1.5">
+            <p className="font-bold text-lg">✅ NOTA VINCULADA!</p>
+            <p className="text-base font-semibold">NF {notaExistente.numero_nota}</p>
+            <div className="text-sm space-y-0.5 mt-1">
+              <p>📤 {notaExistente.emitente_razao_social || 'N/A'}</p>
+              <p className="opacity-80">📍 {notaExistente.emitente_cidade || 'N/A'}/{notaExistente.emitente_uf || 'N/A'}</p>
+              <p>📥 {notaExistente.destinatario_razao_social || 'N/A'}</p>
+              <p className="opacity-80">📍 {notaExistente.destinatario_cidade || 'N/A'}/{notaExistente.destinatario_uf || 'N/A'}</p>
+            </div>
+            <p className="text-base font-bold mt-1">📦 {volumesNota.length} volumes carregados</p>
+          </div>,
+          { 
+            id: 'nota-vinculada',
+            duration: 8000,
+            style: { 
+              background: isDark ? '#065f46' : '#d1fae5',
+              color: isDark ? '#d1fae5' : '#065f46',
+              border: '3px solid #10b981',
+              padding: '20px',
+              fontSize: '14px',
+              minWidth: '320px'
+            }
+          }
+        );
         
         setSearchChaveNF("");
         setNotasBaseBusca("");
@@ -952,19 +974,41 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       
       try { playSuccessBeep(); } catch (e) {}
       
-      // Feedback visual detalhado para nota importada
-      const feedbackMsg = `✅ NF ${numeroNota} IMPORTADA DA SEFAZ!\n` +
-        `📤 ${emitElements?.getElementsByTagName('xNome')[0]?.textContent || 'N/A'}\n` +
-        `📍 ${emitElements?.getElementsByTagName('xMun')[0]?.textContent || 'N/A'}/${emitElements?.getElementsByTagName('UF')[0]?.textContent || 'N/A'}\n` +
-        `📥 ${destElements?.getElementsByTagName('xNome')[0]?.textContent || 'N/A'}\n` +
-        `📍 ${destElements?.getElementsByTagName('xMun')[0]?.textContent || 'N/A'}/${destElements?.getElementsByTagName('UF')[0]?.textContent || 'N/A'}\n` +
-        `📦 ${volumesCriados.length} volumes | ${(pesoBruto > 0 ? pesoBruto : pesoLiquido).toLocaleString()} kg`;
+      const remetenteNome = emitElements?.getElementsByTagName('xNome')[0]?.textContent || 'N/A';
+      const remetenteCidade = emitElements?.getElementsByTagName('xMun')[0]?.textContent || 'N/A';
+      const remetenteUF = emitElements?.getElementsByTagName('UF')[0]?.textContent || 'N/A';
+      const destNome = destElements?.getElementsByTagName('xNome')[0]?.textContent || 'N/A';
+      const destCidade = destElements?.getElementsByTagName('xMun')[0]?.textContent || 'N/A';
+      const destUF = destElements?.getElementsByTagName('UF')[0]?.textContent || 'N/A';
+      const pesoTotal = pesoBruto > 0 ? pesoBruto : pesoLiquido;
       
-      toast.success(feedbackMsg, { 
-        id: 'pesquisa-nf',
-        duration: 8000,
-        style: { whiteSpace: 'pre-line', fontSize: '14px', lineHeight: '1.6', fontWeight: '600' }
-      });
+      toast.success(
+        <div className="flex flex-col gap-1.5">
+          <p className="font-bold text-lg">✅ IMPORTADA DA SEFAZ!</p>
+          <p className="text-base font-semibold">NF {numeroNota}</p>
+          <div className="text-sm space-y-0.5 mt-1">
+            <p>📤 {remetenteNome}</p>
+            <p className="opacity-80">📍 {remetenteCidade}/{remetenteUF}</p>
+            <p>📥 {destNome}</p>
+            <p className="opacity-80">📍 {destCidade}/{destUF}</p>
+          </div>
+          <p className="text-base font-bold mt-1">
+            📦 {volumesCriados.length} volumes | {pesoTotal.toLocaleString()} kg
+          </p>
+        </div>,
+        { 
+          id: 'nota-importada',
+          duration: 9000,
+          style: { 
+            background: isDark ? '#065f46' : '#d1fae5',
+            color: isDark ? '#d1fae5' : '#065f46',
+            border: '3px solid #10b981',
+            padding: '20px',
+            fontSize: '14px',
+            minWidth: '340px'
+          }
+        }
+      );
       
       setSearchChaveNF("");
       setNotasBaseBusca("");
@@ -975,12 +1019,25 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       console.error("❌ ERRO ao processar chave NF:", error);
       try { playErrorBeep(); } catch (e) {}
       
-      const errorMsg = `❌ ERRO AO PROCESSAR NOTA\n${error.message || 'Falha ao processar'}`;
-      toast.error(errorMsg, { 
-        id: 'pesquisa-nf',
-        duration: 5000,
-        style: { whiteSpace: 'pre-line', fontSize: '14px', lineHeight: '1.6', fontWeight: '600' }
-      });
+      toast.error(
+        <div className="flex flex-col gap-1.5">
+          <p className="font-bold text-lg">❌ ERRO</p>
+          <p className="text-base font-semibold">Não foi possível processar a nota</p>
+          <p className="text-sm mt-1">{error.message || 'Falha ao processar nota fiscal'}</p>
+        </div>,
+        { 
+          id: 'nota-erro',
+          duration: 6000,
+          style: { 
+            background: isDark ? '#7f1d1d' : '#fee2e2',
+            color: isDark ? '#fecaca' : '#7f1d1d',
+            border: '3px solid #ef4444',
+            padding: '20px',
+            fontSize: '14px',
+            minWidth: '320px'
+          }
+        }
+      );
       
       setSearchChaveNF("");
       setNotasBaseBusca("");
