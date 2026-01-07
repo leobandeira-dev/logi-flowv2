@@ -309,7 +309,21 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
             setNotasFiscaisLocal(prev => [...prev, ...notasParaVincular]);
             setVolumesLocal(prev => [...prev, ...volumesDaEtiquetaDB]);
 
-            toast.success(`${notasParaVincular.length} nota(s) vinculada(s) automaticamente`);
+            // Feedback detalhado para cada nota vinculada
+            notasParaVincular.forEach(nota => {
+              const feedbackMsg = `✅ NF ${nota.numero_nota} AUTO-VINCULADA\n` +
+                `📤 ${nota.emitente_razao_social || 'N/A'}\n` +
+                `📍 ${nota.emitente_cidade || 'N/A'}/${nota.emitente_uf || 'N/A'}\n` +
+                `📥 ${nota.destinatario_razao_social || 'N/A'}\n` +
+                `📍 ${nota.destinatario_cidade || 'N/A'}/${nota.destinatario_uf || 'N/A'}`;
+              
+              toast.success(feedbackMsg, { 
+                duration: 6000,
+                style: { whiteSpace: 'pre-line', fontSize: '12px', lineHeight: '1.4' }
+              });
+            });
+            
+            playSuccessBeep();
           } else {
             // Garantir que os volumes estão no estado local
             const volumesIdsLocais = volumesLocal.map(v => v.id);
@@ -380,7 +394,23 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
           setRefreshKey(prev => prev + 1);
 
           playSuccessBeep();
-          toast.success(`✅ ${volumesParaCarregar.length} volumes embarcados!`);
+          
+          // Feedback detalhado da etiqueta mãe
+          const notasEtiqueta = [...new Set(volumesParaCarregar.map(v => v.nota_fiscal_id))];
+          const notasInfo = notasEtiqueta.map(nId => {
+            const n = notasFiscaisLocal.find(nf => nf.id === nId);
+            return n ? `NF ${n.numero_nota}` : '';
+          }).filter(Boolean).join(', ');
+          
+          const feedbackMsg = `✅ ETIQUETA MÃE ${etiquetaMae.codigo}\n` +
+            `📦 ${volumesParaCarregar.length} volumes embarcados\n` +
+            `📋 ${notasInfo}\n` +
+            `✓ Continue escaneando...`;
+          
+          toast.success(feedbackMsg, { 
+            duration: 5000,
+            style: { whiteSpace: 'pre-line', fontSize: '12px', lineHeight: '1.4', fontWeight: '500' }
+          });
 
           // Atualizar nota em conferência
           if (notasIdsUnicas.length === 1) {
@@ -513,7 +543,20 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
             timestamp: new Date().toISOString()
           }));
 
-          toast.info(`📋 NF ${notaDoVolume.numero_nota} adicionada - ${todosVolumesNota.length} volumes`, { duration: 2000 });
+          // Feedback detalhado da nota vinculada
+          const feedbackMsg = `✅ NF ${notaDoVolume.numero_nota} AUTO-VINCULADA\n` +
+            `📤 ${notaDoVolume.emitente_razao_social || 'N/A'}\n` +
+            `📍 ${notaDoVolume.emitente_cidade || 'N/A'}/${notaDoVolume.emitente_uf || 'N/A'}\n` +
+            `📥 ${notaDoVolume.destinatario_razao_social || 'N/A'}\n` +
+            `📍 ${notaDoVolume.destinatario_cidade || 'N/A'}/${notaDoVolume.destinatario_uf || 'N/A'}\n` +
+            `📦 ${todosVolumesNota.length} volumes carregados`;
+          
+          toast.success(feedbackMsg, { 
+            duration: 7000,
+            style: { whiteSpace: 'pre-line', fontSize: '12px', lineHeight: '1.4' }
+          });
+          
+          playSuccessBeep();
                 
           // Forçar atualização do UI
           setRefreshKey(prev => prev + 1);
@@ -658,15 +701,26 @@ export default function ConferenciaVolumes({ ordem, notasFiscais, volumes, onClo
       // 7. Feedback consolidado para usuário
       playSuccessBeep();
       if (notaCompleta) {
-        toast.success(`✅ NF ${nota?.numero_nota} COMPLETA - ${volumesNota.length}/${volumesNota.length} volumes`, { 
-          duration: 2000,
-          style: { background: '#10b981', color: 'white', fontWeight: 'bold' }
+        const feedbackMsg = `✅ NF ${nota?.numero_nota} COMPLETA!\n` +
+          `📦 ${volumesNota.length}/${volumesNota.length} volumes embarcados\n` +
+          `📋 ${nota?.emitente_razao_social?.substring(0, 30) || 'N/A'}\n` +
+          `📍 ${nota?.destinatario_cidade || 'N/A'}/${nota?.destinatario_uf || 'N/A'}`;
+        
+        toast.success(feedbackMsg, { 
+          duration: 4000,
+          style: { whiteSpace: 'pre-line', fontSize: '13px', lineHeight: '1.5', fontWeight: 'bold', background: '#10b981', color: 'white' }
         });
         setNotaEmConferencia(null);
       } else {
         const faltam = volumesNota.length - embarcadosNota.length;
-        toast.success(`✓ Volume ${embarcadosNota.length}/${volumesNota.length} - NF ${nota?.numero_nota} (faltam ${faltam})`, { 
-          duration: 1500 
+        const feedbackMsg = `✅ Volume ${embarcadosNota.length}/${volumesNota.length} embarcado\n` +
+          `📋 NF ${nota?.numero_nota}\n` +
+          `⏳ Faltam ${faltam} volume(s)\n` +
+          `📦 Continue escaneando...`;
+        
+        toast.success(feedbackMsg, { 
+          duration: 3000,
+          style: { whiteSpace: 'pre-line', fontSize: '12px', lineHeight: '1.4' }
         });
         setNotaEmConferencia(nota);
       }
