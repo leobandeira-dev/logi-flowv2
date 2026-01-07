@@ -1018,6 +1018,62 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     }
   };
 
+  const handleDesvincularNota = async (nota) => {
+    if (!confirm(`Desvincular NF ${nota.numero_nota} e todos os seus volumes?`)) return;
+    
+    try {
+      const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
+      
+      // Remover endereçamentos dos volumes desta nota (apenas da ordem atual)
+      const volumesNotaIds = volumesNota.map(v => v.id);
+      const enderecamentosRemover = getEnderecamentosOrdemAtual().filter(e => volumesNotaIds.includes(e.volume_id));
+
+      for (const end of enderecamentosRemover) {
+        await base44.entities.EnderecamentoVolume.delete(end.id);
+      }
+
+      // Remover nota da ordem
+      const notasIds = (ordem.notas_fiscais_ids || []).filter(id => id !== nota.id);
+      await base44.entities.OrdemDeCarregamento.update(ordem.id, {
+        notas_fiscais_ids: notasIds
+      });
+
+      // Atualizar status da nota para disponível/recebida
+      await base44.entities.NotaFiscal.update(nota.id, {
+        ordem_id: null,
+        status_nf: "recebida" 
+      });
+
+      // Recarregar apenas endereçamentos desta ordem
+      const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
+      setEnderecamentos(todosEnderecamentos);
+
+      // Atualizar estados locais
+      setNotasFiscaisLocal(prev => prev.filter(nf => nf.id !== nota.id));
+      setVolumesLocal(prev => prev.filter(v => v.nota_fiscal_id !== nota.id));
+
+      toast.success(`NF ${nota.numero_nota} desvinculada!`);
+      
+      // Tentar salvar rascunho após atualização do estado
+      setTimeout(() => {
+        try {
+          const rascunho = {
+            enderecamentos: todosEnderecamentos,
+            notas: notasFiscaisLocal.filter(nf => nf.id !== nota.id),
+            volumes: volumesLocal.filter(v => v.nota_fiscal_id !== nota.id),
+            notasOrigem: notasOrigem,
+            timestamp: new Date().toISOString()
+          };
+          localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify(rascunho));
+        } catch (e) { console.error("Erro ao salvar rascunho auto", e); }
+      }, 500);
+
+    } catch (error) {
+      console.error("Erro ao desvincular nota:", error);
+      toast.error("Erro ao desvincular nota");
+    }
+  };
+
   const handleDragEnd = async (result) => {
     if (!result.destination) return;
 
@@ -2357,6 +2413,18 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                 <Badge className={`${volumesEndNota.length === volumesNota.length ? 'bg-green-600' : 'bg-orange-500'} text-white text-[10px] h-5 px-2`}>
                                   {volumesEndNota.length}/{volumesNota.length}
                                 </Badge>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 hover:bg-red-50 dark:hover:bg-red-950 ml-1"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDesvincularNota(nota);
+                                  }}
+                                  title="Desvincular nota fiscal"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                </Button>
                               </div>
                               <p className="text-[10px] truncate mb-1" style={{ color: theme.textMuted }} title={nota.emitente_razao_social}>
                                 {nota.emitente_razao_social}
@@ -3669,55 +3737,18 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                 <strong style={{ color: theme.text }}>{(nota.peso_total_nf || 0).toLocaleString()}</strong> kg
                               </span>
                             </div>
-                            {origem === "Adicionada" && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-5 w-5 p-0 hover:bg-red-50 dark:hover:bg-red-950"
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  if (!confirm(`Desvincular NF ${nota.numero_nota} e todos os seus volumes?`)) return;
-                                  
-                                  try {
-                                    // Remover endereçamentos dos volumes desta nota (apenas da ordem atual)
-                                    const volumesNotaIds = volumesNota.map(v => v.id);
-                                    const enderecamentosRemover = getEnderecamentosOrdemAtual().filter(e => volumesNotaIds.includes(e.volume_id));
-
-                                    for (const end of enderecamentosRemover) {
-                                      await base44.entities.EnderecamentoVolume.delete(end.id);
-                                    }
-
-                                    // Remover nota da ordem
-                                    const notasIds = (ordem.notas_fiscais_ids || []).filter(id => id !== nota.id);
-                                    await base44.entities.OrdemDeCarregamento.update(ordem.id, {
-                                      notas_fiscais_ids: notasIds
-                                    });
-
-                                    // Atualizar status da nota
-                                    await base44.entities.NotaFiscal.update(nota.id, {
-                                      ordem_id: null,
-                                      status_nf: "recebida"
-                                    });
-
-                                    // Recarregar apenas endereçamentos desta ordem
-                                    const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
-                                    setEnderecamentos(todosEnderecamentos);
-
-                                    // Atualizar estados locais
-                                    setNotasFiscaisLocal(notasFiscaisLocal.filter(nf => nf.id !== nota.id));
-                                    setVolumesLocal(volumesLocal.filter(v => v.nota_fiscal_id !== nota.id));
-
-                                    toast.success(`NF ${nota.numero_nota} desvinculada!`);
-                                  } catch (error) {
-                                    console.error("Erro ao desvincular nota:", error);
-                                    toast.error("Erro ao desvincular nota");
-                                  }
-                                }}
-                                title="Desvincular nota fiscal"
-                              >
-                                <Trash2 className="w-3 h-3 text-red-500" />
-                              </Button>
-                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 w-5 p-0 hover:bg-red-50 dark:hover:bg-red-950"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDesvincularNota(nota);
+                              }}
+                              title="Desvincular nota fiscal"
+                            >
+                              <Trash2 className="w-3 h-3 text-red-500" />
+                            </Button>
                           </div>
                         </div>
                         <div className="flex items-center justify-between text-[9px] mt-0.5" style={{ color: theme.textMuted }}>
