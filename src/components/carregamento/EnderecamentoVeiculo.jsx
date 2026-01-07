@@ -539,16 +539,13 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   };
 
   const handleClickCelula = (linha, coluna) => {
-    if (isMobile) {
-      setCelulaAtiva({ linha, coluna });
-      setShowBuscaModal(true);
-      setVolumesSelecionados([]);
-      setSearchTerm("");
-      setSearchChaveNF("");
-      setFiltroTipo("volume");
-    } else {
-      handleAlocarNaCelula(linha, coluna);
-    }
+    // SEMPRE abrir modal de busca ao clicar em célula
+    setCelulaAtiva({ linha, coluna });
+    setShowBuscaModal(true);
+    setVolumesSelecionados([]);
+    setSearchTerm("");
+    setSearchChaveNF("");
+    setFiltroTipo("volume");
   };
 
   const handleRemoverNotaDaCelula = async (linha, coluna, notaId) => {
@@ -4068,6 +4065,369 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           </div>
         </div>
       </div>
+
+      {/* Modal de Busca/Scanner */}
+      <Dialog open={showBuscaModal} onOpenChange={setShowBuscaModal}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <DialogHeader>
+            <DialogTitle style={{ color: theme.text }}>
+              Posição: {celulaAtiva?.linha}-{celulaAtiva?.coluna}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto space-y-4 py-4">
+            {/* Tipo de Filtro */}
+            <div>
+              <Tabs value={filtroTipo} onValueChange={setFiltroTipo}>
+                <TabsList className="grid w-full grid-cols-2 h-9">
+                  <TabsTrigger value="volume" className="text-xs">Volume / Etiq. Mãe</TabsTrigger>
+                  <TabsTrigger value="nota_fiscal" className="text-xs">Nota Fiscal</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            {/* Campo de Busca Unificado */}
+            {filtroTipo === "nota_fiscal" ? (
+              <div className="p-2 border rounded" style={{ borderColor: theme.cardBorder, backgroundColor: isDark ? '#1e3a8a22' : '#eff6ff' }}>
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-xs font-semibold" style={{ color: theme.text }}>
+                    Pesquisar Nota Fiscal
+                  </Label>
+                  <div className="flex items-center gap-1.5">
+                    <Checkbox
+                      id="usar-base-busca"
+                      checked={usarBase}
+                      onCheckedChange={setUsarBase}
+                    />
+                    <Label htmlFor="usar-base-busca" className="text-xs cursor-pointer" style={{ color: theme.text }}>
+                      Base
+                    </Label>
+                  </div>
+                </div>
+                
+                {!usarBase ? (
+                  <>
+                    <Button
+                      onClick={() => setShowCameraNotaFiscal(true)}
+                      className="bg-blue-600 hover:bg-blue-700 w-full mb-2 h-8"
+                      size="sm"
+                    >
+                      <Camera className="w-3 h-3 mr-2" />
+                      Escanear Código de Barras
+                    </Button>
+                    <Input
+                      ref={inputChaveRef}
+                      placeholder="Cole ou bipe a chave..."
+                      value={searchChaveNF}
+                      onChange={(e) => setSearchChaveNF(e.target.value.replace(/\D/g, '').substring(0, 44))}
+                      className="h-9 text-sm font-mono"
+                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                      disabled={processandoChave}
+                      autoFocus
+                    />
+                    {processandoChave && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                        <span className="text-xs" style={{ color: theme.text }}>Processando...</span>
+                      </div>
+                    )}
+                    <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
+                      Cole ou bipe a chave - pesquisa automática
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3" style={{ color: theme.textMuted }} />
+                      <Input
+                        ref={inputChaveRef}
+                        placeholder="Número da NF ou chave (44 dígitos)..."
+                        value={notasBaseBusca}
+                        onChange={(e) => setNotasBaseBusca(e.target.value)}
+                        onKeyDown={async (e) => {
+                          if (e.key === 'Enter' && notasBaseBusca.trim()) {
+                            const valor = notasBaseBusca.trim().replace(/\D/g, '');
+                            
+                            // Se tiver 44 dígitos, importar diretamente
+                            if (valor.length === 44) {
+                              setNotasBaseBusca("");
+                              await handlePesquisarChaveNF(valor);
+                            }
+                          }
+                        }}
+                        className="h-9 text-sm pl-7"
+                        style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                        autoFocus
+                      />
+                    </div>
+                    <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
+                      Digite número ou bipe chave - Enter para importar
+                    </p>
+                  </>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* Botão de Câmera */}
+                <div className="flex justify-center">
+                  <Button
+                    onClick={() => setShowCamera(true)}
+                    className="bg-blue-600 hover:bg-blue-700 w-full"
+                    size="sm"
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    Escanear QR Code
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-2 p-2 rounded border" style={{ borderColor: theme.cardBorder }}>
+                  <Checkbox
+                    id="apenas-vinculadas-modal"
+                    checked={apenasNotasVinculadas}
+                    onCheckedChange={(checked) => setApenasNotasVinculadas(checked)}
+                  />
+                  <label
+                    htmlFor="apenas-vinculadas-modal"
+                    className="text-xs font-medium cursor-pointer flex-1"
+                    style={{ color: theme.text }}
+                  >
+                    Apenas Notas Vinculadas
+                  </label>
+                  {apenasNotasVinculadas && (
+                    <Badge className="bg-blue-600 text-white text-[10px] px-1.5 py-0">
+                      Ativo
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Campo de Busca Unificado */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
+                  <Input
+                    placeholder="Digite volume ou etiqueta mãe..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && searchTerm.trim()) {
+                        handleBuscarVolumeOuEtiqueta(searchTerm);
+                      }
+                    }}
+                    className="pl-10 h-10"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                    disabled={processandoBusca}
+                    autoFocus
+                  />
+                  {processandoBusca && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-[9px] mt-1 text-center" style={{ color: theme.textMuted }}>
+                  Pressione Enter ou escaneie para buscar
+                </p>
+              </>
+            )}
+
+            {volumesSelecionados.length > 0 && (
+              <div className="flex items-center justify-between p-2 border rounded" style={{ borderColor: theme.cardBorder }}>
+                <Badge className="bg-blue-600 text-white">
+                  {volumesSelecionados.length} selecionado(s)
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setVolumesSelecionados([])}
+                  className="h-7 text-xs"
+                  style={{ color: theme.textMuted }}
+                >
+                  Limpar
+                </Button>
+              </div>
+            )}
+
+            {/* Lista de Volumes Filtrados ou Notas da Base */}
+            <Droppable droppableId="volumes-list">
+              {(provided) => (
+                <div 
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className="space-y-2 max-h-[300px] overflow-y-auto"
+                >
+                  {usarBase && filtroTipo === "nota_fiscal" ? (
+                // Exibir notas da base quando modo "Base" ativado
+                <NotasBaseList
+                  notasBaseBusca={notasBaseBusca}
+                  notasFiscaisLocal={notasFiscaisLocal}
+                  volumesLocal={volumesLocal}
+                  onSelecionarNota={async (nota) => {
+                  // VERIFICAR SE JÁ ESTÁ VINCULADA
+                  const jaVinculada = notasFiscaisLocal.some(nf => nf.id === nota.id);
+
+                  if (jaVinculada) {
+                  try { playErrorBeep(); } catch (e) {}
+                  toast.warning(`⚠️ Nota ${nota.numero_nota} já está vinculada!`, { duration: 3000 });
+                  return;
+                  }
+
+                  // BUSCAR VOLUMES DO BANCO PRIMEIRO
+                  toast.loading("Carregando volumes...", { id: 'load-volumes' });
+
+                  try {
+                  const volumesNotaDB = await base44.entities.Volume.filter({ nota_fiscal_id: nota.id });
+
+                  if (volumesNotaDB.length === 0) {
+                  toast.error("❌ Nota sem volumes cadastrados!", { id: 'load-volumes', duration: 3000 });
+                  return;
+                  }
+
+                  // ATUALIZAR ESTADO COM NOTA E VOLUMES
+                  setNotasFiscaisLocal(prev => {
+                  if (prev.some(n => n.id === nota.id)) return prev;
+                  return [...prev, nota];
+                  });
+
+                  setVolumesLocal(prev => {
+                  const volumesIdsLocais = prev.map(v => v.id);
+                  const volumesNovos = volumesNotaDB.filter(v => !volumesIdsLocais.includes(v.id));
+                  return [...prev, ...volumesNovos];
+                  });
+
+                  setNotasOrigem(prev => ({ ...prev, [nota.id]: "Adicionada" }));
+
+                  // SELECIONAR VOLUMES NÃO ENDEREÇADOS
+                  const idsEnderecados = getEnderecamentosOrdemAtual().map(e => e.volume_id);
+                  const volumesParaSelecionar = volumesNotaDB.filter(v => !idsEnderecados.includes(v.id));
+
+                  setVolumesSelecionados(volumesParaSelecionar.map(v => v.id));
+                  setNotasBaseBusca("");
+                  setAbaAtiva("volumes");
+
+                  try { playSuccessBeep(); } catch (e) {}
+                  toast.success(`✅ NF ${nota.numero_nota} vinculada! ${volumesParaSelecionar.length}/${volumesNotaDB.length} volumes disponíveis`, { 
+                  id: 'load-volumes', 
+                  duration: 4000 
+                  });
+
+                      // VINCULAR NO BANCO (em background)
+                      (async () => {
+                        try {
+                          const notasIds = [...(ordem.notas_fiscais_ids || []).filter(id => id !== nota.id), nota.id];
+                          await Promise.all([
+                            base44.entities.NotaFiscal.update(nota.id, {
+                              ordem_id: ordem.id,
+                              status_nf: "aguardando_expedicao"
+                            }),
+                            base44.entities.OrdemDeCarregamento.update(ordem.id, {
+                              notas_fiscais_ids: notasIds
+                            })
+                          ]);
+                          
+                          // Salvar rascunho após vincular
+                          setTimeout(() => salvarRascunho(), 200);
+                        } catch (error) {
+                          console.error("Erro ao vincular nota no banco:", error);
+                          toast.error("Erro ao salvar vinculação no banco", { duration: 3000 });
+                        }
+                      })();
+                    } catch (error) {
+                      console.error("Erro ao processar nota:", error);
+                      toast.error(`Erro: ${error.message}`, { id: 'load-volumes', duration: 3000 });
+                    }
+                  }}
+                  theme={theme}
+                  isDark={isDark}
+                />
+              ) : (
+                // Exibir volumes normalmente
+                <>
+                  {filteredVolumes.map((volume, index) => {
+                    const nota = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+                    const isSelected = volumesSelecionados.includes(volume.id);
+
+                    return (
+                      <Draggable key={volume.id} draggableId={volume.id} index={index}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            onClick={() => handleToggleVolume(volume.id)}
+                            className="p-2 border rounded cursor-pointer hover:shadow-sm transition-all touch-none"
+                            style={{
+                              ...provided.draggableProps.style,
+                              borderColor: isSelected ? '#3b82f6' : theme.cardBorder,
+                              backgroundColor: snapshot.isDragging 
+                                ? (isDark ? '#1e40af' : '#3b82f6')
+                                : (isSelected ? (isDark ? '#1e3a8a33' : '#dbeafe33') : 'transparent'),
+                              color: snapshot.isDragging ? '#ffffff' : 'inherit',
+                              opacity: snapshot.isDragging ? 0.9 : 1,
+                              transform: provided.draggableProps.style?.transform || 'none'
+                            }}
+                          >
+                            <div className="flex items-start gap-2">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => handleToggleVolume(volume.id)}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p 
+                                  className="font-mono text-xs font-bold truncate" 
+                                  style={{ color: snapshot.isDragging ? '#ffffff' : theme.text }}
+                                >
+                                  {volume.identificador_unico}
+                                </p>
+                                <p 
+                                  className="text-xs truncate" 
+                                  style={{ color: snapshot.isDragging ? '#e0e7ff' : theme.textMuted }}
+                                >
+                                  NF {nota?.numero_nota}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+
+                  {filteredVolumes.length === 0 && (
+                    <div className="text-center py-8" style={{ color: theme.textMuted }}>
+                      <Package className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                      <p className="text-sm">Nenhum volume encontrado</p>
+                    </div>
+                  )}
+                  {provided.placeholder}
+                </>
+              )}
+                </div>
+              )}
+            </Droppable>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowBuscaModal(false);
+                setCelulaAtiva(null);
+                setVolumesSelecionados([]);
+              }}
+              style={{ borderColor: theme.cardBorder, color: theme.text }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => handleAlocarNaCelula(celulaAtiva.linha, celulaAtiva.coluna)}
+              disabled={volumesSelecionados.length === 0}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Alocar ({volumesSelecionados.length})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal de Câmera Desktop - Volumes */}
       {showCamera && (
