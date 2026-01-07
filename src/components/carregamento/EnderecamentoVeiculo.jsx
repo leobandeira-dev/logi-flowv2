@@ -540,13 +540,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   };
 
   const handleClickCelula = (linha, coluna) => {
-    // SEMPRE abrir modal de busca ao clicar em célula
+    // Abrir câmera para scanear volumes diretamente na célula
     setCelulaAtiva({ linha, coluna });
-    setShowBuscaModal(true);
+    setShowCamera(true);
     setVolumesSelecionados([]);
     setSearchTerm("");
-    setSearchChaveNF("");
-    setFiltroTipo("volume");
   };
 
   const handleRemoverNotaDaCelula = async (linha, coluna, notaId) => {
@@ -1476,8 +1474,286 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   };
 
   const handleScanQRCode = async (codigo) => {
-    setShowCamera(false);
-    await handleBuscarVolumeOuEtiqueta(codigo);
+    if (!codigo || !codigo.trim()) {
+      toast.error("Código inválido");
+      return 'error';
+    }
+
+    const codigoLimpo = codigo.trim().toUpperCase();
+    
+    console.log('🔍 SCAN CÉLULA:', {
+      codigo: codigoLimpo,
+      celula: celulaAtiva ? `${celulaAtiva.linha}-${celulaAtiva.coluna}` : 'N/A'
+    });
+
+    // VALIDAÇÃO: Verificar se há célula ativa
+    if (!celulaAtiva) {
+      toast.error("Nenhuma célula selecionada");
+      return 'error';
+    }
+
+    try {
+      // 1. Tentar encontrar como ETIQUETA MÃE primeiro
+      const etiquetasEncontradas = await base44.entities.EtiquetaMae.filter({ codigo: codigoLimpo });
+      
+      if (etiquetasEncontradas.length > 0) {
+        const etiquetaMae = etiquetasEncontradas[0];
+        
+        if (etiquetaMae.volumes_ids && etiquetaMae.volumes_ids.length > 0) {
+          // Buscar volumes do banco
+          const volumesDaEtiquetaDB = await base44.entities.Volume.filter({ 
+            id: { $in: etiquetaMae.volumes_ids } 
+          });
+
+          if (volumesDaEtiquetaDB.length === 0) {
+            toast.warning(`Etiqueta ${etiquetaMae.codigo} sem volumes no sistema`);
+            return 'error';
+          }
+
+          // Buscar notas fiscais únicas
+          const notasIdsUnicas = [...new Set(volumesDaEtiquetaDB.map(v => v.nota_fiscal_id).filter(Boolean))];
+          
+          // VALIDAÇÃO: Se flag "Apenas Notas Vinculadas" estiver ativa
+          if (apenasNotasVinculadas) {
+            const notasJaVinculadasIds = notasFiscaisLocal.map(nf => nf.id);
+            const notasNaoVinculadas = notasIdsUnicas.filter(id => !notasJaVinculadasIds.includes(id));
+            
+            if (notasNaoVinculadas.length > 0) {
+              toast.error("❌ Etiqueta contém volumes de notas não vinculadas a esta ordem", { duration: 3000 });
+              return 'error';
+            }
+          }
+
+          // Verificar volumes já endereçados
+          const idsEnderecados = enderecamentos.map(e => e.volume_id);
+          const volumesParaEnderecear = volumesDaEtiquetaDB.filter(v => !idsEnderecados.includes(v.id));
+          
+          if (volumesParaEnderecear.length === 0) {
+            playErrorBeep();
+            toast.warning(`⚠️ Todos os volumes da etiqueta ${etiquetaMae.codigo} já foram endereçados`, { duration: 2000 });
+            return 'duplicate';
+          }
+
+          // Verificar se precisa vincular notas
+          const notasParaVincular = [];
+          for (const notaId of notasIdsUnicas) {
+            if (!notasFiscaisLocal.some(nf => nf.id === notaId)) {
+              const nota = await base44.entities.NotaFiscal.get(notaId);
+              notasParaVincular.push(nota);
+            }
+          }
+
+          // Vincular notas em batch se necessário
+          if (notasParaVincular.length > 0) {
+            const updatePromises = notasParaVincular.map(nota =>
+              base44.entities.NotaFiscal.update(nota.id, {
+                ordem_id: ordem.id,
+                status_nf: "aguardando_expedicao"
+              })
+            );
+
+            const notasIds = [...(ordem.notas_fiscais_ids || []), ...notasParaVincular.map(n => n.id)];
+            const updateOrdemPromise = base44.entities.OrdemDeCarregamento.update(ordem.id, {
+              notas_fiscais_ids: notasIds
+            });
+
+            await Promise.all([...updatePromises, updateOrdemPromise]);
+
+            setNotasFiscaisLocal(prev => [...prev, ...notasParaVincular]);
+            setVolumesLocal(prev => [...prev, ...volumesDaEtiquetaDB.filter(v => !prev.some(p => p.id === v.id))]);
+
+            toast.success(`${notasParaVincular.length} nota(s) vinculada(s) automaticamente`);
+          } else {
+            // Garantir que os volumes estão no estado local
+            const volumesIdsLocais = volumesLocal.map(v => v.id);
+            const volumesNovos = volumesDaEtiquetaDB.filter(v => !volumesIdsLocais.includes(v.id));
+            if (volumesNovos.length > 0) {
+              setVolumesLocal(prev => [...prev, ...volumesNovos]);
+            }
+          }
+
+          // Endereçar volumes em batch na célula selecionada
+          const user = await base44.auth.me();
+          const { linha, coluna } = celulaAtiva;
+
+          for (const volume of volumesParaEnderecear) {
+            await base44.entities.Volume.update(volume.id, {
+              status_volume: "carregado",
+              ordem_id: ordem.id,
+              localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linha}-${coluna}`
+            });
+
+            await base44.entities.EnderecamentoVolume.create({
+              ordem_id: ordem.id,
+              volume_id: volume.id,
+              nota_fiscal_id: volume.nota_fiscal_id,
+              linha: linha,
+              coluna: coluna,
+              posicao_celula: `${linha}-${coluna}`,
+              data_enderecamento: new Date().toISOString(),
+              enderecado_por: user.id
+            });
+          }
+
+          // Recarregar endereçamentos do banco
+          const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
+          setEnderecamentos(todosEnderecamentos);
+
+          salvarRascunho();
+          playSuccessBeep();
+          toast.success(`✅ Etiqueta ${etiquetaMae.codigo}: ${volumesParaEnderecear.length} volumes alocados em ${linha}-${coluna}`, { duration: 3000 });
+          
+          return 'success';
+        } else {
+          toast.warning(`Etiqueta ${etiquetaMae.codigo} sem volumes vinculados`);
+          return 'error';
+        }
+      }
+
+      // 2. Tentar encontrar como VOLUME INDIVIDUAL
+      let volume = volumesLocal.find(v => 
+        v.identificador_unico?.toUpperCase() === codigoLimpo
+      );
+
+      // Se não encontrou, buscar em TODOS os volumes do estoque
+      if (!volume) {
+        const volumesEncontrados = await base44.entities.Volume.filter({ 
+          identificador_unico: codigoLimpo 
+        });
+
+        if (volumesEncontrados.length > 0) {
+          volume = volumesEncontrados[0];
+          
+          // Verificar se já está endereçado
+          const jaEnderecado = enderecamentos.some(e => e.volume_id === volume.id);
+          if (jaEnderecado) {
+            playErrorBeep();
+            toast.warning(`⚠️ Volume ${codigoLimpo} já foi endereçado`, { duration: 2000 });
+            return 'duplicate';
+          }
+          
+          // Buscar a nota fiscal deste volume
+          const notaDoVolume = await base44.entities.NotaFiscal.get(volume.nota_fiscal_id);
+          
+          if (!notaDoVolume) {
+            toast.error("Nota fiscal do volume não encontrada");
+            return 'error';
+          }
+
+          // VALIDAÇÃO: Se flag "Apenas Notas Vinculadas" estiver ativa
+          if (apenasNotasVinculadas) {
+            const notaVinculada = notasFiscaisLocal.find(nf => nf.id === notaDoVolume.id);
+            if (!notaVinculada) {
+              toast.error("❌ Volume não pertence a nenhuma nota fiscal vinculada a esta ordem", { duration: 3000 });
+              return 'error';
+            }
+          }
+
+          // Buscar TODOS os volumes da nota do banco
+          const todosVolumesNota = await base44.entities.Volume.filter({ 
+            nota_fiscal_id: notaDoVolume.id 
+          });
+
+          console.log('📦 Nova nota encontrada:', {
+            nota: notaDoVolume.numero_nota,
+            volumesEncontrados: todosVolumesNota.length
+          });
+
+          // Verificar se a nota já está vinculada
+          const notaJaVinculada = notasFiscaisLocal.some(nf => nf.id === notaDoVolume.id);
+
+          if (!notaJaVinculada) {
+            // Vincular automaticamente a nota à ordem
+            await base44.entities.NotaFiscal.update(notaDoVolume.id, {
+              ordem_id: ordem.id,
+              status_nf: "aguardando_expedicao"
+            });
+
+            const notasIds = [...(ordem.notas_fiscais_ids || []), notaDoVolume.id];
+            await base44.entities.OrdemDeCarregamento.update(ordem.id, {
+              notas_fiscais_ids: notasIds
+            });
+
+            console.log('✅ Nota vinculada à ordem, atualizando estados locais');
+
+            setNotasFiscaisLocal(prev => [...prev, notaDoVolume]);
+            setVolumesLocal(prev => [...prev, ...todosVolumesNota.filter(v => !prev.some(p => p.id === v.id))]);
+
+            toast.info(`📋 NF ${notaDoVolume.numero_nota} adicionada - ${todosVolumesNota.length} volumes`, { duration: 2000 });
+          } else {
+            // Garantir que TODOS os volumes da nota estão no estado local
+            const volumesIdsLocais = volumesLocal.map(v => v.id);
+            const volumesParaAdicionar = todosVolumesNota.filter(v => !volumesIdsLocais.includes(v.id));
+
+            if (volumesParaAdicionar.length > 0) {
+              setVolumesLocal(prev => [...prev, ...volumesParaAdicionar]);
+            }
+          }
+        } else {
+          toast.error("Volume não encontrado no estoque");
+          return 'error';
+        }
+      }
+
+      // GARANTIR QUE O VOLUME EXISTE
+      if (!volume) {
+        toast.error("Volume não encontrado");
+        return 'error';
+      }
+
+      // Verificar duplicata
+      const jaEnderecado = enderecamentos.some(e => e.volume_id === volume.id);
+      if (jaEnderecado) {
+        playErrorBeep();
+        toast.warning(`⚠️ Volume ${codigoLimpo} já foi endereçado`, { duration: 2000 });
+        return 'duplicate';
+      }
+
+      // VALIDAÇÃO: Se flag "Apenas Notas Vinculadas" estiver ativa
+      if (apenasNotasVinculadas) {
+        const notaVinculada = notasFiscaisLocal.find(nf => nf.id === volume.nota_fiscal_id);
+        if (!notaVinculada) {
+          toast.error("❌ Volume não pertence a nenhuma nota fiscal vinculada a esta ordem", { duration: 3000 });
+          return 'error';
+        }
+      }
+
+      // Endereçar o volume na célula ativa
+      const user = await base44.auth.me();
+      const { linha, coluna } = celulaAtiva;
+
+      await base44.entities.Volume.update(volume.id, {
+        status_volume: "carregado",
+        ordem_id: ordem.id,
+        localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linha}-${coluna}`
+      });
+
+      await base44.entities.EnderecamentoVolume.create({
+        ordem_id: ordem.id,
+        volume_id: volume.id,
+        nota_fiscal_id: volume.nota_fiscal_id,
+        linha: linha,
+        coluna: coluna,
+        posicao_celula: `${linha}-${coluna}`,
+        data_enderecamento: new Date().toISOString(),
+        enderecado_por: user.id
+      });
+
+      // Recarregar endereçamentos
+      const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
+      setEnderecamentos(todosEnderecamentos);
+
+      salvarRascunho();
+      playSuccessBeep();
+      toast.success(`✅ Volume ${codigoLimpo} alocado em ${linha}-${coluna}! Continue escaneando...`, { duration: 2000 });
+      
+      return 'success';
+    } catch (error) {
+      console.error("Erro ao processar scan:", error);
+      playErrorBeep();
+      toast.error(`Erro: ${error.message}`);
+      return 'error';
+    }
   };
 
   const handleScanCodigoBarrasNF = async (codigo) => {
@@ -3917,7 +4193,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                           <div
                             ref={provided.innerRef}
                             {...provided.droppableProps}
-                            onClick={() => handleAlocarNaCelula(linha, coluna)}
+                            onClick={() => handleClickCelula(linha, coluna)}
                             className="p-1 sm:p-2 border-b min-h-[60px] sm:min-h-[100px] cursor-pointer hover:bg-opacity-50 transition-all"
                             style={{
                               backgroundColor: snapshot.isDraggingOver 
@@ -3926,7 +4202,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                               borderColor: theme.cellBorder,
                               borderRight: idx < layoutConfig.colunas.length - 1 ? `1px solid ${theme.cellBorder}` : 'none'
                             }}
-                            title="Clique para alocar volumes selecionados ou arraste volumes aqui"
+                            title="Clique para escanear volumes ou arraste volumes aqui"
                           >
                             <div className="space-y-0.5">
                               {notasNaCelula.map((nota, notaIndex) => {
