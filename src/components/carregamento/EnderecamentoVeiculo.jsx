@@ -5073,7 +5073,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       value={searchChaveNF}
                       onChange={(e) => {
                         setSearchChaveNF(e.target.value.replace(/\D/g, '').substring(0, 44));
-                        if (feedbackNota) setFeedbackNota(null);
+                        if (feedbackNota) {
+                          setFeedbackNota(null);
+                          setFeedbackMensagem("");
+                        }
                       }}
                       className="h-9 text-sm font-mono transition-all duration-300"
                       style={{ 
