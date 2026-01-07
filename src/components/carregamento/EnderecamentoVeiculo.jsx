@@ -3174,7 +3174,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       <div className="flex-1 flex overflow-hidden">
         {/* Painel Esquerdo - Volumes e Lista de Notas */}
         <div className="w-80 border-r flex flex-col" style={{ borderColor: theme.cardBorder, backgroundColor: theme.cardBg }}>
-          <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col">
+          <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="grid w-full grid-cols-2 mx-4 mt-4">
               <TabsTrigger value="volumes" className="text-sm">
                 <Package className="w-3 h-3 mr-1" />
@@ -3187,7 +3187,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsList>
 
             {/* Aba Volumes */}
-            <TabsContent value="volumes" className="flex-1 flex flex-col mt-0">
+            <TabsContent value="volumes" className="flex-1 flex flex-col mt-0 overflow-hidden">
               <div className="p-4 border-b" style={{ borderColor: theme.cardBorder }}>
                 <h3 className="font-semibold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
                   <Package className="w-4 h-4" />
@@ -3627,7 +3627,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsContent>
 
             {/* Aba Lista de Notas */}
-            <TabsContent value="notas" className="flex-1 flex flex-col mt-0">
+            <TabsContent value="notas" className="flex-1 flex flex-col mt-0 overflow-hidden">
               <div className="p-4 border-b" style={{ borderColor: theme.cardBorder }}>
                 <h3 className="font-semibold flex items-center gap-2" style={{ color: theme.text }}>
                   <FileText className="w-4 h-4" />
