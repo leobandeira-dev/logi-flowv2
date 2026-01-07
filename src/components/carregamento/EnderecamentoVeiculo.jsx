@@ -2341,16 +2341,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsContent>
 
             {/* Aba Lista de Notas Mobile */}
-            <TabsContent value="notas" className="flex-1 overflow-hidden p-3 space-y-2" style={{ margin: 0, display: 'flex', flexDirection: 'column' }}>
-                <div className="border-b pb-2 flex-shrink-0" style={{ borderColor: theme.cardBorder }}>
-                  <div className="p-3 border-b" style={{ borderColor: theme.cardBorder }}>
-                    <h3 className="font-semibold text-xs flex items-center gap-2" style={{ color: theme.text }}>
-                      <FileText className="w-4 h-4" />
-                      Notas Fiscais ({notasFiscaisLocal.length})
-                    </h3>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto space-y-2">
+            <TabsContent value="notas" className="flex-1 overflow-y-auto p-3 space-y-2" style={{ margin: 0 }}>
                       {(() => {
                         const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
                           if (!acc.find(n => n.id === nota.id)) {
@@ -2411,15 +2402,15 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         });
                       })()}
 
-                      {notasFiscaisLocal.length === 0 && (
-                        <div className="text-center py-8" style={{ color: theme.textMuted }}>
-                          <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                          <p className="text-sm">Nenhuma nota vinculada</p>
-                        </div>
-                      )}
-              </TabsContent>
+              {notasFiscaisLocal.length === 0 && (
+                <div className="text-center py-8" style={{ color: theme.textMuted }}>
+                  <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                  <p className="text-sm">Nenhuma nota vinculada</p>
+                </div>
+              )}
+            </TabsContent>
 
-              {/* Aba Layout Mobile */}
+            {/* Aba Layout Mobile */}
               <TabsContent value="layout" className="flex-1 overflow-hidden mt-0">
                 <div className="h-full flex flex-col">
                   <div className="p-3 border-b space-y-2" style={{ borderColor: theme.cardBorder }}>
