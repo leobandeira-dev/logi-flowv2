@@ -2327,11 +2327,42 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     {filteredVolumes.length === 0 && (
                       <div className="text-center py-8" style={{ color: theme.textMuted }}>
                         <Package className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                        <p className="text-sm">
-                          {getVolumesNaoEnderecados().length === 0
-                            ? "Todos posicionados!"
-                            : "Nenhum volume"}
+                        <p className="text-sm mb-3">
+                          {getVolumesNaoEnderecados().length === 0 && notasFiscaisLocal.length > 0
+                            ? "Todos os volumes foram posicionados!"
+                            : notasFiscaisLocal.length === 0
+                            ? "Vincule notas fiscais para carregar volumes"
+                            : "Carregando volumes..."}
                         </p>
+                        {notasFiscaisLocal.length > 0 && volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length === 0 && (
+                          <Button
+                            size="sm"
+                            onClick={async () => {
+                              toast.loading("Recarregando volumes...", { id: 'reload-vols-mobile' });
+                              try {
+                                const notasIds = notasFiscaisLocal.map(n => n.id);
+                                const volumesDB = await base44.entities.Volume.filter({ 
+                                  nota_fiscal_id: { $in: notasIds } 
+                                });
+
+                                setVolumesLocal(prev => {
+                                  const volumesIdsLocais = prev.map(v => v.id);
+                                  const volumesNovos = volumesDB.filter(v => !volumesIdsLocais.includes(v.id));
+                                  return [...prev, ...volumesNovos];
+                                });
+
+                                toast.success(`✅ ${volumesDB.length} volumes carregados!`, { id: 'reload-vols-mobile', duration: 3000 });
+                              } catch (error) {
+                                console.error("Erro ao recarregar volumes:", error);
+                                toast.error("Erro ao carregar volumes", { id: 'reload-vols-mobile' });
+                              }
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            <Package className="w-4 h-4 mr-2" />
+                            Recarregar Volumes
+                          </Button>
+                        )}
                       </div>
                     )}
                     {provided.placeholder}
@@ -2341,7 +2372,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsContent>
 
             {/* Aba Lista de Notas Mobile */}
-            <TabsContent value="notas" className="h-full overflow-y-auto" style={{ margin: 0, padding: 0 }}>
+            <TabsContent value="notas" className="flex-1 overflow-y-auto" style={{ margin: 0, padding: 0 }}>
               <div className="space-y-1.5 p-2">
               {(() => {
                         const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
@@ -2413,25 +2444,23 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsContent>
 
             {/* Aba Layout Mobile */}
-              <TabsContent value="layout" className="flex-1 overflow-hidden mt-0">
-                <div className="h-full flex flex-col">
-                  <div className="p-3 border-b space-y-2" style={{ borderColor: theme.cardBorder }}>
-                    <div className="flex items-center gap-2">
-                      <Label className="text-xs whitespace-nowrap" style={{ color: theme.text }}>Linhas:</Label>
-                      <Input
-                        type="number"
-                        value={numLinhas}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value) || 1;
-                          setNumLinhas(Math.max(1, Math.min(20, val)));
-                        }}
-                        className="w-16 h-7 text-sm"
-                        style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                        min={1}
-                        max={20}
-                      />
-                    </div>
-                  </div>
+            <TabsContent value="layout" className="flex-1 overflow-hidden mt-0">
+              <div className="h-full flex flex-col">
+                <div className="px-2 py-1.5 border-b flex items-center gap-2" style={{ borderColor: theme.cardBorder }}>
+                  <Label className="text-xs whitespace-nowrap" style={{ color: theme.text }}>Linhas:</Label>
+                  <Input
+                    type="number"
+                    value={numLinhas}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 1;
+                      setNumLinhas(Math.max(1, Math.min(20, val)));
+                    }}
+                    className="w-16 h-7 text-xs"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                    min={1}
+                    max={20}
+                  />
+                </div>
 
             {/* Grid do Veículo Mobile */}
             <div className="flex-1 overflow-auto p-2">
