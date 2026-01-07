@@ -588,6 +588,14 @@ export default function Carregamento() {
                 style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
               />
             </div>
+            <FiltrosPredefinidos
+              rota="carregamento"
+              filtrosAtuais={filters}
+              onAplicarFiltro={(novosFiltros) => {
+                setFilters(novosFiltros);
+                setPaginaAtual(1);
+              }}
+            />
             <Button
               variant={showFilters ? "default" : "outline"}
               size="sm"
@@ -604,6 +612,7 @@ export default function Carregamento() {
           {/* Filtros Rápidos */}
           {showFilters && (
             <div className="space-y-2 mb-2">
+              {/* Filtros Básicos */}
               <div className="flex gap-1.5">
                 <select
                   value={filters.statusTracking}
@@ -628,16 +637,42 @@ export default function Carregamento() {
                   <option value="ordem_completa">Alocado</option>
                 </select>
               </div>
-              {(filters.statusTracking || filters.tiposRegistro?.length > 0) && (
+
+              {/* Filtro de Operações */}
+              <div className="space-y-1">
+                <Label className="text-[10px] font-medium ml-1" style={{ color: theme.textMuted }}>Operações</Label>
+                <div className="flex gap-2 overflow-x-auto pb-2 px-1 scrollbar-hide">
+                  {operacoes.map((op) => (
+                    <Badge
+                      key={op.id}
+                      variant={filters.operacoesIds.includes(op.id) ? "default" : "outline"}
+                      className="cursor-pointer hover:opacity-80 transition-opacity whitespace-nowrap text-[10px] h-6 px-2"
+                      style={filters.operacoesIds.includes(op.id) ? {
+                        backgroundColor: '#3b82f6',
+                        color: 'white'
+                      } : {
+                        backgroundColor: 'transparent',
+                        borderColor: theme.inputBorder,
+                        color: theme.text
+                      }}
+                      onClick={() => toggleOperacao(op.id)}
+                    >
+                      {op.nome}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {(filters.statusTracking || filters.tiposRegistro?.length > 0 || filters.operacoesIds?.length > 0) && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setFilters({ ...filters, statusTracking: "", tiposRegistro: [] })}
+                  onClick={() => setFilters({ ...filters, statusTracking: "", tiposRegistro: [], operacoesIds: [] })}
                   className="w-full h-7 text-xs"
                   style={{ color: '#ef4444' }}
                 >
                   <X className="w-3 h-3 mr-1" />
-                  Limpar
+                  Limpar Filtros
                 </Button>
               )}
             </div>
