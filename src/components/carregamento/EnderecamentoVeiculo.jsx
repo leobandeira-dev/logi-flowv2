@@ -166,7 +166,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     inicio: "",
     fim: ""
   });
-  const [usarBase, setUsarBase] = useState(false);
+  const [usarBase, setUsarBase] = useState(true);
   const [notasBaseBusca, setNotasBaseBusca] = useState("");
   const inputChaveRef = React.useRef(null);
   const [showCamera, setShowCamera] = useState(false);
@@ -566,6 +566,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       return;
     }
 
+    if (processandoChave) return;
+
     setProcessandoChave(true);
     try {
       // Buscar nota no banco de dados
@@ -585,10 +587,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           
           setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
           setSearchTerm("");
-          setFiltroTipo("volume");
-          setAbaAtiva("volumes");
           
-          toast.success(`${volumesNaoEnderecados.length} volume(s) da NF ${notaExistente.numero_nota} selecionado(s)`);
+          // Feedback específico para nota já vinculada
+          playSuccessBeep();
+          toast.info(`ℹ️ Nota ${notaExistente.numero_nota} já está na lista. Volumes selecionados.`);
           setSearchChaveNF("");
           
           // Manter foco no campo
@@ -626,7 +628,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         setVolumesLocal(volumesAtualizados);
         setNotasOrigem({ ...notasOrigem, [notaExistente.id]: "Adicionada" });
         
-        toast.success("Nota fiscal vinculada automaticamente!");
+        playSuccessBeep();
+        toast.success("✅ Nota fiscal vinculada com sucesso!");
         
         // Salvar rascunho automaticamente
         setTimeout(() => salvarRascunho(), 100);
@@ -777,7 +780,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       setVolumesLocal(volumesAtualizados);
       setNotasOrigem({ ...notasOrigem, [novaNF.id]: "Importada" });
       
-      toast.success(`Nota fiscal importada! ${quantidadeVolumes} volume(s) criado(s).`);
+      playSuccessBeep();
+      toast.success(`✅ Nota fiscal importada e vinculada! ${quantidadeVolumes} volume(s) criado(s).`);
       
       // Salvar rascunho automaticamente
       setTimeout(() => salvarRascunho(), 100);
@@ -3446,7 +3450,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         
                         setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
                         setNotasBaseBusca("");
-                        setAbaAtiva("volumes");
+                        // setAbaAtiva("volumes"); // Manter na guia atual para permitir bipes contínuos
                         toast.success(`✓ ${volumesNaoEnderecados.length || volumesNota.length} vol.`, { duration: 1200 });
 
                         // Operações de banco em BACKGROUND
