@@ -3712,9 +3712,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                   ? "Todos os volumes foram posicionados!"
                                   : notasFiscaisLocal.length === 0
                                   ? "Vincule notas fiscais para carregar volumes"
-                                  : "Carregando volumes..."}
+                                  : "Nenhum volume disponível"}
                               </p>
-                              {notasFiscaisLocal.length > 0 && volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length === 0 && (
+                              {notasFiscaisLocal.length > 0 && (
                                 <Button
                                   size="sm"
                                   onClick={async () => {
