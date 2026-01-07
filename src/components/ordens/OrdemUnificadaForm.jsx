@@ -1028,42 +1028,18 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
         }
       };
 
-      setProgressoImportacao({ etapa: 'analise', progresso: 30, detalhe: 'Tentando leitura rápida do texto...' });
+      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url,
+        json_schema: ordemSchema
+      });
 
-      let dados = null;
-
-      try {
-        // TENTATIVA 1: Leitura Rápida (Texto)
-        const fastResult = await base44.functions.invoke('extractPdfFast', {
-          file_url,
-          json_schema: ordemSchema
-        });
-
-        if (fastResult.data?.status === 'success') {
-          dados = fastResult.data.output;
-          console.log("✅ Leitura rápida bem sucedida");
-        } else if (fastResult.data?.status === 'scanned') {
-          console.log("⚠️ PDF escaneado detectado, mudando para visão computacional");
-          throw new Error("SCANNED_PDF");
-        } else {
-          throw new Error("FAST_READ_FAILED");
-        }
-      } catch (error) {
-        setProgressoImportacao({ etapa: 'analise', progresso: 50, detalhe: 'Usando leitura visual profunda (mais lento)...' });
-        
-        // TENTATIVA 2: Leitura Visual (Fallback)
-        const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-          file_url,
-          json_schema: ordemSchema
-        });
-
-        if (result.status !== "success" || !result.output) {
-          throw new Error("Não foi possível extrair os dados do PDF.");
-        }
-        dados = result.output;
+      if (result.status !== "success" || !result.output) {
+        throw new Error("Não foi possível extrair os dados do PDF.");
       }
 
-      setProgressoImportacao({ etapa: 'processamento', progresso: 80, detalhe: 'Processando dados e cadastros...' });
+      setProgressoImportacao({ etapa: 'processamento', progresso: 70, detalhe: 'Processando dados e cadastros...' });
+
+      const dados = result.output;
 
       // PROCESSO OTIMIZADO: Paralelizar busca/criação de Motorista e Veículos
       
