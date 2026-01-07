@@ -1202,23 +1202,39 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       if (destination.droppableId.startsWith("cell-")) {
         const [__, linhaDestino, colunaDestino] = destination.droppableId.split("-");
         
-        // SE HÁ VOLUMES SELECIONADOS, usar apenas os selecionados desta nota (SEM modal)
+        // SE HÁ VOLUMES SELECIONADOS, alocar TODOS os volumes selecionados (independente da nota arrastada)
         if (volumesSelecionados.length > 0) {
-          const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === notaId);
-          const volumesSelecionadosDaNota = volumesNota.filter(v => volumesSelecionados.includes(v.id));
-          
-          if (volumesSelecionadosDaNota.length === 0) {
-            toast.warning("Nenhum volume desta nota foi selecionado");
-            return;
-          }
-
-          // Alocar DIRETO sem modal
           const user = await base44.auth.me();
           
           try {
             setSaving(true);
             
-            for (const volume of volumesSelecionadosDaNota) {
+            // Verificar duplicatas antes de criar
+            const endereçamentosExistentes = await base44.entities.EnderecamentoVolume.filter({
+              ordem_id: ordem.id,
+              volume_id: { $in: volumesSelecionados }
+            });
+
+            const volumesJaEnderecadosIds = endereçamentosExistentes.map(e => e.volume_id);
+            const volumesParaAlocar = volumesSelecionados.filter(id => !volumesJaEnderecadosIds.includes(id));
+
+            if (volumesParaAlocar.length === 0) {
+              playErrorBeep();
+              toast.warning("Todos os volumes selecionados já foram endereçados");
+              setVolumesSelecionados([]);
+              setSaving(false);
+              return;
+            }
+
+            if (volumesJaEnderecadosIds.length > 0) {
+              toast.info(`${volumesJaEnderecadosIds.length} volume(s) já endereçado(s), alocando ${volumesParaAlocar.length}`);
+            }
+            
+            // Alocar TODOS os volumes selecionados (de todas as notas)
+            for (const volumeId of volumesParaAlocar) {
+              const volume = volumesLocal.find(v => v.id === volumeId);
+              if (!volume) continue;
+
               await base44.entities.Volume.update(volume.id, {
                 status_volume: "carregado",
                 localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linhaDestino}-${colunaDestino}`
@@ -1227,7 +1243,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               await base44.entities.EnderecamentoVolume.create({
                 ordem_id: ordem.id,
                 volume_id: volume.id,
-                nota_fiscal_id: notaId,
+                nota_fiscal_id: volume.nota_fiscal_id,
                 linha: parseInt(linhaDestino),
                 coluna: colunaDestino,
                 posicao_celula: `${linhaDestino}-${colunaDestino}`,
@@ -1243,7 +1259,28 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             salvarRascunho();
             
             playSuccessBeep();
-            toast.success(`✅ ${volumesSelecionadosDaNota.length} volume(s) alocado(s) em ${linhaDestino}-${colunaDestino}!`, { duration: 3000 });
+            
+            // Feedback detalhado por nota
+            const notasAfetadas = {};
+            volumesParaAlocar.forEach(volumeId => {
+              const volume = volumesLocal.find(v => v.id === volumeId);
+              if (volume?.nota_fiscal_id) {
+                notasAfetadas[volume.nota_fiscal_id] = (notasAfetadas[volume.nota_fiscal_id] || 0) + 1;
+              }
+            });
+            
+            const feedbackMsg = `✅ ${volumesParaAlocar.length} volume(s) alocado(s) em ${linhaDestino}-${colunaDestino}\n` +
+              `📋 ${Object.keys(notasAfetadas).length} nota(s) fiscal(is)\n` +
+              Object.entries(notasAfetadas).map(([nId, count]) => {
+                const n = notasFiscaisLocal.find(nf => nf.id === nId);
+                return n ? `  • NF ${n.numero_nota}: ${count} vol.` : '';
+              }).filter(Boolean).join('\n');
+            
+            toast.success(feedbackMsg, { 
+              duration: 5000,
+              style: { whiteSpace: 'pre-line', fontSize: '12px', lineHeight: '1.4' }
+            });
+            
             setSaving(false);
           } catch (error) {
             console.error("Erro ao alocar volumes:", error);
