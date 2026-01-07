@@ -1400,25 +1400,27 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           );
           setEnderecamentos(enderecamentosAtualizados);
 
-          try {
-            // Deletar em paralelo (background)
-            const deletePromises = endsParaRemover.map(async end => {
-              await base44.entities.EnderecamentoVolume.delete(end.id);
-              await base44.entities.Volume.update(end.volume_id, {
-                status_volume: "criado",
-                localizacao_atual: null
+          // Executar deletar em paralelo (background) de forma assíncrona
+          (async () => {
+            try {
+              const deletePromises = endsParaRemover.map(async end => {
+                await base44.entities.EnderecamentoVolume.delete(end.id);
+                await base44.entities.Volume.update(end.volume_id, {
+                  status_volume: "criado",
+                  localizacao_atual: null
+                });
               });
-            });
 
-            await Promise.all(deletePromises);
+              await Promise.all(deletePromises);
 
-            toast.success(`✅ Nota desalocada! ${endsParaRemover.length} volumes removidos`, { duration: 3000 });
-            salvarRascunho();
-          } catch (error) {
-            console.error("Erro ao desalocar nota:", error);
-            await loadEnderecamentos();
-            toast.error("Erro ao desalocar nota");
-          }
+              toast.success(`✅ Nota desalocada! ${endsParaRemover.length} volumes removidos`, { duration: 3000 });
+              salvarRascunho();
+            } catch (error) {
+              console.error("Erro ao desalocar nota:", error);
+              await loadEnderecamentos();
+              toast.error("Erro ao desalocar nota");
+            }
+          })();
         }
         return;
       }
