@@ -4214,11 +4214,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       placeholder="44 dígitos - bipe ou cole..."
                       value={searchChaveNF}
                       onChange={(e) => {
-                       setSearchChaveNF(e.target.value.replace(/\D/g, '').substring(0, 44));
-                       if (feedbackNota) {
-                         setFeedbackNota(null);
-                         setFeedbackMensagem("");
-                       }
+                        setSearchChaveNF(e.target.value.replace(/\D/g, '').substring(0, 44));
+                        if (feedbackNota) {
+                          setFeedbackNota(null);
+                          setFeedbackMensagem("");
+                        }
                       }}
                       className="h-7 text-xs font-mono transition-all duration-300"
                       style={{ 
@@ -4237,6 +4237,19 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       disabled={processandoChave}
                       autoFocus
                     />
+                    {feedbackMensagem && (
+                      <div 
+                        className="text-xs font-semibold mt-1 transition-all duration-300"
+                        style={{ 
+                          color: feedbackNota === 'success' ? '#10b981' : 
+                                 feedbackNota === 'duplicate' ? '#a855f7' : 
+                                 feedbackNota === 'error' ? '#ef4444' : 
+                                 theme.text 
+                        }}
+                      >
+                        {feedbackMensagem}
+                      </div>
+                    )}
                     {processandoChave && (
                       <div className="flex items-center gap-2 mt-2">
                         <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -5111,6 +5124,19 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       disabled={processandoChave}
                       autoFocus
                     />
+                    {feedbackMensagem && (
+                      <div 
+                        className="text-xs font-semibold mt-1 transition-all duration-300"
+                        style={{ 
+                          color: feedbackNota === 'success' ? '#10b981' : 
+                                 feedbackNota === 'duplicate' ? '#a855f7' : 
+                                 feedbackNota === 'error' ? '#ef4444' : 
+                                 theme.text 
+                        }}
+                      >
+                        {feedbackMensagem}
+                      </div>
+                    )}
                     {processandoChave && (
                       <div className="flex items-center gap-2 mt-2">
                         <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
