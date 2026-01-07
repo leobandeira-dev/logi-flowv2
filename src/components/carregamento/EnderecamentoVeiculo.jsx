@@ -729,19 +729,26 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     const chave = chaveNF || searchChaveNF;
     
     if (!chave || chave.length !== 44) {
+      toast.error("Chave deve ter 44 dígitos", { id: 'pesquisa-nf' });
+      setProcessandoChave(false);
       return;
     }
 
-    if (processandoChave) return;
+    if (processandoChave) {
+      console.log('⚠️ Já processando uma chave, ignorando...');
+      return;
+    }
 
     setProcessandoChave(true);
-    let feedbackDado = false;
+    console.log('🔍 INICIANDO PESQUISA NF:', chave);
 
     try {
       // 1. Tentar buscar nota localmente primeiro (se já estiver na lista da ordem)
       const notaLocal = notasFiscaisLocal.find(nf => nf.chave_nota_fiscal === chave);
       
       if (notaLocal) {
+        console.log('⚠️ Nota já vinculada localmente:', notaLocal.numero_nota);
+        
         // Já está na lista local = já vinculada
         const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === notaLocal.id);
         const volumesNaoEnderecados = volumesNota.filter(v => {
@@ -751,78 +758,104 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         
         setVolumesSelecionados(volumesNaoEnderecados.map(v => v.id));
         setSearchTerm("");
-        
-        try { playErrorBeep(); } catch (e) {} // Beep diferente para alertar que já existe
-        toast.info(`⚠️ Nota ${notaLocal.numero_nota} JÁ VINCULADA! ${volumesNaoEnderecados.length} volumes selecionados`, { duration: 3000 });
-        
         setSearchChaveNF("");
         setNotasBaseBusca("");
-        feedbackDado = true;
+        
+        try { playErrorBeep(); } catch (e) {}
+        
+        const feedbackMsg = `⚠️ NF ${notaLocal.numero_nota} JÁ VINCULADA!\n` +
+          `📋 ${notaLocal.emitente_razao_social || 'N/A'}\n` +
+          `📦 ${volumesNaoEnderecados.length} volumes selecionados`;
+        
+        toast.warning(feedbackMsg, { 
+          id: 'pesquisa-nf',
+          duration: 4000,
+          style: { whiteSpace: 'pre-line', fontSize: '13px', lineHeight: '1.5', fontWeight: '600' }
+        });
+        
+        setProcessandoChave(false);
         return;
       }
 
       // 2. Buscar nota no banco de dados
+      console.log('🔍 Buscando no banco de dados...');
       const notasExistentes = await base44.entities.NotaFiscal.filter({ chave_nota_fiscal: chave });
       
       if (notasExistentes.length > 0) {
         const notaExistente = notasExistentes[0];
+        console.log('✅ Nota encontrada no banco:', notaExistente.numero_nota);
         
-        // Proteção extra contra duplicidade no estado local
-        setNotasFiscaisLocal(prev => {
-          if (prev.some(n => n.id === notaExistente.id)) return prev;
+        // Verificar duplicidade no estado local
+        if (notasFiscaisLocal.some(n => n.id === notaExistente.id)) {
+          console.log('⚠️ Nota já está no estado local, abortando');
           
-          // Se não existir, prosseguir com a vinculação
-          (async () => {
-            await base44.entities.NotaFiscal.update(notaExistente.id, {
-              ordem_id: ordem.id,
-              status_nf: "aguardando_expedicao"
-            });
-
-            // Atualizar ordem
-            const notasIds = [...(ordem.notas_fiscais_ids || []).filter(id => id !== notaExistente.id), notaExistente.id];
-            await base44.entities.OrdemDeCarregamento.update(ordem.id, {
-              notas_fiscais_ids: notasIds
-            });
-          })();
-
-          return [...prev, notaExistente];
-        });
-
-        // Buscar volumes
+          try { playErrorBeep(); } catch (e) {}
+          toast.warning(`⚠️ Nota ${notaExistente.numero_nota} já está vinculada!`, { 
+            id: 'pesquisa-nf',
+            duration: 3000 
+          });
+          
+          setSearchChaveNF("");
+          setNotasBaseBusca("");
+          setProcessandoChave(false);
+          return;
+        }
+        
+        // Buscar volumes ANTES de vincular
         const volumesNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaExistente.id });
+        
+        // Atualizar estados locais
+        setNotasFiscaisLocal(prev => [...prev, notaExistente]);
         setVolumesLocal(prev => {
-          // Filtrar volumes que já existem para não duplicar
           const novos = volumesNota.filter(v => !prev.some(p => p.id === v.id));
           return [...prev, ...novos];
         });
-        
         setNotasOrigem(prev => ({ ...prev, [notaExistente.id]: "Adicionada" }));
+        
+        // Vincular no banco (em background)
+        (async () => {
+          try {
+            const notasIds = [...(ordem.notas_fiscais_ids || []).filter(id => id !== notaExistente.id), notaExistente.id];
+            await Promise.all([
+              base44.entities.NotaFiscal.update(notaExistente.id, {
+                ordem_id: ordem.id,
+                status_nf: "aguardando_expedicao"
+              }),
+              base44.entities.OrdemDeCarregamento.update(ordem.id, {
+                notas_fiscais_ids: notasIds
+              })
+            ]);
+            setTimeout(() => salvarRascunho(), 100);
+          } catch (error) {
+            console.error("Erro ao vincular nota no banco:", error);
+          }
+        })();
         
         try { playSuccessBeep(); } catch (e) {}
         
         // Feedback visual detalhado
-        const feedbackMsg = `✅ NF ${notaExistente.numero_nota} VINCULADA\n` +
-          `📤 Remetente: ${notaExistente.emitente_razao_social || 'N/A'}\n` +
-          `📍 Origem: ${notaExistente.emitente_cidade || 'N/A'}/${notaExistente.emitente_uf || 'N/A'}\n` +
-          `📥 Destinatário: ${notaExistente.destinatario_razao_social || 'N/A'}\n` +
-          `📍 Destino: ${notaExistente.destinatario_cidade || 'N/A'}/${notaExistente.destinatario_uf || 'N/A'}\n` +
+        const feedbackMsg = `✅ NF ${notaExistente.numero_nota} VINCULADA!\n` +
+          `📤 ${notaExistente.emitente_razao_social || 'N/A'}\n` +
+          `📍 ${notaExistente.emitente_cidade || 'N/A'}/${notaExistente.emitente_uf || 'N/A'}\n` +
+          `📥 ${notaExistente.destinatario_razao_social || 'N/A'}\n` +
+          `📍 ${notaExistente.destinatario_cidade || 'N/A'}/${notaExistente.destinatario_uf || 'N/A'}\n` +
           `📦 ${volumesNota.length} volumes carregados`;
         
         toast.success(feedbackMsg, { 
-          duration: 8000,
-          style: { whiteSpace: 'pre-line', fontSize: '13px', lineHeight: '1.5' }
+          id: 'pesquisa-nf',
+          duration: 7000,
+          style: { whiteSpace: 'pre-line', fontSize: '14px', lineHeight: '1.6', fontWeight: '600' }
         });
         
         setSearchChaveNF("");
         setNotasBaseBusca("");
-        feedbackDado = true;
-        
-        setTimeout(() => salvarRascunho(), 100);
+        setProcessandoChave(false);
         return;
       }
 
       // 3. Nota não existe - Importar via API
-      toast.info("🔍 Buscando na SEFAZ...", { duration: 2000 });
+      console.log('📡 Importando da SEFAZ...');
+      toast.loading("🔍 Buscando na SEFAZ...", { id: 'pesquisa-nf' });
       
       const response = await base44.functions.invoke('buscarNotaFiscalMeuDanfe', {
         chaveAcesso: chave
@@ -906,7 +939,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         notas_fiscais_ids: notasIds
       });
 
-      // Atualizar estado com proteção contra duplicidade
+      // Atualizar estados locais
       setNotasFiscaisLocal(prev => {
         if (prev.some(n => n.id === novaNF.id)) return prev;
         return [...prev, novaNF];
@@ -915,35 +948,46 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       setVolumesLocal(prev => [...prev, ...volumesCriados]);
       setNotasOrigem(prev => ({ ...prev, [novaNF.id]: "Importada" }));
       
+      console.log('✅ Nota importada com sucesso:', numeroNota);
+      
       try { playSuccessBeep(); } catch (e) {}
       
       // Feedback visual detalhado para nota importada
-      const feedbackMsg = `✅ NF ${numeroNota} IMPORTADA DA SEFAZ\n` +
-        `📤 Remetente: ${emitElements?.getElementsByTagName('xNome')[0]?.textContent || 'N/A'}\n` +
-        `📍 Origem: ${emitElements?.getElementsByTagName('xMun')[0]?.textContent || 'N/A'}/${emitElements?.getElementsByTagName('UF')[0]?.textContent || 'N/A'}\n` +
-        `📥 Destinatário: ${destElements?.getElementsByTagName('xNome')[0]?.textContent || 'N/A'}\n` +
-        `📍 Destino: ${destElements?.getElementsByTagName('xMun')[0]?.textContent || 'N/A'}/${destElements?.getElementsByTagName('UF')[0]?.textContent || 'N/A'}\n` +
-        `📦 ${volumesCriados.length} volumes criados | Peso: ${(pesoBruto > 0 ? pesoBruto : pesoLiquido).toLocaleString()} kg`;
+      const feedbackMsg = `✅ NF ${numeroNota} IMPORTADA DA SEFAZ!\n` +
+        `📤 ${emitElements?.getElementsByTagName('xNome')[0]?.textContent || 'N/A'}\n` +
+        `📍 ${emitElements?.getElementsByTagName('xMun')[0]?.textContent || 'N/A'}/${emitElements?.getElementsByTagName('UF')[0]?.textContent || 'N/A'}\n` +
+        `📥 ${destElements?.getElementsByTagName('xNome')[0]?.textContent || 'N/A'}\n` +
+        `📍 ${destElements?.getElementsByTagName('xMun')[0]?.textContent || 'N/A'}/${destElements?.getElementsByTagName('UF')[0]?.textContent || 'N/A'}\n` +
+        `📦 ${volumesCriados.length} volumes | ${(pesoBruto > 0 ? pesoBruto : pesoLiquido).toLocaleString()} kg`;
       
       toast.success(feedbackMsg, { 
+        id: 'pesquisa-nf',
         duration: 8000,
-        style: { whiteSpace: 'pre-line', fontSize: '13px', lineHeight: '1.5' }
+        style: { whiteSpace: 'pre-line', fontSize: '14px', lineHeight: '1.6', fontWeight: '600' }
       });
       
       setSearchChaveNF("");
       setNotasBaseBusca("");
-      feedbackDado = true;
       
       setTimeout(() => salvarRascunho(), 100);
 
     } catch (error) {
-      console.error("Erro ao processar chave NF:", error);
+      console.error("❌ ERRO ao processar chave NF:", error);
       try { playErrorBeep(); } catch (e) {}
-      toast.error(`❌ Erro: ${error.message || 'Falha ao processar nota'}`);
+      
+      const errorMsg = `❌ ERRO AO PROCESSAR NOTA\n${error.message || 'Falha ao processar'}`;
+      toast.error(errorMsg, { 
+        id: 'pesquisa-nf',
+        duration: 5000,
+        style: { whiteSpace: 'pre-line', fontSize: '14px', lineHeight: '1.6', fontWeight: '600' }
+      });
+      
       setSearchChaveNF("");
       setNotasBaseBusca("");
     } finally {
       setProcessandoChave(false);
+      console.log('✅ Finalizado processamento de chave NF');
+      
       // Focar novamente no input apropriado
       setTimeout(() => {
         if (inputChaveRef.current) {
