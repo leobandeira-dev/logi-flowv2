@@ -70,6 +70,29 @@ const tipoCarroceriaOptions = [
   { value: "CARRETA LOC", label: "CARRETA LOC" }
 ];
 
+const StepItem = ({ label, status }) => {
+  let icon = <div className="w-4 h-4 rounded-full border-2 border-gray-300"></div>;
+  let textClass = "text-gray-500";
+
+  if (status === 'completed') {
+    icon = <CheckCircle2 className="w-4 h-4 text-green-600" />;
+    textClass = "text-green-700 font-medium";
+  } else if (status === 'current') {
+    icon = <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />;
+    textClass = "text-blue-700 font-semibold";
+  } else if (status === 'error') {
+    icon = <AlertCircle className="w-4 h-4 text-red-600" />;
+    textClass = "text-red-700 font-medium";
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {icon}
+      <span className={`text-sm ${textClass}`}>{label}</span>
+    </div>
+  );
+};
+
 export default function OrdemUnificadaForm({
   tipo_ordem, // 'coleta', 'carregamento', 'recebimento', 'entrega'
   open,
@@ -137,6 +160,7 @@ export default function OrdemUnificadaForm({
   const [importError, setImportError] = useState(null);
   const [importSuccess, setImportSuccess] = useState(false);
   const pdfInputRef = React.useRef(null);
+  const [progressoImportacao, setProgressoImportacao] = useState({ etapa: 'parada', progresso: 0, detalhe: '' });
   
   // Validação
   const [showValidation, setShowValidation] = useState(false);
@@ -950,14 +974,14 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
     if (!file) return;
 
     setImportando(true);
-    setLoadingMessage("Enviando arquivo (1/3)...");
+    setProgressoImportacao({ etapa: 'upload', progresso: 10, detalhe: 'Enviando arquivo para análise...' });
     setImportError(null);
     setImportSuccess(false);
 
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      setLoadingMessage("IA analisando documento (2/3) - Aguarde...");
+      setProgressoImportacao({ etapa: 'analise', progresso: 40, detalhe: 'Inteligência Artificial analisando documento...' });
 
       const ordemSchema = {
         type: "object",
@@ -979,6 +1003,8 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
           implemento1_renavam: { type: "string", description: "Renavam do primeiro reboque" },
           implemento2_placa: { type: "string", description: "Placa do segundo reboque" },
           implemento2_renavam: { type: "string" },
+          implemento3_placa: { type: "string" },
+          implemento3_renavam: { type: "string" },
           
           origem_completo: { type: "string", description: "Campo ORIGEM completo (Cidade/UF)" },
           destino_completo: { type: "string", description: "Campo DESTINO completo (Cidade/UF)" },
@@ -1011,21 +1037,24 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
         throw new Error("Não foi possível extrair os dados do PDF.");
       }
 
-      setLoadingMessage("Processando dados e preenchendo (3/3)...");
+      setProgressoImportacao({ etapa: 'processamento', progresso: 70, detalhe: 'Processando dados e cadastros...' });
 
       const dados = result.output;
 
-      // Buscar ou criar motorista
-      let motoristaId = null;
-      let motoristaEncontradoOuCriado = null;
-      if (dados.motorista_cpf) {
-        const cpfLimpo = dados.motorista_cpf.replace(/\D/g, '');
-        motoristaEncontradoOuCriado = motoristas.find(m => m.cpf?.replace(/\D/g, '') === cpfLimpo);
-
-        if (motoristaEncontradoOuCriado) {
-          motoristaId = motoristaEncontradoOuCriado.id;
-        } else if (dados.motorista_nome && dados.motorista_cnh) {
-          const novoMotorista = await base44.entities.Motorista.create({
+      // PROCESSO OTIMIZADO: Paralelizar busca/criação de Motorista e Veículos
+      
+      const processarMotorista = async () => {
+        if (!dados.motorista_cpf && !dados.motorista_nome) return null;
+        
+        const cpfLimpo = dados.motorista_cpf ? dados.motorista_cpf.replace(/\D/g, '') : '';
+        let mot = null;
+        
+        if (cpfLimpo) {
+          mot = motoristas.find(m => m.cpf?.replace(/\D/g, '') === cpfLimpo);
+        }
+        
+        if (!mot && dados.motorista_nome && dados.motorista_cnh) {
+          mot = await base44.entities.Motorista.create({
             nome: dados.motorista_nome,
             cpf: dados.motorista_cpf,
             rg: dados.motorista_rg || "",
@@ -1036,49 +1065,64 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
             status: "ativo",
             data_cadastro: new Date().toISOString().split('T')[0]
           });
-          motoristaId = novoMotorista.id;
-          motoristaEncontradoOuCriado = novoMotorista;
         }
-      }
-
-      // Buscar ou criar veículos
-      const veiculosIds = { cavalo: null, implemento1: null, implemento2: null, implemento3: null };
-      let currentVeiculosList = [...veiculos];
-
-      const findOrCreateVeiculo = async (placa, renavam, antt, tipo) => {
-        if (!placa) return null;
-        const placaLimpa = placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
-        let veiculoObj = currentVeiculosList.find(v =>
-          v.placa?.toUpperCase().replace(/[^A-Z0-9]/g, '') === placaLimpa
-        );
-
-        if (veiculoObj) {
-          // Atualizar ANTT se disponível e não existente
-          if (antt && !veiculoObj.antt_numero) {
-             await base44.entities.Veiculo.update(veiculoObj.id, { antt_numero: antt });
-          }
-          return veiculoObj.id;
-        } else {
-          const novoVeiculo = await base44.entities.Veiculo.create({
-            placa: placa,
-            tipo: tipo,
-            marca: "A definir",
-            modelo: "A definir",
-            renavam: renavam || "",
-            antt_numero: antt || "",
-            status: "disponível"
-          });
-          currentVeiculosList.push(novoVeiculo);
-          return novoVeiculo.id;
-        }
+        return mot;
       };
 
-      veiculosIds.cavalo = await findOrCreateVeiculo(dados.cavalo_placa, dados.cavalo_renavam, dados.cavalo_antt, "cavalo");
-      veiculosIds.implemento1 = await findOrCreateVeiculo(dados.implemento1_placa, dados.implemento1_renavam, "semi-reboque");
-      veiculosIds.implemento2 = await findOrCreateVeiculo(dados.implemento2_placa, dados.implemento2_renavam, "semi-reboque");
-      veiculosIds.implemento3 = await findOrCreateVeiculo(dados.implemento3_placa, dados.implemento3_renavam, "semi-reboque");
+      const processarVeiculos = async () => {
+        const ids = { cavalo: null, implemento1: null, implemento2: null, implemento3: null };
+        const veiculosEncontrados = { cavalo: null, implemento1: null, implemento2: null, implemento3: null };
+        const currentList = [...veiculos];
 
-      // Atualizar ficha do motorista
+        const findOrCreate = async (placa, renavam, antt, tipo) => {
+          if (!placa) return null;
+          const placaLimpa = placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
+          let veic = currentList.find(v => v.placa?.toUpperCase().replace(/[^A-Z0-9]/g, '') === placaLimpa);
+
+          if (veic) {
+            if (antt && !veic.antt_numero) {
+               base44.entities.Veiculo.update(veic.id, { antt_numero: antt }).catch(console.error);
+            }
+            return veic;
+          } else {
+            const novo = await base44.entities.Veiculo.create({
+              placa: placa,
+              tipo: tipo,
+              marca: "A definir",
+              modelo: "A definir",
+              renavam: renavam || "",
+              antt_numero: antt || "",
+              status: "disponível"
+            });
+            currentList.push(novo);
+            return novo;
+          }
+        };
+
+        const cavalo = await findOrCreate(dados.cavalo_placa, dados.cavalo_renavam, dados.cavalo_antt, "cavalo");
+        if (cavalo) { ids.cavalo = cavalo.id; veiculosEncontrados.cavalo = cavalo; }
+
+        const impl1 = await findOrCreate(dados.implemento1_placa, dados.implemento1_renavam, null, "semi-reboque");
+        if (impl1) { ids.implemento1 = impl1.id; veiculosEncontrados.implemento1 = impl1; }
+
+        const impl2 = await findOrCreate(dados.implemento2_placa, dados.implemento2_renavam, null, "semi-reboque");
+        if (impl2) { ids.implemento2 = impl2.id; veiculosEncontrados.implemento2 = impl2; }
+
+        const impl3 = await findOrCreate(dados.implemento3_placa, dados.implemento3_renavam, null, "semi-reboque");
+        if (impl3) { ids.implemento3 = impl3.id; veiculosEncontrados.implemento3 = impl3; }
+
+        return { ids, veiculosEncontrados };
+      };
+
+      const [motoristaResultado, veiculosResultado] = await Promise.all([
+        processarMotorista(),
+        processarVeiculos()
+      ]);
+
+      const motoristaId = motoristaResultado?.id;
+      const veiculosIds = veiculosResultado.ids;
+      const veiculosObjs = veiculosResultado.veiculosEncontrados;
+
       if (motoristaId && veiculosIds.cavalo) {
         const updateMotoristaVehicles = {
           cavalo_id: veiculosIds.cavalo,
@@ -1087,14 +1131,10 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
           implemento3_id: veiculosIds.implemento3
         };
         Object.keys(updateMotoristaVehicles).forEach(key => updateMotoristaVehicles[key] === null && delete updateMotoristaVehicles[key]);
-
+        
         await base44.entities.Motorista.update(motoristaId, updateMotoristaVehicles);
-        if (motoristaEncontradoOuCriado) {
-          motoristaEncontradoOuCriado = { ...motoristaEncontradoOuCriado, ...updateMotoristaVehicles };
-        }
       }
 
-      // Atualizar status da ordem se for edição com motorista e veículo
       if (editingOrdem?.id && motoristaId && veiculosIds.cavalo) {
         await base44.entities.OrdemDeCarregamento.update(editingOrdem.id, {
           tipo_negociacao: "alocado",
@@ -1102,7 +1142,8 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
         });
       }
 
-      // Processar peso
+      setProgressoImportacao({ etapa: 'processamento', progresso: 90, detalhe: 'Preenchendo formulário...' });
+
       let pesoKg = '';
       if (dados.peso) {
         let pesoStr = dados.peso.toString().replace(/[^0-9,.]/g, '').replace(',', '.');
@@ -1134,7 +1175,6 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
         return apenasNumeros;
       };
 
-      // Processar origem e destino
       let origemCidade = "", origemUF = "";
       if (dados.origem_completo) {
         const parts = dados.origem_completo.split('/');
@@ -1159,7 +1199,6 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
 
       setFormData(prev => ({
         ...prev,
-        // Cliente/Remetente
         cliente: dados.remetente_razao_social || prev.cliente,
         cliente_cnpj: dados.remetente_cnpj || prev.cliente_cnpj,
         remetente_razao_social: dados.remetente_razao_social || prev.remetente_razao_social,
@@ -1167,66 +1206,65 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
         remetente_endereco: dados.remetente_endereco || prev.remetente_endereco,
         remetente_cep: normalizarCEP(dados.remetente_cep) || prev.remetente_cep,
         
-        // Origem
         origem: origemCidade || prev.origem,
         origem_cidade: origemCidade || prev.origem_cidade,
         origem_uf: origemUF || prev.origem_uf,
-        origem_endereco: dados.remetente_endereco || prev.origem_endereco, // Assume endereço do remetente como origem física
+        origem_endereco: dados.remetente_endereco || prev.origem_endereco,
         origem_cep: normalizarCEP(dados.remetente_cep) || prev.origem_cep,
 
-        // Destinatário
         destinatario: dados.destinatario_razao_social || prev.destinatario,
         destinatario_cnpj: dados.destinatario_cnpj || prev.destinatario_cnpj,
         
-        // Destino
         destino: destinoCidade || prev.destino,
         destino_cidade: destinoCidade || prev.destino_cidade,
         destino_uf: destinoUF || prev.destino_uf,
         destino_endereco: dados.destinatario_endereco || prev.destino_endereco,
         destino_cep: normalizarCEP(dados.destinatario_cep) || prev.destino_cep,
 
-        // Carga
         produto: dados.produto || prev.produto,
         peso: pesoKg || prev.peso,
         volumes: volumesNum || prev.volumes,
         
-        // Alocação
         motorista_id: motoristaId || prev.motorista_id,
         cavalo_id: veiculosIds.cavalo || prev.cavalo_id,
         implemento1_id: veiculosIds.implemento1 || prev.implemento1_id,
         implemento2_id: veiculosIds.implemento2 || prev.implemento2_id,
         implemento3_id: veiculosIds.implemento3_id || prev.implemento3_id,
         
-        // Outros
         viagem: dados.load_num || prev.viagem,
         pedido_cliente: dados.load_num || prev.pedido_cliente,
         numero_oc: dados.numero_ordem || prev.numero_oc,
         observacao_carga: dados.observacoes || prev.observacao_carga
       }));
 
-      if (motoristaEncontradoOuCriado) {
-        setMotoristaSearchTerm(motoristaEncontradoOuCriado.nome);
-        setMotoristaTelefone(motoristaEncontradoOuCriado.celular || "");
-        setItemsEncontrados(prev => ({ ...prev, motorista: motoristaEncontradoOuCriado }));
+      if (motoristaResultado) {
+        setMotoristaSearchTerm(motoristaResultado.nome);
+        setMotoristaTelefone(motoristaResultado.celular || "");
+        setItemsEncontrados(prev => ({ ...prev, motorista: motoristaResultado }));
       }
 
       ['cavalo', 'implemento1', 'implemento2', 'implemento3'].forEach(key => {
-        if (veiculosIds[key]) {
-          const veiculoObj = currentVeiculosList.find(v => v.id === veiculosIds[key]);
-          if (veiculoObj) {
-            setVeiculoSearchTerm(prev => ({ ...prev, [key]: veiculoObj.placa }));
-            setItemsEncontrados(prev => ({ ...prev, [key]: veiculoObj }));
-          }
+        if (veiculosObjs[key]) {
+          setVeiculoSearchTerm(prev => ({ ...prev, [key]: veiculosObjs[key].placa }));
+          setItemsEncontrados(prev => ({ ...prev, [key]: veiculosObjs[key] }));
         }
       });
 
       setVeiculosAlterados(false);
+      setProgressoImportacao({ etapa: 'concluido', progresso: 100, detalhe: 'Importação concluída com sucesso!' });
       setImportSuccess(true);
-      setTimeout(() => setImportSuccess(false), 5000);
+      
+      setTimeout(() => {
+        setImportSuccess(false);
+        setProgressoImportacao({ etapa: 'parada', progresso: 0, detalhe: '' });
+      }, 4000);
+      
       toast.success("Dados importados com sucesso!");
+
     } catch (error) {
       console.error("Erro ao importar PDF:", error);
       setImportError(error.message || "Erro ao processar o PDF.");
+      setProgressoImportacao({ etapa: 'erro', progresso: 0, detalhe: 'Erro na importação.' });
       toast.error("Erro ao importar PDF");
     } finally {
       setImportando(false);
@@ -1440,25 +1478,47 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
               <input ref={pdfInputRef} type="file" accept=".pdf" onChange={handleImportarPDF} className="hidden" disabled={importando} />
               
               {mostrarImportPDF ? (
-                <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50 hover:bg-blue-100 transition-colors">
-                  <div className="text-center">
-                    <FileUp className="w-12 h-12 mx-auto mb-3 text-blue-600" />
-                    <h3 className="text-lg font-semibold mb-2 text-blue-900">Completar Ordem com PDF do ERP</h3>
-                    <p className="text-sm text-blue-700 mb-4">Faça upload do PDF para preencher automaticamente</p>
-                    <Button type="button" onClick={() => pdfInputRef.current?.click()} disabled={importando} className="bg-blue-600 min-w-[200px]">
-                      {importando ? (
-                        <div className="flex flex-col items-center py-1">
-                          <div className="flex items-center">
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            <span>Processando...</span>
-                          </div>
-                          {loadingMessage && <span className="text-[10px] opacity-90 mt-1">{loadingMessage}</span>}
-                        </div>
-                      ) : (
-                        <><FileUp className="w-4 h-4 mr-2" />Selecionar PDF</>
-                      )}
-                    </Button>
-                  </div>
+                <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50 transition-colors">
+                  {importando ? (
+                    <div className="max-w-md mx-auto">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-semibold text-blue-900">Importando PDF...</span>
+                        <span className="text-xs font-medium text-blue-700">{progressoImportacao.progresso}%</span>
+                      </div>
+                      <div className="w-full bg-blue-200 rounded-full h-2.5 mb-4">
+                        <div 
+                          className={`h-2.5 rounded-full transition-all duration-500 ${progressoImportacao.etapa === 'erro' ? 'bg-red-600' : 'bg-blue-600'}`} 
+                          style={{ width: `${progressoImportacao.progresso}%` }}
+                        ></div>
+                      </div>
+                      <div className="space-y-2 bg-white/50 p-3 rounded-lg border border-blue-100">
+                        <StepItem 
+                          label="Upload do Arquivo" 
+                          status={progressoImportacao.etapa === 'upload' ? 'current' : (progressoImportacao.progresso > 10 ? 'completed' : 'pending')} 
+                        />
+                        <StepItem 
+                          label="Análise Inteligente (IA)" 
+                          status={progressoImportacao.etapa === 'analise' ? 'current' : (progressoImportacao.progresso > 40 ? 'completed' : 'pending')} 
+                        />
+                        <StepItem 
+                          label="Processamento de Dados" 
+                          status={progressoImportacao.etapa === 'processamento' ? 'current' : (progressoImportacao.progresso > 70 ? 'completed' : 'pending')} 
+                        />
+                      </div>
+                      <p className="text-xs text-center text-blue-600 mt-3 font-medium animate-pulse">
+                        {progressoImportacao.detalhe}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center hover:bg-blue-100 transition-colors rounded-lg p-2 cursor-pointer" onClick={() => pdfInputRef.current?.click()}>
+                      <FileUp className="w-12 h-12 mx-auto mb-3 text-blue-600" />
+                      <h3 className="text-lg font-semibold mb-2 text-blue-900">Completar Ordem com PDF do ERP</h3>
+                      <p className="text-sm text-blue-700 mb-4">Faça upload do PDF para preencher automaticamente</p>
+                      <Button type="button" onClick={(e) => { e.stopPropagation(); pdfInputRef.current?.click(); }} className="bg-blue-600 min-w-[200px]">
+                        <FileUp className="w-4 h-4 mr-2" />Selecionar PDF
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex justify-end mb-2">
