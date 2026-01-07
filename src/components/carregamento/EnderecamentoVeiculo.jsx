@@ -1458,26 +1458,28 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       const alocacaoExistente = getEnderecamentosOrdemAtual().find(e => e.volume_id === volumeId);
       
       if (alocacaoExistente) {
-        try {
-          // ATUALIZAÇÃO OTIMISTA: Remover do estado imediatamente
-          setEnderecamentos(prev => prev.filter(e => e.id !== alocacaoExistente.id));
+        // ATUALIZAÇÃO OTIMISTA: Remover do estado imediatamente
+        setEnderecamentos(prev => prev.filter(e => e.id !== alocacaoExistente.id));
 
-          // Deletar do banco em paralelo (background)
-          await Promise.all([
-            base44.entities.EnderecamentoVolume.delete(alocacaoExistente.id),
-            base44.entities.Volume.update(volumeId, {
-              status_volume: "criado",
-              localizacao_atual: null
-            })
-          ]);
+        // Deletar do banco em paralelo (background) de forma assíncrona
+        (async () => {
+          try {
+            await Promise.all([
+              base44.entities.EnderecamentoVolume.delete(alocacaoExistente.id),
+              base44.entities.Volume.update(volumeId, {
+                status_volume: "criado",
+                localizacao_atual: null
+              })
+            ]);
 
-          toast.success("✅ Volume desalocado!", { duration: 2000 });
-          setTimeout(() => salvarRascunho(), 100);
-        } catch (error) {
-          console.error("Erro ao desalocar volume:", error);
-          await loadEnderecamentos();
-          toast.error("Erro ao desalocar volume");
-        }
+            toast.success("✅ Volume desalocado!", { duration: 2000 });
+            setTimeout(() => salvarRascunho(), 100);
+          } catch (error) {
+            console.error("Erro ao desalocar volume:", error);
+            await loadEnderecamentos();
+            toast.error("Erro ao desalocar volume");
+          }
+        })();
       }
       return;
     }
