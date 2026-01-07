@@ -525,10 +525,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       setEnderecamentos(todosEnderecamentos);
       
       setVolumesSelecionados([]);
-      setShowBuscaModal(false);
-      setCelulaAtiva(null);
+      // NÃO fechar modal - permitir continuar alocando na mesma célula
+      // setShowBuscaModal(false);
+      // setCelulaAtiva(null);
       
-      toast.success(`✅ ${volumesParaEnderecear.length} volume(s) alocado(s) com sucesso!`, { duration: 3000 });
+      toast.success(`✅ ${volumesParaEnderecear.length} volume(s) alocado(s)! Continue escaneando...`, { duration: 2000 });
       
       // Salvar rascunho de forma assíncrona
       salvarRascunho();
