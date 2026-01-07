@@ -766,6 +766,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         try { playErrorBeep(); } catch (e) {}
         
         setFeedbackNota('duplicate');
+        setFeedbackMensagem(`⚠️ Nota ${notaLocal.numero_nota} já vinculada`);
         
         toast.warning(
           <div className="flex flex-col gap-1">
@@ -787,7 +788,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           }
         );
         
-        setTimeout(() => setFeedbackNota(null), 3000);
+        setTimeout(() => setFeedbackNota(null), 3300);
         setProcessandoChave(false);
         return;
       }
@@ -849,6 +850,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         try { playSuccessBeep(); } catch (e) {}
         
         setFeedbackNota('success');
+        setFeedbackMensagem(`✅ NF ${notaExistente.numero_nota} vinculada`);
         
         toast.success(
           <div className="flex flex-col gap-1.5">
@@ -876,7 +878,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           }
         );
         
-        setTimeout(() => setFeedbackNota(null), 3000);
+        setTimeout(() => setFeedbackNota(null), 3300);
         setSearchChaveNF("");
         setNotasBaseBusca("");
         setProcessandoChave(false);
@@ -983,6 +985,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       try { playSuccessBeep(); } catch (e) {}
       
       setFeedbackNota('success');
+      setFeedbackMensagem(`✅ NF ${numeroNota} importada`);
       
       const remetenteNome = emitElements?.getElementsByTagName('xNome')[0]?.textContent || 'N/A';
       const remetenteCidade = emitElements?.getElementsByTagName('xMun')[0]?.textContent || 'N/A';
@@ -1020,7 +1023,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         }
       );
       
-      setTimeout(() => setFeedbackNota(null), 3000);
+      setTimeout(() => setFeedbackNota(null), 3300);
       setSearchChaveNF("");
       setNotasBaseBusca("");
       
@@ -1031,6 +1034,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       try { playErrorBeep(); } catch (e) {}
       
       setFeedbackNota('error');
+      setFeedbackMensagem("❌ Erro ao processar nota");
       
       toast.error(
         <div className="flex flex-col gap-1.5">
@@ -3601,8 +3605,21 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                             color: theme.text 
                           }}
                           autoFocus
-                        />
-                      </div>
+                          />
+                          {feedbackMensagem && (
+                          <div 
+                            className="text-xs font-semibold mt-1 transition-all duration-300"
+                            style={{ 
+                              color: feedbackNota === 'success' ? '#10b981' : 
+                                     feedbackNota === 'duplicate' ? '#a855f7' : 
+                                     feedbackNota === 'error' ? '#ef4444' : 
+                                     theme.text 
+                            }}
+                          >
+                            {feedbackMensagem}
+                          </div>
+                          )}
+                          </div>
                       <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
                         Digite número ou bipe chave - Enter para importar
                       </p>
@@ -5182,6 +5199,19 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     disabled={processandoBusca}
                     autoFocus
                   />
+                  {feedbackMensagem && (
+                    <div 
+                      className="text-xs font-semibold mt-1 transition-all duration-300"
+                      style={{ 
+                        color: feedbackNota === 'success' ? '#10b981' : 
+                               feedbackNota === 'duplicate' ? '#a855f7' : 
+                               feedbackNota === 'error' ? '#ef4444' : 
+                               theme.text 
+                      }}
+                    >
+                      {feedbackMensagem}
+                    </div>
+                  )}
                   {processandoBusca && (
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                       <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
