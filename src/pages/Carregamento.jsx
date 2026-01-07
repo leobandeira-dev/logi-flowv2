@@ -27,6 +27,8 @@ import FiltroDataPeriodo from "../components/filtros/FiltroDataPeriodo";
 import ConferenciaVolumes from "../components/carregamento/ConferenciaVolumes";
 import EnderecamentoVeiculo from "../components/carregamento/EnderecamentoVeiculo";
 import SubOrdemForm from "../components/ordens/SubOrdemForm";
+import MotoristaReservaModal from "../components/ordens/MotoristaReservaModal";
+import { MapPin, User, Users } from "lucide-react";
 
 export default function Carregamento() {
   const [ordens, setOrdens] = useState([]);
@@ -52,6 +54,8 @@ export default function Carregamento() {
   const [ordemParaConferencia, setOrdemParaConferencia] = useState(null);
   const [showOrdemFilhaForm, setShowOrdemFilhaForm] = useState(false);
   const [ordemMae, setOrdemMae] = useState(null);
+  const [showReservaModal, setShowReservaModal] = useState(false);
+  const [ordemParaReserva, setOrdemParaReserva] = useState(null);
   
   const hoje = new Date();
   const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -694,7 +698,8 @@ export default function Carregamento() {
             filteredOrdens.slice(inicio, fim).map(ordem => {
               const qtdNotas = ordem.notas_fiscais_ids?.length || 0;
               const motorista = motoristas.find(m => m.id === ordem.motorista_id);
-              
+              const motoristaReserva = motoristas.find(m => m.id === ordem.motorista_reserva_id);
+
               const tipoConfig = {
                 oferta: { label: "Oferta", bg: "bg-green-600" },
                 negociando: { label: "Negociando", bg: "bg-yellow-600" },
@@ -706,7 +711,7 @@ export default function Carregamento() {
                 <Card key={ordem.id} className="overflow-hidden" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
                   <CardContent className="p-2.5">
                     {/* Header Compacto */}
-                    <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex items-start justify-between gap-2 mb-1">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-sm mb-0.5 truncate" style={{ color: theme.text }}>
                           {ordem.numero_carga}
@@ -720,7 +725,59 @@ export default function Carregamento() {
                       </Badge>
                     </div>
 
-                    {/* Info Resumida */}
+                    {/* Origem -> Destino */}
+                    <div className="flex items-center gap-1.5 text-xs mb-2" style={{ color: theme.text }}>
+                      <MapPin className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                      <span className="truncate">
+                        <span className="font-medium">{ordem.origem_cidade || ordem.origem}</span>
+                        <span className="text-gray-400 mx-1">→</span>
+                        <span className="font-medium">{ordem.destino_cidade || ordem.destino}</span>
+                      </span>
+                    </div>
+
+                    {/* Motoristas */}
+                    <div className="grid grid-cols-1 gap-1 mb-3 bg-gray-50 dark:bg-slate-900/50 p-2 rounded-md">
+                      {/* Principal */}
+                      <div className="flex items-center gap-2 text-xs">
+                        <User className="w-3.5 h-3.5 flex-shrink-0 text-blue-600" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] text-gray-500 uppercase block leading-none mb-0.5">Principal</span>
+                          <span className="truncate font-medium block" style={{ color: theme.text }}>
+                            {motorista?.nome || ordem.motorista_nome_temp || "—"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Separador */}
+                      <div className="h-[1px] bg-gray-200 dark:bg-gray-700 w-full" />
+
+                      {/* Reserva + Botão */}
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <Users className="w-3.5 h-3.5 flex-shrink-0 text-purple-600" />
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[10px] text-gray-500 uppercase block leading-none mb-0.5">Reserva</span>
+                            <span className="truncate font-medium block" style={{ color: theme.text }}>
+                              {motoristaReserva?.nome || "—"}
+                            </span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOrdemParaReserva(ordem);
+                            setShowReservaModal(true);
+                          }}
+                          className="h-6 px-2 text-[10px] text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                        >
+                          {motoristaReserva ? "Alterar" : "+ Add"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Info Carga */}
                     <div className="flex items-center justify-between text-xs mb-2 py-1.5 px-2 rounded" style={{ backgroundColor: isDark ? '#0f172a' : '#f3f4f6' }}>
                       <span style={{ color: theme.textMuted }}>{qtdNotas} NF</span>
                       <span className="font-semibold" style={{ color: theme.text }}>
@@ -1192,6 +1249,23 @@ export default function Carregamento() {
           }}
         />
       )}
-    </div>
-  );
-}
+
+      {showReservaModal && ordemParaReserva && (
+        <MotoristaReservaModal
+          open={showReservaModal}
+          onClose={() => {
+            setShowReservaModal(false);
+            setOrdemParaReserva(null);
+          }}
+          ordem={ordemParaReserva}
+          motoristas={motoristas}
+          onSuccess={async () => {
+            setShowReservaModal(false);
+            setOrdemParaReserva(null);
+            await loadData();
+          }}
+        />
+      )}
+      </div>
+      );
+      }
