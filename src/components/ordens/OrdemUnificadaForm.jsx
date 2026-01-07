@@ -1478,7 +1478,14 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
               <input ref={pdfInputRef} type="file" accept=".pdf" onChange={handleImportarPDF} className="hidden" disabled={importando} />
               
               {mostrarImportPDF || importando ? (
-                <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50 transition-colors">
+                <div 
+                  className={`border-2 border-dashed rounded-lg transition-all duration-300 overflow-hidden ${
+                    importSuccess ? 'border-green-500 bg-green-50' :
+                    importError ? 'border-red-500 bg-red-50' :
+                    importando ? 'border-blue-400 bg-blue-50 p-6' :
+                    'border-gray-200 hover:border-blue-400 hover:bg-blue-50 p-3'
+                  }`}
+                >
                   {importando ? (
                     <div className="max-w-md mx-auto">
                       <div className="flex items-center justify-between mb-2">
@@ -1509,14 +1516,37 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
                         {progressoImportacao.detalhe}
                       </p>
                     </div>
-                  ) : (
-                    <div className="text-center hover:bg-blue-100 transition-colors rounded-lg p-2 cursor-pointer" onClick={() => pdfInputRef.current?.click()}>
-                      <FileUp className="w-12 h-12 mx-auto mb-3 text-blue-600" />
-                      <h3 className="text-lg font-semibold mb-2 text-blue-900">Completar Ordem com PDF do ERP</h3>
-                      <p className="text-sm text-blue-700 mb-4">Faça upload do PDF para preencher automaticamente</p>
-                      <Button type="button" onClick={(e) => { e.stopPropagation(); pdfInputRef.current?.click(); }} className="bg-blue-600 min-w-[200px]">
-                        <FileUp className="w-4 h-4 mr-2" />Selecionar PDF
+                  ) : importSuccess ? (
+                    <div className="flex flex-col items-center justify-center py-2 text-green-700 animate-in fade-in zoom-in duration-300">
+                      <CheckCircle2 className="w-8 h-8 mb-2" />
+                      <span className="font-semibold">Importação concluída com sucesso!</span>
+                      <span className="text-xs opacity-80">Os dados foram preenchidos no formulário.</span>
+                    </div>
+                  ) : importError ? (
+                    <div className="flex flex-col items-center justify-center py-2 text-red-700 animate-in fade-in zoom-in duration-300">
+                      <AlertCircle className="w-8 h-8 mb-2" />
+                      <span className="font-semibold">Falha na importação</span>
+                      <span className="text-xs opacity-80 mb-2">{importError}</span>
+                      <Button variant="outline" size="sm" onClick={() => setImportError(null)} className="border-red-200 hover:bg-red-100 text-red-700 h-7 text-xs bg-white">
+                        Tentar Novamente
                       </Button>
+                    </div>
+                  ) : (
+                    <div 
+                      className="flex items-center justify-center gap-4 cursor-pointer group" 
+                      onClick={() => pdfInputRef.current?.click()}
+                    >
+                      <div className="p-2 bg-blue-100 text-blue-600 rounded-full group-hover:bg-blue-200 transition-colors shadow-sm">
+                        <FileUp className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-gray-700 group-hover:text-blue-800 transition-colors">
+                          Importar dados via PDF
+                        </p>
+                        <p className="text-xs text-gray-500 group-hover:text-blue-600 transition-colors">
+                          Arraste ou clique para selecionar do ERP
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1533,20 +1563,6 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
                     <FileUp className="w-3 h-3 mr-2" />Atualizar dados com PDF
                   </Button>
                 </div>
-              )}
-
-              {importError && (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{importError}</AlertDescription>
-                </Alert>
-              )}
-
-              {importSuccess && (
-                <Alert className="mt-4 bg-green-50 border-green-200">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <AlertDescription className="text-green-800">✅ Dados importados com sucesso!</AlertDescription>
-                </Alert>
               )}
             </div>
           )}
