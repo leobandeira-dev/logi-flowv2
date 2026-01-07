@@ -1028,50 +1028,20 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
         }
       };
 
-      let dados = null;
+      setProgressoImportacao({ etapa: 'analise', progresso: 30, detalhe: 'IA analisando documento (pode levar alguns segundos)...' });
 
-      try {
-        setProgressoImportacao({ etapa: 'analise', progresso: 30, detalhe: 'Tentando leitura rápida do texto...' });
-        
-        // TENTATIVA 1: Processamento Rápido via Backend (Extração de Texto)
-        // Com Timeout de 8s para evitar que a soma dos tempos fique excessiva
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Timeout leitura rápida")), 8000)
-        );
+      // Otimização: Schema simplificado para resposta mais rápida
+      // Removemos descrições longas para economizar tokens
+      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url,
+        json_schema: ordemSchema
+      });
 
-        const response = await Promise.race([
-          base44.functions.invoke('processarPdfOrdem', {
-            file_url,
-            json_schema: ordemSchema
-          }),
-          timeoutPromise
-        ]);
-
-        if (response.data && response.data.output) {
-          dados = response.data.output;
-          console.log("✅ Sucesso na leitura rápida de texto");
-        } else {
-          throw new Error("Resposta inválida da leitura rápida");
-        }
-
-      } catch (fastError) {
-        console.log("⚠️ Falha na leitura rápida, iniciando leitura visual profunda:", fastError);
-        
-        // TENTATIVA 2: Fallback para Leitura Visual (ExtractDataFromUploadedFile)
-        // Mais lento, mas funciona para PDFs escaneados/imagens
-        setProgressoImportacao({ etapa: 'analise', progresso: 45, detalhe: 'Arquivo escaneado detectado. Usando leitura visual profunda (pode demorar)...' });
-        
-        const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-          file_url,
-          json_schema: ordemSchema
-        });
-
-        if (result.status !== "success" || !result.output) {
-          throw new Error("Não foi possível extrair os dados do PDF.");
-        }
-        
-        dados = result.output;
+      if (result.status !== "success" || !result.output) {
+        throw new Error("Não foi possível extrair os dados do PDF.");
       }
+
+      const dados = result.output;
 
       setProgressoImportacao({ etapa: 'processamento', progresso: 80, detalhe: 'Processando dados e cadastros...' });
 
