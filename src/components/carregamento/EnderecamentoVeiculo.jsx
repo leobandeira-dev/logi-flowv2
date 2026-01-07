@@ -3247,8 +3247,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsList>
 
             {/* Aba Volumes */}
-            <TabsContent value="volumes" className="flex-1 flex flex-col" style={{ margin: 0, padding: 0, height: '100%', overflow: 'hidden' }}>
-              <div className="p-2 border-b" style={{ borderColor: theme.cardBorder, flexShrink: 0 }}>
+            <TabsContent value="volumes" className="flex-1 overflow-hidden" style={{ margin: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
+              <div className="p-2 border-b flex-shrink-0" style={{ borderColor: theme.cardBorder }}>
                 {/* Tipo de Filtro */}
                 <div className="mb-3">
                   <Tabs value={filtroTipo} onValueChange={setFiltroTipo}>
@@ -3422,10 +3422,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                   <div 
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="flex-1 overflow-y-auto p-4"
-                    style={{ maxHeight: '70vh' }}
+                    className="flex-1 overflow-y-auto p-2 space-y-3"
                   >
-                    <div className="space-y-3">
                       {usarBase && filtroTipo === "nota_fiscal" ? (
                         // Exibir notas da base quando modo "Base" ativado
                         <NotasBaseList
@@ -3735,14 +3733,13 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         </>
                       )}
                       {provided.placeholder}
-                    </div>
                   </div>
                 )}
               </Droppable>
             </TabsContent>
 
             {/* Aba Lista de Notas */}
-            <TabsContent value="notas" className="flex-1 overflow-y-auto px-2" style={{ margin: 0, padding: '0.5rem 0.5rem 0.5rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+            <TabsContent value="notas" className="flex-1 overflow-y-auto p-2 space-y-1.5" style={{ margin: 0 }}>
               {(() => {
                 // CRÍTICO: Remover duplicatas por ID antes de renderizar
                 const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
@@ -3815,13 +3812,12 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     });
                     })()}
 
-                {notasFiscaisLocal.length === 0 && (
-                  <div className="text-center py-8" style={{ color: theme.textMuted }}>
-                    <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                    <p className="text-sm">Nenhuma nota fiscal vinculada</p>
-                  </div>
-                )}
-              })()}
+              {notasFiscaisLocal.length === 0 && (
+                <div className="text-center py-8" style={{ color: theme.textMuted }}>
+                  <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                  <p className="text-sm">Nenhuma nota fiscal vinculada</p>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>
