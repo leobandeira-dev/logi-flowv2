@@ -3219,7 +3219,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         {/* Painel Esquerdo - Volumes e Lista de Notas */}
         <div className="w-80 border-r flex flex-col" style={{ borderColor: theme.cardBorder, backgroundColor: theme.cardBg }}>
           <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col" style={{ display: 'flex', flexDirection: 'column', height: '100%', margin: 0, padding: 0 }}>
-            <TabsList className="grid w-[calc(100%-1rem)] grid-cols-2 mx-auto mt-2 mb-0" style={{ flexShrink: 0 }}>
+            <TabsList className="grid w-full grid-cols-2 h-8" style={{ flexShrink: 0, margin: 0, borderRadius: 0 }}>
               <TabsTrigger value="volumes" className="text-sm h-8">
                 <Package className="w-3 h-3 mr-1" />
                 Volumes
