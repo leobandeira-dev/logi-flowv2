@@ -3665,85 +3665,87 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsContent>
 
             {/* Aba Lista de Notas */}
-            <TabsContent value="notas" className="flex-1 overflow-y-auto m-0 p-0 pt-2 px-2 space-y-1.5">
-              {(() => {
-                // CRÍTICO: Remover duplicatas por ID antes de renderizar
-                const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
-                  if (!acc.find(n => n.id === nota.id)) {
-                    acc.push(nota);
-                  }
-                  return acc;
-                }, []);
-                
-                return notasUnicas.map((nota) => {
-                  const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
-                  const volumesEndNota = enderecamentos.filter(e => e.nota_fiscal_id === nota.id && e.ordem_id === ordem.id);
-                  const origem = notasOrigem[nota.id] || "Vinculada";
-                  const origemColor = origem === "Vinculada" ? (isDark ? '#3b82f6' : '#2563eb') : origem === "Adicionada" ? (isDark ? '#f59e0b' : '#d97706') : (isDark ? '#10b981' : '#059669');
+            <TabsContent value="notas" className="flex-1 overflow-y-auto m-0 p-0">
+              <div className="p-2 space-y-1.5">
+                {(() => {
+                  // CRÍTICO: Remover duplicatas por ID antes de renderizar
+                  const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
+                    if (!acc.find(n => n.id === nota.id)) {
+                      acc.push(nota);
+                    }
+                    return acc;
+                  }, []);
+                  
+                  return notasUnicas.map((nota) => {
+                    const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
+                    const volumesEndNota = enderecamentos.filter(e => e.nota_fiscal_id === nota.id && e.ordem_id === ordem.id);
+                    const origem = notasOrigem[nota.id] || "Vinculada";
+                    const origemColor = origem === "Vinculada" ? (isDark ? '#3b82f6' : '#2563eb') : origem === "Adicionada" ? (isDark ? '#f59e0b' : '#d97706') : (isDark ? '#10b981' : '#059669');
 
-                  return (
-                    <div
-                      key={nota.id}
-                      className="p-2 border rounded"
-                      style={{ borderColor: theme.cardBorder, backgroundColor: isDark ? '#1e293b' : '#ffffff' }}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="font-bold text-xs whitespace-nowrap" style={{ color: theme.text }}>
-                            NF {nota.numero_nota}
-                          </span>
-                          <Badge
-                            className="text-[8px] h-3.5 px-1.5 flex-shrink-0"
-                            style={{ backgroundColor: origemColor, color: 'white' }}
-                          >
-                            {origem}
-                          </Badge>
-                          <span className="text-[10px] truncate" style={{ color: theme.textMuted }} title={nota.emitente_razao_social}>
-                            {nota.emitente_razao_social?.substring(0, 20) || '-'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-2 text-[10px] whitespace-nowrap" style={{ color: theme.textMuted }}>
-                            <span>
-                              <strong style={{ color: theme.text }}>{volumesEndNota.length}/{volumesNota.length}</strong> vol
+                    return (
+                      <div
+                        key={nota.id}
+                        className="p-2 border rounded"
+                        style={{ borderColor: theme.cardBorder, backgroundColor: isDark ? '#1e293b' : '#ffffff' }}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <span className="font-bold text-xs whitespace-nowrap" style={{ color: theme.text }}>
+                              NF {nota.numero_nota}
                             </span>
-                            <span>
-                              <strong style={{ color: theme.text }}>{(nota.peso_total_nf || 0).toLocaleString()}</strong> kg
+                            <Badge
+                              className="text-[8px] h-3.5 px-1.5 flex-shrink-0"
+                              style={{ backgroundColor: origemColor, color: 'white' }}
+                            >
+                              {origem}
+                            </Badge>
+                            <span className="text-[10px] truncate" style={{ color: theme.textMuted }} title={nota.emitente_razao_social}>
+                              {nota.emitente_razao_social?.substring(0, 20) || '-'}
                             </span>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-5 w-5 p-0 hover:bg-red-50 dark:hover:bg-red-950"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDesvincularNota(nota);
-                            }}
-                            title="Desvincular nota fiscal"
-                          >
-                            <Trash2 className="w-3 h-3 text-red-500" />
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 text-[10px] whitespace-nowrap" style={{ color: theme.textMuted }}>
+                              <span>
+                                <strong style={{ color: theme.text }}>{volumesEndNota.length}/{volumesNota.length}</strong> vol
+                              </span>
+                              <span>
+                                <strong style={{ color: theme.text }}>{(nota.peso_total_nf || 0).toLocaleString()}</strong> kg
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 w-5 p-0 hover:bg-red-50 dark:hover:bg-red-950"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDesvincularNota(nota);
+                              }}
+                              title="Desvincular nota fiscal"
+                            >
+                              <Trash2 className="w-3 h-3 text-red-500" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-[9px] mt-0.5" style={{ color: theme.textMuted }}>
+                          <span className="truncate" title={`${nota.emitente_cidade}/${nota.emitente_uf} → ${nota.destinatario_cidade}/${nota.destinatario_uf}`}>
+                            {nota.emitente_cidade}/{nota.emitente_uf} → {nota.destinatario_cidade}/{nota.destinatario_uf}
+                          </span>
+                          <span className="ml-2 font-semibold whitespace-nowrap" style={{ color: theme.text }}>
+                            R$ {(nota.valor_nota_fiscal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between text-[9px] mt-0.5" style={{ color: theme.textMuted }}>
-                        <span className="truncate" title={`${nota.emitente_cidade}/${nota.emitente_uf} → ${nota.destinatario_cidade}/${nota.destinatario_uf}`}>
-                          {nota.emitente_cidade}/{nota.emitente_uf} → {nota.destinatario_cidade}/{nota.destinatario_uf}
-                        </span>
-                        <span className="ml-2 font-semibold whitespace-nowrap" style={{ color: theme.text }}>
-                          R$ {(nota.valor_nota_fiscal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
+                    );
+                  });
+                })()}
 
-              {notasFiscaisLocal.length === 0 && (
-                <div className="text-center py-8" style={{ color: theme.textMuted }}>
-                  <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                  <p className="text-sm">Nenhuma nota fiscal vinculada</p>
-                </div>
-              )}
+                {notasFiscaisLocal.length === 0 && (
+                  <div className="text-center py-8" style={{ color: theme.textMuted }}>
+                    <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                    <p className="text-sm">Nenhuma nota fiscal vinculada</p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
         </div>
