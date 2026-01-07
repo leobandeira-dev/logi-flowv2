@@ -1350,12 +1350,6 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           }
           return;
         }
-
-    // Se NÃO houver volumes selecionados, abrir câmera
-    setCelulaAtiva({ linha, coluna });
-    setShowCamera(true);
-    setSearchTerm("");
-  };
         
         // SE NÃO HÁ SELEÇÕES, buscar volumes disponíveis e abrir modal
         const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === notaId);
