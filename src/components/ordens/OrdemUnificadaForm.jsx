@@ -1477,7 +1477,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
             <div className="mb-4">
               <input ref={pdfInputRef} type="file" accept=".pdf" onChange={handleImportarPDF} className="hidden" disabled={importando} />
               
-              {mostrarImportPDF ? (
+              {mostrarImportPDF || importando ? (
                 <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50 transition-colors">
                   {importando ? (
                     <div className="max-w-md mx-auto">
@@ -1530,11 +1530,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
                     disabled={importando}
                     className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 text-xs"
                   >
-                    {importando ? (
-                      <><Loader2 className="w-3 h-3 mr-2 animate-spin" />Processando...</>
-                    ) : (
-                      <><FileUp className="w-3 h-3 mr-2" />Atualizar dados com PDF</>
-                    )}
+                    <FileUp className="w-3 h-3 mr-2" />Atualizar dados com PDF
                   </Button>
                 </div>
               )}
