@@ -3207,14 +3207,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             {/* Aba Volumes */}
             <TabsContent value="volumes" className="flex-1 flex flex-col mt-0 overflow-hidden">
               <div className="p-2 border-b" style={{ borderColor: theme.cardBorder }}>
-                <h3 className="font-semibold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-                  <Package className="w-4 h-4" />
-                  Volumes para Carregamento
-                </h3>
-
-            {/* Tipo de Filtro */}
-            <div className="mb-3">
-              <Tabs value={filtroTipo} onValueChange={setFiltroTipo}>
+                {/* Tipo de Filtro */}
+                <div className="mb-3">
+                  <Tabs value={filtroTipo} onValueChange={setFiltroTipo}>
                 <TabsList className="grid w-full grid-cols-2 h-8">
                   <TabsTrigger value="volume" className="text-xs">Volume / Etiq. Mãe</TabsTrigger>
                   <TabsTrigger value="nota_fiscal" className="text-xs">Nota Fiscal</TabsTrigger>
