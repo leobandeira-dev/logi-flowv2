@@ -3193,7 +3193,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         {/* Painel Esquerdo - Volumes e Lista de Notas */}
         <div className="w-80 border-r flex flex-col" style={{ borderColor: theme.cardBorder, backgroundColor: theme.cardBg }}>
           <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="grid w-[calc(100%-1rem)] grid-cols-2 mx-auto mt-2">
+            <TabsList className="grid w-[calc(100%-1rem)] grid-cols-2 mx-auto mt-2 mb-0">
               <TabsTrigger value="volumes" className="text-sm h-8">
                 <Package className="w-3 h-3 mr-1" />
                 Volumes
@@ -3205,7 +3205,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsList>
 
             {/* Aba Volumes */}
-            <TabsContent value="volumes" className="flex-1 flex flex-col mt-0 overflow-hidden">
+            <TabsContent value="volumes" className="flex-1 flex flex-col overflow-hidden" style={{ marginTop: 0, paddingTop: 0 }}>
               <div className="p-2 border-b" style={{ borderColor: theme.cardBorder }}>
                 {/* Tipo de Filtro */}
                 <div className="mb-3">
@@ -3665,7 +3665,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsContent>
 
             {/* Aba Lista de Notas */}
-            <TabsContent value="notas" className="flex-1 overflow-y-auto m-0 px-2 pb-2 space-y-1.5">
+            <TabsContent value="notas" className="flex-1 overflow-y-auto px-2 pb-2 space-y-1.5" style={{ margin: 0, padding: '0 0.5rem 0.5rem 0.5rem' }}>
               {(() => {
                 // CRÍTICO: Remover duplicatas por ID antes de renderizar
                 const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
