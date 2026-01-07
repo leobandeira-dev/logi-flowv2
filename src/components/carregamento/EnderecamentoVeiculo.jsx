@@ -595,11 +595,74 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     }
   };
 
-  const handleClickCelula = (linha, coluna) => {
-    // Abrir câmera para scanear volumes diretamente na célula
+  const handleClickCelula = async (linha, coluna) => {
+    // Se houver volumes selecionados, alocar diretamente SEM abrir câmera
+    if (volumesSelecionados.length > 0) {
+      try {
+        const user = await base44.auth.me();
+
+        // Verificar duplicatas
+        const endereçamentosExistentes = await base44.entities.EnderecamentoVolume.filter({
+          ordem_id: ordem.id,
+          volume_id: { $in: volumesSelecionados }
+        });
+
+        const volumesJaEnderecados = endereçamentosExistentes.map(e => e.volume_id);
+        const volumesParaEnderecear = volumesSelecionados.filter(id => !volumesJaEnderecados.includes(id));
+
+        if (volumesParaEnderecear.length === 0) {
+          playErrorBeep();
+          toast.warning("Todos os volumes selecionados já foram endereçados");
+          setVolumesSelecionados([]);
+          return;
+        }
+
+        if (volumesJaEnderecados.length > 0) {
+          toast.info(`${volumesJaEnderecados.length} volume(s) já endereçado(s), alocando ${volumesParaEnderecear.length}`);
+        }
+
+        // Alocar volumes selecionados
+        for (const volumeId of volumesParaEnderecear) {
+          const volume = volumesLocal.find(v => v.id === volumeId);
+          if (!volume) continue;
+
+          await base44.entities.Volume.update(volumeId, {
+            status_volume: "carregado",
+            localizacao_atual: `Ordem ${ordem.numero_carga || ordem.id.slice(-6)} - ${linha}-${coluna}`
+          });
+
+          await base44.entities.EnderecamentoVolume.create({
+            ordem_id: ordem.id,
+            volume_id: volumeId,
+            nota_fiscal_id: volume.nota_fiscal_id,
+            linha: linha,
+            coluna: coluna,
+            posicao_celula: `${linha}-${coluna}`,
+            data_enderecamento: new Date().toISOString(),
+            enderecado_por: user.id
+          });
+        }
+
+        // Recarregar endereçamentos
+        const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
+        setEnderecamentos(todosEnderecamentos);
+        
+        setVolumesSelecionados([]);
+        salvarRascunho();
+        
+        playSuccessBeep();
+        toast.success(`✅ ${volumesParaEnderecear.length} volume(s) alocado(s) em ${linha}-${coluna}!`, { duration: 3000 });
+      } catch (error) {
+        console.error("Erro ao alocar volumes:", error);
+        playErrorBeep();
+        toast.error("Erro ao alocar volumes");
+      }
+      return;
+    }
+
+    // Se NÃO houver volumes selecionados, abrir câmera
     setCelulaAtiva({ linha, coluna });
     setShowCamera(true);
-    setVolumesSelecionados([]);
     setSearchTerm("");
   };
 
