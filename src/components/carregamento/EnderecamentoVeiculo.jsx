@@ -178,6 +178,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const [apenasNotasVinculadas, setApenasNotasVinculadas] = useState(false);
   const [showCameraNotaFiscal, setShowCameraNotaFiscal] = useState(false);
   const [feedbackNota, setFeedbackNota] = useState(null); // 'success' | 'duplicate' | 'error'
+  const [feedbackMensagem, setFeedbackMensagem] = useState("");
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -788,7 +789,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           }
         );
         
-        setTimeout(() => setFeedbackNota(null), 3300);
+        setTimeout(() => {
+          setFeedbackNota(null);
+          setFeedbackMensagem("");
+        }, 3300);
         setProcessandoChave(false);
         return;
       }
@@ -878,7 +882,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           }
         );
         
-        setTimeout(() => setFeedbackNota(null), 3300);
+        setTimeout(() => {
+          setFeedbackNota(null);
+          setFeedbackMensagem("");
+        }, 3300);
         setSearchChaveNF("");
         setNotasBaseBusca("");
         setProcessandoChave(false);
@@ -1023,7 +1030,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         }
       );
       
-      setTimeout(() => setFeedbackNota(null), 3300);
+      setTimeout(() => {
+        setFeedbackNota(null);
+        setFeedbackMensagem("");
+      }, 3300);
       setSearchChaveNF("");
       setNotasBaseBusca("");
       
@@ -1056,7 +1066,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         }
       );
       
-      setTimeout(() => setFeedbackNota(null), 3000);
+      setTimeout(() => {
+        setFeedbackNota(null);
+        setFeedbackMensagem("");
+      }, 3300);
       setSearchChaveNF("");
       setNotasBaseBusca("");
     } finally {
@@ -4201,8 +4214,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       placeholder="44 dígitos - bipe ou cole..."
                       value={searchChaveNF}
                       onChange={(e) => {
-                        setSearchChaveNF(e.target.value.replace(/\D/g, '').substring(0, 44));
-                        if (feedbackNota) setFeedbackNota(null);
+                       setSearchChaveNF(e.target.value.replace(/\D/g, '').substring(0, 44));
+                       if (feedbackNota) {
+                         setFeedbackNota(null);
+                         setFeedbackMensagem("");
+                       }
                       }}
                       className="h-7 text-xs font-mono transition-all duration-300"
                       style={{ 
