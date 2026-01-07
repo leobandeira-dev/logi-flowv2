@@ -3667,16 +3667,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             {/* Aba Lista de Notas */}
             <TabsContent value="notas" className="flex-1 overflow-y-auto mt-0 p-2">
               <div className="space-y-1.5">
-                  {(() => {
-                    // CRÍTICO: Remover duplicatas por ID antes de renderizar
-                    const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
-                      if (!acc.find(n => n.id === nota.id)) {
-                        acc.push(nota);
-                      }
-                      return acc;
-                    }, []);
-                    
-                    return notasUnicas.map((nota) => {
+                {(() => {
+                  // CRÍTICO: Remover duplicatas por ID antes de renderizar
+                  const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
+                    if (!acc.find(n => n.id === nota.id)) {
+                      acc.push(nota);
+                    }
+                    return acc;
+                  }, []);
+                  
+                  return notasUnicas.map((nota) => {
                     const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
                     const volumesEndNota = enderecamentos.filter(e => e.nota_fiscal_id === nota.id && e.ordem_id === ordem.id);
                     const origem = notasOrigem[nota.id] || "Vinculada";
