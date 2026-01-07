@@ -3665,9 +3665,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsContent>
 
             {/* Aba Lista de Notas */}
-            <TabsContent value="notas" className="flex-1 flex flex-col mt-0 overflow-hidden">
-              <div className="flex-1 overflow-y-auto px-2 pb-2">
-                <div className="space-y-1.5">
+            <TabsContent value="notas" className="flex-1 overflow-y-auto mt-0 p-2">
+              <div className="space-y-1.5">
                   {(() => {
                     // CRÍTICO: Remover duplicatas por ID antes de renderizar
                     const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
