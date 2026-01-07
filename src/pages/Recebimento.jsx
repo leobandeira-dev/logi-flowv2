@@ -1934,6 +1934,13 @@ export default function Recebimento() {
                           ref={inputChaveRef}
                           placeholder="Cole ou escaneie"
                           defaultValue=""
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 44);
+                            if (value.length === 44) {
+                              handleBuscarPorChave(value);
+                              e.target.value = "";
+                            }
+                          }}
                           onPaste={(e) => {
                             e.preventDefault();
                             const pastedText = e.clipboardData.getData('text');
@@ -1969,13 +1976,12 @@ export default function Recebimento() {
                             borderColor: filaImportacao.length > 0 ? '#8b5cf6' : theme.cardBorder,
                             color: theme.text
                           }}
-                          disabled={filaImportacao.length > 0}
                           autoComplete="off"
+                          autoFocus
                         />
                         <Button
                           type="button"
                           onClick={() => setShowScanner(true)}
-                          disabled={filaImportacao.length > 0}
                           variant="outline"
                           className="h-9 w-9 p-0 flex-shrink-0"
                           style={{ borderColor: theme.cardBorder, color: theme.text }}
