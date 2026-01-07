@@ -440,7 +440,7 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                           </Badge>
                         </TableCell>
                         <TableCell className="py-1 px-2 align-middle">
-                          <Badge className={`text-[9px] h-6 px-1.5 font-bold ${statusInfo.color} flex flex-col items-center justify-center leading-[1.1] py-0.5`}>
+                          <Badge className={`text-[9px] h-auto min-h-6 px-1.5 font-bold ${statusInfo.color} flex flex-col items-center justify-center leading-[1.1] py-0.5`}>
                             {Array.isArray(statusInfo.label) ? (
                               statusInfo.label.map((linha, i) => (
                                 <span key={i} className="whitespace-nowrap">{linha}</span>
