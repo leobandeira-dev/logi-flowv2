@@ -2187,7 +2187,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       return Object.entries(volumesPorNota).map(([notaId, volumes]) => {
                         const nota = notasFiscaisLocal.find(nf => nf.id === notaId);
                         const expandKey = `sidebar-mobile-${notaId}`;
-                        const isExpanded = notasExpandidas[expandKey] !== false;
+                        const isExpanded = notasExpandidas[expandKey] === true;
                         
                         return (
                           <div key={notaId} className="border rounded" style={{ borderColor: theme.cardBorder }}>
