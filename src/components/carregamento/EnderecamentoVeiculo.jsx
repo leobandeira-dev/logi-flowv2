@@ -2083,6 +2083,79 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     }
   };
 
+  const handleGerarArquivoChaves = async () => {
+    try {
+      const user = await base44.auth.me();
+      let empresa = null;
+
+      if (user.empresa_id) {
+        try {
+          empresa = await base44.entities.Empresa.get(user.empresa_id);
+        } catch (error) {
+          console.log("Erro ao buscar empresa:", error);
+        }
+      }
+
+      const dataAtual = new Date().toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      // Gerar conteúdo do arquivo TXT
+      let conteudo = `========================================\n`;
+      conteudo += `CHAVES DE ACESSO - NOTAS FISCAIS\n`;
+      conteudo += `========================================\n\n`;
+      
+      conteudo += `ORDEM DE CARREGAMENTO: ${ordem.numero_carga || `#${ordem.id.slice(-6)}`}\n`;
+      conteudo += `CLIENTE: ${ordem.cliente || '-'}\n`;
+      conteudo += `ORIGEM: ${ordem.origem_cidade || ordem.origem || '-'}\n`;
+      conteudo += `DESTINO: ${ordem.destino_cidade || ordem.destino || '-'}\n`;
+      
+      if (empresa) {
+        conteudo += `EMPRESA: ${empresa.nome_fantasia || empresa.razao_social}\n`;
+        if (empresa.cnpj) conteudo += `CNPJ: ${empresa.cnpj}\n`;
+      }
+      
+      conteudo += `GERADO POR: ${user.full_name || user.email}\n`;
+      conteudo += `DATA/HORA: ${dataAtual}\n`;
+      conteudo += `\n========================================\n`;
+      conteudo += `TOTAL DE NOTAS: ${notasFiscaisLocal.length}\n`;
+      conteudo += `========================================\n\n`;
+
+      // Listar chaves das notas fiscais
+      conteudo += `CHAVES DE ACESSO:\n\n`;
+      
+      notasFiscaisLocal.forEach((nota, index) => {
+        if (nota.chave_nota_fiscal) {
+          conteudo += `${nota.chave_nota_fiscal}\n`;
+        }
+      });
+
+      conteudo += `\n========================================\n`;
+      conteudo += `FIM DO ARQUIVO\n`;
+      conteudo += `========================================\n`;
+
+      // Criar blob e fazer download
+      const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `chaves_nf_${ordem.numero_carga || ordem.id.slice(-6)}_${new Date().toISOString().slice(0, 10)}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success(`✅ Arquivo TXT gerado com ${notasFiscaisLocal.length} chave(s)!`, { duration: 3000 });
+    } catch (error) {
+      console.error("Erro ao gerar arquivo TXT:", error);
+      toast.error("Erro ao gerar arquivo TXT");
+    }
+  };
+
   const gerarPDFListaNotas = (user, empresa) => {
     const dataAtual = new Date().toLocaleString('pt-BR');
 
@@ -2643,6 +2716,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 size="sm"
                 className="h-7"
                 style={{ borderColor: theme.cardBorder, color: theme.text }}
+              >
+                <FileText className="w-3 h-3" />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleGerarArquivoChaves}
+                size="sm"
+                className="h-7"
+                style={{ borderColor: theme.cardBorder, color: theme.text }}
+                title="Gerar arquivo TXT com chaves"
               >
                 <FileText className="w-3 h-3" />
               </Button>
@@ -3816,6 +3899,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             >
               <Printer className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
               <span className="hidden sm:inline">Notas</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleGerarArquivoChaves}
+              size="sm"
+              className="h-7 sm:h-9 px-2 sm:px-4"
+              style={{ borderColor: theme.cardBorder, color: theme.text }}
+            >
+              <FileText className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Chaves</span>
             </Button>
             <Button
               onClick={handleSalvarProgresso}
