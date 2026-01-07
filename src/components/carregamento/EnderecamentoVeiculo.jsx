@@ -3665,17 +3665,18 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsContent>
 
             {/* Aba Lista de Notas */}
-            <TabsContent value="notas" className="flex-1 overflow-y-auto space-y-1.5" style={{ margin: 0, padding: '0 0.5rem 0.5rem 0.5rem' }}>
-              {(() => {
-                // CRÍTICO: Remover duplicatas por ID antes de renderizar
-                const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
-                  if (!acc.find(n => n.id === nota.id)) {
-                    acc.push(nota);
-                  }
-                  return acc;
-                }, []);
-                
-                return notasUnicas.map((nota) => {
+            <TabsContent value="notas" className="flex-1 overflow-y-auto" style={{ margin: 0, padding: 0 }}>
+              <div className="space-y-1.5" style={{ padding: '0 0.5rem 0.5rem 0.5rem' }}>
+                {(() => {
+                  // CRÍTICO: Remover duplicatas por ID antes de renderizar
+                  const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
+                    if (!acc.find(n => n.id === nota.id)) {
+                      acc.push(nota);
+                    }
+                    return acc;
+                  }, []);
+                  
+                  return notasUnicas.map((nota) => {
                     const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
                     const volumesEndNota = enderecamentos.filter(e => e.nota_fiscal_id === nota.id && e.ordem_id === ordem.id);
                     const origem = notasOrigem[nota.id] || "Vinculada";
@@ -3744,7 +3745,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     <p className="text-sm">Nenhuma nota fiscal vinculada</p>
                     </div>
                     )}
-                    </TabsContent>
+                  })()}
+                </div>
+              </TabsContent>
           </Tabs>
         </div>
 
