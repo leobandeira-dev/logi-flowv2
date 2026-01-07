@@ -646,7 +646,19 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         setNotasOrigem(prev => ({ ...prev, [notaExistente.id]: "Adicionada" }));
         
         try { playSuccessBeep(); } catch (e) {}
-        toast.success(`✅ Nota fiscal ${notaExistente.numero_nota} VINCULADA com sucesso! ${volumesNota.length} volumes carregados`, { duration: 4000 });
+        
+        // Feedback visual detalhado
+        const feedbackMsg = `✅ NF ${notaExistente.numero_nota} VINCULADA\n` +
+          `📤 Remetente: ${notaExistente.emitente_razao_social || 'N/A'}\n` +
+          `📍 Origem: ${notaExistente.emitente_cidade || 'N/A'}/${notaExistente.emitente_uf || 'N/A'}\n` +
+          `📥 Destinatário: ${notaExistente.destinatario_razao_social || 'N/A'}\n` +
+          `📍 Destino: ${notaExistente.destinatario_cidade || 'N/A'}/${notaExistente.destinatario_uf || 'N/A'}\n` +
+          `📦 ${volumesNota.length} volumes carregados`;
+        
+        toast.success(feedbackMsg, { 
+          duration: 8000,
+          style: { whiteSpace: 'pre-line', fontSize: '13px', lineHeight: '1.5' }
+        });
         
         setSearchChaveNF("");
         setNotasBaseBusca("");
@@ -751,7 +763,19 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       setNotasOrigem(prev => ({ ...prev, [novaNF.id]: "Importada" }));
       
       try { playSuccessBeep(); } catch (e) {}
-      toast.success(`✅ Nota fiscal ${numeroNota} IMPORTADA! ${volumesCriados.length} volumes criados`, { duration: 4000 });
+      
+      // Feedback visual detalhado para nota importada
+      const feedbackMsg = `✅ NF ${numeroNota} IMPORTADA DA SEFAZ\n` +
+        `📤 Remetente: ${emitElements?.getElementsByTagName('xNome')[0]?.textContent || 'N/A'}\n` +
+        `📍 Origem: ${emitElements?.getElementsByTagName('xMun')[0]?.textContent || 'N/A'}/${emitElements?.getElementsByTagName('UF')[0]?.textContent || 'N/A'}\n` +
+        `📥 Destinatário: ${destElements?.getElementsByTagName('xNome')[0]?.textContent || 'N/A'}\n` +
+        `📍 Destino: ${destElements?.getElementsByTagName('xMun')[0]?.textContent || 'N/A'}/${destElements?.getElementsByTagName('UF')[0]?.textContent || 'N/A'}\n` +
+        `📦 ${volumesCriados.length} volumes criados | Peso: ${(pesoBruto > 0 ? pesoBruto : pesoLiquido).toLocaleString()} kg`;
+      
+      toast.success(feedbackMsg, { 
+        duration: 8000,
+        style: { whiteSpace: 'pre-line', fontSize: '13px', lineHeight: '1.5' }
+      });
       
       setSearchChaveNF("");
       setNotasBaseBusca("");
