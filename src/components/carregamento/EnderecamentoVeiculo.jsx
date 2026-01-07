@@ -3737,15 +3737,15 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       </div>
                     );
                   });
-                  })()}
+                })()}
 
-                  {notasFiscaisLocal.length === 0 && (
-                    <div className="text-center py-8" style={{ color: theme.textMuted }}>
-                      <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                      <p className="text-sm">Nenhuma nota fiscal vinculada</p>
-                    </div>
-                  )}
-                </div>
+                {notasFiscaisLocal.length === 0 && (
+                  <div className="text-center py-8" style={{ color: theme.textMuted }}>
+                    <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                    <p className="text-sm">Nenhuma nota fiscal vinculada</p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
         </div>
