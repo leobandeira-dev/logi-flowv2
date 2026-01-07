@@ -285,23 +285,43 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           idade: `${Math.floor(diasPassados * 24)}h`
         });
         
-        // Restaurar dados do rascunho
+        // Restaurar TODOS os dados do rascunho na ordem correta
         if (rascunho.notasOrigem) setNotasOrigem(rascunho.notasOrigem);
-        if (rascunho.notas && rascunho.notas.length > 0) setNotasFiscaisLocal(rascunho.notas);
-        if (rascunho.volumes && rascunho.volumes.length > 0) setVolumesLocal(rascunho.volumes);
-        if (rascunho.enderecamentos && rascunho.enderecamentos.length > 0) setEnderecamentos(rascunho.enderecamentos);
         
-        // Toast discreto informando que há um rascunho
-        if (rascunho.enderecamentos?.length > 0) {
+        // CRÍTICO: Restaurar notas e volumes ANTES de endereçamentos
+        if (rascunho.notas && rascunho.notas.length > 0) {
+          setNotasFiscaisLocal(rascunho.notas);
+          console.log(`📋 ${rascunho.notas.length} notas restauradas`);
+        }
+        
+        if (rascunho.volumes && rascunho.volumes.length > 0) {
+          setVolumesLocal(rascunho.volumes);
+          console.log(`📦 ${rascunho.volumes.length} volumes restaurados`);
+        }
+        
+        if (rascunho.enderecamentos && rascunho.enderecamentos.length > 0) {
+          setEnderecamentos(rascunho.enderecamentos);
+          console.log(`📍 ${rascunho.enderecamentos.length} endereçamentos restaurados`);
+        }
+        
+        // Toast detalhado informando o que foi restaurado
+        if (rascunho.enderecamentos?.length > 0 || rascunho.notas?.length > 0) {
           setTimeout(() => {
-            toast.info(`💾 Progresso anterior restaurado: ${rascunho.enderecamentos.length} endereçamentos`, { 
-              duration: 3000 
+            const feedbackMsg = `💾 PROGRESSO RESTAURADO\n` +
+              `📋 ${rascunho.notas?.length || 0} notas fiscais\n` +
+              `📦 ${rascunho.volumes?.length || 0} volumes\n` +
+              `📍 ${rascunho.enderecamentos?.length || 0} posicionamentos`;
+            
+            toast.info(feedbackMsg, { 
+              duration: 5000,
+              style: { whiteSpace: 'pre-line', fontSize: '12px', lineHeight: '1.4' }
             });
           }, 500);
         }
       }
     } catch (error) {
       console.error("Erro ao carregar rascunho:", error);
+      toast.error("Erro ao restaurar progresso salvo");
     }
   };
 
@@ -337,20 +357,56 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const handleSalvarProgresso = async () => {
     setSaving(true);
     try {
-      // Salvar no localStorage
-      salvarRascunho();
+      // 1. Salvar rascunho no localStorage com TODOS os dados
+      const enderecamentosOrdemAtual = enderecamentos.filter(e => e.ordem_id === ordem.id);
+      const rascunho = {
+        enderecamentos: enderecamentosOrdemAtual,
+        notas: notasFiscaisLocal,
+        volumes: volumesLocal,
+        notasOrigem: notasOrigem,
+        timestamp: new Date().toISOString()
+      };
       
-      // Opcional: sincronizar dados críticos com o banco (notas vinculadas)
+      localStorage.setItem(`enderecamento_rascunho_${ordem.id}`, JSON.stringify(rascunho));
+      console.log(`💾 Rascunho salvo completo:`, {
+        enderecamentos: enderecamentosOrdemAtual.length,
+        notas: notasFiscaisLocal.length,
+        volumes: volumesLocal.length
+      });
+      
+      // 2. Sincronizar notas vinculadas no banco
       const notasIds = notasFiscaisLocal.map(n => n.id);
       if (notasIds.length > 0) {
         await base44.entities.OrdemDeCarregamento.update(ordem.id, {
           notas_fiscais_ids: notasIds
         });
+        
+        // Garantir que cada nota está vinculada à ordem
+        for (const nota of notasFiscaisLocal) {
+          await base44.entities.NotaFiscal.update(nota.id, {
+            ordem_id: ordem.id,
+            status_nf: nota.status_nf || "aguardando_expedicao"
+          });
+        }
       }
       
-      toast.success("✅ Progresso salvo! Você pode continuar depois.", { duration: 2000 });
+      // 3. Feedback detalhado
+      const totalVolumesEnderecados = enderecamentosOrdemAtual.length;
+      const totalVolumes = volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length;
+      
+      const feedbackMsg = `✅ PROGRESSO SALVO COM SUCESSO!\n` +
+        `📋 ${notasFiscaisLocal.length} nota(s) fiscal vinculada(s)\n` +
+        `📦 ${totalVolumesEnderecados}/${totalVolumes} volumes posicionados\n` +
+        `💾 Você pode continuar depois`;
+      
+      playSuccessBeep();
+      toast.success(feedbackMsg, { 
+        duration: 5000,
+        style: { whiteSpace: 'pre-line', fontSize: '13px', lineHeight: '1.5', fontWeight: '500' }
+      });
     } catch (error) {
       console.error("Erro ao salvar progresso:", error);
+      playErrorBeep();
       toast.error("Erro ao salvar progresso");
     } finally {
       setSaving(false);
@@ -2732,6 +2788,36 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             {/* Aba Lista de Notas Mobile */}
             <TabsContent value="notas" className="flex-1 overflow-y-auto" style={{ margin: 0, padding: 0 }}>
               <div className="space-y-1.5 p-2">
+              {/* Cabeçalho com Totais Mobile */}
+              <div className="p-2 mb-2 border rounded" style={{ borderColor: theme.cardBorder, backgroundColor: isDark ? '#1e40af22' : '#eff6ff' }}>
+                <div className="grid grid-cols-2 gap-2 text-[10px]">
+                  <div>
+                    <span style={{ color: theme.textMuted }}>Notas:</span>
+                    <span className="ml-1 font-bold" style={{ color: theme.text }}>
+                      {notasFiscaisLocal.length}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: theme.textMuted }}>Volumes:</span>
+                    <span className="ml-1 font-bold" style={{ color: theme.text }}>
+                      {volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: theme.textMuted }}>Peso:</span>
+                    <span className="ml-1 font-bold" style={{ color: theme.text }}>
+                      {notasFiscaisLocal.reduce((sum, nf) => sum + (nf.peso_total_nf || 0), 0).toLocaleString()} kg
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: theme.textMuted }}>m³:</span>
+                    <span className="ml-1 font-bold" style={{ color: theme.text }}>
+                      {volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id))
+                        .reduce((sum, v) => sum + (v.cubagem || 0), 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
               {(() => {
                         const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
                           if (!acc.find(n => n.id === nota.id)) {
@@ -4117,6 +4203,36 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             {/* Aba Lista de Notas */}
             <TabsContent value="notas" className="h-full overflow-y-auto" style={{ margin: 0, padding: 0 }}>
               <div className="space-y-1.5 p-2">
+              {/* Cabeçalho com Totais */}
+              <div className="p-2 mb-2 border rounded" style={{ borderColor: theme.cardBorder, backgroundColor: isDark ? '#1e40af22' : '#eff6ff' }}>
+                <div className="grid grid-cols-2 gap-2 text-[10px]">
+                  <div>
+                    <span style={{ color: theme.textMuted }}>Notas:</span>
+                    <span className="ml-1 font-bold" style={{ color: theme.text }}>
+                      {notasFiscaisLocal.length}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: theme.textMuted }}>Volumes:</span>
+                    <span className="ml-1 font-bold" style={{ color: theme.text }}>
+                      {volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: theme.textMuted }}>Peso:</span>
+                    <span className="ml-1 font-bold" style={{ color: theme.text }}>
+                      {notasFiscaisLocal.reduce((sum, nf) => sum + (nf.peso_total_nf || 0), 0).toLocaleString()} kg
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: theme.textMuted }}>m³:</span>
+                    <span className="ml-1 font-bold" style={{ color: theme.text }}>
+                      {volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id))
+                        .reduce((sum, v) => sum + (v.cubagem || 0), 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
               {(() => {
                 const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
                   if (!acc.find(n => n.id === nota.id)) {
