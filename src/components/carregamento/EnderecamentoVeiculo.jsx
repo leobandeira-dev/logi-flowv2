@@ -3665,18 +3665,17 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </TabsContent>
 
             {/* Aba Lista de Notas */}
-            <TabsContent value="notas" className="flex-1 overflow-y-auto m-0 p-0" style={{ paddingTop: 0 }}>
-              <div className="px-2 pb-2 space-y-1.5" style={{ paddingTop: 0 }}>
-                {(() => {
-                  // CRÍTICO: Remover duplicatas por ID antes de renderizar
-                  const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
-                    if (!acc.find(n => n.id === nota.id)) {
-                      acc.push(nota);
-                    }
-                    return acc;
-                  }, []);
-                  
-                  return notasUnicas.map((nota) => {
+            <TabsContent value="notas" className="flex-1 overflow-y-auto m-0 p-2 space-y-1.5" style={{ paddingTop: 0 }}>
+              {(() => {
+                // CRÍTICO: Remover duplicatas por ID antes de renderizar
+                const notasUnicas = notasFiscaisLocal.reduce((acc, nota) => {
+                  if (!acc.find(n => n.id === nota.id)) {
+                    acc.push(nota);
+                  }
+                  return acc;
+                }, []);
+                
+                return notasUnicas.map((nota) => {
                     const volumesNota = volumesLocal.filter(v => v.nota_fiscal_id === nota.id);
                     const volumesEndNota = enderecamentos.filter(e => e.nota_fiscal_id === nota.id && e.ordem_id === ordem.id);
                     const origem = notasOrigem[nota.id] || "Vinculada";
@@ -3736,17 +3735,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         </div>
                       </div>
                     );
-                  });
-                })()}
+                    });
+                    })()}
 
-                {notasFiscaisLocal.length === 0 && (
-                  <div className="text-center py-8" style={{ color: theme.textMuted }}>
+                    {notasFiscaisLocal.length === 0 && (
+                    <div className="text-center py-8" style={{ color: theme.textMuted }}>
                     <FileText className="w-12 h-12 mx-auto mb-2 opacity-20" />
                     <p className="text-sm">Nenhuma nota fiscal vinculada</p>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
+                    </div>
+                    )}
+                    </TabsContent>
           </Tabs>
         </div>
 
