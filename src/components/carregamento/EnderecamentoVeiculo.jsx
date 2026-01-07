@@ -190,10 +190,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
   useEffect(() => {
     const checkMobile = () => {
-      // Verificar se é dispositivo touch OU se largura é menor que 1024
-      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      const isSmallScreen = window.innerWidth <= 1024;
-      setIsMobile(isTouchDevice || isSmallScreen);
+      // Sempre false - usar layout desktop responsivo em todos os tamanhos
+      setIsMobile(false);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -3167,30 +3165,31 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: theme.bg }}>
       {/* Header */}
-      <div className="border-b p-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
+      <div className="border-b p-2 sm:p-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button
               variant="outline"
               size="sm"
               onClick={onClose}
+              className="h-8 sm:h-9"
               style={{ borderColor: theme.cardBorder, color: theme.text }}
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
+              <ArrowLeft className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Voltar</span>
             </Button>
             <div>
-              <h2 className="text-xl font-bold" style={{ color: theme.text }}>
-                Endereçamento no Caminhão
+              <h2 className="text-base sm:text-xl font-bold" style={{ color: theme.text }}>
+                Endereçamento
               </h2>
-              <p className="text-sm" style={{ color: theme.textMuted }}>
-                Ordem: {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
+              <p className="text-xs sm:text-sm" style={{ color: theme.textMuted }}>
+                {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
               </p>
             </div>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-1 sm:gap-2 items-center flex-wrap w-full sm:w-auto">
             <Select value={tipoImpressao} onValueChange={setTipoImpressao}>
-              <SelectTrigger className="w-32 h-9" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}>
+              <SelectTrigger className="w-20 sm:w-32 h-7 sm:h-9 text-xs" style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
@@ -3202,61 +3201,68 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               variant="outline"
               onClick={handleImprimirLayout}
               disabled={enderecamentos.length === 0}
+              size="sm"
+              className="h-7 sm:h-9 px-2 sm:px-4"
               style={{ borderColor: theme.cardBorder, color: theme.text }}
             >
-              <Printer className="w-4 h-4 mr-2" />
-              Layout
+              <Printer className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Layout</span>
             </Button>
             <Button
               variant="outline"
               onClick={handleImprimirListaNotas}
+              size="sm"
+              className="h-7 sm:h-9 px-2 sm:px-4"
               style={{ borderColor: theme.cardBorder, color: theme.text }}
             >
-              <Printer className="w-4 h-4 mr-2" />
-              Notas
+              <Printer className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Notas</span>
             </Button>
             <Button
               onClick={handleSalvarProgresso}
               disabled={saving}
               variant="outline"
+              size="sm"
+              className="h-7 sm:h-9 px-2 sm:px-4"
               style={{ borderColor: theme.cardBorder, color: theme.text }}
             >
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Progresso
+              <Save className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Salvar</span>
             </Button>
             <Button
               onClick={handleAbrirFinalizacao}
               disabled={saving}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 text-white h-7 sm:h-9 px-2 sm:px-4 text-xs"
             >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Finalizar Carregamento
+              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Finalizar</span>
             </Button>
           </div>
         </div>
 
         {/* Progresso */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span style={{ color: theme.text }}>Progresso do Endereçamento</span>
+        <div className="space-y-1 sm:space-y-2">
+          <div className="flex justify-between text-xs sm:text-sm">
+            <span style={{ color: theme.text }}>Progresso</span>
             <span className="font-bold" style={{ color: theme.text }}>
-              {getEnderecamentosOrdemAtual().length} / {volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length} volumes
+              {getEnderecamentosOrdemAtual().length}/{volumesLocal.filter(v => notasFiscaisLocal.some(nf => nf.id === v.nota_fiscal_id)).length}
             </span>
           </div>
-          <Progress value={progressoEnderecamento} className="h-3" />
+          <Progress value={progressoEnderecamento} className="h-2 sm:h-3" />
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col sm:flex-row overflow-hidden">
         {/* Painel Esquerdo - Volumes e Lista de Notas */}
-        <div className="w-80 border-r flex flex-col" style={{ borderColor: theme.cardBorder, backgroundColor: theme.cardBg }}>
+        <div className="w-full sm:w-80 border-b sm:border-b-0 sm:border-r flex flex-col" style={{ borderColor: theme.cardBorder, backgroundColor: theme.cardBg }}>
           <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col" style={{ display: 'flex', flexDirection: 'column', height: '100%', margin: 0, padding: 0 }}>
-            <TabsList className="grid w-full grid-cols-2 h-8" style={{ flexShrink: 0, margin: 0, borderRadius: 0 }}>
-              <TabsTrigger value="volumes" className="text-sm h-8">
+            <TabsList className="grid w-full grid-cols-2 h-7 sm:h-8" style={{ flexShrink: 0, margin: 0, borderRadius: 0 }}>
+              <TabsTrigger value="volumes" className="text-xs sm:text-sm h-7 sm:h-8">
                 <Package className="w-3 h-3 mr-1" />
                 Volumes
               </TabsTrigger>
-              <TabsTrigger value="notas" className="text-sm h-8">
+              <TabsTrigger value="notas" className="text-xs sm:text-sm h-7 sm:h-8">
                 <FileText className="w-3 h-3 mr-1" />
                 Lista de Notas
               </TabsTrigger>
@@ -3266,9 +3272,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             <TabsContent value="volumes" className="flex-1 overflow-hidden space-y-2 p-2" style={{ margin: 0, display: 'flex', flexDirection: 'column' }}>
               {/* Tipo de Filtro */}
               <Tabs value={filtroTipo} onValueChange={setFiltroTipo} className="flex-shrink-0">
-                <TabsList className="grid w-full grid-cols-2 h-8">
-                  <TabsTrigger value="volume" className="text-xs">Volume / Etiq. Mãe</TabsTrigger>
-                  <TabsTrigger value="nota_fiscal" className="text-xs">Nota Fiscal</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 h-7 sm:h-8">
+                  <TabsTrigger value="volume" className="text-[10px] sm:text-xs">Volume / Etiq. Mãe</TabsTrigger>
+                  <TabsTrigger value="nota_fiscal" className="text-[10px] sm:text-xs">Nota Fiscal</TabsTrigger>
                 </TabsList>
               </Tabs>
 
@@ -3835,15 +3841,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         </div>
 
         {/* Painel Central - Layout do Veículo */}
-        <div className="flex-1 overflow-auto p-4">
+        <div className="flex-1 overflow-auto p-2 sm:p-4">
           <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold flex items-center gap-2" style={{ color: theme.text }}>
-                <Grid3x3 className="w-4 h-4" />
-                Layout do Caminhão - {tipoVeiculo}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2 sm:mb-4">
+              <h3 className="font-semibold text-sm sm:text-base flex items-center gap-2" style={{ color: theme.text }}>
+                <Grid3x3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Layout do Caminhão - {tipoVeiculo}</span>
+                <span className="sm:hidden">Layout - {tipoVeiculo}</span>
               </h3>
               <div className="flex items-center gap-2">
-                <Label className="text-sm" style={{ color: theme.text }}>Linhas:</Label>
+                <Label className="text-xs sm:text-sm" style={{ color: theme.text }}>Linhas:</Label>
                 <Input
                   type="number"
                   value={numLinhas}
@@ -3851,7 +3858,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     const val = parseInt(e.target.value) || 1;
                     setNumLinhas(Math.max(1, Math.min(20, val)));
                   }}
-                  className="w-16 h-8 text-sm"
+                  className="w-14 sm:w-16 h-7 sm:h-8 text-xs sm:text-sm"
                   style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
                   min={1}
                   max={20}
@@ -3860,16 +3867,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </div>
 
             {/* Grid do Veículo */}
-            <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: theme.cellBorder }}>
+            <div className="border-2 rounded-lg overflow-x-auto" style={{ borderColor: theme.cellBorder }}>
               {/* Cabeçalho */}
-              <div className="grid gap-0" style={{ gridTemplateColumns: `80px repeat(${layoutConfig.colunas.length}, minmax(200px, 1fr))` }}>
-                <div className="p-2 font-bold text-center border-b border-r" style={{ backgroundColor: isDark ? '#334155' : '#f1f5f9', borderColor: theme.cellBorder, color: theme.text }}>
-                  Linha
+              <div className="grid gap-0" style={{ gridTemplateColumns: `50px repeat(${layoutConfig.colunas.length}, minmax(120px, 1fr))` }}>
+                <div className="p-1.5 sm:p-2 font-bold text-center border-b border-r text-[10px] sm:text-sm" style={{ backgroundColor: isDark ? '#334155' : '#f1f5f9', borderColor: theme.cellBorder, color: theme.text }}>
+                  Lin
                 </div>
                 {layoutConfig.colunas.map((coluna, idx) => (
                   <div
                     key={coluna}
-                    className="p-2 font-bold text-center border-b"
+                    className="p-1.5 sm:p-2 font-bold text-center border-b text-[9px] sm:text-sm"
                     style={{
                       backgroundColor: isDark ? '#334155' : '#f1f5f9',
                       borderColor: theme.cellBorder,
@@ -3877,7 +3884,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                       color: theme.text
                     }}
                   >
-                    {coluna}
+                    <span className="hidden sm:inline">{coluna}</span>
+                    <span className="sm:hidden">{coluna.substring(0, 3)}</span>
                   </div>
                 ))}
               </div>
@@ -3887,10 +3895,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 <div
                   key={linha}
                   className="grid gap-0"
-                  style={{ gridTemplateColumns: `80px repeat(${layoutConfig.colunas.length}, minmax(200px, 1fr))` }}
+                  style={{ gridTemplateColumns: `50px repeat(${layoutConfig.colunas.length}, minmax(120px, 1fr))` }}
                 >
                   <div
-                    className="p-2 font-bold text-center border-b border-r"
+                    className="p-1.5 sm:p-2 font-bold text-center border-b border-r text-[10px] sm:text-sm"
                     style={{
                       backgroundColor: isDark ? '#334155' : '#f1f5f9',
                       borderColor: theme.cellBorder,
@@ -3912,7 +3920,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                             ref={provided.innerRef}
                             {...provided.droppableProps}
                             onClick={() => handleAlocarNaCelula(linha, coluna)}
-                            className="p-2 border-b min-h-[100px] cursor-pointer hover:bg-opacity-50 transition-all"
+                            className="p-1 sm:p-2 border-b min-h-[60px] sm:min-h-[100px] cursor-pointer hover:bg-opacity-50 transition-all"
                             style={{
                               backgroundColor: snapshot.isDraggingOver 
                                 ? (isDark ? '#1e40af44' : '#dbeafe')
@@ -3938,46 +3946,46 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     <Draggable draggableId={`nota-${nota.id}-${linha}-${coluna}`} index={notaIndex}>
                                       {(provided, snapshot) => (
                                         <div
-                                          ref={provided.innerRef}
-                                          {...provided.draggableProps}
-                                          {...provided.dragHandleProps}
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            toggleNotaExpandida(nota.id, linha, coluna);
-                                          }}
-                                          className="flex items-center justify-between gap-1 px-2 py-1 rounded text-[11px] leading-tight cursor-pointer"
-                                          style={{
-                                           ...provided.draggableProps.style,
-                                           backgroundColor: snapshot.isDragging 
-                                             ? (isDark ? '#1e40af' : '#3b82f6')
-                                             : (isDark ? '#1e40af' : '#bfdbfe'),
-                                           color: isDark ? '#ffffff' : '#1e3a8a',
-                                           opacity: snapshot.isDragging ? 0.9 : 1,
-                                           fontWeight: '600',
-                                           letterSpacing: '0.3px'
-                                          }}
-                                          >
-                                          <span className="font-bold shrink-0 w-14 uppercase">
-                                           {nota.numero_nota}
-                                          </span>
-                                          <span className="flex-1 truncate text-center px-1 uppercase" title={nota.emitente_razao_social}>
-                                           {fornecedorAbreviado}
-                                          </span>
-                                          <span className="font-bold shrink-0 w-6 text-right">
-                                           {volumesNota.length}
-                                          </span>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handleRemoverNotaDaCelula(linha, coluna, nota.id);
-                                            }}
-                                            className="h-4 w-4 p-0 hover:bg-red-100 dark:hover:bg-red-900 flex-shrink-0"
-                                            title="Remover NF desta célula"
-                                          >
-                                            <Trash2 className="w-2.5 h-2.5 text-red-600" />
-                                          </Button>
+                                         ref={provided.innerRef}
+                                         {...provided.draggableProps}
+                                         {...provided.dragHandleProps}
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           toggleNotaExpandida(nota.id, linha, coluna);
+                                         }}
+                                         className="flex items-center justify-between gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[9px] sm:text-[11px] leading-tight cursor-pointer"
+                                         style={{
+                                          ...provided.draggableProps.style,
+                                          backgroundColor: snapshot.isDragging 
+                                            ? (isDark ? '#1e40af' : '#3b82f6')
+                                            : (isDark ? '#1e40af' : '#bfdbfe'),
+                                          color: isDark ? '#ffffff' : '#1e3a8a',
+                                          opacity: snapshot.isDragging ? 0.9 : 1,
+                                          fontWeight: '600',
+                                          letterSpacing: '0.3px'
+                                         }}
+                                         >
+                                         <span className="font-bold shrink-0 w-10 sm:w-14 uppercase text-[9px] sm:text-[10px]">
+                                          {nota.numero_nota}
+                                         </span>
+                                         <span className="flex-1 truncate text-center px-0.5 sm:px-1 uppercase text-[8px] sm:text-[9px]" title={nota.emitente_razao_social}>
+                                          {fornecedorAbreviado}
+                                         </span>
+                                         <span className="font-bold shrink-0 w-4 sm:w-6 text-right text-[9px] sm:text-[10px]">
+                                          {volumesNota.length}
+                                         </span>
+                                         <Button
+                                           variant="ghost"
+                                           size="sm"
+                                           onClick={(e) => {
+                                             e.stopPropagation();
+                                             handleRemoverNotaDaCelula(linha, coluna, nota.id);
+                                           }}
+                                           className="h-3.5 w-3.5 sm:h-4 sm:w-4 p-0 hover:bg-red-100 dark:hover:bg-red-900 flex-shrink-0"
+                                           title="Remover NF desta célula"
+                                         >
+                                           <Trash2 className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-red-600" />
+                                         </Button>
                                         </div>
                                       )}
                                     </Draggable>
@@ -3999,7 +4007,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                                   ref={provided.innerRef}
                                                   {...provided.draggableProps}
                                                   {...provided.dragHandleProps}
-                                                  className="px-1.5 py-0.5 rounded text-[9px] leading-tight cursor-move ml-2"
+                                                  className="px-1 sm:px-1.5 py-0.5 rounded text-[7px] sm:text-[9px] leading-tight cursor-move ml-1 sm:ml-2"
                                                   style={{
                                                     ...provided.draggableProps.style,
                                                     backgroundColor: snapshot.isDragging 
@@ -4026,8 +4034,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                             </div>
                             
                             {!temVolumes && (
-                              <div className="text-center text-xs" style={{ color: theme.textMuted, opacity: 0.5 }}>
-                                {snapshot.isDraggingOver ? "Solte aqui" : "Vazio"}
+                              <div className="text-center text-[10px] sm:text-xs" style={{ color: theme.textMuted, opacity: 0.5 }}>
+                                {snapshot.isDraggingOver ? "Solte" : "Vazio"}
                               </div>
                             )}
                             {provided.placeholder}
@@ -4041,7 +4049,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             </div>
 
             {/* Instruções de Carregamento */}
-            <Card className="mt-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+            <Card className="mt-2 sm:mt-4 hidden sm:block" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
               <CardHeader>
                 <CardTitle className="text-sm" style={{ color: theme.text }}>
                   📋 Instruções de Carregamento
