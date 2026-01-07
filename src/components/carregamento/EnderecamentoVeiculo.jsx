@@ -254,9 +254,14 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   };
 
   useEffect(() => {
-    loadEnderecamentos();
-    loadNotasOrigem();
-    carregarRascunhoLocal();
+    // Carregar dados do banco e depois restaurar rascunho se existir
+    const init = async () => {
+      await loadEnderecamentos();
+      loadNotasOrigem();
+      // Pequeno delay para garantir que o estado do banco foi processado
+      setTimeout(() => carregarRascunhoLocal(), 100);
+    };
+    init();
   }, [ordem.id]);
 
   const carregarRascunhoLocal = () => {
@@ -3666,14 +3671,14 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
             {/* Aba Lista de Notas */}
             <TabsContent value="notas" className="flex-1 flex flex-col mt-0 overflow-hidden">
-              <div className="p-2 border-b" style={{ borderColor: theme.cardBorder }}>
-                <h3 className="font-semibold flex items-center gap-2" style={{ color: theme.text }}>
+              <div className="px-3 py-2 border-b flex-shrink-0" style={{ borderColor: theme.cardBorder }}>
+                <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: theme.text }}>
                   <FileText className="w-4 h-4" />
                   Notas Fiscais ({notasFiscaisLocal.length})
                 </h3>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto px-2 py-2">
                 <div className="space-y-1.5">
                   {(() => {
                     // CRÍTICO: Remover duplicatas por ID antes de renderizar
