@@ -699,21 +699,28 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         e.linha === linha && e.coluna === coluna && e.nota_fiscal_id === notaId
       );
 
-      for (const end of endsParaRemover) {
-        await base44.entities.EnderecamentoVolume.delete(end.id);
-      }
-
+      // ATUALIZAÇÃO OTIMISTA: Remover do estado imediatamente
       const enderecamentosAtualizados = getEnderecamentosOrdemAtual().filter(e =>
         !(e.linha === linha && e.coluna === coluna && e.nota_fiscal_id === notaId)
       );
       setEnderecamentos(enderecamentosAtualizados);
 
+      // Deletar do banco em paralelo (background)
+      const deletePromises = endsParaRemover.map(async end => {
+        await base44.entities.EnderecamentoVolume.delete(end.id);
+        await base44.entities.Volume.update(end.volume_id, {
+          status_volume: "criado",
+          localizacao_atual: null
+        });
+      });
+
+      await Promise.all(deletePromises);
+
       toast.success("✅ Nota fiscal removida da célula!", { duration: 3000 });
-      
-      // Salvar rascunho de forma assíncrona
       salvarRascunho();
     } catch (error) {
       console.error("Erro ao remover:", error);
+      await loadEnderecamentos();
       toast.error("Erro ao remover da célula");
     }
   };
@@ -1387,32 +1394,28 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         );
 
         if (endsParaRemover.length > 0) {
-          // Atualização otimista
+          // ATUALIZAÇÃO OTIMISTA: Remover imediatamente do estado
           const enderecamentosAtualizados = getEnderecamentosOrdemAtual().filter(e =>
             !(e.linha === parseInt(linhaOrigem) && e.coluna === colunaOrigem && e.nota_fiscal_id === notaId)
           );
           setEnderecamentos(enderecamentosAtualizados);
 
           try {
-            for (const end of endsParaRemover) {
+            // Deletar em paralelo (background)
+            const deletePromises = endsParaRemover.map(async end => {
               await base44.entities.EnderecamentoVolume.delete(end.id);
               await base44.entities.Volume.update(end.volume_id, {
                 status_volume: "criado",
                 localizacao_atual: null
               });
-            }
+            });
 
-            // Recarregar apenas endereçamentos desta ordem
-            const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
-            setEnderecamentos(todosEnderecamentos);
+            await Promise.all(deletePromises);
 
             toast.success(`✅ Nota desalocada! ${endsParaRemover.length} volumes removidos`, { duration: 3000 });
-            
-            // Salvar rascunho de forma assíncrona
             salvarRascunho();
           } catch (error) {
             console.error("Erro ao desalocar nota:", error);
-            // Reverter em caso de erro
             await loadEnderecamentos();
             toast.error("Erro ao desalocar nota");
           }
@@ -1450,27 +1453,23 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
     // Se soltar na lista de volumes, DESALOCAR
     if (destination.droppableId === "volumes-list" || destination.droppableId === "volumes-list-mobile") {
-      // Verificar se o volume estava alocado
       const alocacaoExistente = getEnderecamentosOrdemAtual().find(e => e.volume_id === volumeId);
       
       if (alocacaoExistente) {
         try {
-          // Remover endereçamento
-          await base44.entities.EnderecamentoVolume.delete(alocacaoExistente.id);
-          
-          // Atualizar status do volume
-          await base44.entities.Volume.update(volumeId, {
-            status_volume: "criado",
-            localizacao_atual: null
-          });
+          // ATUALIZAÇÃO OTIMISTA: Remover do estado imediatamente
+          setEnderecamentos(prev => prev.filter(e => e.id !== alocacaoExistente.id));
 
-          // Recarregar apenas endereçamentos desta ordem
-          const todosEnderecamentos = await base44.entities.EnderecamentoVolume.filter({ ordem_id: ordem.id });
-          setEnderecamentos(todosEnderecamentos);
+          // Deletar do banco em paralelo (background)
+          await Promise.all([
+            base44.entities.EnderecamentoVolume.delete(alocacaoExistente.id),
+            base44.entities.Volume.update(volumeId, {
+              status_volume: "criado",
+              localizacao_atual: null
+            })
+          ]);
 
-          toast.success("✅ Volume desalocado com sucesso!", { duration: 2500 });
-
-          // Salvar rascunho automaticamente
+          toast.success("✅ Volume desalocado!", { duration: 2000 });
           setTimeout(() => salvarRascunho(), 100);
         } catch (error) {
           console.error("Erro ao desalocar volume:", error);
