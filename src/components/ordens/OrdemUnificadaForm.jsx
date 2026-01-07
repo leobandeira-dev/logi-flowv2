@@ -1028,18 +1028,45 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
         }
       };
 
-      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-        file_url,
-        json_schema: ordemSchema
-      });
+      let dados = null;
 
-      if (result.status !== "success" || !result.output) {
-        throw new Error("Não foi possível extrair os dados do PDF.");
+      try {
+        setProgressoImportacao({ etapa: 'analise', progresso: 30, detalhe: 'Tentando leitura rápida do texto...' });
+        
+        // TENTATIVA 1: Processamento Rápido via Backend (Extração de Texto)
+        // Isso é muito mais rápido para PDFs gerados por sistemas (não escaneados)
+        const response = await base44.functions.invoke('processarPdfOrdem', {
+          file_url,
+          json_schema: ordemSchema
+        });
+
+        if (response.data && response.data.output) {
+          dados = response.data.output;
+          console.log("✅ Sucesso na leitura rápida de texto");
+        } else {
+          throw new Error("Falha na leitura rápida");
+        }
+
+      } catch (fastError) {
+        console.log("⚠️ Falha na leitura rápida, iniciando leitura visual profunda:", fastError);
+        
+        // TENTATIVA 2: Fallback para Leitura Visual (ExtractDataFromUploadedFile)
+        // Mais lento, mas funciona para PDFs escaneados/imagens
+        setProgressoImportacao({ etapa: 'analise', progresso: 45, detalhe: 'Arquivo escaneado detectado. Usando leitura visual profunda (pode demorar)...' });
+        
+        const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+          file_url,
+          json_schema: ordemSchema
+        });
+
+        if (result.status !== "success" || !result.output) {
+          throw new Error("Não foi possível extrair os dados do PDF.");
+        }
+        
+        dados = result.output;
       }
 
-      setProgressoImportacao({ etapa: 'processamento', progresso: 70, detalhe: 'Processando dados e cadastros...' });
-
-      const dados = result.output;
+      setProgressoImportacao({ etapa: 'processamento', progresso: 80, detalhe: 'Processando dados e cadastros...' });
 
       // PROCESSO OTIMIZADO: Paralelizar busca/criação de Motorista e Veículos
       
