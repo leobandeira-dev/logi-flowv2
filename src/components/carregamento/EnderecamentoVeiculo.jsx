@@ -3576,16 +3576,35 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                         style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
                         disabled={processandoChave}
                         autoFocus
-                      />
-                      {processandoChave && (
+                        />
+                        {feedbackMensagem && (
+                        <div 
+                          className="text-sm font-bold mt-2 px-2 py-1 rounded"
+                          style={{ 
+                            color: feedbackNota === 'success' ? '#10b981' : 
+                                   feedbackNota === 'duplicate' ? '#a855f7' : 
+                                   feedbackNota === 'error' ? '#ef4444' : 
+                                   theme.text,
+                            backgroundColor: feedbackNota === 'success' ? 'rgba(16, 185, 129, 0.1)' :
+                                            feedbackNota === 'duplicate' ? 'rgba(168, 85, 247, 0.1)' :
+                                            feedbackNota === 'error' ? 'rgba(239, 68, 68, 0.1)' :
+                                            'transparent'
+                          }}
+                        >
+                          {feedbackMensagem}
+                        </div>
+                        )}
+                        {processandoChave && (
                         <div className="flex items-center gap-2 mt-2">
                           <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
                           <span className="text-xs" style={{ color: theme.text }}>Processando...</span>
                         </div>
-                      )}
-                      <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
-                        Cole ou bipe a chave - pesquisa automática
-                      </p>
+                        )}
+                        {!feedbackMensagem && !processandoChave && (
+                        <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
+                          Cole ou bipe a chave - pesquisa automática
+                        </p>
+                        )}
                     </>
                   ) : (
                     <>
@@ -3619,23 +3638,29 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                           }}
                           autoFocus
                           />
+                          </div>
                           {feedbackMensagem && (
                           <div 
-                            className="text-xs font-semibold mt-1 transition-all duration-300"
-                            style={{ 
-                              color: feedbackNota === 'success' ? '#10b981' : 
-                                     feedbackNota === 'duplicate' ? '#a855f7' : 
-                                     feedbackNota === 'error' ? '#ef4444' : 
-                                     theme.text 
-                            }}
+                          className="text-sm font-bold mt-2 px-2 py-1 rounded"
+                          style={{ 
+                            color: feedbackNota === 'success' ? '#10b981' : 
+                                   feedbackNota === 'duplicate' ? '#a855f7' : 
+                                   feedbackNota === 'error' ? '#ef4444' : 
+                                   theme.text,
+                            backgroundColor: feedbackNota === 'success' ? 'rgba(16, 185, 129, 0.1)' :
+                                            feedbackNota === 'duplicate' ? 'rgba(168, 85, 247, 0.1)' :
+                                            feedbackNota === 'error' ? 'rgba(239, 68, 68, 0.1)' :
+                                            'transparent'
+                          }}
                           >
-                            {feedbackMensagem}
+                          {feedbackMensagem}
                           </div>
                           )}
-                          </div>
-                      <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
-                        Digite número ou bipe chave - Enter para importar
-                      </p>
+                          {!feedbackMensagem && (
+                          <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>
+                          Digite número ou bipe chave - Enter para importar
+                          </p>
+                          )}
                     </>
                   )}
                 </div>
