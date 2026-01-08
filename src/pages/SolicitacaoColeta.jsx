@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Package, Upload, Plus, RefreshCw, X, Edit, Search, MapPin, Loader2 } from "lucide-react";
+import { Package, Upload, Plus, RefreshCw, X, Edit, Search, MapPin, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import NotaFiscalForm from "../components/notas-fiscais/NotaFiscalForm";
