@@ -46,6 +46,7 @@ export default function SolicitacaoColeta() {
   const [distanciaOpDest, setDistanciaOpDest] = useState(null);
   const [erroCalculoDistancia, setErroCalculoDistancia] = useState(false);
   const [kmManual, setKmManual] = useState(null);
+  const [aliquotaIcmsManual, setAliquotaIcmsManual] = useState(null);
   
   const [formData, setFormData] = useState({
     // Remetente
@@ -756,60 +757,111 @@ export default function SolicitacaoColeta() {
 
     const valorFaixa = itemAplicavel.valores_colunas?.[kmFaixa] || 0;
 
-    let valorBase = 0;
+    let freteValor = 0;
 
     // Calcular baseado no tipo de tabela
     switch (tabelaSelecionada.tipo_tabela) {
       case "peso_km":
         if (itemAplicavel.unidade === "viagem") {
-          valorBase = valorFaixa;
+          freteValor = valorFaixa;
         } else if (itemAplicavel.unidade === "tonelada") {
-          valorBase = valorFaixa * (pesoTotal / 1000);
+          freteValor = valorFaixa * (pesoTotal / 1000);
         } else if (itemAplicavel.unidade === "kg") {
-          valorBase = valorFaixa * pesoTotal;
+          freteValor = valorFaixa * pesoTotal;
         }
         break;
       case "percentual_nf":
-        valorBase = valorTotal * (valorFaixa / 100);
+        freteValor = valorTotal * (valorFaixa / 100);
         break;
       case "valor_fixo":
-        valorBase = valorFaixa;
+        freteValor = valorFaixa;
         break;
       default:
-        valorBase = valorFaixa;
+        freteValor = valorFaixa;
     }
 
-    // Aplicar adicionais e taxas
-    let valorFinal = valorBase;
-    
-    if (tabelaSelecionada.frete_minimo && valorFinal < tabelaSelecionada.frete_minimo) {
-      valorFinal = tabelaSelecionada.frete_minimo;
+    // Aplicar frete mínimo se necessário
+    if (tabelaSelecionada.frete_minimo && freteValor < tabelaSelecionada.frete_minimo) {
+      freteValor = tabelaSelecionada.frete_minimo;
     }
 
-    // Ad Valorem
-    if (tabelaSelecionada.ad_valorem) {
-      valorFinal += valorTotal * (tabelaSelecionada.ad_valorem / 100);
-    }
-
-    // GRIS
-    if (tabelaSelecionada.gris) {
-      valorFinal += valorTotal * (tabelaSelecionada.gris / 100);
-    }
+    // Calcular componentes individuais
+    const componentes = {
+      freteValor,
+      pedagio: 0,
+      adValorem: 0,
+      gris: 0,
+      seguro: 0,
+      taxaColeta: tabelaSelecionada.taxa_coleta || 0,
+      taxaEntrega: tabelaSelecionada.taxa_entrega || 0,
+      taxaRedespacho: tabelaSelecionada.taxa_redespacho || 0,
+      tde: tabelaSelecionada.tde || 0,
+      generalidades: 0,
+      desconto: 0
+    };
 
     // Pedagio
     if (tabelaSelecionada.pedagio) {
       if (tabelaSelecionada.tipo_pedagio === "fixo") {
-        valorFinal += tabelaSelecionada.pedagio;
+        componentes.pedagio = tabelaSelecionada.pedagio;
       } else if (tabelaSelecionada.tipo_pedagio === "percentual") {
-        valorFinal += valorBase * (tabelaSelecionada.pedagio / 100);
+        componentes.pedagio = freteValor * (tabelaSelecionada.pedagio / 100);
       }
     }
 
-    // Taxas fixas
-    valorFinal += (tabelaSelecionada.taxa_coleta || 0);
-    valorFinal += (tabelaSelecionada.taxa_entrega || 0);
-    valorFinal += (tabelaSelecionada.taxa_redespacho || 0);
-    valorFinal += (tabelaSelecionada.tde || 0);
+    // Ad Valorem (% sobre valor da NF)
+    if (tabelaSelecionada.ad_valorem) {
+      componentes.adValorem = valorTotal * (tabelaSelecionada.ad_valorem / 100);
+    }
+
+    // GRIS (% sobre valor da NF)
+    if (tabelaSelecionada.gris) {
+      componentes.gris = valorTotal * (tabelaSelecionada.gris / 100);
+    }
+
+    // Seguro (% sobre valor da NF)
+    if (tabelaSelecionada.seguro) {
+      componentes.seguro = valorTotal * (tabelaSelecionada.seguro / 100);
+    }
+
+    // Generalidades (% sobre frete base)
+    if (tabelaSelecionada.generalidades) {
+      componentes.generalidades = freteValor * (tabelaSelecionada.generalidades / 100);
+    }
+
+    // Soma de todos os custos antes de ICMS
+    const somaCustos = Object.values(componentes).reduce((sum, val) => sum + val, 0);
+
+    // Calcular desconto se houver
+    if (tabelaSelecionada.desconto) {
+      componentes.desconto = somaCustos * (tabelaSelecionada.desconto / 100);
+    }
+
+    const valorAntesICMS = somaCustos - componentes.desconto;
+
+    // Calcular ICMS
+    const aliquotaIcms = aliquotaIcmsManual || tabelaSelecionada.icms || 0;
+    const adicionarIcms = tabelaSelecionada.adicionar_icms || false;
+    
+    let valorFinal = 0;
+    let valorIcms = 0;
+    let baseCalculoIcms = 0;
+
+    if (aliquotaIcms > 0) {
+      if (adicionarIcms) {
+        // Adicionar ICMS: valor / (1 - icms)
+        valorFinal = valorAntesICMS / (1 - (aliquotaIcms / 100));
+        valorIcms = valorFinal - valorAntesICMS;
+        baseCalculoIcms = valorFinal;
+      } else {
+        // Destacar ICMS: valor * icms
+        valorFinal = valorAntesICMS;
+        valorIcms = valorAntesICMS * (aliquotaIcms / 100);
+        baseCalculoIcms = valorAntesICMS;
+      }
+    } else {
+      valorFinal = valorAntesICMS;
+    }
 
     return {
       tabela: tabelaSelecionada.nome,
@@ -822,7 +874,13 @@ export default function SolicitacaoColeta() {
       baseConfigurada,
       origemCalculo,
       destinoCalculo,
-      valorBase,
+      componentes,
+      somaCustos,
+      valorAntesICMS,
+      aliquotaIcms,
+      adicionarIcms,
+      baseCalculoIcms,
+      valorIcms,
       valorFinal,
       peso: pesoTotal,
       cubagem: cubagemTotal,
@@ -848,7 +906,7 @@ export default function SolicitacaoColeta() {
     } else {
       setPrecificacaoCalculada(null);
     }
-  }, [tabelaSelecionada, notasFiscais, kmManual, distanciaEmitenteDest, distanciaEmitenteOp, distanciaOpDest]);
+  }, [tabelaSelecionada, notasFiscais, kmManual, aliquotaIcmsManual, distanciaEmitenteDest, distanciaEmitenteOp, distanciaOpDest]);
 
   const handleSalvarVolumes = (notaData) => {
     // Calcular valores dos volumes
@@ -2053,61 +2111,227 @@ export default function SolicitacaoColeta() {
                         )}
 
                         {precificacaoCalculada && (
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="border rounded-lg p-3" style={{ borderColor: theme.cardBorder }}>
-                              <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Faixa de Peso</p>
-                              <p className="text-sm font-bold" style={{ color: theme.text }}>
-                                {precificacaoCalculada.faixaPeso}
-                              </p>
-                            </div>
-                            <div className="border rounded-lg p-3 bg-purple-50 dark:bg-purple-900/20" style={{ borderColor: '#a855f7' }}>
-                              <p className="text-xs mb-1 text-purple-700 dark:text-purple-300">Faixa KM</p>
-                              <p className="text-lg font-bold text-purple-900 dark:text-purple-100">
-                                Faixa {precificacaoCalculada.faixaKm}
-                              </p>
-                              <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
-                                {precificacaoCalculada.kmFaixaMin} - {precificacaoCalculada.kmFaixaMax} km
-                              </p>
-                              {precificacaoCalculada.kmCalculado > 0 && (
-                                <>
-                                  <div className="mt-2 pt-2 border-t" style={{ borderColor: '#c084fc' }}>
-                                    <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">
-                                      Base de Cálculo: <span className="font-bold">{precificacaoCalculada.baseConfigurada}</span>
-                                    </p>
-                                    <p className="text-xl font-bold text-purple-700 dark:text-purple-300">
-                                      {precificacaoCalculada.kmCalculado.toFixed(1)} km
-                                    </p>
-                                    <p className="text-xs mt-1 text-purple-600 dark:text-purple-400 font-medium">
-                                      {precificacaoCalculada.distanciaUsada}
-                                    </p>
-                                  </div>
-                                  {precificacaoCalculada.origemCalculo && precificacaoCalculada.destinoCalculo && (
-                                    <div className="mt-2 pt-2 border-t space-y-1" style={{ borderColor: '#c084fc' }}>
-                                      <p className="text-xs text-purple-600 dark:text-purple-400">
-                                        <span className="font-medium">De:</span> {precificacaoCalculada.origemCalculo}
+                          <div className="space-y-4">
+                            {/* Resumo da Faixa */}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="border rounded-lg p-3" style={{ borderColor: theme.cardBorder }}>
+                                <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Faixa de Peso</p>
+                                <p className="text-sm font-bold" style={{ color: theme.text }}>
+                                  {precificacaoCalculada.faixaPeso}
+                                </p>
+                              </div>
+                              <div className="border rounded-lg p-3 bg-purple-50 dark:bg-purple-900/20" style={{ borderColor: '#a855f7' }}>
+                                <p className="text-xs mb-1 text-purple-700 dark:text-purple-300">Faixa KM</p>
+                                <p className="text-lg font-bold text-purple-900 dark:text-purple-100">
+                                  Faixa {precificacaoCalculada.faixaKm}
+                                </p>
+                                <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                                  {precificacaoCalculada.kmFaixaMin} - {precificacaoCalculada.kmFaixaMax} km
+                                </p>
+                                {precificacaoCalculada.kmCalculado > 0 && (
+                                  <>
+                                    <div className="mt-2 pt-2 border-t" style={{ borderColor: '#c084fc' }}>
+                                      <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">
+                                        Base de Cálculo: <span className="font-bold">{precificacaoCalculada.baseConfigurada}</span>
                                       </p>
-                                      <p className="text-xs text-purple-600 dark:text-purple-400">
-                                        <span className="font-medium">Para:</span> {precificacaoCalculada.destinoCalculo}
+                                      <p className="text-xl font-bold text-purple-700 dark:text-purple-300">
+                                        {precificacaoCalculada.kmCalculado.toFixed(1)} km
+                                      </p>
+                                      <p className="text-xs mt-1 text-purple-600 dark:text-purple-400 font-medium">
+                                        {precificacaoCalculada.distanciaUsada}
                                       </p>
                                     </div>
-                                  )}
-                                </>
-                              )}
+                                    {precificacaoCalculada.origemCalculo && precificacaoCalculada.destinoCalculo && (
+                                      <div className="mt-2 pt-2 border-t space-y-1" style={{ borderColor: '#c084fc' }}>
+                                        <p className="text-xs text-purple-600 dark:text-purple-400">
+                                          <span className="font-medium">De:</span> {precificacaoCalculada.origemCalculo}
+                                        </p>
+                                        <p className="text-xs text-purple-600 dark:text-purple-400">
+                                          <span className="font-medium">Para:</span> {precificacaoCalculada.destinoCalculo}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
                             </div>
-                            <div className="border rounded-lg p-3" style={{ borderColor: theme.cardBorder }}>
-                              <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Valor Base</p>
-                              <p className="text-sm font-bold text-blue-600">
-                                R$ {precificacaoCalculada.valorBase.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                              </p>
-                              <p className="text-xs" style={{ color: theme.textMuted }}>
-                                ({precificacaoCalculada.unidade})
+
+                            {/* Campo ICMS Manual */}
+                            <div className="border rounded-lg p-3 bg-blue-50 dark:bg-blue-900/20" style={{ borderColor: '#3b82f6' }}>
+                              <Label className="text-xs text-blue-700 dark:text-blue-300 mb-1 block">Alíquota ICMS (%) - Opcional</Label>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={aliquotaIcmsManual ?? ""}
+                                onChange={(e) => setAliquotaIcmsManual(e.target.value ? parseFloat(e.target.value) : null)}
+                                placeholder={tabelaSelecionada.icms ? `Padrão: ${tabelaSelecionada.icms}%` : "Ex: 12"}
+                                className="bg-white dark:bg-gray-800"
+                              />
+                              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                {tabelaSelecionada.adicionar_icms 
+                                  ? "⚠ Tabela configurada para ADICIONAR ICMS ao valor" 
+                                  : "ℹ Tabela configurada para DESTACAR ICMS do valor"}
                               </p>
                             </div>
-                            <div className="border rounded-lg p-3 bg-green-50 dark:bg-green-900/20" style={{ borderColor: '#16a34a' }}>
-                              <p className="text-xs mb-1 text-green-700 dark:text-green-300">Valor Total Estimado</p>
-                              <p className="text-lg font-bold text-green-700 dark:text-green-300">
-                                R$ {precificacaoCalculada.valorFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                              </p>
+
+                            {/* Breakdown Detalhado - Estilo CT-e */}
+                            <div className="border-2 rounded-lg p-4 bg-white dark:bg-gray-800" style={{ borderColor: '#3b82f6' }}>
+                              <h3 className="font-bold text-sm mb-3 text-blue-700 dark:text-blue-300">
+                                📊 Composição do Frete (Base para CT-e)
+                              </h3>
+                              
+                              <div className="space-y-2 text-sm">
+                                {/* Componentes de Prestação de Serviço */}
+                                <div className="flex justify-between py-1 border-b" style={{ borderColor: theme.cardBorder }}>
+                                  <span style={{ color: theme.textMuted }}>Frete-Valor ({precificacaoCalculada.unidade})</span>
+                                  <span className="font-semibold" style={{ color: theme.text }}>
+                                    R$ {precificacaoCalculada.componentes.freteValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </span>
+                                </div>
+                                
+                                {precificacaoCalculada.componentes.pedagio > 0 && (
+                                  <div className="flex justify-between py-1 border-b" style={{ borderColor: theme.cardBorder }}>
+                                    <span style={{ color: theme.textMuted }}>Pedágio</span>
+                                    <span className="font-semibold" style={{ color: theme.text }}>
+                                      R$ {precificacaoCalculada.componentes.pedagio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {precificacaoCalculada.componentes.adValorem > 0 && (
+                                  <div className="flex justify-between py-1 border-b" style={{ borderColor: theme.cardBorder }}>
+                                    <span style={{ color: theme.textMuted }}>Ad Valorem ({tabelaSelecionada.ad_valorem}%)</span>
+                                    <span className="font-semibold" style={{ color: theme.text }}>
+                                      R$ {precificacaoCalculada.componentes.adValorem.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {precificacaoCalculada.componentes.gris > 0 && (
+                                  <div className="flex justify-between py-1 border-b" style={{ borderColor: theme.cardBorder }}>
+                                    <span style={{ color: theme.textMuted }}>GRIS ({tabelaSelecionada.gris}%)</span>
+                                    <span className="font-semibold" style={{ color: theme.text }}>
+                                      R$ {precificacaoCalculada.componentes.gris.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {precificacaoCalculada.componentes.seguro > 0 && (
+                                  <div className="flex justify-between py-1 border-b" style={{ borderColor: theme.cardBorder }}>
+                                    <span style={{ color: theme.textMuted }}>Seguro ({tabelaSelecionada.seguro}%)</span>
+                                    <span className="font-semibold" style={{ color: theme.text }}>
+                                      R$ {precificacaoCalculada.componentes.seguro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {precificacaoCalculada.componentes.taxaColeta > 0 && (
+                                  <div className="flex justify-between py-1 border-b" style={{ borderColor: theme.cardBorder }}>
+                                    <span style={{ color: theme.textMuted }}>Taxa de Coleta</span>
+                                    <span className="font-semibold" style={{ color: theme.text }}>
+                                      R$ {precificacaoCalculada.componentes.taxaColeta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {precificacaoCalculada.componentes.taxaEntrega > 0 && (
+                                  <div className="flex justify-between py-1 border-b" style={{ borderColor: theme.cardBorder }}>
+                                    <span style={{ color: theme.textMuted }}>Taxa de Entrega</span>
+                                    <span className="font-semibold" style={{ color: theme.text }}>
+                                      R$ {precificacaoCalculada.componentes.taxaEntrega.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {precificacaoCalculada.componentes.taxaRedespacho > 0 && (
+                                  <div className="flex justify-between py-1 border-b" style={{ borderColor: theme.cardBorder }}>
+                                    <span style={{ color: theme.textMuted }}>Taxa Redespacho</span>
+                                    <span className="font-semibold" style={{ color: theme.text }}>
+                                      R$ {precificacaoCalculada.componentes.taxaRedespacho.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {precificacaoCalculada.componentes.tde > 0 && (
+                                  <div className="flex justify-between py-1 border-b" style={{ borderColor: theme.cardBorder }}>
+                                    <span style={{ color: theme.textMuted }}>TDE</span>
+                                    <span className="font-semibold" style={{ color: theme.text }}>
+                                      R$ {precificacaoCalculada.componentes.tde.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {precificacaoCalculada.componentes.generalidades > 0 && (
+                                  <div className="flex justify-between py-1 border-b" style={{ borderColor: theme.cardBorder }}>
+                                    <span style={{ color: theme.textMuted }}>Generalidades ({tabelaSelecionada.generalidades}%)</span>
+                                    <span className="font-semibold" style={{ color: theme.text }}>
+                                      R$ {precificacaoCalculada.componentes.generalidades.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {precificacaoCalculada.componentes.desconto > 0 && (
+                                  <div className="flex justify-between py-1 border-b" style={{ borderColor: theme.cardBorder }}>
+                                    <span style={{ color: theme.textMuted }}>Desconto ({tabelaSelecionada.desconto}%)</span>
+                                    <span className="font-semibold text-red-600">
+                                      - R$ {precificacaoCalculada.componentes.desconto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* Subtotal antes de ICMS */}
+                                <div className="flex justify-between py-2 border-t-2 border-b-2 bg-gray-50 dark:bg-gray-900/50 px-2 -mx-2" style={{ borderColor: theme.cardBorder }}>
+                                  <span className="font-bold" style={{ color: theme.text }}>Valor antes de ICMS</span>
+                                  <span className="font-bold text-blue-600">
+                                    R$ {precificacaoCalculada.valorAntesICMS.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </span>
+                                </div>
+
+                                {/* ICMS */}
+                                {precificacaoCalculada.aliquotaIcms > 0 && (
+                                  <>
+                                    <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 space-y-2">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-xs font-semibold text-orange-700 dark:text-orange-300">
+                                          ICMS ({precificacaoCalculada.aliquotaIcms}%)
+                                        </span>
+                                        <span className="text-xs px-2 py-0.5 rounded bg-orange-200 dark:bg-orange-800 text-orange-900 dark:text-orange-100">
+                                          {precificacaoCalculada.adicionarIcms ? "ADICIONAR" : "DESTACAR"}
+                                        </span>
+                                      </div>
+                                      
+                                      <div className="flex justify-between text-xs">
+                                        <span style={{ color: theme.textMuted }}>Base de Cálculo</span>
+                                        <span className="font-semibold" style={{ color: theme.text }}>
+                                          R$ {precificacaoCalculada.baseCalculoIcms.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                        </span>
+                                      </div>
+                                      
+                                      <div className="flex justify-between text-xs">
+                                        <span style={{ color: theme.textMuted }}>Alíquota</span>
+                                        <span className="font-semibold" style={{ color: theme.text }}>
+                                          {precificacaoCalculada.aliquotaIcms}%
+                                        </span>
+                                      </div>
+                                      
+                                      <div className="flex justify-between pt-2 border-t" style={{ borderColor: '#fb923c' }}>
+                                        <span className="font-bold text-orange-700 dark:text-orange-300">Valor ICMS</span>
+                                        <span className="font-bold text-orange-700 dark:text-orange-300">
+                                          R$ {precificacaoCalculada.valorIcms.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+
+                                {/* Valor Total Final */}
+                                <div className="flex justify-between py-3 bg-green-50 dark:bg-green-900/20 px-3 -mx-2 rounded-lg border-2" style={{ borderColor: '#16a34a' }}>
+                                  <span className="font-bold text-lg text-green-700 dark:text-green-300">VALOR TOTAL</span>
+                                  <span className="font-bold text-xl text-green-700 dark:text-green-300">
+                                    R$ {precificacaoCalculada.valorFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         )}
