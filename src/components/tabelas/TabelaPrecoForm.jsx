@@ -28,6 +28,15 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
     vigencia_fim: "",
     tipos_aplicacao: [],
     unidade_cobranca: "viagem",
+    colunas_km: [
+      { letra: "A", km_min: 0, km_max: 100 },
+      { letra: "B", km_min: 100, km_max: 200 },
+      { letra: "C", km_min: 200, km_max: 400 },
+      { letra: "D", km_min: 400, km_max: 600 },
+      { letra: "E", km_min: 600, km_max: 800 },
+      { letra: "F", km_min: 800, km_max: 1000 },
+      { letra: "G", km_min: 1000, km_max: 1200 }
+    ],
     frete_minimo: 0,
     pedagio: 0,
     tipo_pedagio: "fixo",
@@ -69,6 +78,15 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
         vigencia_fim: tabela.vigencia_fim ? new Date(tabela.vigencia_fim).toISOString().slice(0, 10) : "",
         tipos_aplicacao: tabela.tipos_aplicacao || [],
         unidade_cobranca: tabela.unidade_cobranca || "viagem",
+        colunas_km: tabela.colunas_km || [
+          { letra: "A", km_min: 0, km_max: 100 },
+          { letra: "B", km_min: 100, km_max: 200 },
+          { letra: "C", km_min: 200, km_max: 400 },
+          { letra: "D", km_min: 400, km_max: 600 },
+          { letra: "E", km_min: 600, km_max: 800 },
+          { letra: "F", km_min: 800, km_max: 1000 },
+          { letra: "G", km_min: 1000, km_max: 1200 }
+        ],
         frete_minimo: tabela.frete_minimo || 0,
         pedagio: tabela.pedagio || 0,
         tipo_pedagio: tabela.tipo_pedagio || "fixo",
@@ -161,20 +179,15 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
   };
 
   const addItem = () => {
+    const valores_colunas = {};
+    formData.colunas_km.forEach(col => {
+      valores_colunas[col.letra] = 0;
+    });
+    
     setItens([...itens, {
-      descricao_faixa: "",
       faixa_peso_min: 0,
       faixa_peso_max: 0,
-      faixa_km_min: 0,
-      faixa_km_max: 0,
-      col_a: 0,
-      col_b: 0,
-      col_c: 0,
-      col_d: 0,
-      col_e: 0,
-      col_f: 0,
-      col_g: 0,
-      valor: 0,
+      valores_colunas: valores_colunas,
       unidade: formData.unidade_cobranca,
       ordem: itens.length + 1
     }]);
@@ -186,8 +199,79 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
 
   const updateItem = (index, field, value) => {
     const newItens = [...itens];
-    newItens[index] = { ...newItens[index], [field]: parseFloat(value) || 0 };
+    if (field.startsWith('col_')) {
+      const letra = field.replace('col_', '').toUpperCase();
+      newItens[index] = {
+        ...newItens[index],
+        valores_colunas: {
+          ...newItens[index].valores_colunas,
+          [letra]: parseFloat(value) || 0
+        }
+      };
+    } else {
+      newItens[index] = { ...newItens[index], [field]: parseFloat(value) || 0 };
+    }
     setItens(newItens);
+  };
+
+  const addColuna = () => {
+    const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const proximaLetra = letras[formData.colunas_km.length];
+    const ultimaColuna = formData.colunas_km[formData.colunas_km.length - 1];
+    
+    setFormData({
+      ...formData,
+      colunas_km: [
+        ...formData.colunas_km,
+        {
+          letra: proximaLetra,
+          km_min: ultimaColuna ? ultimaColuna.km_max : 0,
+          km_max: ultimaColuna ? ultimaColuna.km_max + 200 : 200
+        }
+      ]
+    });
+
+    // Adicionar a nova coluna a todos os itens existentes
+    const newItens = itens.map(item => ({
+      ...item,
+      valores_colunas: {
+        ...item.valores_colunas,
+        [proximaLetra]: 0
+      }
+    }));
+    setItens(newItens);
+  };
+
+  const removeColuna = (letra) => {
+    if (formData.colunas_km.length <= 1) {
+      toast.error("Deve haver pelo menos uma coluna");
+      return;
+    }
+
+    setFormData({
+      ...formData,
+      colunas_km: formData.colunas_km.filter(c => c.letra !== letra)
+    });
+
+    // Remover a coluna de todos os itens
+    const newItens = itens.map(item => {
+      const newValores = { ...item.valores_colunas };
+      delete newValores[letra];
+      return {
+        ...item,
+        valores_colunas: newValores
+      };
+    });
+    setItens(newItens);
+  };
+
+  const updateColuna = (letra, field, value) => {
+    setFormData({
+      ...formData,
+      colunas_km: formData.colunas_km.map(c => 
+        c.letra === letra ? { ...c, [field]: parseFloat(value) || 0 } : c
+      )
+    });
   };
 
   const theme = {
@@ -548,10 +632,16 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle style={{ color: theme.text }}>Faixas de Peso x KM</CardTitle>
-                  <Button type="button" onClick={addItem} size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Adicionar Faixa
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button type="button" onClick={addColuna} size="sm" variant="outline">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Adicionar Coluna KM
+                    </Button>
+                    <Button type="button" onClick={addItem} size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Adicionar Faixa Peso
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -559,14 +649,49 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                   <table className="w-full border-collapse" style={{ borderColor: theme.cardBorder }}>
                     <thead>
                       <tr style={{ backgroundColor: isDark ? '#334155' : '#f1f5f9' }}>
-                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Peso (kg)</th>
-                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>até 100km (A)</th>
-                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>100-200km (B)</th>
-                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>200-400km (C)</th>
-                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>400-600km (D)</th>
-                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>600-800km (E)</th>
-                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>800-1000km (F)</th>
-                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>1000-1200km (G)</th>
+                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>
+                          Peso Min (kg)
+                        </th>
+                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>
+                          Peso Max (kg)
+                        </th>
+                        {formData.colunas_km.map((col) => (
+                          <th key={col.letra} className="border p-1 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center justify-between gap-1">
+                                <span>Col {col.letra}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeColuna(col.letra)}
+                                  className="h-4 w-4 p-0 text-red-600 hover:text-red-700"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              <div className="flex gap-1">
+                                <Input
+                                  type="number"
+                                  value={col.km_min}
+                                  onChange={(e) => updateColuna(col.letra, 'km_min', e.target.value)}
+                                  placeholder="KM min"
+                                  className="h-6 text-xs"
+                                  style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                                />
+                                <span className="text-xs">a</span>
+                                <Input
+                                  type="number"
+                                  value={col.km_max}
+                                  onChange={(e) => updateColuna(col.letra, 'km_max', e.target.value)}
+                                  placeholder="KM max"
+                                  className="h-6 text-xs"
+                                  style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                                />
+                              </div>
+                            </div>
+                          </th>
+                        ))}
                         <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Ações</th>
                       </tr>
                     </thead>
@@ -575,13 +700,11 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                         <tr key={index}>
                           <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
                             <Input
-                              value={item.descricao_faixa || `${item.faixa_peso_min} a ${item.faixa_peso_max}`}
-                              onChange={(e) => {
-                                const newItens = [...itens];
-                                newItens[index] = { ...newItens[index], descricao_faixa: e.target.value };
-                                setItens(newItens);
-                              }}
-                              placeholder="0 a 50 kg"
+                              type="number"
+                              step="0.01"
+                              value={item.faixa_peso_min || 0}
+                              onChange={(e) => updateItem(index, 'faixa_peso_min', e.target.value)}
+                              placeholder="0"
                               className="text-xs h-8"
                               style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                             />
@@ -590,72 +713,25 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                             <Input
                               type="number"
                               step="0.01"
-                              value={item.col_a || 0}
-                              onChange={(e) => updateItem(index, 'col_a', e.target.value)}
+                              value={item.faixa_peso_max || 0}
+                              onChange={(e) => updateItem(index, 'faixa_peso_max', e.target.value)}
+                              placeholder="50"
                               className="text-xs h-8"
                               style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                             />
                           </td>
-                          <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={item.col_b || 0}
-                              onChange={(e) => updateItem(index, 'col_b', e.target.value)}
-                              className="text-xs h-8"
-                              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                            />
-                          </td>
-                          <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={item.col_c || 0}
-                              onChange={(e) => updateItem(index, 'col_c', e.target.value)}
-                              className="text-xs h-8"
-                              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                            />
-                          </td>
-                          <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={item.col_d || 0}
-                              onChange={(e) => updateItem(index, 'col_d', e.target.value)}
-                              className="text-xs h-8"
-                              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                            />
-                          </td>
-                          <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={item.col_e || 0}
-                              onChange={(e) => updateItem(index, 'col_e', e.target.value)}
-                              className="text-xs h-8"
-                              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                            />
-                          </td>
-                          <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={item.col_f || 0}
-                              onChange={(e) => updateItem(index, 'col_f', e.target.value)}
-                              className="text-xs h-8"
-                              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                            />
-                          </td>
-                          <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={item.col_g || 0}
-                              onChange={(e) => updateItem(index, 'col_g', e.target.value)}
-                              className="text-xs h-8"
-                              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                            />
-                          </td>
+                          {formData.colunas_km.map((col) => (
+                            <td key={col.letra} className="border p-1" style={{ borderColor: theme.cardBorder }}>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={item.valores_colunas?.[col.letra] || 0}
+                                onChange={(e) => updateItem(index, `col_${col.letra.toLowerCase()}`, e.target.value)}
+                                className="text-xs h-8"
+                                style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                              />
+                            </td>
+                          ))}
                           <td className="border p-1 text-center" style={{ borderColor: theme.cardBorder }}>
                             <Button
                               type="button"
