@@ -825,7 +825,7 @@ export default function SolicitacaoColeta() {
     } else {
       setPrecificacaoCalculada(null);
     }
-  }, [tabelaSelecionada, notasFiscais]);
+  }, [tabelaSelecionada, notasFiscais, kmManual, distanciaEmitenteDest, distanciaEmitenteOp, distanciaOpDest]);
 
   const handleSalvarVolumes = (notaData) => {
     // Calcular valores dos volumes
@@ -1911,16 +1911,29 @@ export default function SolicitacaoColeta() {
                             </p>
                             <div>
                               <Label className="text-xs text-red-700 dark:text-red-300">KM Manual</Label>
-                              <Input
-                                type="number"
-                                step="0.1"
-                                value={kmManual || ""}
-                                onChange={(e) => setKmManual(parseFloat(e.target.value) || null)}
-                                placeholder="Ex: 450"
-                                className="mt-1 bg-white dark:bg-gray-800"
-                              />
+                              <div className="flex gap-2 mt-1">
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  value={kmManual || ""}
+                                  onChange={(e) => setKmManual(parseFloat(e.target.value) || null)}
+                                  placeholder="Ex: 450"
+                                  className="flex-1 bg-white dark:bg-gray-800"
+                                />
+                                <Button
+                                  type="button"
+                                  onClick={() => {
+                                    const resultado = calcularPrecificacao();
+                                    setPrecificacaoCalculada(resultado);
+                                    toast.success("Precificação calculada!");
+                                  }}
+                                  className="bg-red-600 hover:bg-red-700 text-white px-4"
+                                >
+                                  Calcular
+                                </Button>
+                              </div>
                               <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                                Digite a distância em KM para calcular o frete
+                                Digite a distância em KM e clique em Calcular
                               </p>
                             </div>
                           </div>
@@ -1988,14 +2001,27 @@ export default function SolicitacaoColeta() {
                             
                             <div className="border-t pt-3" style={{ borderColor: '#c084fc' }}>
                               <Label className="text-xs text-purple-700 dark:text-purple-300">KM Manual (Opcional)</Label>
-                              <Input
-                                type="number"
-                                step="0.1"
-                                value={kmManual || ""}
-                                onChange={(e) => setKmManual(parseFloat(e.target.value) || null)}
-                                placeholder="Deixe em branco para usar cálculo automático"
-                                className="mt-1 bg-white dark:bg-gray-800"
-                              />
+                              <div className="flex gap-2 mt-1">
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  value={kmManual || ""}
+                                  onChange={(e) => setKmManual(parseFloat(e.target.value) || null)}
+                                  placeholder="Ex: 1000"
+                                  className="flex-1 bg-white dark:bg-gray-800"
+                                />
+                                <Button
+                                  type="button"
+                                  onClick={() => {
+                                    const resultado = calcularPrecificacao();
+                                    setPrecificacaoCalculada(resultado);
+                                    toast.success("Precificação recalculada!");
+                                  }}
+                                  className="bg-purple-600 hover:bg-purple-700 text-white px-4"
+                                >
+                                  Calcular
+                                </Button>
+                              </div>
                               <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
                                 Se preenchido, este valor será usado no lugar do cálculo automático
                               </p>
