@@ -649,14 +649,14 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                   <table className="w-full border-collapse" style={{ borderColor: theme.cardBorder }}>
                     <thead>
                       <tr style={{ backgroundColor: isDark ? '#334155' : '#f1f5f9' }}>
-                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>
+                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text, minWidth: '100px' }}>
                           Peso Min (kg)
                         </th>
-                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>
+                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text, minWidth: '100px' }}>
                           Peso Max (kg)
                         </th>
                         {formData.colunas_km.map((col) => (
-                          <th key={col.letra} className="border p-1 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>
+                          <th key={col.letra} className="border p-1 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text, minWidth: '140px' }}>
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center justify-between gap-1">
                                 <span>Col {col.letra}</span>
@@ -670,13 +670,13 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                                   <X className="w-3 h-3" />
                                 </Button>
                               </div>
-                              <div className="flex gap-1">
+                              <div className="flex gap-1 items-center">
                                 <Input
                                   type="number"
                                   value={col.km_min}
                                   onChange={(e) => updateColuna(col.letra, 'km_min', e.target.value)}
-                                  placeholder="KM min"
-                                  className="h-6 text-xs"
+                                  placeholder="Min"
+                                  className="h-6 text-xs w-16"
                                   style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                                 />
                                 <span className="text-xs">a</span>
@@ -684,15 +684,15 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                                   type="number"
                                   value={col.km_max}
                                   onChange={(e) => updateColuna(col.letra, 'km_max', e.target.value)}
-                                  placeholder="KM max"
-                                  className="h-6 text-xs"
+                                  placeholder="Max"
+                                  className="h-6 text-xs w-16"
                                   style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                                 />
                               </div>
                             </div>
                           </th>
                         ))}
-                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Ações</th>
+                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text, minWidth: '60px' }}>Ações</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -705,7 +705,7 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                               value={item.faixa_peso_min || 0}
                               onChange={(e) => updateItem(index, 'faixa_peso_min', e.target.value)}
                               placeholder="0"
-                              className="text-xs h-8"
+                              className="text-xs h-8 w-full"
                               style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                             />
                           </td>
@@ -716,20 +716,23 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                               value={item.faixa_peso_max || 0}
                               onChange={(e) => updateItem(index, 'faixa_peso_max', e.target.value)}
                               placeholder="50"
-                              className="text-xs h-8"
+                              className="text-xs h-8 w-full"
                               style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                             />
                           </td>
                           {formData.colunas_km.map((col) => (
                             <td key={col.letra} className="border p-1" style={{ borderColor: theme.cardBorder }}>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                value={item.valores_colunas?.[col.letra] || 0}
-                                onChange={(e) => updateItem(index, `col_${col.letra.toLowerCase()}`, e.target.value)}
-                                className="text-xs h-8"
-                                style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                              />
+                              <div className="relative">
+                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs" style={{ color: theme.textMuted }}>R$</span>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={item.valores_colunas?.[col.letra] || 0}
+                                  onChange={(e) => updateItem(index, `col_${col.letra.toLowerCase()}`, e.target.value)}
+                                  className="text-xs h-8 pl-8 w-full"
+                                  style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                                />
+                              </div>
                             </td>
                           ))}
                           <td className="border p-1 text-center" style={{ borderColor: theme.cardBorder }}>
