@@ -32,6 +32,13 @@ export default function SolicitacaoColeta() {
   const videoRef = React.useRef(null);
   const [metodoEntradaSelecionado, setMetodoEntradaSelecionado] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [tabelas, setTabelas] = useState([]);
+  const [tabelaSelecionada, setTabelaSelecionada] = useState(null);
+  const [showTabelaManual, setShowTabelaManual] = useState(false);
+  const [searchTabela, setSearchTabela] = useState("");
+  const [tipoFrete, setTipoFrete] = useState(null); // 'CIF' ou 'FOB'
+  const [showTipoFreteModal, setShowTipoFreteModal] = useState(false);
+  const [precificacaoCalculada, setPrecificacaoCalculada] = useState(null);
   
   const [formData, setFormData] = useState({
     // Remetente
@@ -179,14 +186,16 @@ export default function SolicitacaoColeta() {
       }
       
       // Carregar coletas solicitadas por este fornecedor e motoristas
-      const [ordensData, motoristasData] = await Promise.all([
+      const [ordensData, motoristasData, tabelasData] = await Promise.all([
         base44.entities.OrdemDeCarregamento.list("-data_solicitacao"),
-        base44.entities.Motorista.list()
+        base44.entities.Motorista.list(),
+        base44.entities.TabelaPreco.filter({ ativo: true })
       ]);
       
       const minhasColetas = ordensData.filter(o => o.fornecedor_id === currentUser.id);
       setColetas(minhasColetas);
       setMotoristas(motoristasData);
+      setTabelas(tabelasData);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
@@ -557,6 +566,112 @@ export default function SolicitacaoColeta() {
     setShowVolumesModal(true);
   };
 
+  const calcularPrecificacao = () => {
+    if (!tabelaSelecionada) return null;
+
+    const pesoTotal = notasFiscais.reduce((sum, nf) => sum + (nf.peso_nf || 0), 0);
+    const valorTotal = notasFiscais.reduce((sum, nf) => sum + (nf.valor_nf || 0), 0);
+    
+    // Calcular cubagem total
+    const todosVolumes = notasFiscais.flatMap(nf => nf.volumes || []);
+    const cubagemTotal = todosVolumes.reduce((sum, v) => sum + (v.m3 || 0), 0);
+
+    // Encontrar faixa de peso aplicável
+    const itens = tabelaSelecionada.itens || [];
+    const itemAplicavel = itens.find(item => 
+      pesoTotal >= item.faixa_peso_min && pesoTotal <= item.faixa_peso_max
+    );
+
+    if (!itemAplicavel) {
+      return { 
+        erro: "Peso fora das faixas da tabela",
+        peso: pesoTotal,
+        cubagem: cubagemTotal,
+        valor: valorTotal
+      };
+    }
+
+    // TODO: Calcular KM (por enquanto assumir faixa A)
+    const kmFaixa = "A";
+    const valorFaixa = itemAplicavel.valores_colunas?.[kmFaixa] || 0;
+
+    let valorBase = 0;
+
+    // Calcular baseado no tipo de tabela
+    switch (tabelaSelecionada.tipo_tabela) {
+      case "peso_km":
+        if (itemAplicavel.unidade === "viagem") {
+          valorBase = valorFaixa;
+        } else if (itemAplicavel.unidade === "tonelada") {
+          valorBase = valorFaixa * (pesoTotal / 1000);
+        } else if (itemAplicavel.unidade === "kg") {
+          valorBase = valorFaixa * pesoTotal;
+        }
+        break;
+      case "percentual_nf":
+        valorBase = valorTotal * (valorFaixa / 100);
+        break;
+      case "valor_fixo":
+        valorBase = valorFaixa;
+        break;
+      default:
+        valorBase = valorFaixa;
+    }
+
+    // Aplicar adicionais e taxas
+    let valorFinal = valorBase;
+    
+    if (tabelaSelecionada.frete_minimo && valorFinal < tabelaSelecionada.frete_minimo) {
+      valorFinal = tabelaSelecionada.frete_minimo;
+    }
+
+    // Ad Valorem
+    if (tabelaSelecionada.ad_valorem) {
+      valorFinal += valorTotal * (tabelaSelecionada.ad_valorem / 100);
+    }
+
+    // GRIS
+    if (tabelaSelecionada.gris) {
+      valorFinal += valorTotal * (tabelaSelecionada.gris / 100);
+    }
+
+    // Pedagio
+    if (tabelaSelecionada.pedagio) {
+      if (tabelaSelecionada.tipo_pedagio === "fixo") {
+        valorFinal += tabelaSelecionada.pedagio;
+      } else if (tabelaSelecionada.tipo_pedagio === "percentual") {
+        valorFinal += valorBase * (tabelaSelecionada.pedagio / 100);
+      }
+    }
+
+    // Taxas fixas
+    valorFinal += (tabelaSelecionada.taxa_coleta || 0);
+    valorFinal += (tabelaSelecionada.taxa_entrega || 0);
+    valorFinal += (tabelaSelecionada.taxa_redespacho || 0);
+    valorFinal += (tabelaSelecionada.tde || 0);
+
+    return {
+      tabela: tabelaSelecionada.nome,
+      faixaPeso: `${itemAplicavel.faixa_peso_min} - ${itemAplicavel.faixa_peso_max} kg`,
+      faixaKm: kmFaixa,
+      valorBase,
+      valorFinal,
+      peso: pesoTotal,
+      cubagem: cubagemTotal,
+      valor: valorTotal,
+      unidade: itemAplicavel.unidade
+    };
+  };
+
+  useEffect(() => {
+    if (tabelaSelecionada && notasFiscais.length > 0) {
+      const resultado = calcularPrecificacao();
+      setPrecificacaoCalculada(resultado);
+    } else {
+      setPrecificacaoCalculada(null);
+    }
+  }, [tabelaSelecionada, notasFiscais]);
+
   const handleSalvarVolumes = (notaData) => {
     // Calcular valores dos volumes
     const volumesArray = notaData.volumes || [];
@@ -635,6 +750,108 @@ export default function SolicitacaoColeta() {
     setNotaParaVolumes(notaVazia);
     setShowVolumesModal(true);
     setMetodoEntradaSelecionado(true);
+  };
+
+  const buscarTabelaParceiro = async (cnpj) => {
+    if (!cnpj) return null;
+
+    const parceiros = await base44.entities.Parceiro.list();
+    const parceiro = parceiros.find(p => p.cnpj === cnpj.replace(/\D/g, ''));
+    
+    if (!parceiro) return null;
+
+    const tabelasParceiro = tabelas.filter(t => 
+      t.clientes_parceiros_ids?.includes(parceiro.id) &&
+      t.tipos_aplicacao?.includes("coleta")
+    );
+
+    if (tabelasParceiro.length > 0) {
+      // Retornar a primeira tabela ativa e dentro da vigência
+      const hoje = new Date();
+      const tabelaValida = tabelasParceiro.find(t => {
+        const inicio = t.vigencia_inicio ? new Date(t.vigencia_inicio) : null;
+        const fim = t.vigencia_fim ? new Date(t.vigencia_fim) : null;
+        
+        if (inicio && hoje < inicio) return false;
+        if (fim && hoje > fim) return false;
+        
+        return true;
+      });
+
+      return tabelaValida || tabelasParceiro[0];
+    }
+
+    return null;
+  };
+
+  useEffect(() => {
+    const verificarTabela = async () => {
+      if (!formData.remetente_cnpj && !formData.destinatario_cnpj) {
+        setTabelaSelecionada(null);
+        setTipoFrete(null);
+        return;
+      }
+
+      const tabelaRemetente = await buscarTabelaParceiro(formData.remetente_cnpj);
+      const tabelaDestinatario = await buscarTabelaParceiro(formData.destinatario_cnpj);
+
+      // Se ambos têm tabela, perguntar CIF ou FOB
+      if (tabelaRemetente && tabelaDestinatario && !tipoFrete) {
+        setShowTipoFreteModal(true);
+        return;
+      }
+
+      // Se apenas um tem tabela, usar essa
+      if (tabelaRemetente && !tabelaDestinatario) {
+        const tabelaComItens = await carregarItensDaTabela(tabelaRemetente);
+        setTabelaSelecionada(tabelaComItens);
+        setShowTabelaManual(false);
+      } else if (tabelaDestinatario && !tabelaRemetente) {
+        const tabelaComItens = await carregarItensDaTabela(tabelaDestinatario);
+        setTabelaSelecionada(tabelaComItens);
+        setShowTabelaManual(false);
+      } else if (tipoFrete) {
+        // Aplicar baseado no tipo de frete
+        const tabelaEscolhida = tipoFrete === "CIF" ? tabelaRemetente : tabelaDestinatario;
+        if (tabelaEscolhida) {
+          const tabelaComItens = await carregarItensDaTabela(tabelaEscolhida);
+          setTabelaSelecionada(tabelaComItens);
+          setShowTabelaManual(false);
+        }
+      } else {
+        // Nenhum tem tabela
+        setTabelaSelecionada(null);
+        setShowTabelaManual(true);
+      }
+    };
+
+    if (metodoEntradaSelecionado) {
+      verificarTabela();
+    }
+  }, [formData.remetente_cnpj, formData.destinatario_cnpj, tipoFrete, metodoEntradaSelecionado, tabelas]);
+
+  const carregarItensDaTabela = async (tabela) => {
+    try {
+      const itens = await base44.entities.TabelaPrecoItem.filter(
+        { tabela_preco_id: tabela.id },
+        "ordem",
+        100
+      );
+      return { ...tabela, itens };
+    } catch (error) {
+      console.error("Erro ao carregar itens da tabela:", error);
+      return { ...tabela, itens: [] };
+    }
+  };
+
+  const handleSelecionarTabelaManual = async (tabelaId) => {
+    const tabela = tabelas.find(t => t.id === tabelaId);
+    if (tabela) {
+      const tabelaComItens = await carregarItensDaTabela(tabela);
+      setTabelaSelecionada(tabelaComItens);
+      setShowTabelaManual(false);
+      setSearchTabela("");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -1478,6 +1695,136 @@ export default function SolicitacaoColeta() {
                   </div>
                 </div>
 
+                {/* Precificação */}
+                {notasFiscais.length > 0 && (
+                  <div className="border rounded-lg p-4 space-y-3" style={{ borderColor: theme.cardBorder }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-green-600 rounded" />
+                        <Label className="text-base font-semibold" style={{ color: theme.text }}>Precificação</Label>
+                      </div>
+                      {tabelaSelecionada && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setTabelaSelecionada(null);
+                            setShowTabelaManual(true);
+                            setTipoFrete(null);
+                          }}
+                          className="text-xs"
+                        >
+                          Trocar Tabela
+                        </Button>
+                      )}
+                    </div>
+
+                    {tabelaSelecionada ? (
+                      <div className="space-y-3">
+                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                          <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+                            📋 Tabela Aplicada: {tabelaSelecionada.nome}
+                          </p>
+                          {tabelaSelecionada.codigo && (
+                            <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                              Código: {tabelaSelecionada.codigo}
+                            </p>
+                          )}
+                        </div>
+
+                        {precificacaoCalculada && (
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="border rounded-lg p-3" style={{ borderColor: theme.cardBorder }}>
+                              <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Faixa de Peso</p>
+                              <p className="text-sm font-bold" style={{ color: theme.text }}>
+                                {precificacaoCalculada.faixaPeso}
+                              </p>
+                            </div>
+                            <div className="border rounded-lg p-3" style={{ borderColor: theme.cardBorder }}>
+                              <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Faixa KM</p>
+                              <p className="text-sm font-bold" style={{ color: theme.text }}>
+                                Faixa {precificacaoCalculada.faixaKm}
+                              </p>
+                            </div>
+                            <div className="border rounded-lg p-3" style={{ borderColor: theme.cardBorder }}>
+                              <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Valor Base</p>
+                              <p className="text-sm font-bold text-blue-600">
+                                R$ {precificacaoCalculada.valorBase.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </p>
+                              <p className="text-xs" style={{ color: theme.textMuted }}>
+                                ({precificacaoCalculada.unidade})
+                              </p>
+                            </div>
+                            <div className="border rounded-lg p-3 bg-green-50 dark:bg-green-900/20" style={{ borderColor: '#16a34a' }}>
+                              <p className="text-xs mb-1 text-green-700 dark:text-green-300">Valor Total Estimado</p>
+                              <p className="text-lg font-bold text-green-700 dark:text-green-300">
+                                R$ {precificacaoCalculada.valorFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : showTabelaManual ? (
+                      <div className="space-y-3">
+                        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                            ⚠ Nenhuma tabela encontrada automaticamente. Pesquise e selecione uma tabela manualmente.
+                          </p>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Input
+                            value={searchTabela}
+                            onChange={(e) => setSearchTabela(e.target.value)}
+                            placeholder="Pesquisar tabela por nome ou código..."
+                            className="flex-1"
+                            style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                          />
+                          <Button
+                            type="button"
+                            onClick={() => {}}
+                            variant="outline"
+                            size="sm"
+                          >
+                            <Search className="w-4 h-4" />
+                          </Button>
+                        </div>
+
+                        <div className="max-h-48 overflow-y-auto border rounded-lg" style={{ borderColor: theme.cardBorder }}>
+                          {tabelas
+                            .filter(t => 
+                              t.nome?.toLowerCase().includes(searchTabela.toLowerCase()) ||
+                              t.codigo?.toLowerCase().includes(searchTabela.toLowerCase())
+                            )
+                            .map(t => (
+                              <button
+                                key={t.id}
+                                type="button"
+                                onClick={() => handleSelecionarTabelaManual(t.id)}
+                                className="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 border-b"
+                                style={{ borderColor: theme.cardBorder }}
+                              >
+                                <p className="text-sm font-semibold" style={{ color: theme.text }}>
+                                  {t.nome}
+                                </p>
+                                {t.codigo && (
+                                  <p className="text-xs" style={{ color: theme.textMuted }}>
+                                    Código: {t.codigo}
+                                  </p>
+                                )}
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4" style={{ color: theme.textMuted }}>
+                        <p className="text-sm">Carregando tabela de preços...</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Observações */}
                 <div className="border rounded-lg p-4 space-y-3" style={{ borderColor: theme.cardBorder }}>
                   <div className="flex items-center gap-2">
@@ -1656,6 +2003,52 @@ export default function SolicitacaoColeta() {
             isDark={isDark}
             modoManual={notaParaVolumes && !notaParaVolumes.index && notaParaVolumes.numero_nota === ""}
           />
+        )}
+
+        {/* Modal Tipo de Frete CIF/FOB */}
+        {showTipoFreteModal && (
+          <Dialog open={showTipoFreteModal} onOpenChange={setShowTipoFreteModal}>
+            <DialogContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+              <DialogHeader>
+                <DialogTitle style={{ color: theme.text }}>Tipo de Frete</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <p className="text-sm" style={{ color: theme.textMuted }}>
+                  Tanto o remetente quanto o destinatário possuem tabelas de preço. Qual é o tipo de frete?
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTipoFrete("CIF");
+                      setShowTipoFreteModal(false);
+                    }}
+                    className="border-2 rounded-lg p-4 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    style={{ borderColor: theme.cardBorder }}
+                  >
+                    <p className="font-bold text-lg mb-1" style={{ color: theme.text }}>CIF</p>
+                    <p className="text-xs" style={{ color: theme.textMuted }}>
+                      Frete pago pelo remetente
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTipoFrete("FOB");
+                      setShowTipoFreteModal(false);
+                    }}
+                    className="border-2 rounded-lg p-4 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    style={{ borderColor: theme.cardBorder }}
+                  >
+                    <p className="font-bold text-lg mb-1" style={{ color: theme.text }}>FOB</p>
+                    <p className="text-xs" style={{ color: theme.textMuted }}>
+                      Frete pago pelo destinatário
+                    </p>
+                  </button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
 
         {/* Onboarding */}

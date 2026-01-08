@@ -31,16 +31,16 @@ import PortalTransul from './pages/PortalTransul';
 import Precificacao from './pages/Precificacao';
 import Procedimentos from './pages/Procedimentos';
 import ProcessarEtapasNovembro from './pages/ProcessarEtapasNovembro';
+import ProdutosPalets from './pages/ProdutosPalets';
 import Recebimento from './pages/Recebimento';
 import SAC from './pages/SAC';
 import SolicitacaoColeta from './pages/SolicitacaoColeta';
+import Tabelas from './pages/Tabelas';
 import Tracking from './pages/Tracking';
 import TrackingTV from './pages/TrackingTV';
 import Unitizacao from './pages/Unitizacao';
 import Usuarios from './pages/Usuarios';
 import Veiculos from './pages/Veiculos';
-import Tabelas from './pages/Tabelas';
-import ProdutosPalets from './pages/ProdutosPalets';
 import __Layout from './Layout.jsx';
 
 
@@ -78,16 +78,16 @@ export const PAGES = {
     "Precificacao": Precificacao,
     "Procedimentos": Procedimentos,
     "ProcessarEtapasNovembro": ProcessarEtapasNovembro,
+    "ProdutosPalets": ProdutosPalets,
     "Recebimento": Recebimento,
     "SAC": SAC,
     "SolicitacaoColeta": SolicitacaoColeta,
+    "Tabelas": Tabelas,
     "Tracking": Tracking,
     "TrackingTV": TrackingTV,
     "Unitizacao": Unitizacao,
     "Usuarios": Usuarios,
     "Veiculos": Veiculos,
-    "Tabelas": Tabelas,
-    "ProdutosPalets": ProdutosPalets,
 }
 
 export const pagesConfig = {
