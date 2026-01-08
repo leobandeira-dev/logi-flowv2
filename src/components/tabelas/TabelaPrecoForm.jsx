@@ -669,7 +669,7 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                           <th key={col.letra} className="border p-1 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text, minWidth: '140px' }}>
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center justify-between gap-1">
-                                <span>Col {col.letra}</span>
+                                <span>Faixa {col.letra}</span>
                                 <Button
                                   type="button"
                                   variant="ghost"
