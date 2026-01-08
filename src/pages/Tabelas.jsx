@@ -53,7 +53,12 @@ export default function Tabelas() {
   const loadTabelas = async () => {
     setLoading(true);
     try {
-      const data = await base44.entities.TabelaPreco.list("-created_date", 100);
+      const user = await base44.auth.me();
+      const data = await base44.entities.TabelaPreco.filter(
+        { empresa_id: user.empresa_id },
+        "-created_date",
+        100
+      );
       setTabelas(data);
     } catch (error) {
       console.error("Erro ao carregar tabelas:", error);
