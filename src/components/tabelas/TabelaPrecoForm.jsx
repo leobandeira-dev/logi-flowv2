@@ -115,7 +115,15 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
         "ordem",
         100
       );
-      setItens(data);
+      // Extrair apenas os dados necessários de cada item
+      const itensData = data.map(item => ({
+        faixa_peso_min: item.faixa_peso_min ?? null,
+        faixa_peso_max: item.faixa_peso_max ?? null,
+        valores_colunas: item.valores_colunas || {},
+        unidade: item.unidade,
+        ordem: item.ordem
+      }));
+      setItens(itensData);
     } catch (error) {
       console.error("Erro ao carregar itens:", error);
     }
