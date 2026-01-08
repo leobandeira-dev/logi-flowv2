@@ -23,10 +23,10 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
     codigo: "",
     descricao: "",
     tipo_tabela: "peso_km",
-    cliente_parceiro_id: "",
+    clientes_parceiros_ids: [],
     vigencia_inicio: "",
     vigencia_fim: "",
-    tipo_aplicacao: "todos",
+    tipos_aplicacao: [],
     unidade_cobranca: "viagem",
     frete_minimo: 0,
     pedagio: 0,
@@ -64,10 +64,10 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
         codigo: tabela.codigo || "",
         descricao: tabela.descricao || "",
         tipo_tabela: tabela.tipo_tabela || "peso_km",
-        cliente_parceiro_id: tabela.cliente_parceiro_id || "",
+        clientes_parceiros_ids: tabela.clientes_parceiros_ids || [],
         vigencia_inicio: tabela.vigencia_inicio ? new Date(tabela.vigencia_inicio).toISOString().slice(0, 10) : "",
         vigencia_fim: tabela.vigencia_fim ? new Date(tabela.vigencia_fim).toISOString().slice(0, 10) : "",
-        tipo_aplicacao: tabela.tipo_aplicacao || "todos",
+        tipos_aplicacao: tabela.tipos_aplicacao || [],
         unidade_cobranca: tabela.unidade_cobranca || "viagem",
         frete_minimo: tabela.frete_minimo || 0,
         pedagio: tabela.pedagio || 0,
@@ -271,39 +271,58 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label style={{ color: theme.text }}>Cliente</Label>
-                  <Select
-                    value={formData.cliente_parceiro_id}
-                    onValueChange={(value) => setFormData({ ...formData, cliente_parceiro_id: value })}
-                  >
-                    <SelectTrigger style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
-                      <SelectValue placeholder="Selecione o cliente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {parceiros.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.razao_social}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label style={{ color: theme.text }}>Clientes (múltipla seleção)</Label>
+                  <div className="border rounded-lg p-2 max-h-40 overflow-y-auto" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                    {parceiros.map((p) => (
+                      <label key={p.id} className="flex items-center gap-2 p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.clientes_parceiros_ids.includes(p.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData({ ...formData, clientes_parceiros_ids: [...formData.clientes_parceiros_ids, p.id] });
+                            } else {
+                              setFormData({ ...formData, clientes_parceiros_ids: formData.clientes_parceiros_ids.filter(id => id !== p.id) });
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <span className="text-sm" style={{ color: theme.text }}>{p.razao_social}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {formData.clientes_parceiros_ids.length > 0 && (
+                    <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                      {formData.clientes_parceiros_ids.length} cliente(s) selecionado(s)
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <Label style={{ color: theme.text }}>Aplicação</Label>
-                  <Select
-                    value={formData.tipo_aplicacao}
-                    onValueChange={(value) => setFormData({ ...formData, tipo_aplicacao: value })}
-                  >
-                    <SelectTrigger style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos">Todos</SelectItem>
-                      <SelectItem value="coleta">Coleta</SelectItem>
-                      <SelectItem value="carregamento">Carregamento</SelectItem>
-                      <SelectItem value="entrega">Entrega</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label style={{ color: theme.text }}>Aplicação (múltipla seleção)</Label>
+                  <div className="border rounded-lg p-2 space-y-1" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                    {["todos", "coleta", "carregamento", "entrega"].map((tipo) => (
+                      <label key={tipo} className="flex items-center gap-2 p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.tipos_aplicacao.includes(tipo)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData({ ...formData, tipos_aplicacao: [...formData.tipos_aplicacao, tipo] });
+                            } else {
+                              setFormData({ ...formData, tipos_aplicacao: formData.tipos_aplicacao.filter(t => t !== tipo) });
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <span className="text-sm capitalize" style={{ color: theme.text }}>{tipo}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {formData.tipos_aplicacao.length > 0 && (
+                    <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                      {formData.tipos_aplicacao.length} tipo(s) selecionado(s)
+                    </p>
+                  )}
                 </div>
               </div>
 

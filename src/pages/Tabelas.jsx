@@ -131,11 +131,28 @@ export default function Tabelas() {
     return parceiro?.razao_social || "N/A";
   };
 
-  const filteredTabelas = tabelas.filter(t => 
-    t.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    getParceiroNome(t.cliente_parceiro_id).toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const getClientesNomes = (clientesIds) => {
+    if (!clientesIds || clientesIds.length === 0) return "Nenhum";
+    if (clientesIds.length === 1) {
+      return getParceiroNome(clientesIds[0]);
+    }
+    return `${clientesIds.length} clientes`;
+  };
+
+  const getTiposAplicacao = (tipos) => {
+    if (!tipos || tipos.length === 0) return "Nenhum";
+    if (tipos.length === 1) return tipos[0];
+    return tipos.join(", ");
+  };
+
+  const filteredTabelas = tabelas.filter(t => {
+    const nomeMatch = t.nome?.toLowerCase().includes(searchTerm.toLowerCase());
+    const descMatch = t.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
+    const clientesMatch = t.clientes_parceiros_ids?.some(id => 
+      getParceiroNome(id).toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    return nomeMatch || descMatch || clientesMatch;
+  });
 
   const theme = {
     bg: isDark ? '#0f172a' : '#f9fafb',
@@ -241,14 +258,22 @@ export default function Tabelas() {
                         <div className="flex items-center gap-2">
                           <Building2 className="w-4 h-4" style={{ color: theme.textMuted }} />
                           <span className="text-sm" style={{ color: theme.text }}>
-                            {getParceiroNome(tabela.cliente_parceiro_id)}
+                            {getClientesNomes(tabela.clientes_parceiros_ids)}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className="bg-purple-600 text-white">
-                          {tabela.tipo_aplicacao}
-                        </Badge>
+                        <div className="flex flex-wrap gap-1">
+                          {tabela.tipos_aplicacao && tabela.tipos_aplicacao.length > 0 ? (
+                            tabela.tipos_aplicacao.map((tipo, idx) => (
+                              <Badge key={idx} className="bg-purple-600 text-white text-xs">
+                                {tipo}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-xs" style={{ color: theme.textMuted }}>Nenhum</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1 text-xs" style={{ color: theme.textMuted }}>
