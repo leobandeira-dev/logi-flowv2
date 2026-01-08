@@ -25,6 +25,7 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
     codigo: "",
     descricao: "",
     tipo_tabela: "peso_km",
+    tipo_distancia: "emitente_destinatario",
     clientes_parceiros_ids: [],
     vigencia_inicio: "",
     vigencia_fim: "",
@@ -79,6 +80,7 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
         codigo: tabela.codigo || "",
         descricao: tabela.descricao || "",
         tipo_tabela: tabela.tipo_tabela || "peso_km",
+        tipo_distancia: tabela.tipo_distancia || "emitente_destinatario",
         clientes_parceiros_ids: tabela.clientes_parceiros_ids || [],
         vigencia_inicio: tabela.vigencia_inicio ? new Date(tabela.vigencia_inicio).toISOString().slice(0, 10) : "",
         vigencia_fim: tabela.vigencia_fim ? new Date(tabela.vigencia_fim).toISOString().slice(0, 10) : "",
@@ -384,6 +386,28 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                   </Select>
                 </div>
               </div>
+
+              {formData.tipo_tabela === "peso_km" && (
+                <div>
+                  <Label style={{ color: theme.text }}>Base de Cálculo de Distância</Label>
+                  <Select
+                    value={formData.tipo_distancia}
+                    onValueChange={(value) => setFormData({ ...formData, tipo_distancia: value })}
+                  >
+                    <SelectTrigger style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="emitente_destinatario">Emitente x Destinatário</SelectItem>
+                      <SelectItem value="emitente_operador">Emitente x Operador Logístico</SelectItem>
+                      <SelectItem value="operador_destinatario">Operador Logístico x Destinatário</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                    Define qual distância será usada para determinar a faixa de KM no cálculo do frete
+                  </p>
+                </div>
+              )}
 
               <div>
                 <Label style={{ color: theme.text }}>Descrição</Label>

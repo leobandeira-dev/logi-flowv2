@@ -43,6 +43,7 @@ export default function SolicitacaoColeta() {
   const [calculandoDistancia, setCalculandoDistancia] = useState(false);
   const [distanciaEmitenteDest, setDistanciaEmitenteDest] = useState(null);
   const [distanciaEmitenteOp, setDistanciaEmitenteOp] = useState(null);
+  const [distanciaOpDest, setDistanciaOpDest] = useState(null);
   
   const [formData, setFormData] = useState({
     // Remetente
@@ -597,6 +598,15 @@ export default function SolicitacaoColeta() {
           calcularDistancia({ origem: origemEmitente, destino: destinoOperador })
             .then(res => ({ tipo: 'emitente_op', data: res.data }))
         );
+
+        // Calcular distância Operador Logístico -> Destinatário
+        if (formData.destino_cidade && formData.destino_uf) {
+          const destinoFinal = `${formData.destino_cidade}, ${formData.destino_uf}, Brasil`;
+          promises.push(
+            calcularDistancia({ origem: destinoOperador, destino: destinoFinal })
+              .then(res => ({ tipo: 'op_dest', data: res.data }))
+          );
+        }
       }
 
       const resultados = await Promise.all(promises);
@@ -609,6 +619,11 @@ export default function SolicitacaoColeta() {
           });
         } else if (resultado.tipo === 'emitente_op' && !resultado.data.error) {
           setDistanciaEmitenteOp({
+            km: parseFloat(resultado.data.distancia_km),
+            texto: resultado.data.distancia_texto
+          });
+        } else if (resultado.tipo === 'op_dest' && !resultado.data.error) {
+          setDistanciaOpDest({
             km: parseFloat(resultado.data.distancia_km),
             texto: resultado.data.distancia_texto
           });
@@ -647,8 +662,27 @@ export default function SolicitacaoColeta() {
       };
     }
 
-    // Determinar KM baseado na distância calculada
-    const kmReferencia = distanciaEmitenteDest?.km || distanciaEmitenteOp?.km || 0;
+    // Determinar KM baseado na configuração da tabela
+    let kmReferencia = 0;
+    let distanciaUsada = "";
+    
+    switch (tabelaSelecionada.tipo_distancia) {
+      case "emitente_destinatario":
+        kmReferencia = distanciaEmitenteDest?.km || 0;
+        distanciaUsada = "Emitente → Destinatário";
+        break;
+      case "emitente_operador":
+        kmReferencia = distanciaEmitenteOp?.km || 0;
+        distanciaUsada = "Emitente → Operador";
+        break;
+      case "operador_destinatario":
+        kmReferencia = distanciaOpDest?.km || 0;
+        distanciaUsada = "Operador → Destinatário";
+        break;
+      default:
+        kmReferencia = distanciaEmitenteDest?.km || 0;
+        distanciaUsada = "Emitente → Destinatário";
+    }
     
     // Encontrar a faixa de KM correta
     const colunas = tabelaSelecionada.colunas_km || [];
@@ -723,6 +757,7 @@ export default function SolicitacaoColeta() {
       faixaPeso: `${itemAplicavel.faixa_peso_min} - ${itemAplicavel.faixa_peso_max} kg`,
       faixaKm: kmFaixa,
       kmCalculado: kmReferencia,
+      distanciaUsada,
       valorBase,
       valorFinal,
       peso: pesoTotal,
@@ -730,7 +765,8 @@ export default function SolicitacaoColeta() {
       valor: valorTotal,
       unidade: itemAplicavel.unidade,
       distanciaEmitenteDest: distanciaEmitenteDest?.texto,
-      distanciaEmitenteOp: distanciaEmitenteOp?.texto
+      distanciaEmitenteOp: distanciaEmitenteOp?.texto,
+      distanciaOpDest: distanciaOpDest?.texto
     };
   };
 
@@ -1817,11 +1853,11 @@ export default function SolicitacaoColeta() {
                             <div className="flex items-center gap-2">
                               <Loader2 className="w-4 h-4 animate-spin text-yellow-700 dark:text-yellow-300" />
                               <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                                Calculando distâncias...
+                                Calculando distâncias via Google Maps...
                               </p>
                             </div>
                           </div>
-                        ) : (distanciaEmitenteDest || distanciaEmitenteOp) && (
+                        ) : (distanciaEmitenteDest || distanciaEmitenteOp || distanciaOpDest) && (
                           <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
                             <div className="flex items-center gap-2 mb-2">
                               <MapPin className="w-4 h-4 text-purple-700 dark:text-purple-300" />
@@ -1829,20 +1865,33 @@ export default function SolicitacaoColeta() {
                                 Distâncias Calculadas
                               </p>
                             </div>
-                            <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                               {distanciaEmitenteDest && (
-                                <div>
-                                  <p className="text-purple-700 dark:text-purple-300">Emitente → Destinatário:</p>
+                                <div className="border rounded p-2" style={{ borderColor: '#c084fc' }}>
+                                  <p className="text-purple-700 dark:text-purple-300 mb-1">Emitente → Destinatário</p>
                                   <p className="font-bold text-purple-900 dark:text-purple-100">{distanciaEmitenteDest.texto}</p>
                                 </div>
                               )}
                               {distanciaEmitenteOp && (
-                                <div>
-                                  <p className="text-purple-700 dark:text-purple-300">Emitente → Operador:</p>
+                                <div className="border rounded p-2" style={{ borderColor: '#c084fc' }}>
+                                  <p className="text-purple-700 dark:text-purple-300 mb-1">Emitente → Operador</p>
                                   <p className="font-bold text-purple-900 dark:text-purple-100">{distanciaEmitenteOp.texto}</p>
                                 </div>
                               )}
+                              {distanciaOpDest && (
+                                <div className="border rounded p-2" style={{ borderColor: '#c084fc' }}>
+                                  <p className="text-purple-700 dark:text-purple-300 mb-1">Operador → Destinatário</p>
+                                  <p className="font-bold text-purple-900 dark:text-purple-100">{distanciaOpDest.texto}</p>
+                                </div>
+                              )}
                             </div>
+                            {precificacaoCalculada?.distanciaUsada && (
+                              <div className="mt-2 pt-2 border-t" style={{ borderColor: '#c084fc' }}>
+                                <p className="text-xs text-purple-700 dark:text-purple-300">
+                                  ✓ Usando: <span className="font-bold">{precificacaoCalculada.distanciaUsada}</span> para cálculo da faixa de KM
+                                </p>
+                              </div>
+                            )}
                           </div>
                         )}
 
