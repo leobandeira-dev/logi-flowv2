@@ -44,6 +44,8 @@ export default function SolicitacaoColeta() {
   const [distanciaEmitenteDest, setDistanciaEmitenteDest] = useState(null);
   const [distanciaEmitenteOp, setDistanciaEmitenteOp] = useState(null);
   const [distanciaOpDest, setDistanciaOpDest] = useState(null);
+  const [erroCalculoDistancia, setErroCalculoDistancia] = useState(false);
+  const [kmManual, setKmManual] = useState(null);
   
   const [formData, setFormData] = useState({
     // Remetente
@@ -577,6 +579,7 @@ export default function SolicitacaoColeta() {
     }
 
     setCalculandoDistancia(true);
+    setErroCalculoDistancia(false);
     try {
       const origemEmitente = `${formData.remetente_cidade}, ${formData.remetente_uf}, Brasil`;
       
@@ -588,6 +591,7 @@ export default function SolicitacaoColeta() {
         promises.push(
           calcularDistancia({ origem: origemEmitente, destino: destinoFinal })
             .then(res => ({ tipo: 'emitente_dest', data: res.data }))
+            .catch(err => ({ tipo: 'emitente_dest', error: true, message: err.message }))
         );
       }
 
@@ -597,6 +601,7 @@ export default function SolicitacaoColeta() {
         promises.push(
           calcularDistancia({ origem: origemEmitente, destino: destinoOperador })
             .then(res => ({ tipo: 'emitente_op', data: res.data }))
+            .catch(err => ({ tipo: 'emitente_op', error: true, message: err.message }))
         );
 
         // Calcular distância Operador Logístico -> Destinatário
@@ -605,33 +610,51 @@ export default function SolicitacaoColeta() {
           promises.push(
             calcularDistancia({ origem: destinoOperador, destino: destinoFinal })
               .then(res => ({ tipo: 'op_dest', data: res.data }))
+              .catch(err => ({ tipo: 'op_dest', error: true, message: err.message }))
           );
         }
       }
 
       const resultados = await Promise.all(promises);
+      let houveErro = false;
 
       resultados.forEach(resultado => {
-        if (resultado.tipo === 'emitente_dest' && !resultado.data.error) {
-          setDistanciaEmitenteDest({
-            km: parseFloat(resultado.data.distancia_km),
-            texto: resultado.data.distancia_texto
-          });
-        } else if (resultado.tipo === 'emitente_op' && !resultado.data.error) {
-          setDistanciaEmitenteOp({
-            km: parseFloat(resultado.data.distancia_km),
-            texto: resultado.data.distancia_texto
-          });
-        } else if (resultado.tipo === 'op_dest' && !resultado.data.error) {
-          setDistanciaOpDest({
-            km: parseFloat(resultado.data.distancia_km),
-            texto: resultado.data.distancia_texto
-          });
+        if (resultado.error || resultado.data?.error) {
+          houveErro = true;
+        } else {
+          if (resultado.tipo === 'emitente_dest') {
+            setDistanciaEmitenteDest({
+              km: parseFloat(resultado.data.distancia_km),
+              texto: resultado.data.distancia_texto,
+              origem: resultado.data.origem_endereco,
+              destino: resultado.data.destino_endereco
+            });
+          } else if (resultado.tipo === 'emitente_op') {
+            setDistanciaEmitenteOp({
+              km: parseFloat(resultado.data.distancia_km),
+              texto: resultado.data.distancia_texto,
+              origem: resultado.data.origem_endereco,
+              destino: resultado.data.destino_endereco
+            });
+          } else if (resultado.tipo === 'op_dest') {
+            setDistanciaOpDest({
+              km: parseFloat(resultado.data.distancia_km),
+              texto: resultado.data.distancia_texto,
+              origem: resultado.data.origem_endereco,
+              destino: resultado.data.destino_endereco
+            });
+          }
         }
       });
+
+      if (houveErro) {
+        setErroCalculoDistancia(true);
+        toast.error("API do Google Maps não disponível. Insira o KM manualmente.");
+      }
     } catch (error) {
       console.error("Erro ao calcular distâncias:", error);
-      toast.error("Erro ao calcular distâncias");
+      setErroCalculoDistancia(true);
+      toast.error("Erro ao calcular distâncias via API");
     } finally {
       setCalculandoDistancia(false);
     }
@@ -662,26 +685,42 @@ export default function SolicitacaoColeta() {
       };
     }
 
-    // Determinar KM baseado na configuração da tabela
+    // Determinar KM baseado na configuração da tabela ou manual
     let kmReferencia = 0;
     let distanciaUsada = "";
+    let origemCalculo = "";
+    let destinoCalculo = "";
     
-    switch (tabelaSelecionada.tipo_distancia) {
-      case "emitente_destinatario":
-        kmReferencia = distanciaEmitenteDest?.km || 0;
-        distanciaUsada = "Emitente → Destinatário";
-        break;
-      case "emitente_operador":
-        kmReferencia = distanciaEmitenteOp?.km || 0;
-        distanciaUsada = "Emitente → Operador";
-        break;
-      case "operador_destinatario":
-        kmReferencia = distanciaOpDest?.km || 0;
-        distanciaUsada = "Operador → Destinatário";
-        break;
-      default:
-        kmReferencia = distanciaEmitenteDest?.km || 0;
-        distanciaUsada = "Emitente → Destinatário";
+    // Priorizar KM manual se informado
+    if (kmManual && kmManual > 0) {
+      kmReferencia = kmManual;
+      distanciaUsada = "KM Manual";
+    } else {
+      switch (tabelaSelecionada.tipo_distancia) {
+        case "emitente_destinatario":
+          kmReferencia = distanciaEmitenteDest?.km || 0;
+          distanciaUsada = "Emitente → Destinatário";
+          origemCalculo = distanciaEmitenteDest?.origem || "";
+          destinoCalculo = distanciaEmitenteDest?.destino || "";
+          break;
+        case "emitente_operador":
+          kmReferencia = distanciaEmitenteOp?.km || 0;
+          distanciaUsada = "Emitente → Operador";
+          origemCalculo = distanciaEmitenteOp?.origem || "";
+          destinoCalculo = distanciaEmitenteOp?.destino || "";
+          break;
+        case "operador_destinatario":
+          kmReferencia = distanciaOpDest?.km || 0;
+          distanciaUsada = "Operador → Destinatário";
+          origemCalculo = distanciaOpDest?.origem || "";
+          destinoCalculo = distanciaOpDest?.destino || "";
+          break;
+        default:
+          kmReferencia = distanciaEmitenteDest?.km || 0;
+          distanciaUsada = "Emitente → Destinatário";
+          origemCalculo = distanciaEmitenteDest?.origem || "";
+          destinoCalculo = distanciaEmitenteDest?.destino || "";
+      }
     }
     
     // Encontrar a faixa de KM correta
@@ -758,6 +797,8 @@ export default function SolicitacaoColeta() {
       faixaKm: kmFaixa,
       kmCalculado: kmReferencia,
       distanciaUsada,
+      origemCalculo,
+      destinoCalculo,
       valorBase,
       valorFinal,
       peso: pesoTotal,
@@ -1847,7 +1888,7 @@ export default function SolicitacaoColeta() {
                           )}
                         </div>
 
-                        {/* Distâncias Calculadas */}
+                        {/* Distâncias Calculadas ou Erro */}
                         {calculandoDistancia ? (
                           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
                             <div className="flex items-center gap-2">
@@ -1857,41 +1898,108 @@ export default function SolicitacaoColeta() {
                               </p>
                             </div>
                           </div>
-                        ) : (distanciaEmitenteDest || distanciaEmitenteOp || distanciaOpDest) && (
-                          <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                        ) : erroCalculoDistancia ? (
+                          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
                             <div className="flex items-center gap-2 mb-2">
-                              <MapPin className="w-4 h-4 text-purple-700 dark:text-purple-300" />
-                              <p className="text-sm font-semibold text-purple-900 dark:text-purple-200">
-                                Distâncias Calculadas
+                              <AlertTriangle className="w-4 h-4 text-red-700 dark:text-red-300" />
+                              <p className="text-sm font-semibold text-red-900 dark:text-red-200">
+                                API Google Maps não disponível
                               </p>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                            <p className="text-xs text-red-700 dark:text-red-300 mb-3">
+                              Não foi possível calcular as distâncias automaticamente. Insira o KM manualmente abaixo.
+                            </p>
+                            <div>
+                              <Label className="text-xs text-red-700 dark:text-red-300">KM Manual</Label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                value={kmManual || ""}
+                                onChange={(e) => setKmManual(parseFloat(e.target.value) || null)}
+                                placeholder="Ex: 450"
+                                className="mt-1 bg-white dark:bg-gray-800"
+                              />
+                              <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                                Digite a distância em KM para calcular o frete
+                              </p>
+                            </div>
+                          </div>
+                        ) : (distanciaEmitenteDest || distanciaEmitenteOp || distanciaOpDest) && (
+                          <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <MapPin className="w-4 h-4 text-purple-700 dark:text-purple-300" />
+                                <p className="text-sm font-semibold text-purple-900 dark:text-purple-200">
+                                  Distâncias Calculadas via Google Maps
+                                </p>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setKmManual(null);
+                                  calcularDistancias();
+                                }}
+                                className="h-7 text-xs"
+                              >
+                                Recalcular
+                              </Button>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 gap-3 mb-3">
                               {distanciaEmitenteDest && (
-                                <div className="border rounded p-2" style={{ borderColor: '#c084fc' }}>
-                                  <p className="text-purple-700 dark:text-purple-300 mb-1">Emitente → Destinatário</p>
-                                  <p className="font-bold text-purple-900 dark:text-purple-100">{distanciaEmitenteDest.texto}</p>
+                                <div className="border rounded-lg p-3 bg-white dark:bg-gray-800" style={{ borderColor: '#c084fc' }}>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs font-semibold text-purple-700 dark:text-purple-300">Emitente → Destinatário</p>
+                                    <p className="text-lg font-bold text-purple-900 dark:text-purple-100">{distanciaEmitenteDest.texto}</p>
+                                  </div>
+                                  <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                                    <p><span className="font-medium">Origem:</span> {distanciaEmitenteDest.origem}</p>
+                                    <p><span className="font-medium">Destino:</span> {distanciaEmitenteDest.destino}</p>
+                                  </div>
                                 </div>
                               )}
                               {distanciaEmitenteOp && (
-                                <div className="border rounded p-2" style={{ borderColor: '#c084fc' }}>
-                                  <p className="text-purple-700 dark:text-purple-300 mb-1">Emitente → Operador</p>
-                                  <p className="font-bold text-purple-900 dark:text-purple-100">{distanciaEmitenteOp.texto}</p>
+                                <div className="border rounded-lg p-3 bg-white dark:bg-gray-800" style={{ borderColor: '#c084fc' }}>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs font-semibold text-purple-700 dark:text-purple-300">Emitente → Operador</p>
+                                    <p className="text-lg font-bold text-purple-900 dark:text-purple-100">{distanciaEmitenteOp.texto}</p>
+                                  </div>
+                                  <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                                    <p><span className="font-medium">Origem:</span> {distanciaEmitenteOp.origem}</p>
+                                    <p><span className="font-medium">Destino:</span> {distanciaEmitenteOp.destino}</p>
+                                  </div>
                                 </div>
                               )}
                               {distanciaOpDest && (
-                                <div className="border rounded p-2" style={{ borderColor: '#c084fc' }}>
-                                  <p className="text-purple-700 dark:text-purple-300 mb-1">Operador → Destinatário</p>
-                                  <p className="font-bold text-purple-900 dark:text-purple-100">{distanciaOpDest.texto}</p>
+                                <div className="border rounded-lg p-3 bg-white dark:bg-gray-800" style={{ borderColor: '#c084fc' }}>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs font-semibold text-purple-700 dark:text-purple-300">Operador → Destinatário</p>
+                                    <p className="text-lg font-bold text-purple-900 dark:text-purple-100">{distanciaOpDest.texto}</p>
+                                  </div>
+                                  <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+                                    <p><span className="font-medium">Origem:</span> {distanciaOpDest.origem}</p>
+                                    <p><span className="font-medium">Destino:</span> {distanciaOpDest.destino}</p>
+                                  </div>
                                 </div>
                               )}
                             </div>
-                            {precificacaoCalculada?.distanciaUsada && (
-                              <div className="mt-2 pt-2 border-t" style={{ borderColor: '#c084fc' }}>
-                                <p className="text-xs text-purple-700 dark:text-purple-300">
-                                  ✓ Usando: <span className="font-bold">{precificacaoCalculada.distanciaUsada}</span> para cálculo da faixa de KM
-                                </p>
-                              </div>
-                            )}
+                            
+                            <div className="border-t pt-3" style={{ borderColor: '#c084fc' }}>
+                              <Label className="text-xs text-purple-700 dark:text-purple-300">KM Manual (Opcional)</Label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                value={kmManual || ""}
+                                onChange={(e) => setKmManual(parseFloat(e.target.value) || null)}
+                                placeholder="Deixe em branco para usar cálculo automático"
+                                className="mt-1 bg-white dark:bg-gray-800"
+                              />
+                              <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                                Se preenchido, este valor será usado no lugar do cálculo automático
+                              </p>
+                            </div>
                           </div>
                         )}
 
@@ -1910,12 +2018,22 @@ export default function SolicitacaoColeta() {
                               </p>
                               {precificacaoCalculada.kmCalculado > 0 && (
                                 <>
-                                  <p className="text-base font-bold text-purple-700 dark:text-purple-300 mt-1">
+                                  <p className="text-xl font-bold text-purple-700 dark:text-purple-300 mt-2">
                                     {precificacaoCalculada.kmCalculado.toFixed(1)} km
                                   </p>
-                                  <p className="text-xs mt-1 text-purple-600 dark:text-purple-400">
-                                    {precificacaoCalculada.distanciaUsada}
+                                  <p className="text-xs mt-1 text-purple-600 dark:text-purple-400 font-medium">
+                                    Base: {precificacaoCalculada.distanciaUsada}
                                   </p>
+                                  {precificacaoCalculada.origemCalculo && precificacaoCalculada.destinoCalculo && (
+                                    <div className="mt-2 pt-2 border-t space-y-1" style={{ borderColor: '#c084fc' }}>
+                                      <p className="text-xs text-purple-600 dark:text-purple-400">
+                                        <span className="font-medium">De:</span> {precificacaoCalculada.origemCalculo}
+                                      </p>
+                                      <p className="text-xs text-purple-600 dark:text-purple-400">
+                                        <span className="font-medium">Para:</span> {precificacaoCalculada.destinoCalculo}
+                                      </p>
+                                    </div>
+                                  )}
                                 </>
                               )}
                             </div>
