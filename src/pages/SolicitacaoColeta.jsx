@@ -1903,15 +1903,20 @@ export default function SolicitacaoColeta() {
                                 {precificacaoCalculada.faixaPeso}
                               </p>
                             </div>
-                            <div className="border rounded-lg p-3" style={{ borderColor: theme.cardBorder }}>
-                              <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Faixa KM</p>
-                              <p className="text-sm font-bold" style={{ color: theme.text }}>
+                            <div className="border rounded-lg p-3 bg-purple-50 dark:bg-purple-900/20" style={{ borderColor: '#a855f7' }}>
+                              <p className="text-xs mb-1 text-purple-700 dark:text-purple-300">Faixa KM</p>
+                              <p className="text-sm font-bold text-purple-900 dark:text-purple-100">
                                 Faixa {precificacaoCalculada.faixaKm}
                               </p>
                               {precificacaoCalculada.kmCalculado > 0 && (
-                                <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
-                                  ({precificacaoCalculada.kmCalculado.toFixed(1)} km)
-                                </p>
+                                <>
+                                  <p className="text-base font-bold text-purple-700 dark:text-purple-300 mt-1">
+                                    {precificacaoCalculada.kmCalculado.toFixed(1)} km
+                                  </p>
+                                  <p className="text-xs mt-1 text-purple-600 dark:text-purple-400">
+                                    {precificacaoCalculada.distanciaUsada}
+                                  </p>
+                                </>
                               )}
                             </div>
                             <div className="border rounded-lg p-3" style={{ borderColor: theme.cardBorder }}>
