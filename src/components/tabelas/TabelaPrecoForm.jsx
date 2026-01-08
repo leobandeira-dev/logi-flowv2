@@ -12,12 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2, X, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros }) {
   const [isDark, setIsDark] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [searchCliente, setSearchCliente] = useState("");
+  const [filteredParceiros, setFilteredParceiros] = useState(parceiros);
   const [formData, setFormData] = useState({
     nome: "",
     codigo: "",
@@ -65,6 +67,10 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    setFilteredParceiros(parceiros);
+  }, [parceiros]);
 
   useEffect(() => {
     if (tabela) {
@@ -284,6 +290,33 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
     });
   };
 
+  const handleSearchCliente = (e) => {
+    e.preventDefault();
+    if (!searchCliente.trim()) {
+      setFilteredParceiros(parceiros);
+      return;
+    }
+
+    const termo = searchCliente.toLowerCase();
+    const resultados = parceiros.filter(p => 
+      p.razao_social?.toLowerCase().includes(termo) ||
+      p.cnpj?.includes(termo)
+    );
+    
+    setFilteredParceiros(resultados);
+    
+    if (resultados.length === 0) {
+      toast.info("Nenhum cliente encontrado");
+    }
+  };
+
+  const handleSearchKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSearchCliente(e);
+    }
+  };
+
   const theme = {
     bg: isDark ? '#0f172a' : '#f9fafb',
     cardBg: isDark ? '#1e293b' : '#ffffff',
@@ -366,24 +399,51 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label style={{ color: theme.text }}>Clientes (múltipla seleção)</Label>
+                  <div className="mb-2 flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        value={searchCliente}
+                        onChange={(e) => setSearchCliente(e.target.value)}
+                        onKeyPress={handleSearchKeyPress}
+                        placeholder="Pesquisar cliente por nome ou CNPJ..."
+                        className="pr-10"
+                        style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleSearchCliente}
+                      size="sm"
+                      variant="outline"
+                      className="px-3"
+                    >
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  </div>
                   <div className="border rounded-lg p-2 max-h-40 overflow-y-auto" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                    {parceiros.map((p) => (
-                      <label key={p.id} className="flex items-center gap-2 p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.clientes_parceiros_ids.includes(p.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFormData({ ...formData, clientes_parceiros_ids: [...formData.clientes_parceiros_ids, p.id] });
-                            } else {
-                              setFormData({ ...formData, clientes_parceiros_ids: formData.clientes_parceiros_ids.filter(id => id !== p.id) });
-                            }
-                          }}
-                          className="rounded"
-                        />
-                        <span className="text-sm" style={{ color: theme.text }}>{p.razao_social}</span>
-                      </label>
-                    ))}
+                    {filteredParceiros.length === 0 ? (
+                      <p className="text-xs text-center py-4" style={{ color: theme.textMuted }}>
+                        Nenhum cliente encontrado
+                      </p>
+                    ) : (
+                      filteredParceiros.map((p) => (
+                        <label key={p.id} className="flex items-center gap-2 p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.clientes_parceiros_ids.includes(p.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData({ ...formData, clientes_parceiros_ids: [...formData.clientes_parceiros_ids, p.id] });
+                              } else {
+                                setFormData({ ...formData, clientes_parceiros_ids: formData.clientes_parceiros_ids.filter(id => id !== p.id) });
+                              }
+                            }}
+                            className="rounded"
+                          />
+                          <span className="text-sm" style={{ color: theme.text }}>{p.razao_social}</span>
+                        </label>
+                      ))
+                    )}
                   </div>
                   {formData.clientes_parceiros_ids.length > 0 && (
                     <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
