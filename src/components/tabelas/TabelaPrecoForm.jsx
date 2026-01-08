@@ -181,12 +181,12 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
   const addItem = () => {
     const valores_colunas = {};
     formData.colunas_km.forEach(col => {
-      valores_colunas[col.letra] = 0;
+      valores_colunas[col.letra] = null;
     });
     
     setItens([...itens, {
-      faixa_peso_min: 0,
-      faixa_peso_max: 0,
+      faixa_peso_min: null,
+      faixa_peso_max: null,
       valores_colunas: valores_colunas,
       unidade: formData.unidade_cobranca,
       ordem: itens.length + 1
@@ -199,17 +199,19 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
 
   const updateItem = (index, field, value) => {
     const newItens = [...itens];
+    const parsedValue = value === "" ? null : parseFloat(value);
+    
     if (field.startsWith('col_')) {
       const letra = field.replace('col_', '').toUpperCase();
       newItens[index] = {
         ...newItens[index],
         valores_colunas: {
           ...newItens[index].valores_colunas,
-          [letra]: parseFloat(value) || 0
+          [letra]: parsedValue
         }
       };
     } else {
-      newItens[index] = { ...newItens[index], [field]: parseFloat(value) || 0 };
+      newItens[index] = { ...newItens[index], [field]: parsedValue };
     }
     setItens(newItens);
   };
@@ -702,9 +704,9 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                             <Input
                               type="number"
                               step="0.01"
-                              value={item.faixa_peso_min || 0}
+                              value={item.faixa_peso_min ?? ""}
                               onChange={(e) => updateItem(index, 'faixa_peso_min', e.target.value)}
-                              placeholder="0"
+                              placeholder="Min"
                               className="text-xs h-8 w-full"
                               style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                             />
@@ -713,9 +715,9 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                             <Input
                               type="number"
                               step="0.01"
-                              value={item.faixa_peso_max || 0}
+                              value={item.faixa_peso_max ?? ""}
                               onChange={(e) => updateItem(index, 'faixa_peso_max', e.target.value)}
-                              placeholder="50"
+                              placeholder="Max"
                               className="text-xs h-8 w-full"
                               style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                             />
@@ -727,8 +729,9 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                                 <Input
                                   type="number"
                                   step="0.01"
-                                  value={item.valores_colunas?.[col.letra] || 0}
+                                  value={item.valores_colunas?.[col.letra] ?? ""}
                                   onChange={(e) => updateItem(index, `col_${col.letra.toLowerCase()}`, e.target.value)}
+                                  placeholder=""
                                   className="text-xs h-8 pl-8 w-full"
                                   style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                                 />
