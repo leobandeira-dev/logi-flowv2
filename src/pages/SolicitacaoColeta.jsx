@@ -726,10 +726,14 @@ export default function SolicitacaoColeta() {
     // Encontrar a faixa de KM correta
     const colunas = tabelaSelecionada.colunas_km || [];
     let kmFaixa = "A"; // Default
+    let kmFaixaMin = 0;
+    let kmFaixaMax = 0;
     
     for (const col of colunas) {
       if (kmReferencia >= col.km_min && kmReferencia <= col.km_max) {
         kmFaixa = col.letra;
+        kmFaixaMin = col.km_min;
+        kmFaixaMax = col.km_max;
         break;
       }
     }
@@ -795,6 +799,8 @@ export default function SolicitacaoColeta() {
       tabela: tabelaSelecionada.nome,
       faixaPeso: `${itemAplicavel.faixa_peso_min} - ${itemAplicavel.faixa_peso_max} kg`,
       faixaKm: kmFaixa,
+      kmFaixaMin,
+      kmFaixaMax,
       kmCalculado: kmReferencia,
       distanciaUsada,
       origemCalculo,
@@ -2039,17 +2045,22 @@ export default function SolicitacaoColeta() {
                             </div>
                             <div className="border rounded-lg p-3 bg-purple-50 dark:bg-purple-900/20" style={{ borderColor: '#a855f7' }}>
                               <p className="text-xs mb-1 text-purple-700 dark:text-purple-300">Faixa KM</p>
-                              <p className="text-sm font-bold text-purple-900 dark:text-purple-100">
+                              <p className="text-lg font-bold text-purple-900 dark:text-purple-100">
                                 Faixa {precificacaoCalculada.faixaKm}
+                              </p>
+                              <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                                {precificacaoCalculada.kmFaixaMin} - {precificacaoCalculada.kmFaixaMax} km
                               </p>
                               {precificacaoCalculada.kmCalculado > 0 && (
                                 <>
-                                  <p className="text-xl font-bold text-purple-700 dark:text-purple-300 mt-2">
-                                    {precificacaoCalculada.kmCalculado.toFixed(1)} km
-                                  </p>
-                                  <p className="text-xs mt-1 text-purple-600 dark:text-purple-400 font-medium">
-                                    Base: {precificacaoCalculada.distanciaUsada}
-                                  </p>
+                                  <div className="mt-2 pt-2 border-t" style={{ borderColor: '#c084fc' }}>
+                                    <p className="text-xl font-bold text-purple-700 dark:text-purple-300">
+                                      {precificacaoCalculada.kmCalculado.toFixed(1)} km
+                                    </p>
+                                    <p className="text-xs mt-1 text-purple-600 dark:text-purple-400 font-medium">
+                                      Base: {precificacaoCalculada.distanciaUsada}
+                                    </p>
+                                  </div>
                                   {precificacaoCalculada.origemCalculo && precificacaoCalculada.destinoCalculo && (
                                     <div className="mt-2 pt-2 border-t space-y-1" style={{ borderColor: '#c084fc' }}>
                                       <p className="text-xs text-purple-600 dark:text-purple-400">
