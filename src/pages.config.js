@@ -40,6 +40,7 @@ import Unitizacao from './pages/Unitizacao';
 import Usuarios from './pages/Usuarios';
 import Veiculos from './pages/Veiculos';
 import Tabelas from './pages/Tabelas';
+import ProdutosPalets from './pages/ProdutosPalets';
 import __Layout from './Layout.jsx';
 
 
@@ -86,6 +87,7 @@ export const PAGES = {
     "Usuarios": Usuarios,
     "Veiculos": Veiculos,
     "Tabelas": Tabelas,
+    "ProdutosPalets": ProdutosPalets,
 }
 
 export const pagesConfig = {

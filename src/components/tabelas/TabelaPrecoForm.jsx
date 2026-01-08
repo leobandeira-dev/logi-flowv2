@@ -20,6 +20,7 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     nome: "",
+    codigo: "",
     descricao: "",
     tipo_tabela: "peso_km",
     cliente_parceiro_id: "",
@@ -27,6 +28,20 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
     vigencia_fim: "",
     tipo_aplicacao: "todos",
     unidade_cobranca: "viagem",
+    frete_minimo: 0,
+    pedagio: 0,
+    tipo_pedagio: "fixo",
+    icms: 0,
+    pis_cofins: 0,
+    ad_valorem: 0,
+    gris: 0,
+    taxa_redespacho: 0,
+    seguro: 0,
+    tde: 0,
+    taxa_coleta: 0,
+    taxa_entrega: 0,
+    generalidades: 0,
+    desconto: 0,
     observacoes: "",
     ativo: true
   });
@@ -46,6 +61,7 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
     if (tabela) {
       setFormData({
         nome: tabela.nome || "",
+        codigo: tabela.codigo || "",
         descricao: tabela.descricao || "",
         tipo_tabela: tabela.tipo_tabela || "peso_km",
         cliente_parceiro_id: tabela.cliente_parceiro_id || "",
@@ -53,6 +69,20 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
         vigencia_fim: tabela.vigencia_fim ? new Date(tabela.vigencia_fim).toISOString().slice(0, 10) : "",
         tipo_aplicacao: tabela.tipo_aplicacao || "todos",
         unidade_cobranca: tabela.unidade_cobranca || "viagem",
+        frete_minimo: tabela.frete_minimo || 0,
+        pedagio: tabela.pedagio || 0,
+        tipo_pedagio: tabela.tipo_pedagio || "fixo",
+        icms: tabela.icms || 0,
+        pis_cofins: tabela.pis_cofins || 0,
+        ad_valorem: tabela.ad_valorem || 0,
+        gris: tabela.gris || 0,
+        taxa_redespacho: tabela.taxa_redespacho || 0,
+        seguro: tabela.seguro || 0,
+        tde: tabela.tde || 0,
+        taxa_coleta: tabela.taxa_coleta || 0,
+        taxa_entrega: tabela.taxa_entrega || 0,
+        generalidades: tabela.generalidades || 0,
+        desconto: tabela.desconto || 0,
         observacoes: tabela.observacoes || "",
         ativo: tabela.ativo !== false
       });
@@ -132,10 +162,18 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
 
   const addItem = () => {
     setItens([...itens, {
+      descricao_faixa: "",
       faixa_peso_min: 0,
       faixa_peso_max: 0,
       faixa_km_min: 0,
       faixa_km_max: 0,
+      col_a: 0,
+      col_b: 0,
+      col_c: 0,
+      col_d: 0,
+      col_e: 0,
+      col_f: 0,
+      col_g: 0,
       valor: 0,
       unidade: formData.unidade_cobranca,
       ordem: itens.length + 1
@@ -179,7 +217,16 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
               <CardTitle style={{ color: theme.text }}>Informações Gerais</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label style={{ color: theme.text }}>Código</Label>
+                  <Input
+                    value={formData.codigo}
+                    onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                    placeholder="Ex: TAB001"
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
                 <div>
                   <Label style={{ color: theme.text }}>Nome da Tabela *</Label>
                   <Input
@@ -312,6 +359,171 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
             </CardContent>
           </Card>
 
+          <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+            <CardHeader>
+              <CardTitle style={{ color: theme.text }}>Configurações de Taxas e Impostos</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-4 gap-4">
+                <div>
+                  <Label style={{ color: theme.text }}>Frete Mínimo (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.frete_minimo}
+                    onChange={(e) => setFormData({ ...formData, frete_minimo: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+                <div>
+                  <Label style={{ color: theme.text }}>Pedágio</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.pedagio}
+                    onChange={(e) => setFormData({ ...formData, pedagio: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+                <div>
+                  <Label style={{ color: theme.text }}>Tipo Pedágio</Label>
+                  <Select
+                    value={formData.tipo_pedagio}
+                    onValueChange={(value) => setFormData({ ...formData, tipo_pedagio: value })}
+                  >
+                    <SelectTrigger style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fixo">Fixo</SelectItem>
+                      <SelectItem value="percentual">Percentual</SelectItem>
+                      <SelectItem value="por_eixo">Por Eixo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label style={{ color: theme.text }}>ICMS (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.icms}
+                    onChange={(e) => setFormData({ ...formData, icms: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-4">
+                <div>
+                  <Label style={{ color: theme.text }}>PIS/COFINS (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.pis_cofins}
+                    onChange={(e) => setFormData({ ...formData, pis_cofins: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+                <div>
+                  <Label style={{ color: theme.text }}>Ad Valorem (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.ad_valorem}
+                    onChange={(e) => setFormData({ ...formData, ad_valorem: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+                <div>
+                  <Label style={{ color: theme.text }}>GRIS (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.gris}
+                    onChange={(e) => setFormData({ ...formData, gris: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+                <div>
+                  <Label style={{ color: theme.text }}>Seguro (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.seguro}
+                    onChange={(e) => setFormData({ ...formData, seguro: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-4">
+                <div>
+                  <Label style={{ color: theme.text }}>TDE (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.tde}
+                    onChange={(e) => setFormData({ ...formData, tde: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+                <div>
+                  <Label style={{ color: theme.text }}>Taxa Coleta (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.taxa_coleta}
+                    onChange={(e) => setFormData({ ...formData, taxa_coleta: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+                <div>
+                  <Label style={{ color: theme.text }}>Taxa Entrega (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.taxa_entrega}
+                    onChange={(e) => setFormData({ ...formData, taxa_entrega: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+                <div>
+                  <Label style={{ color: theme.text }}>Redespacho (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.taxa_redespacho}
+                    onChange={(e) => setFormData({ ...formData, taxa_redespacho: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label style={{ color: theme.text }}>Generalidades (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.generalidades}
+                    onChange={(e) => setFormData({ ...formData, generalidades: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+                <div>
+                  <Label style={{ color: theme.text }}>Desconto (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.desconto}
+                    onChange={(e) => setFormData({ ...formData, desconto: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {formData.tipo_tabela === "peso_km" && (
             <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
               <CardHeader>
@@ -324,73 +536,122 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {itens.map((item, index) => (
-                    <div key={index} className="grid grid-cols-6 gap-3 p-3 border rounded" style={{ borderColor: theme.cardBorder }}>
-                      <div>
-                        <Label className="text-xs" style={{ color: theme.textMuted }}>Peso Min (kg)</Label>
-                        <Input
-                          type="number"
-                          value={item.faixa_peso_min}
-                          onChange={(e) => updateItem(index, 'faixa_peso_min', e.target.value)}
-                          placeholder="0"
-                          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs" style={{ color: theme.textMuted }}>Peso Max (kg)</Label>
-                        <Input
-                          type="number"
-                          value={item.faixa_peso_max}
-                          onChange={(e) => updateItem(index, 'faixa_peso_max', e.target.value)}
-                          placeholder="100"
-                          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs" style={{ color: theme.textMuted }}>KM Min</Label>
-                        <Input
-                          type="number"
-                          value={item.faixa_km_min}
-                          onChange={(e) => updateItem(index, 'faixa_km_min', e.target.value)}
-                          placeholder="0"
-                          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs" style={{ color: theme.textMuted }}>KM Max</Label>
-                        <Input
-                          type="number"
-                          value={item.faixa_km_max}
-                          onChange={(e) => updateItem(index, 'faixa_km_max', e.target.value)}
-                          placeholder="100"
-                          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs" style={{ color: theme.textMuted }}>Valor (R$)</Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={item.valor}
-                          onChange={(e) => updateItem(index, 'valor', e.target.value)}
-                          placeholder="0.00"
-                          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                        />
-                      </div>
-                      <div className="flex items-end">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeItem(index)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse" style={{ borderColor: theme.cardBorder }}>
+                    <thead>
+                      <tr style={{ backgroundColor: isDark ? '#334155' : '#f1f5f9' }}>
+                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Peso (kg)</th>
+                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>até 100km (A)</th>
+                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>100-200km (B)</th>
+                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>200-400km (C)</th>
+                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>400-600km (D)</th>
+                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>600-800km (E)</th>
+                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>800-1000km (F)</th>
+                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>1000-1200km (G)</th>
+                        <th className="border p-2 text-xs font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {itens.map((item, index) => (
+                        <tr key={index}>
+                          <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
+                            <Input
+                              value={item.descricao_faixa || `${item.faixa_peso_min} a ${item.faixa_peso_max}`}
+                              onChange={(e) => {
+                                const newItens = [...itens];
+                                newItens[index] = { ...newItens[index], descricao_faixa: e.target.value };
+                                setItens(newItens);
+                              }}
+                              placeholder="0 a 50 kg"
+                              className="text-xs h-8"
+                              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                            />
+                          </td>
+                          <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={item.col_a || 0}
+                              onChange={(e) => updateItem(index, 'col_a', e.target.value)}
+                              className="text-xs h-8"
+                              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                            />
+                          </td>
+                          <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={item.col_b || 0}
+                              onChange={(e) => updateItem(index, 'col_b', e.target.value)}
+                              className="text-xs h-8"
+                              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                            />
+                          </td>
+                          <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={item.col_c || 0}
+                              onChange={(e) => updateItem(index, 'col_c', e.target.value)}
+                              className="text-xs h-8"
+                              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                            />
+                          </td>
+                          <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={item.col_d || 0}
+                              onChange={(e) => updateItem(index, 'col_d', e.target.value)}
+                              className="text-xs h-8"
+                              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                            />
+                          </td>
+                          <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={item.col_e || 0}
+                              onChange={(e) => updateItem(index, 'col_e', e.target.value)}
+                              className="text-xs h-8"
+                              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                            />
+                          </td>
+                          <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={item.col_f || 0}
+                              onChange={(e) => updateItem(index, 'col_f', e.target.value)}
+                              className="text-xs h-8"
+                              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                            />
+                          </td>
+                          <td className="border p-1" style={{ borderColor: theme.cardBorder }}>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={item.col_g || 0}
+                              onChange={(e) => updateItem(index, 'col_g', e.target.value)}
+                              className="text-xs h-8"
+                              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                            />
+                          </td>
+                          <td className="border p-1 text-center" style={{ borderColor: theme.cardBorder }}>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeItem(index)}
+                              className="text-red-600 hover:text-red-700 h-7"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </CardContent>
             </Card>
