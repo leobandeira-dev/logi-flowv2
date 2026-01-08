@@ -39,6 +39,7 @@ import TrackingTV from './pages/TrackingTV';
 import Unitizacao from './pages/Unitizacao';
 import Usuarios from './pages/Usuarios';
 import Veiculos from './pages/Veiculos';
+import Tabelas from './pages/Tabelas';
 import __Layout from './Layout.jsx';
 
 
@@ -84,6 +85,7 @@ export const PAGES = {
     "Unitizacao": Unitizacao,
     "Usuarios": Usuarios,
     "Veiculos": Veiculos,
+    "Tabelas": Tabelas,
 }
 
 export const pagesConfig = {
