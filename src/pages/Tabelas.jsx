@@ -21,7 +21,8 @@ import {
   Calendar,
   Building2,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Copy
 } from "lucide-react";
 import TabelaPrecoForm from "../components/tabelas/TabelaPrecoForm";
 import { toast } from "sonner";
@@ -105,6 +106,71 @@ export default function Tabelas() {
     } catch (error) {
       console.error("Erro ao atualizar tabela:", error);
       toast.error("Erro ao atualizar tabela");
+    }
+  };
+
+  const handleDuplicate = async (tabela) => {
+    if (!window.confirm(`Deseja duplicar a tabela "${tabela.nome}"?`)) return;
+
+    try {
+      const user = await base44.auth.me();
+      
+      // Criar nova tabela com dados duplicados
+      const novaTabelaData = {
+        empresa_id: user.empresa_id,
+        nome: `${tabela.nome} (Cópia)`,
+        codigo: tabela.codigo ? `${tabela.codigo}-COPIA` : "",
+        descricao: tabela.descricao,
+        tipo_tabela: tabela.tipo_tabela,
+        clientes_parceiros_ids: tabela.clientes_parceiros_ids || [],
+        vigencia_inicio: tabela.vigencia_inicio,
+        vigencia_fim: tabela.vigencia_fim,
+        tipos_aplicacao: tabela.tipos_aplicacao || [],
+        unidade_cobranca: tabela.unidade_cobranca,
+        colunas_km: tabela.colunas_km || [],
+        frete_minimo: tabela.frete_minimo || 0,
+        pedagio: tabela.pedagio || 0,
+        tipo_pedagio: tabela.tipo_pedagio || "fixo",
+        icms: tabela.icms || 0,
+        pis_cofins: tabela.pis_cofins || 0,
+        ad_valorem: tabela.ad_valorem || 0,
+        gris: tabela.gris || 0,
+        taxa_redespacho: tabela.taxa_redespacho || 0,
+        seguro: tabela.seguro || 0,
+        tde: tabela.tde || 0,
+        taxa_coleta: tabela.taxa_coleta || 0,
+        taxa_entrega: tabela.taxa_entrega || 0,
+        generalidades: tabela.generalidades || 0,
+        desconto: tabela.desconto || 0,
+        observacoes: tabela.observacoes || "",
+        ativo: false
+      };
+
+      const novaTabela = await base44.entities.TabelaPreco.create(novaTabelaData);
+
+      // Buscar e duplicar itens da tabela
+      const itens = await base44.entities.TabelaPrecoItem.filter(
+        { tabela_preco_id: tabela.id },
+        "ordem",
+        100
+      );
+
+      for (const item of itens) {
+        await base44.entities.TabelaPrecoItem.create({
+          tabela_preco_id: novaTabela.id,
+          faixa_peso_min: item.faixa_peso_min,
+          faixa_peso_max: item.faixa_peso_max,
+          valores_colunas: item.valores_colunas || {},
+          unidade: item.unidade,
+          ordem: item.ordem
+        });
+      }
+
+      toast.success("Tabela duplicada com sucesso!");
+      loadTabelas();
+    } catch (error) {
+      console.error("Erro ao duplicar tabela:", error);
+      toast.error("Erro ao duplicar tabela");
     }
   };
 
@@ -308,14 +374,25 @@ export default function Tabelas() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(tabela)}
+                            title="Editar"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => handleDuplicate(tabela)}
+                            title="Duplicar"
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleDelete(tabela)}
                             className="text-red-600 hover:text-red-700"
+                            title="Excluir"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
