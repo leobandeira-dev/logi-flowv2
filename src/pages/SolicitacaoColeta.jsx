@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Package, Upload, Plus, RefreshCw, X, Edit, Search } from "lucide-react";
+import { Package, Upload, Plus, RefreshCw, X, Edit, Search, MapPin, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import NotaFiscalForm from "../components/notas-fiscais/NotaFiscalForm";
 import VolumesModal from "../components/notas-fiscais/VolumesModal";
 import OnboardingSolicitacaoColeta from "../components/onboarding/OnboardingSolicitacaoColeta";
+import { calcularDistancia } from "@/functions/calcularDistancia";
 
 export default function SolicitacaoColeta() {
   const [user, setUser] = useState(null);
@@ -39,6 +40,9 @@ export default function SolicitacaoColeta() {
   const [tipoFrete, setTipoFrete] = useState(null); // 'CIF' ou 'FOB'
   const [showTipoFreteModal, setShowTipoFreteModal] = useState(false);
   const [precificacaoCalculada, setPrecificacaoCalculada] = useState(null);
+  const [calculandoDistancia, setCalculandoDistancia] = useState(false);
+  const [distanciaEmitenteDest, setDistanciaEmitenteDest] = useState(null);
+  const [distanciaEmitenteOp, setDistanciaEmitenteOp] = useState(null);
   
   const [formData, setFormData] = useState({
     // Remetente
@@ -566,6 +570,58 @@ export default function SolicitacaoColeta() {
     setShowVolumesModal(true);
   };
 
+  const calcularDistancias = async () => {
+    if (!formData.remetente_cidade || !formData.remetente_uf) {
+      return;
+    }
+
+    setCalculandoDistancia(true);
+    try {
+      const origemEmitente = `${formData.remetente_cidade}, ${formData.remetente_uf}, Brasil`;
+      
+      const promises = [];
+
+      // Calcular distância Emitente -> Destinatário
+      if (formData.destino_cidade && formData.destino_uf) {
+        const destinoFinal = `${formData.destino_cidade}, ${formData.destino_uf}, Brasil`;
+        promises.push(
+          calcularDistancia({ origem: origemEmitente, destino: destinoFinal })
+            .then(res => ({ tipo: 'emitente_dest', data: res.data }))
+        );
+      }
+
+      // Calcular distância Emitente -> Operador Logístico
+      if (operadorLogistico?.cidade && operadorLogistico?.estado) {
+        const destinoOperador = `${operadorLogistico.cidade}, ${operadorLogistico.estado}, Brasil`;
+        promises.push(
+          calcularDistancia({ origem: origemEmitente, destino: destinoOperador })
+            .then(res => ({ tipo: 'emitente_op', data: res.data }))
+        );
+      }
+
+      const resultados = await Promise.all(promises);
+
+      resultados.forEach(resultado => {
+        if (resultado.tipo === 'emitente_dest' && !resultado.data.error) {
+          setDistanciaEmitenteDest({
+            km: parseFloat(resultado.data.distancia_km),
+            texto: resultado.data.distancia_texto
+          });
+        } else if (resultado.tipo === 'emitente_op' && !resultado.data.error) {
+          setDistanciaEmitenteOp({
+            km: parseFloat(resultado.data.distancia_km),
+            texto: resultado.data.distancia_texto
+          });
+        }
+      });
+    } catch (error) {
+      console.error("Erro ao calcular distâncias:", error);
+      toast.error("Erro ao calcular distâncias");
+    } finally {
+      setCalculandoDistancia(false);
+    }
+  };
+
   const calcularPrecificacao = () => {
     if (!tabelaSelecionada) return null;
 
@@ -591,8 +647,20 @@ export default function SolicitacaoColeta() {
       };
     }
 
-    // TODO: Calcular KM (por enquanto assumir faixa A)
-    const kmFaixa = "A";
+    // Determinar KM baseado na distância calculada
+    const kmReferencia = distanciaEmitenteDest?.km || distanciaEmitenteOp?.km || 0;
+    
+    // Encontrar a faixa de KM correta
+    const colunas = tabelaSelecionada.colunas_km || [];
+    let kmFaixa = "A"; // Default
+    
+    for (const col of colunas) {
+      if (kmReferencia >= col.km_min && kmReferencia <= col.km_max) {
+        kmFaixa = col.letra;
+        break;
+      }
+    }
+
     const valorFaixa = itemAplicavel.valores_colunas?.[kmFaixa] || 0;
 
     let valorBase = 0;
@@ -654,14 +722,24 @@ export default function SolicitacaoColeta() {
       tabela: tabelaSelecionada.nome,
       faixaPeso: `${itemAplicavel.faixa_peso_min} - ${itemAplicavel.faixa_peso_max} kg`,
       faixaKm: kmFaixa,
+      kmCalculado: kmReferencia,
       valorBase,
       valorFinal,
       peso: pesoTotal,
       cubagem: cubagemTotal,
       valor: valorTotal,
-      unidade: itemAplicavel.unidade
+      unidade: itemAplicavel.unidade,
+      distanciaEmitenteDest: distanciaEmitenteDest?.texto,
+      distanciaEmitenteOp: distanciaEmitenteOp?.texto
     };
   };
+
+  // Recalcular distâncias quando endereços mudarem
+  useEffect(() => {
+    if (metodoEntradaSelecionado && tabelaSelecionada && notasFiscais.length > 0) {
+      calcularDistancias();
+    }
+  }, [formData.remetente_cidade, formData.remetente_uf, formData.destino_cidade, formData.destino_uf, tabelaSelecionada]);
 
   useEffect(() => {
     if (tabelaSelecionada && notasFiscais.length > 0) {
@@ -1733,6 +1811,41 @@ export default function SolicitacaoColeta() {
                           )}
                         </div>
 
+                        {/* Distâncias Calculadas */}
+                        {calculandoDistancia ? (
+                          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin text-yellow-700 dark:text-yellow-300" />
+                              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                                Calculando distâncias...
+                              </p>
+                            </div>
+                          </div>
+                        ) : (distanciaEmitenteDest || distanciaEmitenteOp) && (
+                          <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                              <MapPin className="w-4 h-4 text-purple-700 dark:text-purple-300" />
+                              <p className="text-sm font-semibold text-purple-900 dark:text-purple-200">
+                                Distâncias Calculadas
+                              </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              {distanciaEmitenteDest && (
+                                <div>
+                                  <p className="text-purple-700 dark:text-purple-300">Emitente → Destinatário:</p>
+                                  <p className="font-bold text-purple-900 dark:text-purple-100">{distanciaEmitenteDest.texto}</p>
+                                </div>
+                              )}
+                              {distanciaEmitenteOp && (
+                                <div>
+                                  <p className="text-purple-700 dark:text-purple-300">Emitente → Operador:</p>
+                                  <p className="font-bold text-purple-900 dark:text-purple-100">{distanciaEmitenteOp.texto}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         {precificacaoCalculada && (
                           <div className="grid grid-cols-2 gap-3">
                             <div className="border rounded-lg p-3" style={{ borderColor: theme.cardBorder }}>
@@ -1746,6 +1859,11 @@ export default function SolicitacaoColeta() {
                               <p className="text-sm font-bold" style={{ color: theme.text }}>
                                 Faixa {precificacaoCalculada.faixaKm}
                               </p>
+                              {precificacaoCalculada.kmCalculado > 0 && (
+                                <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                                  ({precificacaoCalculada.kmCalculado.toFixed(1)} km)
+                                </p>
+                              )}
                             </div>
                             <div className="border rounded-lg p-3" style={{ borderColor: theme.cardBorder }}>
                               <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Valor Base</p>
