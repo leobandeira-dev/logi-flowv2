@@ -688,8 +688,24 @@ export default function SolicitacaoColeta() {
     // Determinar KM baseado na configuração da tabela ou manual
     let kmReferencia = 0;
     let distanciaUsada = "";
+    let baseConfigurada = "";
     let origemCalculo = "";
     let destinoCalculo = "";
+    
+    // Identificar a base configurada na tabela
+    switch (tabelaSelecionada.tipo_distancia) {
+      case "emitente_destinatario":
+        baseConfigurada = "Emitente → Destinatário";
+        break;
+      case "emitente_operador":
+        baseConfigurada = "Emitente → Operador";
+        break;
+      case "operador_destinatario":
+        baseConfigurada = "Operador → Destinatário";
+        break;
+      default:
+        baseConfigurada = "Emitente → Destinatário";
+    }
     
     // Priorizar KM manual se informado
     if (kmManual && kmManual > 0) {
@@ -699,25 +715,25 @@ export default function SolicitacaoColeta() {
       switch (tabelaSelecionada.tipo_distancia) {
         case "emitente_destinatario":
           kmReferencia = distanciaEmitenteDest?.km || 0;
-          distanciaUsada = "Emitente → Destinatário";
+          distanciaUsada = "Emitente → Destinatário (Auto)";
           origemCalculo = distanciaEmitenteDest?.origem || "";
           destinoCalculo = distanciaEmitenteDest?.destino || "";
           break;
         case "emitente_operador":
           kmReferencia = distanciaEmitenteOp?.km || 0;
-          distanciaUsada = "Emitente → Operador";
+          distanciaUsada = "Emitente → Operador (Auto)";
           origemCalculo = distanciaEmitenteOp?.origem || "";
           destinoCalculo = distanciaEmitenteOp?.destino || "";
           break;
         case "operador_destinatario":
           kmReferencia = distanciaOpDest?.km || 0;
-          distanciaUsada = "Operador → Destinatário";
+          distanciaUsada = "Operador → Destinatário (Auto)";
           origemCalculo = distanciaOpDest?.origem || "";
           destinoCalculo = distanciaOpDest?.destino || "";
           break;
         default:
           kmReferencia = distanciaEmitenteDest?.km || 0;
-          distanciaUsada = "Emitente → Destinatário";
+          distanciaUsada = "Emitente → Destinatário (Auto)";
           origemCalculo = distanciaEmitenteDest?.origem || "";
           destinoCalculo = distanciaEmitenteDest?.destino || "";
       }
@@ -803,6 +819,7 @@ export default function SolicitacaoColeta() {
       kmFaixaMax,
       kmCalculado: kmReferencia,
       distanciaUsada,
+      baseConfigurada,
       origemCalculo,
       destinoCalculo,
       valorBase,
@@ -2054,11 +2071,14 @@ export default function SolicitacaoColeta() {
                               {precificacaoCalculada.kmCalculado > 0 && (
                                 <>
                                   <div className="mt-2 pt-2 border-t" style={{ borderColor: '#c084fc' }}>
+                                    <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">
+                                      Base de Cálculo: <span className="font-bold">{precificacaoCalculada.baseConfigurada}</span>
+                                    </p>
                                     <p className="text-xl font-bold text-purple-700 dark:text-purple-300">
                                       {precificacaoCalculada.kmCalculado.toFixed(1)} km
                                     </p>
                                     <p className="text-xs mt-1 text-purple-600 dark:text-purple-400 font-medium">
-                                      Base: {precificacaoCalculada.distanciaUsada}
+                                      {precificacaoCalculada.distanciaUsada}
                                     </p>
                                   </div>
                                   {precificacaoCalculada.origemCalculo && precificacaoCalculada.destinoCalculo && (
