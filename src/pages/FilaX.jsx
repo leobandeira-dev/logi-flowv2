@@ -577,6 +577,32 @@ export default function FilaX() {
     }
   };
 
+  const handleCopiarLinkPublico = () => {
+    const linkPublico = window.location.origin + createPageUrl("FilaMotorista");
+    navigator.clipboard.writeText(linkPublico);
+    toast.success("Link copiado!");
+  };
+
+  const handleCompartilharLink = async () => {
+    const linkPublico = window.location.origin + createPageUrl("FilaMotorista");
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Cadastro na Fila de Veículos',
+          text: 'Cadastre-se na fila de veículos',
+          url: linkPublico
+        });
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          handleCopiarLinkPublico();
+        }
+      }
+    } else {
+      handleCopiarLinkPublico();
+    }
+  };
+
   const theme = {
     bg: isDark ? '#0f172a' : '#f9fafb',
     cardBg: isDark ? '#1e293b' : '#ffffff',
