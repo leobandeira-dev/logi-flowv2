@@ -671,15 +671,15 @@ export default function FilaX() {
                         <thead>
                           <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
                             <th className="text-left p-2 text-xs font-semibold w-8" style={{ color: theme.textMuted }}></th>
-                            <th className="text-left p-2 text-xs font-semibold w-24" style={{ color: theme.textMuted }}>Tipo</th>
+                            <th className="text-left p-2 text-xs font-semibold w-20" style={{ color: theme.textMuted }}>Tipo</th>
                             <th className="text-left p-2 text-xs font-semibold w-40" style={{ color: theme.textMuted }}>Motorista</th>
                             <th className="text-left p-2 text-xs font-semibold w-28" style={{ color: theme.textMuted }}>CPF</th>
                             <th className="text-left p-2 text-xs font-semibold w-28" style={{ color: theme.textMuted }}>Telefone</th>
                             <th className="text-left p-2 text-xs font-semibold w-20" style={{ color: theme.textMuted }}>Cavalo</th>
-                            <th className="text-left p-2 text-xs font-semibold w-28" style={{ color: theme.textMuted }}>Impl.</th>
-                            <th className="text-left p-2 text-xs font-semibold w-32" style={{ color: theme.textMuted }}>Tipo Veíc.</th>
-                            <th className="text-left p-2 text-xs font-semibold w-24" style={{ color: theme.textMuted }}>Local</th>
-                            <th className="text-left p-2 text-xs font-semibold w-32" style={{ color: theme.textMuted }}>Data Entrada</th>
+                            <th className="text-left p-2 text-xs font-semibold w-24" style={{ color: theme.textMuted }}>Impl.</th>
+                            <th className="text-left p-2 text-xs font-semibold w-28" style={{ color: theme.textMuted }}>Tipo Veíc.</th>
+                            <th className="text-left p-2 text-xs font-semibold w-20" style={{ color: theme.textMuted }}>Local</th>
+                            <th className="text-left p-2 text-xs font-semibold w-28" style={{ color: theme.textMuted }}>Data Entrada</th>
                             <th className="text-left p-2 text-xs font-semibold w-20" style={{ color: theme.textMuted }}>Tempo</th>
                             <th className="text-left p-2 text-xs font-semibold w-12" style={{ color: theme.textMuted }}>Ações</th>
                           </tr>
