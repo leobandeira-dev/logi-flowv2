@@ -881,128 +881,83 @@ export default function FilaX() {
                                 style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6', color: theme.text }}
                               />
                             ) : (
-                              <p className="text-sm font-mono font-semibold" style={{ color: theme.text }}>{item.cavalo_placa}</p>
+                              <p className="text-sm font-mono font-semibold whitespace-nowrap" style={{ color: theme.text }}>{item.cavalo_placa}</p>
                             )}
                           </td>
                           <td className="p-3">
-                            <div className="text-xs space-y-1">
-                              {editingCell?.itemId === item.id && editingCell?.field === 'implemento1_placa' ? (
-                                <Input
-                                  value={editValue}
-                                  onChange={(e) => setEditValue(e.target.value.toUpperCase())}
-                                  onKeyDown={handleKeyDown}
-                                  onBlur={handleSaveEdit}
-                                  autoFocus
-                                  className="text-xs font-mono h-7"
-                                  style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6', color: theme.text }}
-                                />
-                              ) : (
-                                <p 
-                                  className="font-mono cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 px-1 rounded" 
-                                  style={{ color: item.implemento1_placa ? theme.text : theme.textMuted }}
-                                  onDoubleClick={() => handleDoubleClick(item.id, 'implemento1_placa', item.implemento1_placa)}
-                                >
-                                  {item.implemento1_placa || "Impl. 1: Clique para adicionar"}
-                                </p>
-                              )}
-                              
-                              {editingCell?.itemId === item.id && editingCell?.field === 'implemento2_placa' ? (
-                                <Input
-                                  value={editValue}
-                                  onChange={(e) => setEditValue(e.target.value.toUpperCase())}
-                                  onKeyDown={handleKeyDown}
-                                  onBlur={handleSaveEdit}
-                                  autoFocus
-                                  className="text-xs font-mono h-7"
-                                  style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6', color: theme.text }}
-                                />
-                              ) : (
-                                <p 
-                                  className="font-mono cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 px-1 rounded" 
-                                  style={{ color: item.implemento2_placa ? theme.text : theme.textMuted }}
-                                  onDoubleClick={() => handleDoubleClick(item.id, 'implemento2_placa', item.implemento2_placa)}
-                                >
-                                  {item.implemento2_placa || "Impl. 2: Clique para adicionar"}
-                                </p>
-                              )}
-                            </div>
+                            {editingCell?.itemId === item.id && (editingCell?.field === 'implemento1_placa' || editingCell?.field === 'implemento2_placa') ? (
+                              <Input
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value.toUpperCase())}
+                                onKeyDown={handleKeyDown}
+                                onBlur={handleSaveEdit}
+                                autoFocus
+                                className="text-xs font-mono h-7"
+                                style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6', color: theme.text }}
+                              />
+                            ) : (
+                              <p 
+                                className="text-xs font-mono cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 px-1 rounded whitespace-nowrap" 
+                                style={{ color: theme.text }}
+                                onDoubleClick={() => handleDoubleClick(item.id, 'implemento1_placa', item.implemento1_placa)}
+                              >
+                                {item.implemento1_placa && item.implemento2_placa 
+                                  ? `${item.implemento1_placa} / ${item.implemento2_placa}`
+                                  : item.implemento1_placa || item.implemento2_placa || "-"
+                                }
+                              </p>
+                            )}
                           </td>
                           <td className="p-3">
-                            <div className="space-y-1">
-                              {/* Tipo de Veículo */}
-                              {editingCell?.itemId === item.id && editingCell?.field === 'tipo_veiculo' ? (
-                                <Select
-                                  value={editValue}
-                                  onValueChange={(value) => {
-                                    setEditValue(value);
-                                    base44.entities.FilaVeiculo.update(item.id, { tipo_veiculo: value })
-                                      .then(() => {
-                                        toast.success("Tipo de veículo atualizado!");
-                                        setEditingCell(null);
-                                        loadData();
-                                      })
-                                      .catch(() => toast.error("Erro ao atualizar"));
-                                  }}
-                                >
-                                  <SelectTrigger className="h-7 text-xs" style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6' }}>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="RODOTREM">RODOTREM</SelectItem>
-                                    <SelectItem value="TRUCK">TRUCK</SelectItem>
-                                    <SelectItem value="CARRETA 5EIXOS">CARRETA 5EIXOS</SelectItem>
-                                    <SelectItem value="CARRETA 6EIXOS">CARRETA 6EIXOS</SelectItem>
-                                    <SelectItem value="CARRETA 7EIXOS">CARRETA 7EIXOS</SelectItem>
-                                    <SelectItem value="BITREM">BITREM</SelectItem>
-                                    <SelectItem value="BI-TRUCK">BI-TRUCK</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              ) : (
-                                <p 
-                                  className="text-xs cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 px-1 rounded" 
-                                  style={{ color: theme.text }}
-                                  onDoubleClick={() => handleDoubleClick(item.id, 'tipo_veiculo', item.tipo_veiculo)}
-                                >
-                                  {item.tipo_veiculo || "-"}
-                                </p>
-                              )}
-
-                              {/* Tipo de Carroceria */}
-                              {editingCell?.itemId === item.id && editingCell?.field === 'tipo_carroceria' ? (
-                                <Select
-                                  value={editValue}
-                                  onValueChange={(value) => {
-                                    setEditValue(value);
-                                    base44.entities.FilaVeiculo.update(item.id, { tipo_carroceria: value })
-                                      .then(() => {
-                                        toast.success("Tipo de carroceria atualizado!");
-                                        setEditingCell(null);
-                                        loadData();
-                                      })
-                                      .catch(() => toast.error("Erro ao atualizar"));
-                                  }}
-                                >
-                                  <SelectTrigger className="h-7 text-xs" style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6' }}>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="SIDER">SIDER</SelectItem>
-                                    <SelectItem value="PRANCHA">PRANCHA</SelectItem>
-                                    <SelectItem value="GRADE BAIXA">GRADE BAIXA</SelectItem>
-                                    <SelectItem value="GRADE ALTA">GRADE ALTA</SelectItem>
-                                    <SelectItem value="BAU">BAU</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              ) : (
-                                <p 
-                                  className="text-xs cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 px-1 rounded" 
-                                  style={{ color: theme.textMuted }}
-                                  onDoubleClick={() => handleDoubleClick(item.id, 'tipo_carroceria', item.tipo_carroceria)}
-                                >
-                                  {item.tipo_carroceria || "Clique para adicionar"}
-                                </p>
-                              )}
-                            </div>
+                            {editingCell?.itemId === item.id && (editingCell?.field === 'tipo_veiculo' || editingCell?.field === 'tipo_carroceria') ? (
+                              <Select
+                                value={editValue}
+                                onValueChange={(value) => {
+                                  setEditValue(value);
+                                  base44.entities.FilaVeiculo.update(item.id, { [editingCell.field]: value })
+                                    .then(() => {
+                                      toast.success("Atualizado!");
+                                      setEditingCell(null);
+                                      loadData();
+                                    })
+                                    .catch(() => toast.error("Erro ao atualizar"));
+                                }}
+                              >
+                                <SelectTrigger className="h-7 text-xs" style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6' }}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {editingCell.field === 'tipo_veiculo' ? (
+                                    <>
+                                      <SelectItem value="RODOTREM">RODOTREM</SelectItem>
+                                      <SelectItem value="TRUCK">TRUCK</SelectItem>
+                                      <SelectItem value="CARRETA 5EIXOS">CARRETA 5EIXOS</SelectItem>
+                                      <SelectItem value="CARRETA 6EIXOS">CARRETA 6EIXOS</SelectItem>
+                                      <SelectItem value="CARRETA 7EIXOS">CARRETA 7EIXOS</SelectItem>
+                                      <SelectItem value="BITREM">BITREM</SelectItem>
+                                      <SelectItem value="BI-TRUCK">BI-TRUCK</SelectItem>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <SelectItem value="SIDER">SIDER</SelectItem>
+                                      <SelectItem value="PRANCHA">PRANCHA</SelectItem>
+                                      <SelectItem value="GRADE BAIXA">GRADE BAIXA</SelectItem>
+                                      <SelectItem value="GRADE ALTA">GRADE ALTA</SelectItem>
+                                      <SelectItem value="BAU">BAU</SelectItem>
+                                    </>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <p 
+                                className="text-xs cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 px-1 rounded whitespace-nowrap" 
+                                style={{ color: theme.text }}
+                                onDoubleClick={() => handleDoubleClick(item.id, 'tipo_veiculo', item.tipo_veiculo)}
+                              >
+                                {item.tipo_veiculo || "-"}
+                                {item.tipo_carroceria && ` / ${item.tipo_carroceria}`}
+                              </p>
+                            )}
                           </td>
                           <td 
                             className="p-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" 
@@ -1019,21 +974,16 @@ export default function FilaX() {
                                 style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6', color: theme.text }}
                               />
                             ) : (
-                              <p className="text-xs" style={{ color: theme.text }}>{item.localizacao_atual || "-"}</p>
+                              <p className="text-xs whitespace-nowrap" style={{ color: theme.text }}>{item.localizacao_atual || "-"}</p>
                             )}
                           </td>
                           <td className="p-3">
-                            <div className="text-xs space-y-0.5">
-                              <p className="font-semibold" style={{ color: theme.text }}>
-                                {item.data_entrada_fila ? format(new Date(item.data_entrada_fila), "dd/MM/yyyy", { locale: ptBR }) : "-"}
-                              </p>
-                              <p style={{ color: theme.textMuted }}>
-                                {item.data_entrada_fila ? format(new Date(item.data_entrada_fila), "HH:mm", { locale: ptBR }) : "-"}
-                              </p>
-                            </div>
+                            <p className="text-xs whitespace-nowrap" style={{ color: theme.text }}>
+                              {item.data_entrada_fila ? format(new Date(item.data_entrada_fila), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "-"}
+                            </p>
                           </td>
                           <td className="p-3">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 whitespace-nowrap">
                               <Clock className="w-3 h-3 text-orange-600" />
                               <span className="text-xs font-semibold text-orange-600">
                                 {calcularTempoNaFila(item.data_entrada_fila)}
