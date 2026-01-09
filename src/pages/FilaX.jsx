@@ -532,6 +532,47 @@ export default function FilaX() {
                             </div>
                           </td>
                           <td className="p-3">
+                            {editingCell?.itemId === item.id && editingCell?.field === 'status' ? (
+                              <Select
+                                value={editValue}
+                                onValueChange={(value) => {
+                                  const updates = { status: value };
+                                  // Se mudar para "em_operacao", registrar saída da fila
+                                  if (value === 'em_operacao' && !item.data_saida_fila) {
+                                    updates.data_saida_fila = new Date().toISOString();
+                                  }
+                                  base44.entities.FilaVeiculo.update(item.id, updates)
+                                    .then(() => {
+                                      toast.success("Status atualizado!");
+                                      setEditingCell(null);
+                                      loadData();
+                                    })
+                                    .catch(() => toast.error("Erro ao atualizar"));
+                                }}
+                              >
+                                <SelectTrigger className="h-7 text-xs w-36" style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6' }}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="aguardando">🟢 Aguardando</SelectItem>
+                                  <SelectItem value="em_operacao">🔵 Em Operação</SelectItem>
+                                  <SelectItem value="indisponivel">🔴 Indisponível</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <span
+                                className="px-2 py-1 rounded text-xs font-semibold cursor-pointer hover:opacity-80"
+                                style={{ 
+                                  backgroundColor: item.status === 'aguardando' ? '#16a34a' : item.status === 'em_operacao' ? '#2563eb' : '#dc2626',
+                                  color: 'white'
+                                }}
+                                onDoubleClick={() => handleDoubleClick(item.id, 'status', item.status)}
+                              >
+                                {item.status === 'aguardando' ? '🟢 Aguardando' : item.status === 'em_operacao' ? '🔵 Em Operação' : '🔴 Indisponível'}
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3">
                             {editingCell?.itemId === item.id && editingCell?.field === 'tipo_fila_id' ? (
                               <Select
                                 value={editValue}
