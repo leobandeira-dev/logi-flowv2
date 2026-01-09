@@ -168,7 +168,8 @@ export default function AdicionarFilaCarousel({
 
   const currentStep = steps[step];
   const isLastStep = step === steps.length - 1;
-  const canGoNext = formData[currentStep.field];
+  const isRequired = ['motorista_nome', 'cavalo_placa', 'tipo_fila_id'].includes(currentStep.field);
+  const canGoNext = isRequired ? !!formData[currentStep.field] : true;
 
   return (
     <div className="space-y-6">
@@ -197,6 +198,11 @@ export default function AdicionarFilaCarousel({
       {/* Current Step */}
       <div className="min-h-[120px]">
         {currentStep.render()}
+        {isRequired && !formData[currentStep.field] && (
+          <p className="text-sm text-orange-600 dark:text-orange-400 mt-2 flex items-center gap-1">
+            <span>⚠️</span> Este campo é obrigatório
+          </p>
+        )}
       </div>
 
       {/* Navigation */}
