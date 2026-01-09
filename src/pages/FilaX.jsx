@@ -577,14 +577,8 @@ export default function FilaX() {
     }
   };
 
-  const handleCopiarLinkPublico = () => {
-    const linkPublico = window.location.origin + createPageUrl("FilaMotorista");
-    navigator.clipboard.writeText(linkPublico);
-    toast.success("Link copiado!");
-  };
-
   const handleCompartilharLink = async () => {
-    const linkPublico = window.location.origin + createPageUrl("FilaMotorista");
+    const linkPublico = "https://logiflow.com.br" + createPageUrl("FilaMotorista");
     
     if (navigator.share) {
       try {
@@ -593,13 +587,16 @@ export default function FilaX() {
           text: 'Cadastre-se na fila de veículos',
           url: linkPublico
         });
+        toast.success("Link compartilhado!");
       } catch (error) {
         if (error.name !== 'AbortError') {
-          handleCopiarLinkPublico();
+          navigator.clipboard.writeText(linkPublico);
+          toast.success("Link copiado para área de transferência!");
         }
       }
     } else {
-      handleCopiarLinkPublico();
+      navigator.clipboard.writeText(linkPublico);
+      toast.success("Link copiado para área de transferência!");
     }
   };
 
@@ -681,16 +678,6 @@ export default function FilaX() {
               style={{ borderColor: theme.cardBorder, color: theme.text }}
             >
               <RefreshCw className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleCompartilharLink}
-              size="sm"
-              className="gap-2"
-              style={{ borderColor: theme.cardBorder, color: theme.text }}
-            >
-              <Share2 className="w-4 h-4" />
-              <span className="hidden md:inline">Link Público</span>
             </Button>
             <Button
               variant="outline"
