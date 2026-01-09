@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Truck, Plus, RefreshCw, Settings, Search, X, Trash2, Edit, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   Dialog,
   DialogContent,
@@ -800,6 +802,16 @@ export default function FilaX() {
                             ) : (
                               <p className="text-xs" style={{ color: theme.text }}>{item.localizacao_atual || "-"}</p>
                             )}
+                          </td>
+                          <td className="p-3">
+                            <div className="text-xs space-y-0.5">
+                              <p className="font-semibold" style={{ color: theme.text }}>
+                                {item.data_entrada_fila ? format(new Date(item.data_entrada_fila), "dd/MM/yyyy", { locale: ptBR }) : "-"}
+                              </p>
+                              <p style={{ color: theme.textMuted }}>
+                                {item.data_entrada_fila ? format(new Date(item.data_entrada_fila), "HH:mm", { locale: ptBR }) : "-"}
+                              </p>
+                            </div>
                           </td>
                           <td className="p-3">
                             <div className="flex items-center gap-1">
