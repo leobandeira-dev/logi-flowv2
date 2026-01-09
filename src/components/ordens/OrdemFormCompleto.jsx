@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -79,7 +78,7 @@ export default function OrdemFormCompleto({ open, onClose, onSubmit, motoristas,
     destinatario: "", destinatario_cnpj: "", destino_endereco: "", destino_cep: "", destino_bairro: "", destino_cidade: "", destino_uf: "",
     data_carregamento: "", tipo_operacao: "FOB", viagem_pedido: "", notas_fiscais: "",
     volumes: "", embalagem: "", conteudo: "", qtd_entregas: 1, duv: "", numero_oc: "",
-    observacao_carga: "", solicitado_por: ""
+    observacao_carga: "", solicitado_por: "", senha_fila: ""
   });
 
   const [valorTotal, setValorTotal] = useState(0);
@@ -152,7 +151,8 @@ export default function OrdemFormCompleto({ open, onClose, onSubmit, motoristas,
         volumes: editingOrdem.volumes || "", embalagem: editingOrdem.embalagem || "",
         conteudo: editingOrdem.conteudo || "", qtd_entregas: editingOrdem.qtd_entregas || 1,
         duv: editingOrdem.duv || "", numero_oc: editingOrdem.numero_oc || "",
-        observacao_carga: editingOrdem.observacao_carga || "", solicitado_por: editingOrdem.solicitado_por || ""
+        observacao_carga: editingOrdem.observacao_carga || "", solicitado_por: editingOrdem.solicitado_por || "",
+        senha_fila: editingOrdem.senha_fila || ""
       });
 
       const motorista = motoristas.find(m => m.id === editingOrdem.motorista_id);
@@ -181,7 +181,7 @@ export default function OrdemFormCompleto({ open, onClose, onSubmit, motoristas,
         destinatario: "", destinatario_cnpj: "", destino_endereco: "", destino_cep: "", destino_bairro: "", destino_cidade: "", destino_uf: "",
         data_carregamento: "", tipo_operacao: "FOB", viagem_pedido: "", notas_fiscais: "",
         volumes: "", embalagem: "", conteudo: "", qtd_entregas: 1, duv: "", numero_oc: "",
-        observacao_carga: "", solicitado_por: ""
+        observacao_carga: "", solicitado_por: "", senha_fila: ""
       });
       setMotoristaSearchTerm("");
       setMotoristaTelefone("");
@@ -1470,7 +1470,19 @@ ${formData.observacao_carga ? `\n📝 *Obs:* ${formData.observacao_carga}` : ''}
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-4 gap-4">
+                <div>
+                  <Label htmlFor="senha_fila">Senha Fila X</Label>
+                  <Input 
+                    id="senha_fila" 
+                    value={formData.senha_fila} 
+                    onChange={(e) => handleInputChange("senha_fila", e.target.value)} 
+                    placeholder="000000" 
+                    maxLength={6}
+                    className="font-mono font-bold"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Vincular com marcação da Fila X</p>
+                </div>
                 <div>
                   <Label htmlFor="duv">DUV</Label>
                   <Input id="duv" value={formData.duv} onChange={(e) => handleInputChange("duv", e.target.value)} placeholder="Número DUV" />

@@ -154,11 +154,19 @@ export default function FilaMotorista() {
       const tipoSelecionado = tiposFila.find(t => t.id === formData.tipo_fila_id);
       
       // Buscar todas as filas para calcular próxima posição
-      const todasFilas = await base44.entities.FilaVeiculo.list();
+      const todasFilas = await base44.entities.FilaVeiculo.filter({ empresa_id: formData.empresa_id });
       const proximaPosicao = todasFilas.length + 1;
+
+      // Gerar senha única de 6 dígitos
+      const gerarSenhaFila = () => {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+      };
+
+      const senhaFila = gerarSenhaFila();
 
       const novoRegistro = await base44.entities.FilaVeiculo.create({
         ...formData,
+        senha_fila: senhaFila,
         tipo_fila_nome: tipoSelecionado?.nome,
         status: "aguardando",
         posicao_fila: proximaPosicao,
@@ -250,6 +258,10 @@ export default function FilaMotorista() {
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Placa:</span>
                   <span className="text-sm font-mono font-bold text-gray-900">{minhaFila.cavalo_placa}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Senha:</span>
+                  <span className="text-sm font-mono font-bold text-blue-600">{minhaFila.senha_fila}</span>
                 </div>
                 {minhaFila.tipo_fila_nome && (
                   <div className="flex justify-between">

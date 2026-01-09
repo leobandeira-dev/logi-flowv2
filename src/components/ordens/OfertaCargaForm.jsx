@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -86,7 +85,8 @@ export default function OfertaCargaForm({ open, onClose, onSubmit }) {
     peso: "",
     valor_tonelada: "",
     frete_viagem: "",
-    observacao_carga: ""
+    observacao_carga: "",
+    senha_fila: ""
   });
   const [showValidation, setShowValidation] = useState(false);
 
@@ -127,7 +127,8 @@ export default function OfertaCargaForm({ open, onClose, onSubmit }) {
       peso: "",
       valor_tonelada: "",
       frete_viagem: "",
-      observacao_carga: ""
+      observacao_carga: "",
+      senha_fila: ""
     });
     setShowValidation(false);
   };
@@ -280,7 +281,20 @@ export default function OfertaCargaForm({ open, onClose, onSubmit }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
+              <div>
+                <Label htmlFor="senha_fila">Senha Fila X</Label>
+                <Input 
+                  id="senha_fila" 
+                  value={formData.senha_fila} 
+                  onChange={(e) => handleInputChange("senha_fila", e.target.value)} 
+                  placeholder="000000" 
+                  maxLength={6}
+                  className="font-mono font-bold"
+                />
+                <p className="text-xs text-gray-500 mt-1">Vincular com Fila X</p>
+              </div>
+
               <div>
                 <Label htmlFor="tipo_operacao">Tipo Operação</Label>
                 <Select value={formData.tipo_operacao} onValueChange={(value) => handleInputChange("tipo_operacao", value)}>

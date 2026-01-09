@@ -49,6 +49,8 @@ export default function FilaX() {
   const [editValue, setEditValue] = useState("");
   const [viewMode, setViewMode] = useState("table"); // "table" ou "kanban"
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [abaAtiva, setAbaAtiva] = useState("fila"); // "fila" ou "historico"
+  const [ordensHistorico, setOrdensHistorico] = useState([]);
 
   const [formData, setFormData] = useState({
     motorista_id: "",
@@ -86,12 +88,13 @@ export default function FilaX() {
     setLoading(true);
     try {
       const user = await base44.auth.me();
-      const [filaData, tiposData, statusData, motoristasData, veiculosData] = await Promise.all([
+      const [filaData, tiposData, statusData, motoristasData, veiculosData, ordensData] = await Promise.all([
         base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id }, "posicao_fila"),
         base44.entities.TipoFilaVeiculo.filter({ empresa_id: user.empresa_id, ativo: true }, "ordem"),
         base44.entities.StatusFilaVeiculo.filter({ empresa_id: user.empresa_id, ativo: true }, "ordem"),
         base44.entities.Motorista.list(),
-        base44.entities.Veiculo.filter({ tipo: "cavalo" })
+        base44.entities.Veiculo.filter({ tipo: "cavalo" }),
+        base44.entities.OrdemDeCarregamento.filter({ empresa_id: user.empresa_id }, "-created_date", 500)
       ]);
 
       setFila(filaData);
@@ -99,6 +102,7 @@ export default function FilaX() {
       setStatusFila(statusData);
       setMotoristas(motoristasData);
       setVeiculos(veiculosData);
+      setOrdensHistorico(ordensData);
 
       // Se não há tipos, criar os padrões
       if (tiposData.length === 0) {
@@ -246,16 +250,24 @@ export default function FilaX() {
       // Pegar o primeiro status ou "aguardando" como padrão
       const statusPadrao = statusFila[0]?.nome.toLowerCase().replace(/ /g, '_') || "aguardando";
 
+      // Gerar senha única de 6 dígitos
+      const gerarSenhaFila = () => {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+      };
+
+      const senhaFila = gerarSenhaFila();
+
       const novoItem = await base44.entities.FilaVeiculo.create({
         empresa_id: user.empresa_id,
         ...formData,
+        senha_fila: senhaFila,
         tipo_fila_nome: tipoSelecionado?.nome,
         status: statusPadrao,
         posicao_fila: proximaPosicao,
         data_entrada_fila: new Date().toISOString()
       });
 
-      toast.success("Veículo adicionado à fila!");
+      toast.success(`Veículo adicionado à fila! Senha: ${senhaFila}`);
       setShowAddModal(false);
       setFormData({
         motorista_id: "",
@@ -689,6 +701,26 @@ export default function FilaX() {
           </div>
         </div>
 
+        {/* Tabs Fila / Histórico */}
+        <div className="flex gap-2 mb-4">
+          <Button
+            variant={abaAtiva === "fila" ? "default" : "outline"}
+            onClick={() => setAbaAtiva("fila")}
+            className={abaAtiva === "fila" ? "bg-blue-600" : ""}
+          >
+            Fila Atual
+          </Button>
+          <Button
+            variant={abaAtiva === "historico" ? "default" : "outline"}
+            onClick={() => setAbaAtiva("historico")}
+            className={abaAtiva === "historico" ? "bg-blue-600" : ""}
+          >
+            Histórico de Ordens
+          </Button>
+        </div>
+
+        {abaAtiva === "fila" && (
+          <>
         {/* Estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
           <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
@@ -1662,7 +1694,131 @@ export default function FilaX() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
-    </div>
-  );
-}
+        </>
+        )}
+
+        {abaAtiva === "historico" && (
+        <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <CardHeader>
+          <CardTitle style={{ color: theme.text }}>Histórico de Ordens de Carregamento</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
+                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Nº Carga</th>
+                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Motorista</th>
+                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Placa</th>
+                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Senha Fila</th>
+                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Cliente</th>
+                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Origem</th>
+                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Destino</th>
+                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Data</th>
+                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Status Fila</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ordensHistorico.map(ordem => {
+                  const temSenha = !!ordem.senha_fila;
+                  const marcacaoFila = temSenha ? fila.find(f => f.senha_fila === ordem.senha_fila) : null;
+
+                  return (
+                    <tr key={ordem.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800" style={{ borderColor: theme.cardBorder }}>
+                      <td className="p-2">
+                        <p className="text-sm font-mono" style={{ color: theme.text }}>{ordem.numero_carga}</p>
+                      </td>
+                      <td className="p-2">
+                        <p className="text-sm" style={{ color: theme.text }}>
+                          {ordem.motorista_nome_temp || motoristas.find(m => m.id === ordem.motorista_id)?.nome || "-"}
+                        </p>
+                      </td>
+                      <td className="p-2">
+                        <p className="text-sm font-mono" style={{ color: theme.text }}>
+                          {ordem.cavalo_placa_temp || veiculos.find(v => v.id === ordem.cavalo_id)?.placa || "-"}
+                        </p>
+                      </td>
+                      <td className="p-2">
+                        {temSenha ? (
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-mono font-bold text-green-600">{ordem.senha_fila}</p>
+                            {marcacaoFila && (
+                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                                ✓ Vinculado
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded font-semibold">
+                            ⚠️ SEM SENHA
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-2">
+                        <p className="text-sm truncate" style={{ color: theme.text }}>{ordem.cliente}</p>
+                      </td>
+                      <td className="p-2">
+                        <p className="text-sm truncate" style={{ color: theme.text }}>{ordem.origem}</p>
+                      </td>
+                      <td className="p-2">
+                        <p className="text-sm truncate" style={{ color: theme.text }}>{ordem.destino}</p>
+                      </td>
+                      <td className="p-2">
+                        <p className="text-xs" style={{ color: theme.textMuted }}>
+                          {ordem.created_date ? format(new Date(ordem.created_date), "dd/MM/yy", { locale: ptBR }) : "-"}
+                        </p>
+                      </td>
+                      <td className="p-2">
+                        {!temSenha ? (
+                          <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
+                            Fila não respeitada
+                          </span>
+                        ) : marcacaoFila ? (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                            ✓ Fila respeitada
+                          </span>
+                        ) : (
+                          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                            Marcação removida
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {ordensHistorico.length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-sm" style={{ color: theme.textMuted }}>Nenhuma ordem encontrada</p>
+              </div>
+            )}
+          </div>
+
+          {/* Resumo */}
+          <div className="mt-6 grid grid-cols-3 gap-4">
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border" style={{ borderColor: '#3b82f6' }}>
+              <p className="text-xs text-blue-600 dark:text-blue-400">Total de Ordens</p>
+              <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{ordensHistorico.length}</p>
+            </div>
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border" style={{ borderColor: '#dc2626' }}>
+              <p className="text-xs text-red-600 dark:text-red-400">Sem Senha (Fila Não Respeitada)</p>
+              <p className="text-2xl font-bold text-red-700 dark:text-red-300">
+                {ordensHistorico.filter(o => !o.senha_fila).length}
+              </p>
+            </div>
+            <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border" style={{ borderColor: '#16a34a' }}>
+              <p className="text-xs text-green-600 dark:text-green-400">Com Senha (Fila Respeitada)</p>
+              <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                {ordensHistorico.filter(o => o.senha_fila).length}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+        </Card>
+        )}
+        </div>
+        </div>
+        );
+        }
