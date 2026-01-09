@@ -23,6 +23,7 @@ export default function AdicionarFilaCarousel({
 }) {
   const [step, setStep] = useState(0);
   const [showError, setShowError] = useState(false);
+  const [openSelect, setOpenSelect] = useState(false);
 
   const steps = [
     {
@@ -66,12 +67,15 @@ export default function AdicionarFilaCarousel({
     {
       title: "Tipo do Motorista",
       field: "tipo_fila_id",
+      isSelect: true,
       render: () => (
         <div>
           <Label style={{ color: theme.text }}>Tipo do Motorista *</Label>
           <Select
             value={formData.tipo_fila_id}
             onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_fila_id: value }))}
+            open={openSelect}
+            onOpenChange={setOpenSelect}
           >
             <SelectTrigger className="h-12" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
               <SelectValue placeholder="Selecione o tipo..." />
@@ -93,12 +97,15 @@ export default function AdicionarFilaCarousel({
     {
       title: "Tipo de Veículo",
       field: "tipo_veiculo",
+      isSelect: true,
       render: () => (
         <div>
           <Label style={{ color: theme.text }}>Tipo de Veículo</Label>
           <Select
             value={formData.tipo_veiculo}
             onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_veiculo: value }))}
+            open={openSelect}
+            onOpenChange={setOpenSelect}
           >
             <SelectTrigger className="h-12" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
               <SelectValue placeholder="Selecione..." />
@@ -119,12 +126,15 @@ export default function AdicionarFilaCarousel({
     {
       title: "Tipo de Carroceria",
       field: "tipo_carroceria",
+      isSelect: true,
       render: () => (
         <div>
           <Label style={{ color: theme.text }}>Tipo de Carroceria</Label>
           <Select
             value={formData.tipo_carroceria}
             onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_carroceria: value }))}
+            open={openSelect}
+            onOpenChange={setOpenSelect}
           >
             <SelectTrigger className="h-12" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
               <SelectValue placeholder="Selecione..." />
@@ -186,11 +196,22 @@ export default function AdicionarFilaCarousel({
   };
 
   const handleNextClick = () => {
+    // Se for um campo Select sem valor, abre o dropdown
+    if (currentStep.isSelect && !formData[currentStep.field]) {
+      setOpenSelect(true);
+      return;
+    }
+
     if (!validateCurrentStep()) {
       setShowError(true);
+      // Se for Select e está vazio, abre
+      if (currentStep.isSelect) {
+        setOpenSelect(true);
+      }
       return;
     }
     setShowError(false);
+    setOpenSelect(false);
     setStep(step + 1);
   };
 
