@@ -221,17 +221,17 @@ export default function AdicionarFilaCarousel({
       {/* Current Step */}
       <div className="min-h-[120px]">
         {currentStep.render()}
-        {currentStep.field === 'cavalo_placa' && formData.cavalo_placa && formData.cavalo_placa.replace(/\W/g, '').length !== 7 && (
+        {showError && currentStep.field === 'cavalo_placa' && formData.cavalo_placa && formData.cavalo_placa.replace(/\W/g, '').length !== 7 && (
           <p className="text-sm text-orange-600 dark:text-orange-400 mt-2 flex items-center gap-1">
             <span>⚠️</span> A placa deve ter exatamente 7 caracteres
           </p>
         )}
-        {currentStep.field === 'cavalo_placa' && !formData.cavalo_placa && (
+        {showError && currentStep.field === 'cavalo_placa' && !formData.cavalo_placa && (
           <p className="text-sm text-orange-600 dark:text-orange-400 mt-2 flex items-center gap-1">
             <span>⚠️</span> Este campo é obrigatório
           </p>
         )}
-        {isRequired && currentStep.field !== 'cavalo_placa' && !formData[currentStep.field] && (
+        {showError && isRequired && currentStep.field !== 'cavalo_placa' && !formData[currentStep.field] && (
           <p className="text-sm text-orange-600 dark:text-orange-400 mt-2 flex items-center gap-1">
             <span>⚠️</span> Este campo é obrigatório
           </p>
