@@ -28,16 +28,20 @@ export default function FilaX() {
   const [loading, setLoading] = useState(true);
   const [fila, setFila] = useState([]);
   const [tiposFila, setTiposFila] = useState([]);
+  const [statusFila, setStatusFila] = useState([]);
   const [motoristas, setMotoristas] = useState([]);
   const [veiculos, setVeiculos] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showTiposModal, setShowTiposModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
   const [searchMotorista, setSearchMotorista] = useState("");
   const [searchPlaca, setSearchPlaca] = useState("");
   const [filteredMotoristas, setFilteredMotoristas] = useState([]);
   const [filteredVeiculos, setFilteredVeiculos] = useState([]);
   const [editingTipo, setEditingTipo] = useState(null);
   const [novoTipo, setNovoTipo] = useState({ nome: "", cor: "#3b82f6" });
+  const [editingStatus, setEditingStatus] = useState(null);
+  const [novoStatus, setNovoStatus] = useState({ nome: "", cor: "#3b82f6", icone: "🟢" });
   const [editingCell, setEditingCell] = useState(null);
   const [editValue, setEditValue] = useState("");
 
@@ -77,21 +81,28 @@ export default function FilaX() {
     setLoading(true);
     try {
       const user = await base44.auth.me();
-      const [filaData, tiposData, motoristasData, veiculosData] = await Promise.all([
+      const [filaData, tiposData, statusData, motoristasData, veiculosData] = await Promise.all([
         base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id }, "posicao_fila"),
         base44.entities.TipoFilaVeiculo.filter({ empresa_id: user.empresa_id, ativo: true }, "ordem"),
+        base44.entities.StatusFilaVeiculo.filter({ empresa_id: user.empresa_id, ativo: true }, "ordem"),
         base44.entities.Motorista.list(),
         base44.entities.Veiculo.filter({ tipo: "cavalo" })
       ]);
 
       setFila(filaData);
       setTiposFila(tiposData);
+      setStatusFila(statusData);
       setMotoristas(motoristasData);
       setVeiculos(veiculosData);
 
       // Se não há tipos, criar os padrões
       if (tiposData.length === 0) {
         await criarTiposPadrao(user.empresa_id);
+      }
+
+      // Se não há status, criar os padrões
+      if (statusData.length === 0) {
+        await criarStatusPadrao(user.empresa_id);
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -119,6 +130,25 @@ export default function FilaX() {
 
     await loadData();
     toast.success("Tipos de fila criados");
+  };
+
+  const criarStatusPadrao = async (empresaId) => {
+    const statusPadrao = [
+      { nome: "Aguardando", cor: "#16a34a", icone: "🟢", ordem: 1 },
+      { nome: "Em Operação", cor: "#2563eb", icone: "🔵", ordem: 2 },
+      { nome: "Indisponível", cor: "#dc2626", icone: "🔴", ordem: 3 }
+    ];
+
+    for (const status of statusPadrao) {
+      await base44.entities.StatusFilaVeiculo.create({
+        ...status,
+        empresa_id: empresaId,
+        ativo: true
+      });
+    }
+
+    await loadData();
+    toast.success("Status de fila criados");
   };
 
   const handleSearchMotorista = (termo) => {
@@ -202,11 +232,14 @@ export default function FilaX() {
       // Calcular próxima posição na fila
       const proximaPosicao = fila.length + 1;
 
+      // Pegar o primeiro status ou "aguardando" como padrão
+      const statusPadrao = statusFila[0]?.nome.toLowerCase().replace(/ /g, '_') || "aguardando";
+
       await base44.entities.FilaVeiculo.create({
         empresa_id: user.empresa_id,
         ...formData,
         tipo_fila_nome: tipoSelecionado?.nome,
-        status: "aguardando",
+        status: statusPadrao,
         posicao_fila: proximaPosicao,
         data_entrada_fila: new Date().toISOString()
       });
@@ -297,6 +330,53 @@ export default function FilaX() {
     }
   };
 
+  const handleSalvarStatus = async (e) => {
+    e.preventDefault();
+
+    if (!novoStatus.nome) {
+      toast.error("Nome do status é obrigatório");
+      return;
+    }
+
+    try {
+      const user = await base44.auth.me();
+      
+      if (editingStatus) {
+        await base44.entities.StatusFilaVeiculo.update(editingStatus.id, novoStatus);
+        toast.success("Status atualizado");
+      } else {
+        const proximaOrdem = statusFila.length + 1;
+        await base44.entities.StatusFilaVeiculo.create({
+          ...novoStatus,
+          empresa_id: user.empresa_id,
+          ordem: proximaOrdem,
+          ativo: true
+        });
+        toast.success("Status criado");
+      }
+
+      setNovoStatus({ nome: "", cor: "#3b82f6", icone: "🟢" });
+      setEditingStatus(null);
+      loadData();
+    } catch (error) {
+      console.error("Erro ao salvar status:", error);
+      toast.error("Erro ao salvar status");
+    }
+  };
+
+  const handleExcluirStatus = async (id) => {
+    if (!confirm("Excluir este status?")) return;
+
+    try {
+      await base44.entities.StatusFilaVeiculo.delete(id);
+      toast.success("Status excluído");
+      loadData();
+    } catch (error) {
+      console.error("Erro ao excluir status:", error);
+      toast.error("Erro ao excluir status");
+    }
+  };
+
   const calcularTempoNaFila = (dataEntrada) => {
     if (!dataEntrada) return "-";
     const agora = new Date();
@@ -339,7 +419,7 @@ export default function FilaX() {
 
     try {
       let updates = { [editingCell.field]: editValue };
-      
+
       // Se editou nome do motorista, buscar dados do motorista
       if (editingCell.field === 'motorista_nome') {
         const termo = editValue.toLowerCase();
@@ -348,10 +428,11 @@ export default function FilaX() {
         );
 
         if (motorista) {
-          // Buscar placas vinculadas
-          const cavalo = veiculos.find(v => v.id === motorista.cavalo_id);
-          const implemento1 = veiculos.find(v => v.id === motorista.implemento1_id);
-          const implemento2 = veiculos.find(v => v.id === motorista.implemento2_id);
+          // Buscar placas vinculadas - buscar todos os implementos
+          const allVeiculos = await base44.entities.Veiculo.list();
+          const cavalo = allVeiculos.find(v => v.id === motorista.cavalo_id);
+          const implemento1 = allVeiculos.find(v => v.id === motorista.implemento1_id);
+          const implemento2 = allVeiculos.find(v => v.id === motorista.implemento2_id);
 
           updates = {
             motorista_id: motorista.id,
@@ -368,7 +449,7 @@ export default function FilaX() {
           toast.success("Dados do motorista carregados!");
         }
       }
-      
+
       // Formatar telefone antes de salvar
       if (editingCell.field === 'motorista_telefone') {
         updates[editingCell.field] = formatarTelefone(editValue);
@@ -439,6 +520,14 @@ export default function FilaX() {
             </Button>
             <Button
               variant="outline"
+              onClick={() => setShowStatusModal(true)}
+              style={{ borderColor: theme.cardBorder, color: theme.text }}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Gerenciar Status
+            </Button>
+            <Button
+              variant="outline"
               onClick={loadData}
               style={{ borderColor: theme.cardBorder, color: theme.text }}
             >
@@ -486,59 +575,63 @@ export default function FilaX() {
           })}
         </div>
 
-        {/* Fila de Veículos */}
-        <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-          <CardHeader>
-            <CardTitle style={{ color: theme.text }}>Veículos Aguardando</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {fila.length === 0 ? (
-              <div className="text-center py-12">
+        {/* Fila de Veículos - Agrupado por Status */}
+        {fila.length === 0 ? (
+          <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+            <CardContent className="py-12">
+              <div className="text-center">
                 <Truck className="w-16 h-16 mx-auto mb-4 opacity-20" />
                 <p style={{ color: theme.textMuted }}>Nenhum veículo na fila</p>
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
-                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Posição</th>
-                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Status</th>
-                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tipo</th>
-                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Motorista</th>
-                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>CPF</th>
-                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Telefone</th>
-                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Cavalo</th>
-                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Implementos</th>
-                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tipo Veículo</th>
-                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Localização</th>
-                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Data Entrada</th>
-                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tempo na Fila</th>
-                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {fila.map((item, index) => {
-                      const tipo = tiposFila.find(t => t.id === item.tipo_fila_id);
-                      return (
+            </CardContent>
+          </Card>
+        ) : (
+          statusFila.map(statusObj => {
+            const veiculosDoStatus = fila.filter(v => v.status === statusObj.nome.toLowerCase().replace(/ /g, '_'));
+            
+            if (veiculosDoStatus.length === 0) return null;
+
+            return (
+              <Card key={statusObj.id} style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2" style={{ color: theme.text }}>
+                    <span style={{ color: statusObj.cor }}>{statusObj.icone}</span>
+                    {statusObj.nome} ({veiculosDoStatus.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
+                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tipo</th>
+                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Motorista</th>
+                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>CPF</th>
+                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Telefone</th>
+                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Cavalo</th>
+                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Implementos</th>
+                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tipo Veículo</th>
+                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Localização</th>
+                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Data Entrada</th>
+                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tempo na Fila</th>
+                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {veiculosDoStatus.map((item, index) => {
+                          const tipo = tiposFila.find(t => t.id === item.tipo_fila_id);
+                          return (
                         <tr key={item.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800" style={{ borderColor: theme.cardBorder }}>
-                          <td className="p-3">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                                <span className="font-bold text-sm text-blue-700 dark:text-blue-300">
-                                  {item.posicao_fila || index + 1}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
                           <td className="p-3">
                             {editingCell?.itemId === item.id && editingCell?.field === 'status' ? (
                               <Select
                                 value={editValue}
                                 onValueChange={(value) => {
-                                  const updates = { status: value };
-                                  // Se mudar para "em_operacao", registrar saída da fila
-                                  if (value === 'em_operacao' && !item.data_saida_fila) {
+                                  const statusSelecionado = statusFila.find(s => s.id === value);
+                                  const statusNormalizado = statusSelecionado?.nome.toLowerCase().replace(/ /g, '_');
+                                  const updates = { status: statusNormalizado };
+                                  // Se mudar status, registrar mudança
+                                  if (statusNormalizado !== item.status && statusNormalizado === 'em_operacao' && !item.data_saida_fila) {
                                     updates.data_saida_fila = new Date().toISOString();
                                   }
                                   base44.entities.FilaVeiculo.update(item.id, updates)
@@ -554,28 +647,19 @@ export default function FilaX() {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="aguardando">🟢 Aguardando</SelectItem>
-                                  <SelectItem value="em_operacao">🔵 Em Operação</SelectItem>
-                                  <SelectItem value="indisponivel">🔴 Indisponível</SelectItem>
+                                  {statusFila.map(s => (
+                                    <SelectItem key={s.id} value={s.id}>
+                                      <div className="flex items-center gap-2">
+                                        <span>{s.icone}</span>
+                                        {s.nome}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
                             ) : (
-                              <span
-                                className="px-2 py-1 rounded text-xs font-semibold cursor-pointer hover:opacity-80"
-                                style={{ 
-                                  backgroundColor: item.status === 'aguardando' ? '#16a34a' : item.status === 'em_operacao' ? '#2563eb' : '#dc2626',
-                                  color: 'white'
-                                }}
-                                onDoubleClick={() => handleDoubleClick(item.id, 'status', item.status)}
-                              >
-                                {item.status === 'aguardando' ? '🟢 Aguardando' : item.status === 'em_operacao' ? '🔵 Em Operação' : '🔴 Indisponível'}
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-3">
-                            {editingCell?.itemId === item.id && editingCell?.field === 'tipo_fila_id' ? (
                               <Select
-                                value={editValue}
+                                value={item.tipo_fila_id}
                                 onValueChange={(value) => {
                                   const tipoSel = tiposFila.find(t => t.id === value);
                                   base44.entities.FilaVeiculo.update(item.id, { 
@@ -584,13 +668,12 @@ export default function FilaX() {
                                   })
                                     .then(() => {
                                       toast.success("Tipo atualizado!");
-                                      setEditingCell(null);
                                       loadData();
                                     })
                                     .catch(() => toast.error("Erro ao atualizar"));
                                 }}
                               >
-                                <SelectTrigger className="h-7 text-xs w-32" style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6' }}>
+                                <SelectTrigger className="h-7 text-xs w-32" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -604,33 +687,34 @@ export default function FilaX() {
                                   ))}
                                 </SelectContent>
                               </Select>
-                            ) : (
-                              <span
-                                className="px-2 py-1 rounded text-xs font-semibold text-white cursor-pointer hover:opacity-80"
-                                style={{ backgroundColor: tipo?.cor || '#6b7280' }}
-                                onDoubleClick={() => handleDoubleClick(item.id, 'tipo_fila_id', item.tipo_fila_id)}
-                              >
-                                {item.tipo_fila_nome}
-                              </span>
                             )}
                           </td>
-                          <td 
-                            className="p-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" 
-                            onDoubleClick={() => handleDoubleClick(item.id, 'motorista_nome', item.motorista_nome)}
-                          >
-                            {editingCell?.itemId === item.id && editingCell?.field === 'motorista_nome' ? (
-                              <Input
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                onBlur={handleSaveEdit}
-                                autoFocus
-                                className="text-sm h-8"
-                                style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6', color: theme.text }}
-                              />
-                            ) : (
-                              <p className="text-sm font-semibold" style={{ color: theme.text }}>{item.motorista_nome}</p>
-                            )}
+                          <td className="p-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
+                                <span className="font-bold text-xs text-blue-700 dark:text-blue-300">
+                                  {item.posicao_fila || index + 1}
+                                </span>
+                              </div>
+                              <div 
+                                className="cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 px-1 rounded flex-1" 
+                                onDoubleClick={() => handleDoubleClick(item.id, 'motorista_nome', item.motorista_nome)}
+                              >
+                                {editingCell?.itemId === item.id && editingCell?.field === 'motorista_nome' ? (
+                                  <Input
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    onBlur={handleSaveEdit}
+                                    autoFocus
+                                    className="text-sm h-8"
+                                    style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6', color: theme.text }}
+                                  />
+                                ) : (
+                                  <p className="text-sm font-semibold" style={{ color: theme.text }}>{item.motorista_nome}</p>
+                                )}
+                              </div>
+                            </div>
                           </td>
                           <td 
                             className="p-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" 
@@ -878,9 +962,11 @@ export default function FilaX() {
                   </tbody>
                 </table>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        );
+      })
+    )}
 
         {/* Modal Adicionar Veículo */}
         <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
@@ -1140,6 +1226,105 @@ export default function FilaX() {
                 </Button>
               </div>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal Gerenciar Status */}
+        <Dialog open={showStatusModal} onOpenChange={setShowStatusModal}>
+          <DialogContent style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+            <DialogHeader>
+              <DialogTitle style={{ color: theme.text }}>Gerenciar Status de Fila</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Form Adicionar/Editar Status */}
+              <form onSubmit={handleSalvarStatus} className="border rounded-lg p-3" style={{ borderColor: theme.cardBorder }}>
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="col-span-2">
+                    <Label style={{ color: theme.text }}>Nome do Status</Label>
+                    <Input
+                      value={novoStatus.nome}
+                      onChange={(e) => setNovoStatus(prev => ({ ...prev, nome: e.target.value }))}
+                      placeholder="Ex: Aguardando Carga"
+                      style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                    />
+                  </div>
+                  <div>
+                    <Label style={{ color: theme.text }}>Ícone</Label>
+                    <Input
+                      value={novoStatus.icone}
+                      onChange={(e) => setNovoStatus(prev => ({ ...prev, icone: e.target.value }))}
+                      placeholder="Ex: 🟢"
+                      style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                    />
+                  </div>
+                  <div>
+                    <Label style={{ color: theme.text }}>Cor</Label>
+                    <Input
+                      type="color"
+                      value={novoStatus.cor}
+                      onChange={(e) => setNovoStatus(prev => ({ ...prev, cor: e.target.value }))}
+                      className="h-10"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                    {editingStatus ? "Atualizar" : "Adicionar"}
+                  </Button>
+                  {editingStatus && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setEditingStatus(null);
+                        setNovoStatus({ nome: "", cor: "#3b82f6", icone: "🟢" });
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                  )}
+                </div>
+              </form>
+
+              {/* Lista de Status */}
+              <div className="space-y-2">
+                <Label style={{ color: theme.text }}>Status Cadastrados</Label>
+                {statusFila.map(status => (
+                  <div
+                    key={status.id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                    style={{ borderColor: theme.cardBorder }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span style={{ fontSize: '1.5rem' }}>{status.icone}</span>
+                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: status.cor }} />
+                      <span className="font-semibold" style={{ color: theme.text }}>{status.nome}</span>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingStatus(status);
+                          setNovoStatus({ nome: status.nome, cor: status.cor, icone: status.icone });
+                        }}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleExcluirStatus(status.id)}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
 
