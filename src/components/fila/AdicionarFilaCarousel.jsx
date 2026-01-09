@@ -48,8 +48,14 @@ export default function AdicionarFilaCarousel({
           <Label style={{ color: theme.text }}>Placa do Cavalo *</Label>
           <Input
             value={formData.cavalo_placa}
-            onChange={(e) => setFormData(prev => ({ ...prev, cavalo_placa: e.target.value.toUpperCase() }))}
+            onChange={(e) => {
+              const valor = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+              if (valor.length <= 7) {
+                setFormData(prev => ({ ...prev, cavalo_placa: valor }));
+              }
+            }}
             placeholder="ABC1234"
+            maxLength={7}
             className="text-lg h-12 font-mono font-bold"
             style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
           />
@@ -169,7 +175,14 @@ export default function AdicionarFilaCarousel({
   const currentStep = steps[step];
   const isLastStep = step === steps.length - 1;
   const isRequired = ['motorista_nome', 'cavalo_placa', 'tipo_fila_id'].includes(currentStep.field);
-  const canGoNext = isRequired ? !!formData[currentStep.field] : true;
+  
+  const canGoNext = () => {
+    if (currentStep.field === 'cavalo_placa') {
+      const placaLimpa = formData.cavalo_placa?.replace(/\W/g, '') || '';
+      return placaLimpa.length === 7;
+    }
+    return isRequired ? !!formData[currentStep.field] : true;
+  };
 
   return (
     <div className="space-y-6">
@@ -198,7 +211,17 @@ export default function AdicionarFilaCarousel({
       {/* Current Step */}
       <div className="min-h-[120px]">
         {currentStep.render()}
-        {isRequired && !formData[currentStep.field] && (
+        {currentStep.field === 'cavalo_placa' && formData.cavalo_placa && formData.cavalo_placa.replace(/\W/g, '').length !== 7 && (
+          <p className="text-sm text-orange-600 dark:text-orange-400 mt-2 flex items-center gap-1">
+            <span>⚠️</span> A placa deve ter exatamente 7 caracteres
+          </p>
+        )}
+        {currentStep.field === 'cavalo_placa' && !formData.cavalo_placa && (
+          <p className="text-sm text-orange-600 dark:text-orange-400 mt-2 flex items-center gap-1">
+            <span>⚠️</span> Este campo é obrigatório
+          </p>
+        )}
+        {isRequired && currentStep.field !== 'cavalo_placa' && !formData[currentStep.field] && (
           <p className="text-sm text-orange-600 dark:text-orange-400 mt-2 flex items-center gap-1">
             <span>⚠️</span> Este campo é obrigatório
           </p>
@@ -223,7 +246,7 @@ export default function AdicionarFilaCarousel({
           <Button
             type="button"
             onClick={() => setStep(step + 1)}
-            disabled={!canGoNext}
+            disabled={!canGoNext()}
             className="flex-1 h-12 bg-blue-600 hover:bg-blue-700"
           >
             Próximo
