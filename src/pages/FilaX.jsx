@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Truck, Plus, RefreshCw, Settings, Search, X, Trash2, Edit, Clock, LayoutGrid, Table } from "lucide-react";
+import { Truck, Plus, RefreshCw, Settings, Search, X, Trash2, Edit, Clock, LayoutGrid, Table, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import FilaKanban from "../components/fila/FilaKanban";
 
 export default function FilaX() {
@@ -652,45 +653,69 @@ export default function FilaX() {
             theme={theme}
           />
         ) : (
-          statusFila.map(statusObj => {
-            const veiculosDoStatus = fila.filter(v => v.status === statusObj.nome.toLowerCase().replace(/ /g, '_'));
+          <DragDropContext onDragEnd={handleDragEnd}>
+            {statusFila.map(statusObj => {
+              const veiculosDoStatus = fila.filter(v => v.status === statusObj.nome.toLowerCase().replace(/ /g, '_'));
 
-            return (
-              <Card key={statusObj.id} style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2" style={{ color: theme.text }}>
-                    <span style={{ color: statusObj.cor }}>{statusObj.icone}</span>
-                    {statusObj.nome} ({veiculosDoStatus.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {veiculosDoStatus.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-sm" style={{ color: theme.textMuted }}>Nenhum veículo neste status</p>
-                    </div>
-                  ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
-                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tipo</th>
-                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Motorista</th>
-                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>CPF</th>
-                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Telefone</th>
-                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Cavalo</th>
-                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Implementos</th>
-                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tipo Veículo</th>
-                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Localização</th>
-                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Data Entrada</th>
-                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tempo na Fila</th>
-                          <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {veiculosDoStatus.map((item, index) => {
-                          const tipo = tiposFila.find(t => t.id === item.tipo_fila_id);
-                          return (
-                        <tr key={item.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800" style={{ borderColor: theme.cardBorder }}>
+              return (
+                <Card key={statusObj.id} style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2" style={{ color: theme.text }}>
+                      <span style={{ color: statusObj.cor }}>{statusObj.icone}</span>
+                      {statusObj.nome} ({veiculosDoStatus.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
+                            <th className="text-left p-3 text-xs font-semibold w-8" style={{ color: theme.textMuted }}></th>
+                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tipo</th>
+                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Motorista</th>
+                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>CPF</th>
+                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Telefone</th>
+                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Cavalo</th>
+                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Implementos</th>
+                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tipo Veículo</th>
+                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Localização</th>
+                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Data Entrada</th>
+                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tempo na Fila</th>
+                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Ações</th>
+                          </tr>
+                        </thead>
+                        <Droppable droppableId={statusObj.id}>
+                          {(provided, snapshot) => (
+                            <tbody
+                              ref={provided.innerRef}
+                              {...provided.droppableProps}
+                              style={{
+                                backgroundColor: snapshot.isDraggingOver 
+                                  ? (theme.cardBg === '#1e293b' ? '#334155' : '#f1f5f9')
+                                  : 'transparent'
+                              }}
+                            >
+                              {veiculosDoStatus.map((item, index) => {
+                                const tipo = tiposFila.find(t => t.id === item.tipo_fila_id);
+                                return (
+                                  <Draggable key={item.id} draggableId={item.id} index={index}>
+                                    {(provided, snapshot) => (
+                                      <tr 
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        className="border-b hover:bg-gray-50 dark:hover:bg-gray-800" 
+                                        style={{ 
+                                          ...provided.draggableProps.style,
+                                          borderColor: theme.cardBorder,
+                                          backgroundColor: snapshot.isDragging 
+                                            ? (theme.cardBg === '#1e293b' ? '#1e293b' : '#ffffff')
+                                            : 'transparent',
+                                          opacity: snapshot.isDragging ? 0.9 : 1
+                                        }}
+                                      >
+                                        <td className="p-3" {...provided.dragHandleProps}>
+                                          <GripVertical className="w-4 h-4 text-gray-400 cursor-grab active:cursor-grabbing" />
+                                        </td>
                           <td className="p-3">
                             {editingCell?.itemId === item.id && editingCell?.field === 'status' ? (
                               <Select
@@ -1024,19 +1049,31 @@ export default function FilaX() {
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            </CardContent>
-          </Card>
-        );
-      })
-    )}
+                                        </td>
+                                      </tr>
+                                    )}
+                                  </Draggable>
+                                );
+                              })}
+                              {provided.placeholder}
+                              {veiculosDoStatus.length === 0 && (
+                                <tr>
+                                  <td colSpan="12" className="text-center py-8">
+                                    <p className="text-sm" style={{ color: theme.textMuted }}>Nenhum veículo neste status</p>
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          )}
+                        </Droppable>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </DragDropContext>
+        )}
 
         {/* Modal Adicionar Veículo */}
         <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
