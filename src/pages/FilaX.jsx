@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Truck, Plus, RefreshCw, Settings, Search, X, Trash2, Edit, Clock, LayoutGrid, Table, GripVertical, MapPin, Share2, Copy } from "lucide-react";
+import { Truck, Plus, RefreshCw, Settings, Search, X, Trash2, Edit, Clock, LayoutGrid, Table, GripVertical, MapPin, Share2, Copy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -24,6 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import FilaKanban from "../components/fila/FilaKanban";
+import AdicionarFilaCarousel from "../components/fila/AdicionarFilaCarousel";
 import { createPageUrl } from "@/utils";
 
 export default function FilaX() {
@@ -51,6 +52,11 @@ export default function FilaX() {
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState("fila"); // "fila" ou "historico"
   const [ordensHistorico, setOrdensHistorico] = useState([]);
+  const [isMobile, setIsMobile] = useState(false);
+  const [etapaModal, setEtapaModal] = useState("telefone"); // "telefone" ou "formulario"
+  const [telefoneBusca, setTelefoneBusca] = useState("");
+  const [buscandoMotorista, setBuscandoMotorista] = useState(false);
+  const [preenchidoAutomatico, setPreenchidoAutomatico] = useState(false);
 
   const [formData, setFormData] = useState({
     motorista_id: "",
@@ -78,6 +84,15 @@ export default function FilaX() {
     const observer = new MutationObserver(checkDarkMode);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   useEffect(() => {
@@ -229,11 +244,64 @@ export default function FilaX() {
     toast.success("Veículo selecionado");
   };
 
+  const handleBuscarMotorista = async () => {
+    const telefoneLimpo = telefoneBusca.replace(/\D/g, '');
+    
+    if (telefoneLimpo.length !== 11) {
+      toast.error("Digite um telefone válido com DDD");
+      return;
+    }
+
+    setBuscandoMotorista(true);
+    try {
+      // Buscar motorista por telefone
+      const motoristasEncontrados = motoristas.filter(m => 
+        m.celular?.replace(/\D/g, '') === telefoneLimpo
+      );
+
+      if (motoristasEncontrados.length > 0) {
+        const motorista = motoristasEncontrados[0];
+        
+        // Preencher dados automaticamente
+        const cavalo = veiculos.find(v => v.id === motorista.cavalo_id);
+        
+        setFormData(prev => ({
+          ...prev,
+          motorista_id: motorista.id,
+          motorista_nome: motorista.nome,
+          motorista_telefone: telefoneLimpo,
+          cavalo_id: motorista.cavalo_id || "",
+          cavalo_placa: cavalo?.placa || "",
+          tipo_veiculo: cavalo?.tipo || "",
+          tipo_carroceria: cavalo?.carroceria || ""
+        }));
+
+        setPreenchidoAutomatico(true);
+        setEtapaModal("formulario");
+        toast.success("Dados carregados! Confirme o check-in");
+      } else {
+        // Motorista não encontrado, preencher apenas telefone
+        setFormData(prev => ({
+          ...prev,
+          motorista_telefone: telefoneLimpo
+        }));
+        setPreenchidoAutomatico(false);
+        setEtapaModal("formulario");
+        toast.info("Preencha os dados para cadastro");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar motorista:", error);
+      toast.error("Erro ao buscar dados");
+    } finally {
+      setBuscandoMotorista(false);
+    }
+  };
+
   const handleAdicionarFila = async (e) => {
     e.preventDefault();
 
-    if (!formData.motorista_nome || !formData.cavalo_placa || !formData.tipo_fila_id) {
-      toast.error("Preencha motorista, placa e tipo de fila");
+    if (!formData.motorista_nome || !formData.cavalo_placa || !formData.tipo_fila_id || !formData.motorista_telefone) {
+      toast.error("Preencha todos os campos obrigatórios");
       return;
     }
 
@@ -1227,136 +1295,116 @@ export default function FilaX() {
         )}
 
         {/* Modal Adicionar Veículo */}
-        <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+        <Dialog open={showAddModal} onOpenChange={() => {
+          setShowAddModal(false);
+          setEtapaModal("telefone");
+          setTelefoneBusca("");
+          setPreenchidoAutomatico(false);
+        }}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
             <DialogHeader>
-              <DialogTitle style={{ color: theme.text }}>Adicionar Veículo à Fila</DialogTitle>
+              <DialogTitle style={{ color: theme.text }}>
+                {isMobile ? "Check-in na Fila" : "Adicionar Veículo à Fila"}
+              </DialogTitle>
             </DialogHeader>
 
-            <form onSubmit={handleAdicionarFila} className="space-y-4">
-              {/* Buscar Motorista */}
-              <div>
-                <Label style={{ color: theme.text }}>Buscar Motorista *</Label>
-                <div className="relative">
-                  <Input
-                    value={searchMotorista}
-                    onChange={(e) => handleSearchMotorista(e.target.value)}
-                    placeholder="Nome, CPF ou telefone..."
-                    className="pr-10"
-                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                  />
-                  <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2" style={{ color: theme.textMuted }} />
-                </div>
-                
-                {filteredMotoristas.length > 0 && (
-                  <div className="border rounded-lg mt-2 max-h-48 overflow-y-auto" style={{ borderColor: theme.cardBorder, backgroundColor: theme.cardBg }}>
-                    {filteredMotoristas.map(m => (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => handleSelecionarMotorista(m)}
-                        className="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 border-b"
-                        style={{ borderColor: theme.cardBorder }}
-                      >
-                        <p className="font-semibold text-sm" style={{ color: theme.text }}>{m.nome}</p>
-                        <p className="text-xs" style={{ color: theme.textMuted }}>CPF: {m.cpf} | {m.celular}</p>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {formData.motorista_nome && (
-                  <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded border" style={{ borderColor: '#16a34a' }}>
-                    <p className="text-sm font-semibold text-green-700 dark:text-green-300">
-                      ✓ {formData.motorista_nome}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Dados Manuais do Motorista (se não encontrado) */}
-              {!formData.motorista_id && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="md:col-span-2">
-                    <Label style={{ color: theme.text }}>Nome Motorista *</Label>
-                    <Input
-                      value={formData.motorista_nome}
-                      onChange={(e) => setFormData(prev => ({ ...prev, motorista_nome: e.target.value }))}
-                      placeholder="Nome completo"
-                      style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Label style={{ color: theme.text }}>Telefone *</Label>
-                    <Input
-                      value={formData.motorista_telefone}
-                      onChange={(e) => {
-                        const valor = e.target.value.replace(/\D/g, '');
-                        if (valor.length <= 11) {
-                          const formatado = valor.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
-                          setFormData(prev => ({ ...prev, motorista_telefone: valor.length === 11 ? formatado : valor }));
-                        }
-                      }}
-                      placeholder="(00) 00000-0000"
-                      maxLength={15}
-                      style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Buscar Placa */}
-              <div>
-                <Label style={{ color: theme.text }}>Buscar Placa do Cavalo *</Label>
-                <div className="relative">
-                  <Input
-                    value={searchPlaca}
-                    onChange={(e) => handleSearchPlaca(e.target.value)}
-                    placeholder="ABC1234..."
-                    className="pr-10"
-                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                  />
-                  <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2" style={{ color: theme.textMuted }} />
+            {isMobile && etapaModal === "telefone" ? (
+              <div className="space-y-6 py-4">
+                <div className="text-center mb-4">
+                  <p className="text-sm" style={{ color: theme.textMuted }}>
+                    Digite seu celular para buscar seus dados
+                  </p>
                 </div>
 
-                {filteredVeiculos.length > 0 && (
-                  <div className="border rounded-lg mt-2 max-h-48 overflow-y-auto" style={{ borderColor: theme.cardBorder, backgroundColor: theme.cardBg }}>
-                    {filteredVeiculos.map(v => (
-                      <button
-                        key={v.id}
-                        type="button"
-                        onClick={() => handleSelecionarVeiculo(v)}
-                        className="w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-800 border-b"
-                        style={{ borderColor: theme.cardBorder }}
-                      >
-                        <p className="font-semibold text-sm font-mono" style={{ color: theme.text }}>{v.placa}</p>
-                        <p className="text-xs" style={{ color: theme.textMuted }}>{v.marca} {v.modelo} | {v.tipo}</p>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {formData.cavalo_placa && (
-                  <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded border" style={{ borderColor: '#16a34a' }}>
-                    <p className="text-sm font-semibold font-mono text-green-700 dark:text-green-300">
-                      ✓ {formData.cavalo_placa}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Placa Manual (se não encontrado) */}
-              {!formData.cavalo_id && (
                 <div>
-                  <Label style={{ color: theme.text }}>Placa do Cavalo (Manual) *</Label>
+                  <Label style={{ color: theme.text }}>Telefone Celular</Label>
                   <Input
-                    value={formData.cavalo_placa}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cavalo_placa: e.target.value.toUpperCase() }))}
-                    placeholder="ABC1234"
+                    value={telefoneBusca}
+                    onChange={(e) => {
+                      const valor = e.target.value.replace(/\D/g, '');
+                      if (valor.length <= 11) {
+                        const formatado = valor.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+                        setTelefoneBusca(valor.length === 11 ? formatado : valor);
+                      }
+                    }}
+                    placeholder="(00) 00000-0000"
+                    maxLength={15}
+                    className="text-lg h-14 text-center font-bold"
                     style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                    autoFocus
                   />
                 </div>
-              )}
+
+                <Button
+                  type="button"
+                  onClick={handleBuscarMotorista}
+                  disabled={buscandoMotorista || telefoneBusca.replace(/\D/g, '').length !== 11}
+                  className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-lg font-bold"
+                >
+                  {buscandoMotorista ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Buscando...
+                    </>
+                  ) : (
+                    "Continuar"
+                  )}
+                </Button>
+              </div>
+            ) : isMobile ? (
+              <form onSubmit={handleAdicionarFila}>
+                <AdicionarFilaCarousel
+                  formData={formData}
+                  setFormData={setFormData}
+                  tiposFila={tiposFila}
+                  theme={theme}
+                  loadingLocation={loadingLocation}
+                  onObterLocalizacao={handleObterLocalizacao}
+                  preenchidoAutomatico={preenchidoAutomatico}
+                />
+              </form>
+            ) : (
+              <form onSubmit={handleAdicionarFila} className="space-y-4">
+              {/* Telefone */}
+              <div>
+                <Label style={{ color: theme.text }}>Telefone Celular *</Label>
+                <Input
+                  value={formData.motorista_telefone}
+                  onChange={(e) => {
+                    const valor = e.target.value.replace(/\D/g, '');
+                    if (valor.length <= 11) {
+                      const formatado = valor.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+                      setFormData(prev => ({ ...prev, motorista_telefone: valor.length === 11 ? formatado : valor }));
+                    }
+                  }}
+                  placeholder="(00) 00000-0000"
+                  maxLength={15}
+                  style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                />
+              </div>
+
+              {/* Nome Motorista */}
+              <div>
+                <Label style={{ color: theme.text }}>Nome Motorista *</Label>
+                <Input
+                  value={formData.motorista_nome}
+                  onChange={(e) => setFormData(prev => ({ ...prev, motorista_nome: e.target.value }))}
+                  placeholder="Nome completo"
+                  style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                />
+              </div>
+
+              {/* Placa do Cavalo */}
+              <div>
+                <Label style={{ color: theme.text }}>Placa do Cavalo *</Label>
+                <Input
+                  value={formData.cavalo_placa}
+                  onChange={(e) => setFormData(prev => ({ ...prev, cavalo_placa: e.target.value.toUpperCase() }))}
+                  placeholder="ABC1234"
+                  className="font-mono font-bold"
+                  style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                />
+              </div>
 
 
 
@@ -1478,9 +1526,10 @@ export default function FilaX() {
                   Adicionar à Fila
                 </Button>
               </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+              </form>
+              )}
+              </DialogContent>
+              </Dialog>
 
         {/* Modal Gerenciar Status */}
         <Dialog open={showStatusModal} onOpenChange={setShowStatusModal}>
