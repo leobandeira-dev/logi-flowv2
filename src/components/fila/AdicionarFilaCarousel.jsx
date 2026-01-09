@@ -36,7 +36,6 @@ export default function AdicionarFilaCarousel({
             placeholder="Digite seu nome"
             className="text-lg h-12"
             style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-            disabled={preenchidoAutomatico}
           />
         </div>
       )
@@ -53,7 +52,6 @@ export default function AdicionarFilaCarousel({
             placeholder="ABC1234"
             className="text-lg h-12 font-mono font-bold"
             style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-            disabled={preenchidoAutomatico}
           />
         </div>
       )
@@ -67,7 +65,6 @@ export default function AdicionarFilaCarousel({
           <Select
             value={formData.tipo_fila_id}
             onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_fila_id: value }))}
-            disabled={preenchidoAutomatico}
           >
             <SelectTrigger className="h-12" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
               <SelectValue placeholder="Selecione o tipo..." />
