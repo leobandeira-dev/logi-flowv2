@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Truck, Plus, RefreshCw, Settings, Search, X, Trash2, Edit, Clock, LayoutGrid, Table, GripVertical } from "lucide-react";
+import { Truck, Plus, RefreshCw, Settings, Search, X, Trash2, Edit, Clock, LayoutGrid, Table, GripVertical, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -47,6 +47,7 @@ export default function FilaX() {
   const [editingCell, setEditingCell] = useState(null);
   const [editValue, setEditValue] = useState("");
   const [viewMode, setViewMode] = useState("table"); // "table" ou "kanban"
+  const [loadingLocation, setLoadingLocation] = useState(false);
 
   const [formData, setFormData] = useState({
     motorista_id: "",
@@ -244,7 +245,7 @@ export default function FilaX() {
       // Pegar o primeiro status ou "aguardando" como padrão
       const statusPadrao = statusFila[0]?.nome.toLowerCase().replace(/ /g, '_') || "aguardando";
 
-      await base44.entities.FilaVeiculo.create({
+      const novoItem = await base44.entities.FilaVeiculo.create({
         empresa_id: user.empresa_id,
         ...formData,
         tipo_fila_nome: tipoSelecionado?.nome,
@@ -272,7 +273,9 @@ export default function FilaX() {
         localizacao_atual: "",
         observacoes: ""
       });
-      loadData();
+      
+      // Adicionar ao estado local sem recarregar
+      setFila(prev => [...prev, novoItem]);
     } catch (error) {
       console.error("Erro ao adicionar à fila:", error);
       toast.error("Erro ao adicionar veículo");
@@ -285,7 +288,7 @@ export default function FilaX() {
     try {
       await base44.entities.FilaVeiculo.delete(id);
       toast.success("Veículo removido da fila");
-      loadData();
+      setFila(prev => prev.filter(item => item.id !== id));
     } catch (error) {
       console.error("Erro ao remover:", error);
       toast.error("Erro ao remover veículo");
@@ -493,6 +496,46 @@ export default function FilaX() {
     }
   };
 
+  const handleObterLocalizacao = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocalização não suportada neste navegador");
+      return;
+    }
+
+    setLoadingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        try {
+          // Reverter coordenadas para endereço usando API de geocoding
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+          );
+          const data = await response.json();
+          
+          const endereco = data.display_name || `${latitude}, ${longitude}`;
+          setFormData(prev => ({ ...prev, localizacao_atual: endereco }));
+          toast.success("Localização obtida!");
+        } catch (error) {
+          console.error("Erro ao obter endereço:", error);
+          setFormData(prev => ({ 
+            ...prev, 
+            localizacao_atual: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}` 
+          }));
+          toast.success("Coordenadas obtidas!");
+        } finally {
+          setLoadingLocation(false);
+        }
+      },
+      (error) => {
+        console.error("Erro ao obter localização:", error);
+        toast.error("Erro ao obter localização");
+        setLoadingLocation(false);
+      }
+    );
+  };
+
   const handleDragEnd = async (result) => {
     if (!result.destination) return;
 
@@ -556,14 +599,14 @@ export default function FilaX() {
     <div className="p-6 min-h-screen" style={{ backgroundColor: theme.bg }}>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-1" style={{ color: theme.text }}>Fila X</h1>
-            <p className="text-sm" style={{ color: theme.textMuted }}>
+            <h1 className="text-2xl md:text-3xl font-bold mb-1" style={{ color: theme.text }}>Fila X</h1>
+            <p className="text-xs md:text-sm" style={{ color: theme.textMuted }}>
               Gerenciamento de fila de veículos disponíveis
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
             <div className="flex border rounded-lg" style={{ borderColor: theme.cardBorder }}>
               <Button
                 variant={viewMode === "table" ? "default" : "ghost"}
@@ -571,8 +614,8 @@ export default function FilaX() {
                 onClick={() => setViewMode("table")}
                 className={viewMode === "table" ? "bg-blue-600 hover:bg-blue-700" : ""}
               >
-                <Table className="w-4 h-4 mr-2" />
-                Tabela
+                <Table className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Tabela</span>
               </Button>
               <Button
                 variant={viewMode === "kanban" ? "default" : "ghost"}
@@ -580,13 +623,15 @@ export default function FilaX() {
                 onClick={() => setViewMode("kanban")}
                 className={viewMode === "kanban" ? "bg-blue-600 hover:bg-blue-700" : ""}
               >
-                <LayoutGrid className="w-4 h-4 mr-2" />
-                Kanban
+                <LayoutGrid className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Kanban</span>
               </Button>
             </div>
             <Button
               variant="outline"
               onClick={() => setShowTiposModal(true)}
+              size="sm"
+              className="hidden md:flex"
               style={{ borderColor: theme.cardBorder, color: theme.text }}
             >
               <Settings className="w-4 h-4 mr-2" />
@@ -595,6 +640,8 @@ export default function FilaX() {
             <Button
               variant="outline"
               onClick={() => setShowStatusModal(true)}
+              size="sm"
+              className="hidden md:flex"
               style={{ borderColor: theme.cardBorder, color: theme.text }}
             >
               <Settings className="w-4 h-4 mr-2" />
@@ -603,30 +650,32 @@ export default function FilaX() {
             <Button
               variant="outline"
               onClick={loadData}
+              size="sm"
               style={{ borderColor: theme.cardBorder, color: theme.text }}
             >
               <RefreshCw className="w-4 h-4" />
             </Button>
             <Button
               onClick={() => setShowAddModal(true)}
+              size="sm"
               className="bg-blue-600 hover:bg-blue-700"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar à Fila
+              <Plus className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Adicionar à Fila</span>
             </Button>
           </div>
         </div>
 
         {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-            <CardContent className="p-4">
+            <CardContent className="p-3 md:p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs" style={{ color: theme.textMuted }}>Total na Fila</p>
-                  <p className="text-2xl font-bold" style={{ color: theme.text }}>{fila.length}</p>
+                  <p className="text-xl md:text-2xl font-bold" style={{ color: theme.text }}>{fila.length}</p>
                 </div>
-                <Truck className="w-8 h-8 text-blue-600" />
+                <Truck className="w-6 h-6 md:w-8 md:h-8 text-blue-600" />
               </div>
             </CardContent>
           </Card>
@@ -635,11 +684,11 @@ export default function FilaX() {
             const count = fila.filter(v => v.tipo_fila_id === tipo.id).length;
             return (
               <Card key={tipo.id} style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardContent className="p-4">
+                <CardContent className="p-3 md:p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs" style={{ color: theme.textMuted }}>{tipo.nome}</p>
-                      <p className="text-2xl font-bold" style={{ color: tipo.cor }}>{count}</p>
+                      <p className="text-xl md:text-2xl font-bold" style={{ color: tipo.cor }}>{count}</p>
                     </div>
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tipo.cor }} />
                   </div>
@@ -772,7 +821,7 @@ export default function FilaX() {
                                   })
                                     .then(() => {
                                       toast.success("Tipo atualizado!");
-                                      loadData();
+                                      setFila(prev => prev.map(f => f.id === item.id ? {...f, tipo_fila_id: value, tipo_fila_nome: tipoSel?.nome} : f));
                                     })
                                     .catch(() => toast.error("Erro ao atualizar"));
                                 }}
@@ -1021,7 +1070,7 @@ export default function FilaX() {
 
         {/* Modal Adicionar Veículo */}
         <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-          <DialogContent className="max-w-3xl" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
             <DialogHeader>
               <DialogTitle style={{ color: theme.text }}>Adicionar Veículo à Fila</DialogTitle>
             </DialogHeader>
@@ -1069,8 +1118,8 @@ export default function FilaX() {
 
               {/* Dados Manuais do Motorista (se não encontrado) */}
               {!formData.motorista_id && (
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="md:col-span-3">
                     <Label style={{ color: theme.text }}>Nome Motorista *</Label>
                     <Input
                       value={formData.motorista_nome}
@@ -1088,7 +1137,7 @@ export default function FilaX() {
                       style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                     />
                   </div>
-                  <div>
+                  <div className="md:col-span-2">
                     <Label style={{ color: theme.text }}>Telefone</Label>
                     <Input
                       value={formData.motorista_telefone}
@@ -1176,8 +1225,8 @@ export default function FilaX() {
               </div>
 
               {/* Tipo de Fila e Características */}
-              <div className="grid grid-cols-3 gap-3">
-                <div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="md:col-span-3">
                   <Label style={{ color: theme.text }}>Tipo de Fila *</Label>
                   <Select
                     value={formData.tipo_fila_id}
@@ -1244,12 +1293,28 @@ export default function FilaX() {
               {/* Localização e Observações */}
               <div>
                 <Label style={{ color: theme.text }}>Localização Atual</Label>
-                <Input
-                  value={formData.localizacao_atual}
-                  onChange={(e) => setFormData(prev => ({ ...prev, localizacao_atual: e.target.value }))}
-                  placeholder="Ex: Pátio Central, Filial SP..."
-                  style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={formData.localizacao_atual}
+                    onChange={(e) => setFormData(prev => ({ ...prev, localizacao_atual: e.target.value }))}
+                    placeholder="Ex: Pátio Central, Filial SP..."
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleObterLocalizacao}
+                    disabled={loadingLocation}
+                    className="flex-shrink-0"
+                    style={{ borderColor: theme.cardBorder }}
+                  >
+                    {loadingLocation ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <MapPin className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
 
               <div>
@@ -1268,11 +1333,12 @@ export default function FilaX() {
                   type="button"
                   variant="outline"
                   onClick={() => setShowAddModal(false)}
+                  className="flex-1"
                   style={{ borderColor: theme.cardBorder, color: theme.text }}
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
                   Adicionar à Fila
                 </Button>
               </div>
