@@ -332,8 +332,11 @@ export default function FilaX() {
         data_entrada_fila: new Date().toISOString()
       });
 
-      toast.success(`Veículo adicionado à fila! Senha: ${senhaFila}`);
+      toast.success(`Check-in realizado! Senha: ${senhaFila}`);
       setShowAddModal(false);
+      setEtapaModal("telefone");
+      setTelefoneBusca("");
+      setPreenchidoAutomatico(false);
       setFormData({
         motorista_id: "",
         motorista_nome: "",
@@ -1153,7 +1156,10 @@ export default function FilaX() {
                                 style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6', color: theme.text }}
                               />
                             ) : (
-                              <p className="text-xs font-mono font-semibold truncate" style={{ color: theme.text }}>{item.cavalo_placa}</p>
+                              <div>
+                                <p className="text-xs font-mono font-semibold truncate" style={{ color: theme.text }}>{item.cavalo_placa}</p>
+                                <p className="text-xs text-blue-600 dark:text-blue-400 font-mono font-bold">Senha: {item.senha_fila}</p>
+                              </div>
                             )}
                           </td>
                           <td className="p-2">
