@@ -179,7 +179,31 @@ export default function AdicionarFilaCarousel({
     return isRequired ? !!formData[currentStep.field] : true;
   };
 
+  const getEmptySelectField = () => {
+    const selectFields = ['tipo_fila_id', 'tipo_veiculo', 'tipo_carroceria'];
+    for (const field of selectFields) {
+      if (!formData[field]) {
+        return field;
+      }
+    }
+    return null;
+  };
+
   const handleNextClick = () => {
+    // Se estiver no passo de múltiplos selects
+    if (currentStep.isMultiSelect) {
+      const emptyField = getEmptySelectField();
+      if (emptyField) {
+        setShowError(true);
+        setOpenSelect(true);
+        return;
+      }
+      setShowError(false);
+      setOpenSelect(false);
+      setStep(step + 1);
+      return;
+    }
+
     if (!validateCurrentStep()) {
       setShowError(true);
       return;
@@ -216,6 +240,25 @@ export default function AdicionarFilaCarousel({
       {/* Current Step */}
       <div className="min-h-[120px]">
         {currentStep.render()}
+        {showError && currentStep.isMultiSelect && (
+          <div className="mt-4 space-y-2">
+            {!formData.tipo_fila_id && (
+              <p className="text-sm text-orange-600 dark:text-orange-400 flex items-center gap-2">
+                <span>⚠️</span> Tipo do Motorista é obrigatório
+              </p>
+            )}
+            {!formData.tipo_veiculo && (
+              <p className="text-sm text-orange-600 dark:text-orange-400 flex items-center gap-2">
+                <span>⚠️</span> Tipo de Veículo é obrigatório
+              </p>
+            )}
+            {!formData.tipo_carroceria && (
+              <p className="text-sm text-orange-600 dark:text-orange-400 flex items-center gap-2">
+                <span>⚠️</span> Tipo de Carroceria é obrigatório
+              </p>
+            )}
+          </div>
+        )}
         {showError && currentStep.field === 'cavalo_placa' && formData.cavalo_placa && formData.cavalo_placa.replace(/\W/g, '').length !== 7 && (
           <p className="text-sm text-orange-600 dark:text-orange-400 mt-2 flex items-center gap-1">
             <span>⚠️</span> A placa deve ter exatamente 7 caracteres
