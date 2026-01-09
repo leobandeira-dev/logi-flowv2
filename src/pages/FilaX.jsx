@@ -666,8 +666,8 @@ export default function FilaX() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div>
-                      <table className="w-full table-fixed">
+                    <div className="overflow-x-auto">
+                      <table className="w-full table-fixed min-w-[1200px]">
                         <thead>
                           <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
                             <th className="text-left p-2 text-xs font-semibold w-8" style={{ color: theme.textMuted }}></th>
