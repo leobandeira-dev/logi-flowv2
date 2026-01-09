@@ -22,6 +22,7 @@ export default function AdicionarFilaCarousel({
   preenchidoAutomatico 
 }) {
   const [step, setStep] = useState(0);
+  const [showError, setShowError] = useState(false);
 
   const steps = [
     {
@@ -176,12 +177,21 @@ export default function AdicionarFilaCarousel({
   const isLastStep = step === steps.length - 1;
   const isRequired = ['motorista_nome', 'cavalo_placa', 'tipo_fila_id'].includes(currentStep.field);
   
-  const canGoNext = () => {
+  const validateCurrentStep = () => {
     if (currentStep.field === 'cavalo_placa') {
       const placaLimpa = formData.cavalo_placa?.replace(/\W/g, '') || '';
       return placaLimpa.length === 7;
     }
     return isRequired ? !!formData[currentStep.field] : true;
+  };
+
+  const handleNextClick = () => {
+    if (!validateCurrentStep()) {
+      setShowError(true);
+      return;
+    }
+    setShowError(false);
+    setStep(step + 1);
   };
 
   return (
@@ -234,7 +244,10 @@ export default function AdicionarFilaCarousel({
           <Button
             type="button"
             variant="outline"
-            onClick={() => setStep(step - 1)}
+            onClick={() => {
+              setStep(step - 1);
+              setShowError(false);
+            }}
             className="flex-1 h-12"
             style={{ borderColor: theme.cardBorder }}
           >
@@ -245,8 +258,7 @@ export default function AdicionarFilaCarousel({
         {!isLastStep ? (
           <Button
             type="button"
-            onClick={() => setStep(step + 1)}
-            disabled={!canGoNext()}
+            onClick={handleNextClick}
             className="flex-1 h-12 bg-blue-600 hover:bg-blue-700"
           >
             Próximo
