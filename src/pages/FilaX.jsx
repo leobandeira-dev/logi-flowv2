@@ -199,11 +199,8 @@ export default function FilaX() {
       ...prev,
       motorista_id: motorista.id,
       motorista_nome: motorista.nome,
-      motorista_cpf: motorista.cpf,
       motorista_telefone: motorista.celular,
-      cavalo_id: motorista.cavalo_id || "",
-      implemento1_id: motorista.implemento1_id || "",
-      implemento2_id: motorista.implemento2_id || ""
+      cavalo_id: motorista.cavalo_id || ""
     }));
 
     // Buscar placas dos veículos vinculados
@@ -1279,8 +1276,8 @@ export default function FilaX() {
 
               {/* Dados Manuais do Motorista (se não encontrado) */}
               {!formData.motorista_id && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="md:col-span-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="md:col-span-2">
                     <Label style={{ color: theme.text }}>Nome Motorista *</Label>
                     <Input
                       value={formData.motorista_nome}
@@ -1289,21 +1286,19 @@ export default function FilaX() {
                       style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                     />
                   </div>
-                  <div>
-                    <Label style={{ color: theme.text }}>CPF</Label>
-                    <Input
-                      value={formData.motorista_cpf}
-                      onChange={(e) => setFormData(prev => ({ ...prev, motorista_cpf: e.target.value }))}
-                      placeholder="000.000.000-00"
-                      style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                    />
-                  </div>
                   <div className="md:col-span-2">
-                    <Label style={{ color: theme.text }}>Telefone</Label>
+                    <Label style={{ color: theme.text }}>Telefone *</Label>
                     <Input
                       value={formData.motorista_telefone}
-                      onChange={(e) => setFormData(prev => ({ ...prev, motorista_telefone: e.target.value }))}
+                      onChange={(e) => {
+                        const valor = e.target.value.replace(/\D/g, '');
+                        if (valor.length <= 11) {
+                          const formatado = valor.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+                          setFormData(prev => ({ ...prev, motorista_telefone: valor.length === 11 ? formatado : valor }));
+                        }
+                      }}
                       placeholder="(00) 00000-0000"
+                      maxLength={15}
                       style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                     />
                   </div>
@@ -1363,32 +1358,12 @@ export default function FilaX() {
                 </div>
               )}
 
-              {/* Implementos */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label style={{ color: theme.text }}>Placa Implemento 1</Label>
-                  <Input
-                    value={formData.implemento1_placa}
-                    onChange={(e) => setFormData(prev => ({ ...prev, implemento1_placa: e.target.value.toUpperCase() }))}
-                    placeholder="DEF5678"
-                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                  />
-                </div>
-                <div>
-                  <Label style={{ color: theme.text }}>Placa Implemento 2</Label>
-                  <Input
-                    value={formData.implemento2_placa}
-                    onChange={(e) => setFormData(prev => ({ ...prev, implemento2_placa: e.target.value.toUpperCase() }))}
-                    placeholder="GHI9012"
-                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                  />
-                </div>
-              </div>
 
-              {/* Tipo de Fila e Características */}
+
+              {/* Tipo do Motorista e Características */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="md:col-span-3">
-                  <Label style={{ color: theme.text }}>Tipo de Fila *</Label>
+                  <Label style={{ color: theme.text }}>Tipo do Motorista *</Label>
                   <Select
                     value={formData.tipo_fila_id}
                     onValueChange={(value) => {

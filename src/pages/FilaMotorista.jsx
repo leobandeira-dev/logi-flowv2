@@ -29,17 +29,16 @@ export default function FilaMotorista() {
   const [formData, setFormData] = useState({
     empresa_id: "",
     motorista_nome: "",
-    motorista_cpf: "",
     motorista_telefone: "",
     cavalo_placa: "",
-    implemento1_placa: "",
-    implemento2_placa: "",
     tipo_fila_id: "",
     tipo_veiculo: "",
     tipo_carroceria: "",
     localizacao_atual: "",
     observacoes: ""
   });
+  const [consultaTelefone, setConsultaTelefone] = useState("");
+  const [consultando, setConsultando] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -65,10 +64,10 @@ export default function FilaMotorista() {
       const tiposData = await base44.entities.TipoFilaVeiculo.filter({ empresa_id: empresaId, ativo: true }, "ordem");
       setTiposFila(tiposData);
 
-      // Verificar se já existe cadastro com este CPF/Telefone no localStorage
-      const cpfSalvo = localStorage.getItem('fila_motorista_cpf');
-      if (cpfSalvo) {
-        await verificarCadastro(cpfSalvo);
+      // Verificar se já existe cadastro com este telefone no localStorage
+      const telefoneSalvo = localStorage.getItem('fila_motorista_telefone');
+      if (telefoneSalvo) {
+        await verificarCadastro(telefoneSalvo);
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -78,9 +77,10 @@ export default function FilaMotorista() {
     }
   };
 
-  const verificarCadastro = async (cpf) => {
+  const verificarCadastro = async (telefone) => {
     try {
-      const filas = await base44.entities.FilaVeiculo.filter({ motorista_cpf: cpf }, "-data_entrada_fila", 1);
+      const telefoneLimpo = telefone.replace(/\D/g, '');
+      const filas = await base44.entities.FilaVeiculo.filter({ motorista_telefone: telefoneLimpo }, "-data_entrada_fila", 1);
       if (filas.length > 0) {
         setMinhaFila(filas[0]);
         setSubmitted(true);
@@ -88,9 +88,39 @@ export default function FilaMotorista() {
         // Contar total de veículos na fila com mesmo status
         const todasFilas = await base44.entities.FilaVeiculo.filter({ status: filas[0].status });
         setTotalNaFila(todasFilas.length);
+        
+        // Buscar ordem vinculada se houver senha
+        if (filas[0].senha_fila) {
+          const ordens = await base44.entities.OrdemDeCarregamento.filter({ senha_fila: filas[0].senha_fila }, null, 1);
+          if (ordens.length > 0) {
+            localStorage.setItem('fila_ordem_vinculada', JSON.stringify(ordens[0]));
+          }
+        }
       }
     } catch (error) {
       console.error("Erro ao verificar cadastro:", error);
+    }
+  };
+
+  const handleConsultarTelefone = async (e) => {
+    e.preventDefault();
+    const telefoneLimpo = consultaTelefone.replace(/\D/g, '');
+    
+    if (telefoneLimpo.length !== 11) {
+      toast.error("Digite um telefone válido com DDD");
+      return;
+    }
+
+    setConsultando(true);
+    try {
+      await verificarCadastro(telefoneLimpo);
+      if (!submitted) {
+        toast.error("Nenhum cadastro encontrado com este telefone");
+      }
+    } catch (error) {
+      toast.error("Erro ao consultar");
+    } finally {
+      setConsultando(false);
     }
   };
 
@@ -135,19 +165,25 @@ export default function FilaMotorista() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.motorista_nome || !formData.cavalo_placa || !formData.tipo_fila_id || !formData.motorista_cpf) {
-      toast.error("Preencha nome, CPF, placa e tipo de fila");
+    if (!formData.motorista_nome || !formData.cavalo_placa || !formData.tipo_fila_id || !formData.motorista_telefone) {
+      toast.error("Preencha nome, telefone, placa e tipo do motorista");
+      return;
+    }
+
+    const telefoneLimpo = formData.motorista_telefone.replace(/\D/g, '');
+    if (telefoneLimpo.length !== 11) {
+      toast.error("Digite um telefone válido com DDD (11 dígitos)");
       return;
     }
 
     try {
-      // Verificar se já existe cadastro com este CPF
-      const existente = await base44.entities.FilaVeiculo.filter({ motorista_cpf: formData.motorista_cpf });
+      // Verificar se já existe cadastro com este telefone
+      const existente = await base44.entities.FilaVeiculo.filter({ motorista_telefone: telefoneLimpo });
       if (existente.length > 0) {
-        toast.error("Você já está cadastrado na fila!");
+        toast.error("Este telefone já está cadastrado na fila!");
         setMinhaFila(existente[0]);
         setSubmitted(true);
-        localStorage.setItem('fila_motorista_cpf', formData.motorista_cpf);
+        localStorage.setItem('fila_motorista_telefone', telefoneLimpo);
         return;
       }
 
@@ -166,6 +202,7 @@ export default function FilaMotorista() {
 
       const novoRegistro = await base44.entities.FilaVeiculo.create({
         ...formData,
+        motorista_telefone: telefoneLimpo,
         senha_fila: senhaFila,
         tipo_fila_nome: tipoSelecionado?.nome,
         status: "aguardando",
@@ -175,8 +212,8 @@ export default function FilaMotorista() {
 
       setMinhaFila(novoRegistro);
       setSubmitted(true);
-      localStorage.setItem('fila_motorista_cpf', formData.motorista_cpf);
-      toast.success("Cadastro realizado com sucesso!");
+      localStorage.setItem('fila_motorista_telefone', telefoneLimpo);
+      toast.success(`Cadastro realizado! Senha: ${senhaFila}`);
       
       // Contar total
       const todasFilasAtual = await base44.entities.FilaVeiculo.filter({ status: "aguardando" });
@@ -192,7 +229,7 @@ export default function FilaMotorista() {
     
     setRefreshing(true);
     try {
-      await verificarCadastro(minhaFila.motorista_cpf);
+      await verificarCadastro(minhaFila.motorista_telefone);
       toast.success("Posição atualizada!");
     } catch (error) {
       toast.error("Erro ao atualizar");
@@ -227,6 +264,9 @@ export default function FilaMotorista() {
   }
 
   if (submitted && minhaFila) {
+    const ordemVinculada = minhaFila.senha_fila ? 
+      JSON.parse(localStorage.getItem('fila_ordem_vinculada') || 'null') : null;
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4 flex items-center justify-center">
         <div className="max-w-md w-full space-y-6">
@@ -238,9 +278,22 @@ export default function FilaMotorista() {
             <p className="text-gray-600 mt-2">Você está na fila de veículos</p>
           </div>
 
-          <Card className="shadow-xl">
+          {/* Senha da Fila */}
+          <Card className="shadow-xl border-2 border-blue-500">
             <CardHeader className="bg-blue-600 text-white rounded-t-lg">
-              <CardTitle className="text-center">Sua Posição na Fila</CardTitle>
+              <CardTitle className="text-center">Sua Senha da Fila</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="text-center mb-4">
+                <p className="text-6xl font-bold text-blue-600 font-mono">{minhaFila.senha_fila}</p>
+                <p className="text-sm text-gray-600 mt-2">Informe esta senha ao criar a ordem de carga</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-xl">
+            <CardHeader className="bg-gray-700 text-white rounded-t-lg">
+              <CardTitle className="text-center">Sua Posição</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <div className="text-center mb-6">
@@ -258,10 +311,6 @@ export default function FilaMotorista() {
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Placa:</span>
                   <span className="text-sm font-mono font-bold text-gray-900">{minhaFila.cavalo_placa}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Senha:</span>
-                  <span className="text-sm font-mono font-bold text-blue-600">{minhaFila.senha_fila}</span>
                 </div>
                 {minhaFila.tipo_fila_nome && (
                   <div className="flex justify-between">
@@ -303,12 +352,41 @@ export default function FilaMotorista() {
                   </>
                 )}
               </Button>
-
-              <p className="text-xs text-center text-gray-500 mt-4">
-                Sua posição será atualizada automaticamente conforme a fila avança
-              </p>
             </CardContent>
           </Card>
+
+          {/* Ordem Vinculada */}
+          {ordemVinculada && (
+            <Card className="shadow-xl border-2 border-green-500">
+              <CardHeader className="bg-green-600 text-white rounded-t-lg">
+                <CardTitle className="text-center">Ordem Vinculada</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Nº Carga:</span>
+                    <span className="text-sm font-mono font-bold text-gray-900">{ordemVinculada.numero_carga}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Cliente:</span>
+                    <span className="text-sm font-semibold text-gray-900">{ordemVinculada.cliente}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Origem:</span>
+                    <span className="text-sm text-gray-900">{ordemVinculada.origem}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Destino:</span>
+                    <span className="text-sm text-gray-900">{ordemVinculada.destino}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Produto:</span>
+                    <span className="text-sm text-gray-900">{ordemVinculada.produto}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     );
@@ -322,10 +400,47 @@ export default function FilaMotorista() {
             <Truck className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Fila de Veículos</h1>
-          <p className="text-gray-600">Cadastre-se na fila de espera</p>
+          <p className="text-gray-600">Cadastre-se ou consulte sua posição</p>
         </div>
 
+        {/* Consultar por Telefone */}
+        <Card className="shadow-xl mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Consultar Cadastro</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <form onSubmit={handleConsultarTelefone} className="flex gap-3">
+              <div className="flex-1">
+                <Input
+                  value={consultaTelefone}
+                  onChange={(e) => {
+                    const valor = e.target.value.replace(/\D/g, '');
+                    if (valor.length <= 11) {
+                      const formatado = valor.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+                      setConsultaTelefone(valor.length === 11 ? formatado : valor);
+                    }
+                  }}
+                  placeholder="(00) 00000-0000"
+                  maxLength={15}
+                  className="text-lg"
+                />
+              </div>
+              <Button type="submit" disabled={consultando} className="bg-green-600 hover:bg-green-700">
+                {consultando ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Consultar"
+                )}
+              </Button>
+            </form>
+            <p className="text-xs text-gray-500 mt-2">Digite seu celular para verificar sua posição na fila</p>
+          </CardContent>
+        </Card>
+
         <Card className="shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-lg">Novo Cadastro</CardTitle>
+          </CardHeader>
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Dados do Motorista */}
@@ -339,25 +454,22 @@ export default function FilaMotorista() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-gray-900">CPF *</Label>
-                  <Input
-                    value={formData.motorista_cpf}
-                    onChange={(e) => setFormData(prev => ({ ...prev, motorista_cpf: e.target.value }))}
-                    placeholder="000.000.000-00"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label className="text-gray-900">Telefone *</Label>
-                  <Input
-                    value={formData.motorista_telefone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, motorista_telefone: e.target.value }))}
-                    placeholder="(00) 00000-0000"
-                    required
-                  />
-                </div>
+              <div>
+                <Label className="text-gray-900">Telefone Celular *</Label>
+                <Input
+                  value={formData.motorista_telefone}
+                  onChange={(e) => {
+                    const valor = e.target.value.replace(/\D/g, '');
+                    if (valor.length <= 11) {
+                      const formatado = valor.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+                      setFormData(prev => ({ ...prev, motorista_telefone: valor.length === 11 ? formatado : valor }));
+                    }
+                  }}
+                  placeholder="(00) 00000-0000"
+                  maxLength={15}
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">Use este número para consultar sua posição depois</p>
               </div>
 
               {/* Dados do Veículo */}
@@ -372,30 +484,11 @@ export default function FilaMotorista() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-gray-900">Placa Implemento 1</Label>
-                  <Input
-                    value={formData.implemento1_placa}
-                    onChange={(e) => setFormData(prev => ({ ...prev, implemento1_placa: e.target.value.toUpperCase() }))}
-                    placeholder="DEF5678"
-                    className="font-mono"
-                  />
-                </div>
-                <div>
-                  <Label className="text-gray-900">Placa Implemento 2</Label>
-                  <Input
-                    value={formData.implemento2_placa}
-                    onChange={(e) => setFormData(prev => ({ ...prev, implemento2_placa: e.target.value.toUpperCase() }))}
-                    placeholder="GHI9012"
-                    className="font-mono"
-                  />
-                </div>
-              </div>
 
-              {/* Tipo de Fila */}
+
+              {/* Tipo do Motorista */}
               <div>
-                <Label className="text-gray-900">Tipo de Veículo *</Label>
+                <Label className="text-gray-900">Tipo do Motorista *</Label>
                 <Select
                   value={formData.tipo_fila_id}
                   onValueChange={(value) => {
@@ -503,10 +596,6 @@ export default function FilaMotorista() {
             </form>
           </CardContent>
         </Card>
-
-        <p className="text-xs text-center text-gray-500 mt-6">
-          Após o cadastro, você poderá acompanhar sua posição na fila
-        </p>
       </div>
     </div>
   );
