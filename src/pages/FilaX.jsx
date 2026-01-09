@@ -658,10 +658,10 @@ export default function FilaX() {
             <Button
               onClick={() => setShowAddModal(true)}
               size="sm"
-              className="hidden md:flex bg-blue-600 hover:bg-blue-700"
+              className="bg-blue-600 hover:bg-blue-700"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Adicionar à Fila
+              Adicionar
             </Button>
           </div>
         </div>
@@ -1640,14 +1640,6 @@ export default function FilaX() {
           </DialogContent>
         </Dialog>
       </div>
-
-      {/* Botão Flutuante Mobile */}
-      <Button
-        onClick={() => setShowAddModal(true)}
-        className="md:hidden fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 z-50"
-      >
-        <Plus className="w-6 h-6" />
-      </Button>
     </div>
   );
 }
