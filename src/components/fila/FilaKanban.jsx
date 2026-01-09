@@ -118,6 +118,7 @@ export default function FilaKanban({
                                     <div className="overflow-hidden">
                                       <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Cavalo</p>
                                       <p className="font-mono font-bold text-[11px]" style={{ color: theme.text }}>{item.cavalo_placa}</p>
+                                      <p className="text-[9px] text-blue-600 dark:text-blue-400 font-mono font-bold">Senha: {item.senha_fila}</p>
                                     </div>
 
                                     {item.tipo_veiculo && (
