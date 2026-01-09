@@ -76,7 +76,7 @@ export default function FilaX() {
     try {
       const user = await base44.auth.me();
       const [filaData, tiposData, motoristasData, veiculosData] = await Promise.all([
-        base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id, status: "aguardando" }, "posicao_fila"),
+        base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id }, "posicao_fila"),
         base44.entities.TipoFilaVeiculo.filter({ empresa_id: user.empresa_id, ativo: true }, "ordem"),
         base44.entities.Motorista.list(),
         base44.entities.Veiculo.filter({ tipo: "cavalo" })
@@ -501,6 +501,7 @@ export default function FilaX() {
                   <thead>
                     <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
                       <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Posição</th>
+                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Status</th>
                       <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tipo</th>
                       <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Motorista</th>
                       <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>CPF</th>
@@ -509,6 +510,7 @@ export default function FilaX() {
                       <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Implementos</th>
                       <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tipo Veículo</th>
                       <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Localização</th>
+                      <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Data Entrada</th>
                       <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tempo na Fila</th>
                       <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Ações</th>
                     </tr>
