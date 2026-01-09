@@ -889,8 +889,8 @@ export default function FilaX() {
                                 <div>
                                   <p className="text-[10px]" style={{ color: theme.textMuted }}>Telefone</p>
                                   <div className="flex items-center gap-1">
-                                    <p className="font-mono truncate" style={{ color: theme.text }}>
-                                      {item.motorista_telefone?.replace(/\D/g, '').slice(-8) || "-"}
+                                    <p className="font-mono text-[9px]" style={{ color: theme.text }}>
+                                      {formatarTelefone(item.motorista_telefone)}
                                     </p>
                                     {item.motorista_telefone && (
                                       <button
@@ -905,8 +905,12 @@ export default function FilaX() {
                                   </div>
                                 </div>
                                 <div>
+                                  <p className="text-[10px]" style={{ color: theme.textMuted }}>Senha</p>
+                                  <p className="font-mono font-bold text-xs text-blue-600 dark:text-blue-400">{item.senha_fila || "-"}</p>
+                                </div>
+                                <div>
                                   <p className="text-[10px]" style={{ color: theme.textMuted }}>Cavalo</p>
-                                  <p className="font-mono font-bold" style={{ color: theme.text }}>{item.cavalo_placa || "-"}</p>
+                                  <p className="font-mono font-bold text-sm" style={{ color: theme.text }}>{item.cavalo_placa || "-"}</p>
                                 </div>
                                 <div>
                                   <p className="text-[10px]" style={{ color: theme.textMuted }}>Implemento</p>
