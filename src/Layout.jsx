@@ -757,7 +757,7 @@ export default function Layout({ children, currentPageName }) {
     }
   };
 
-  if (currentPageName === "LandingPage" || currentPageName === "PortalTransul" || currentPageName === "OfertasPublicas") {
+  if (currentPageName === "LandingPage" || currentPageName === "PortalTransul" || currentPageName === "OfertasPublicas" || currentPageName === "FilaMotorista") {
     return children;
   }
 
