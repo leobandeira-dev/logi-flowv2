@@ -109,20 +109,20 @@ export default function FilaKanban({
                                 {/* Layout em duas colunas */}
                                 <div className="grid grid-cols-2 gap-2 text-[11px]">
                                   {/* Coluna Esquerda */}
-                                  <div className="space-y-1">
+                                  <div className="space-y-1 overflow-hidden">
                                     <div>
-                                      <p className="text-[10px]" style={{ color: theme.textMuted }}>CPF</p>
-                                      <p className="font-mono" style={{ color: theme.text }}>{item.motorista_cpf}</p>
+                                      <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>CPF</p>
+                                      <p className="font-mono text-[10px] break-all" style={{ color: theme.text }}>{item.motorista_cpf}</p>
                                     </div>
 
                                     <div>
-                                      <p className="text-[10px]" style={{ color: theme.textMuted }}>Cavalo</p>
-                                      <p className="font-mono font-bold" style={{ color: theme.text }}>{item.cavalo_placa}</p>
+                                      <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Cavalo</p>
+                                      <p className="font-mono font-bold text-[11px]" style={{ color: theme.text }}>{item.cavalo_placa}</p>
                                     </div>
 
                                     {item.tipo_veiculo && (
                                       <div>
-                                        <p className="text-[10px]" style={{ color: theme.text }}>
+                                        <p className="text-[9px] leading-tight break-words" style={{ color: theme.text }}>
                                           {item.tipo_veiculo}
                                           {item.tipo_carroceria && ` / ${item.tipo_carroceria}`}
                                         </p>
@@ -131,15 +131,15 @@ export default function FilaKanban({
                                   </div>
 
                                   {/* Coluna Direita */}
-                                  <div className="space-y-1">
+                                  <div className="space-y-1 overflow-hidden">
                                     <div>
-                                      <p className="text-[10px]" style={{ color: theme.textMuted }}>Tel</p>
-                                      <div className="flex items-center gap-0.5">
-                                        <p style={{ color: theme.text }}>{formatarTelefone(item.motorista_telefone)}</p>
+                                      <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Tel</p>
+                                      <div className="flex items-center gap-0.5 min-w-0">
+                                        <p className="text-[10px] truncate" style={{ color: theme.text }}>{formatarTelefone(item.motorista_telefone)}</p>
                                         {item.motorista_telefone && (
                                           <button
                                             onClick={() => abrirWhatsApp(item.motorista_telefone)}
-                                            className="text-green-600 hover:text-green-700"
+                                            className="text-green-600 hover:text-green-700 flex-shrink-0"
                                             title="WhatsApp"
                                           >
                                             <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24">
@@ -152,8 +152,8 @@ export default function FilaKanban({
 
                                     {(item.implemento1_placa || item.implemento2_placa) && (
                                       <div>
-                                        <p className="text-[10px]" style={{ color: theme.textMuted }}>Impl</p>
-                                        <p className="font-mono text-[10px]" style={{ color: theme.text }}>
+                                        <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Impl</p>
+                                        <p className="font-mono text-[9px] break-all leading-tight" style={{ color: theme.text }}>
                                           {[item.implemento1_placa, item.implemento2_placa].filter(Boolean).join(' / ')}
                                         </p>
                                       </div>
@@ -161,8 +161,8 @@ export default function FilaKanban({
 
                                     {item.localizacao_atual && (
                                       <div>
-                                        <p className="text-[10px]" style={{ color: theme.textMuted }}>Local</p>
-                                        <p className="text-[10px]" style={{ color: theme.text }}>{item.localizacao_atual}</p>
+                                        <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Local</p>
+                                        <p className="text-[9px] leading-tight break-words" style={{ color: theme.text }}>{item.localizacao_atual}</p>
                                       </div>
                                     )}
                                   </div>
