@@ -667,6 +667,16 @@ export default function FilaX() {
               <span className="hidden md:inline">Link Público</span>
             </Button>
             <Button
+              variant="outline"
+              onClick={handleCompartilharLink}
+              size="sm"
+              className="gap-2"
+              style={{ borderColor: theme.cardBorder, color: theme.text }}
+            >
+              <Share2 className="w-4 h-4" />
+              <span className="hidden md:inline">Link Público</span>
+            </Button>
+            <Button
               onClick={() => setShowAddModal(true)}
               size="sm"
               className="bg-blue-600 hover:bg-blue-700"
