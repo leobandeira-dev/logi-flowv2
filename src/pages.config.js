@@ -12,6 +12,7 @@ import Configuracoes from './pages/Configuracoes';
 import Dashboard from './pages/Dashboard';
 import DashboardTV from './pages/DashboardTV';
 import EtiquetasMae from './pages/EtiquetasMae';
+import FilaMotorista from './pages/FilaMotorista';
 import FilaX from './pages/FilaX';
 import Fluxo from './pages/Fluxo';
 import FluxoTV from './pages/FluxoTV';
@@ -42,7 +43,6 @@ import TrackingTV from './pages/TrackingTV';
 import Unitizacao from './pages/Unitizacao';
 import Usuarios from './pages/Usuarios';
 import Veiculos from './pages/Veiculos';
-import FilaMotorista from './pages/FilaMotorista';
 import __Layout from './Layout.jsx';
 
 
@@ -61,6 +61,7 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "DashboardTV": DashboardTV,
     "EtiquetasMae": EtiquetasMae,
+    "FilaMotorista": FilaMotorista,
     "FilaX": FilaX,
     "Fluxo": Fluxo,
     "FluxoTV": FluxoTV,
@@ -91,7 +92,6 @@ export const PAGES = {
     "Unitizacao": Unitizacao,
     "Usuarios": Usuarios,
     "Veiculos": Veiculos,
-    "FilaMotorista": FilaMotorista,
 }
 
 export const pagesConfig = {

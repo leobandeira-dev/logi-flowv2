@@ -580,23 +580,12 @@ export default function FilaX() {
   const handleCompartilharLink = async () => {
     const linkPublico = "https://logiflow.com.br" + createPageUrl("FilaMotorista");
     
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Cadastro na Fila de Veículos',
-          text: 'Cadastre-se na fila de veículos',
-          url: linkPublico
-        });
-        toast.success("Link compartilhado!");
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          navigator.clipboard.writeText(linkPublico);
-          toast.success("Link copiado para área de transferência!");
-        }
-      }
-    } else {
-      navigator.clipboard.writeText(linkPublico);
+    try {
+      await navigator.clipboard.writeText(linkPublico);
       toast.success("Link copiado para área de transferência!");
+    } catch (error) {
+      console.error("Erro ao copiar:", error);
+      toast.error("Erro ao copiar link");
     }
   };
 
