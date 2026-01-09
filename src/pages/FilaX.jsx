@@ -783,7 +783,7 @@ export default function FilaX() {
                               </Select>
                             )}
                           </td>
-                          <td className="p-2">
+                          <td className="p-2 w-48">
                             <div className="flex items-center gap-2">
                               <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
                                 <span className="font-bold text-xs text-blue-700 dark:text-blue-300">
@@ -791,7 +791,7 @@ export default function FilaX() {
                                 </span>
                               </div>
                               <div 
-                                className="cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 px-1 rounded" 
+                                className="cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 px-1 rounded overflow-hidden" 
                                 onDoubleClick={() => handleDoubleClick(item.id, 'motorista_nome', item.motorista_nome)}
                               >
                                 {editingCell?.itemId === item.id && editingCell?.field === 'motorista_nome' ? (
@@ -805,13 +805,13 @@ export default function FilaX() {
                                     style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6', color: theme.text }}
                                   />
                                 ) : (
-                                  <p className="text-sm font-semibold whitespace-nowrap" style={{ color: theme.text }}>{item.motorista_nome}</p>
+                                  <p className="text-sm font-semibold truncate max-w-[160px]" style={{ color: theme.text }}>{item.motorista_nome}</p>
                                 )}
                               </div>
                             </div>
                           </td>
                           <td 
-                            className="p-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20" 
+                            className="p-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 w-32" 
                             onDoubleClick={() => handleDoubleClick(item.id, 'motorista_cpf', item.motorista_cpf)}
                           >
                             {editingCell?.itemId === item.id && editingCell?.field === 'motorista_cpf' ? (
@@ -825,7 +825,7 @@ export default function FilaX() {
                                 style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6', color: theme.text }}
                               />
                             ) : (
-                              <p className="text-xs font-mono whitespace-nowrap" style={{ color: theme.textMuted }}>{item.motorista_cpf}</p>
+                              <p className="text-xs font-mono truncate" style={{ color: theme.textMuted }}>{item.motorista_cpf}</p>
                             )}
                           </td>
                           <td className="p-2">
@@ -990,7 +990,7 @@ export default function FilaX() {
                               </span>
                             </div>
                           </td>
-                          <td className="p-2">
+                          <td className="p-2 w-16">
                             <Button
                               variant="ghost"
                               size="sm"
