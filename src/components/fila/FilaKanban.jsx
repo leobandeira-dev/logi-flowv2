@@ -109,19 +109,19 @@ export default function FilaKanban({
                                 {/* Layout em duas colunas */}
                                 <div className="grid grid-cols-2 gap-2 text-[11px]">
                                   {/* Coluna Esquerda */}
-                                  <div className="space-y-1 overflow-hidden">
-                                    <div>
+                                  <div className="space-y-1 overflow-hidden min-w-0">
+                                    <div className="overflow-hidden">
                                       <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>CPF</p>
-                                      <p className="font-mono text-[10px] break-all" style={{ color: theme.text }}>{item.motorista_cpf}</p>
+                                      <p className="font-mono text-[9px] leading-tight break-all" style={{ color: theme.text }}>{item.motorista_cpf}</p>
                                     </div>
 
-                                    <div>
+                                    <div className="overflow-hidden">
                                       <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Cavalo</p>
                                       <p className="font-mono font-bold text-[11px]" style={{ color: theme.text }}>{item.cavalo_placa}</p>
                                     </div>
 
                                     {item.tipo_veiculo && (
-                                      <div>
+                                      <div className="overflow-hidden">
                                         <p className="text-[9px] leading-tight break-words" style={{ color: theme.text }}>
                                           {item.tipo_veiculo}
                                           {item.tipo_carroceria && ` / ${item.tipo_carroceria}`}
