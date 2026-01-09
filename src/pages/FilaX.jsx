@@ -1334,6 +1334,8 @@ export default function FilaX() {
                 <div>
                   <Label style={{ color: theme.text }}>Telefone Celular</Label>
                   <Input
+                    type="tel"
+                    inputMode="numeric"
                     value={telefoneBusca}
                     onChange={(e) => {
                       const valor = e.target.value.replace(/\D/g, '');
@@ -1384,6 +1386,8 @@ export default function FilaX() {
               <div>
                 <Label style={{ color: theme.text }}>Telefone Celular *</Label>
                 <Input
+                  type="tel"
+                  inputMode="numeric"
                   value={formData.motorista_telefone}
                   onChange={(e) => {
                     const valor = e.target.value.replace(/\D/g, '');
