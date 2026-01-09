@@ -104,6 +104,12 @@ export default function FilaX() {
       if (statusData.length === 0) {
         await criarStatusPadrao(user.empresa_id);
       }
+
+      // Recarregar dados se criou tipos/status
+      if (tiposData.length === 0 || statusData.length === 0) {
+        await loadData();
+        return;
+      }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       toast.error("Erro ao carregar dados");
