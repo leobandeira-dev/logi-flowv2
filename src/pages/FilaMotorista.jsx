@@ -27,6 +27,7 @@ export default function FilaMotorista() {
   const [refreshing, setRefreshing] = useState(false);
   
   const [formData, setFormData] = useState({
+    empresa_id: "",
     motorista_nome: "",
     motorista_cpf: "",
     motorista_telefone: "",
@@ -47,9 +48,21 @@ export default function FilaMotorista() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Buscar tipos de fila disponíveis (assumindo empresa_id fixo ou buscar de forma pública)
-      // Como é página pública, vamos buscar todos os tipos ativos
-      const tiposData = await base44.entities.TipoFilaVeiculo.filter({ ativo: true }, "ordem");
+      // Buscar primeira empresa disponível (ou todas)
+      const empresas = await base44.entities.Empresa.filter({ status: "ativa" }, null, 1);
+      const empresaId = empresas[0]?.id;
+      
+      if (!empresaId) {
+        toast.error("Nenhuma empresa encontrada");
+        setLoading(false);
+        return;
+      }
+
+      // Salvar empresa_id no estado
+      setFormData(prev => ({ ...prev, empresa_id: empresaId }));
+      
+      // Buscar tipos de fila desta empresa
+      const tiposData = await base44.entities.TipoFilaVeiculo.filter({ empresa_id: empresaId, ativo: true }, "ordem");
       setTiposFila(tiposData);
 
       // Verificar se já existe cadastro com este CPF/Telefone no localStorage
