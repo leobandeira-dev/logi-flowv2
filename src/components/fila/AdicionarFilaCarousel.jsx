@@ -65,88 +65,72 @@ export default function AdicionarFilaCarousel({
       )
     },
     {
-      title: "Tipo do Motorista",
+      title: "Tipo de Motorista, Veículo e Carroceria",
       field: "tipo_fila_id",
-      isSelect: true,
+      isMultiSelect: true,
       render: () => (
-        <div>
-          <Label style={{ color: theme.text }}>Tipo do Motorista *</Label>
-          <Select
-            value={formData.tipo_fila_id}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_fila_id: value }))}
-            open={openSelect}
-            onOpenChange={setOpenSelect}
-          >
-            <SelectTrigger className="h-12" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
-              <SelectValue placeholder="Selecione o tipo..." />
-            </SelectTrigger>
-            <SelectContent>
-              {tiposFila.map(tipo => (
-                <SelectItem key={tipo.id} value={tipo.id}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tipo.cor }} />
-                    {tipo.nome}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )
-    },
-    {
-      title: "Tipo de Veículo",
-      field: "tipo_veiculo",
-      isSelect: true,
-      render: () => (
-        <div>
-          <Label style={{ color: theme.text }}>Tipo de Veículo</Label>
-          <Select
-            value={formData.tipo_veiculo}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_veiculo: value }))}
-            open={openSelect}
-            onOpenChange={setOpenSelect}
-          >
-            <SelectTrigger className="h-12" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
-              <SelectValue placeholder="Selecione..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="RODOTREM">RODOTREM</SelectItem>
-              <SelectItem value="TRUCK">TRUCK</SelectItem>
-              <SelectItem value="CARRETA 5EIXOS">5 EIXOS</SelectItem>
-              <SelectItem value="CARRETA 6EIXOS">6 EIXOS</SelectItem>
-              <SelectItem value="CARRETA 7EIXOS">7 EIXOS</SelectItem>
-              <SelectItem value="BITREM">BITREM</SelectItem>
-              <SelectItem value="BI-TRUCK">BI-TRUCK</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )
-    },
-    {
-      title: "Tipo de Carroceria",
-      field: "tipo_carroceria",
-      isSelect: true,
-      render: () => (
-        <div>
-          <Label style={{ color: theme.text }}>Tipo de Carroceria</Label>
-          <Select
-            value={formData.tipo_carroceria}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_carroceria: value }))}
-            open={openSelect}
-            onOpenChange={setOpenSelect}
-          >
-            <SelectTrigger className="h-12" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
-              <SelectValue placeholder="Selecione..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="SIDER">SIDER</SelectItem>
-              <SelectItem value="PRANCHA">PRANCHA</SelectItem>
-              <SelectItem value="GRADE BAIXA">GRADE BAIXA</SelectItem>
-              <SelectItem value="GRADE ALTA">GRADE ALTA</SelectItem>
-              <SelectItem value="BAU">BAU</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="space-y-4">
+          <div>
+            <Label style={{ color: theme.text }}>Tipo do Motorista *</Label>
+            <Select
+              value={formData.tipo_fila_id}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_fila_id: value }))}
+            >
+              <SelectTrigger className="h-12" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
+                <SelectValue placeholder="Selecione o tipo..." />
+              </SelectTrigger>
+              <SelectContent>
+                {tiposFila.map(tipo => (
+                  <SelectItem key={tipo.id} value={tipo.id}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tipo.cor }} />
+                      {tipo.nome}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label style={{ color: theme.text }}>Tipo de Veículo</Label>
+            <Select
+              value={formData.tipo_veiculo}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_veiculo: value }))}
+            >
+              <SelectTrigger className="h-12" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="RODOTREM">RODOTREM</SelectItem>
+                <SelectItem value="TRUCK">TRUCK</SelectItem>
+                <SelectItem value="CARRETA 5EIXOS">5 EIXOS</SelectItem>
+                <SelectItem value="CARRETA 6EIXOS">6 EIXOS</SelectItem>
+                <SelectItem value="CARRETA 7EIXOS">7 EIXOS</SelectItem>
+                <SelectItem value="BITREM">BITREM</SelectItem>
+                <SelectItem value="BI-TRUCK">BI-TRUCK</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label style={{ color: theme.text }}>Tipo de Carroceria</Label>
+            <Select
+              value={formData.tipo_carroceria}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_carroceria: value }))}
+            >
+              <SelectTrigger className="h-12" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="SIDER">SIDER</SelectItem>
+                <SelectItem value="PRANCHA">PRANCHA</SelectItem>
+                <SelectItem value="GRADE BAIXA">GRADE BAIXA</SelectItem>
+                <SelectItem value="GRADE ALTA">GRADE ALTA</SelectItem>
+                <SelectItem value="BAU">BAU</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       )
     },
@@ -196,18 +180,8 @@ export default function AdicionarFilaCarousel({
   };
 
   const handleNextClick = () => {
-    // Se for um campo Select sem valor, abre o dropdown
-    if (currentStep.isSelect && !formData[currentStep.field]) {
-      setOpenSelect(true);
-      return;
-    }
-
     if (!validateCurrentStep()) {
       setShowError(true);
-      // Se for Select e está vazio, abre
-      if (currentStep.isSelect) {
-        setOpenSelect(true);
-      }
       return;
     }
     setShowError(false);
