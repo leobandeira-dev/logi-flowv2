@@ -193,9 +193,14 @@ export default function FilaMotorista() {
       const todasFilas = await base44.entities.FilaVeiculo.filter({ empresa_id: formData.empresa_id });
       const proximaPosicao = todasFilas.length + 1;
 
-      // Gerar senha única de 6 dígitos
+      // Gerar senha única alfanumérica de 4 dígitos
       const gerarSenhaFila = () => {
-        return Math.floor(100000 + Math.random() * 900000).toString();
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let senha = '';
+        for (let i = 0; i < 4; i++) {
+          senha += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return senha;
       };
 
       const senhaFila = gerarSenhaFila();
