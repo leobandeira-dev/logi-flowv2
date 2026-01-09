@@ -136,7 +136,7 @@ export default function FilaKanban({
                                     <div>
                                       <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Tel</p>
                                       <div className="flex items-center gap-0.5 min-w-0">
-                                        <p className="text-[10px] truncate" style={{ color: theme.text }}>{formatarTelefone(item.motorista_telefone)}</p>
+                                        <p className="text-[9px] break-all leading-tight" style={{ color: theme.text }}>{formatarTelefone(item.motorista_telefone)}</p>
                                         {item.motorista_telefone && (
                                           <button
                                             onClick={() => abrirWhatsApp(item.motorista_telefone)}
@@ -150,6 +150,13 @@ export default function FilaKanban({
                                         )}
                                       </div>
                                     </div>
+
+                                    {item.senha_fila && (
+                                      <div>
+                                        <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Senha</p>
+                                        <p className="font-mono text-[10px] font-bold text-blue-600 dark:text-blue-400">{item.senha_fila}</p>
+                                      </div>
+                                    )}
 
                                     {(item.implemento1_placa || item.implemento2_placa) && (
                                       <div>
