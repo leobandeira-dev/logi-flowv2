@@ -666,22 +666,22 @@ export default function FilaX() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
+                    <div>
+                      <table className="w-full table-fixed">
                         <thead>
                           <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
-                            <th className="text-left p-3 text-xs font-semibold w-8" style={{ color: theme.textMuted }}></th>
-                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tipo</th>
-                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Motorista</th>
-                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>CPF</th>
-                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Telefone</th>
-                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Cavalo</th>
-                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Implementos</th>
-                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tipo Veículo</th>
-                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Localização</th>
-                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Data Entrada</th>
-                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Tempo na Fila</th>
-                            <th className="text-left p-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Ações</th>
+                            <th className="text-left p-2 text-xs font-semibold w-8" style={{ color: theme.textMuted }}></th>
+                            <th className="text-left p-2 text-xs font-semibold w-24" style={{ color: theme.textMuted }}>Tipo</th>
+                            <th className="text-left p-2 text-xs font-semibold w-40" style={{ color: theme.textMuted }}>Motorista</th>
+                            <th className="text-left p-2 text-xs font-semibold w-28" style={{ color: theme.textMuted }}>CPF</th>
+                            <th className="text-left p-2 text-xs font-semibold w-28" style={{ color: theme.textMuted }}>Telefone</th>
+                            <th className="text-left p-2 text-xs font-semibold w-20" style={{ color: theme.textMuted }}>Cavalo</th>
+                            <th className="text-left p-2 text-xs font-semibold w-28" style={{ color: theme.textMuted }}>Impl.</th>
+                            <th className="text-left p-2 text-xs font-semibold w-32" style={{ color: theme.textMuted }}>Tipo Veíc.</th>
+                            <th className="text-left p-2 text-xs font-semibold w-24" style={{ color: theme.textMuted }}>Local</th>
+                            <th className="text-left p-2 text-xs font-semibold w-32" style={{ color: theme.textMuted }}>Data Entrada</th>
+                            <th className="text-left p-2 text-xs font-semibold w-20" style={{ color: theme.textMuted }}>Tempo</th>
+                            <th className="text-left p-2 text-xs font-semibold w-12" style={{ color: theme.textMuted }}>Ações</th>
                           </tr>
                         </thead>
                         <Droppable droppableId={statusObj.id}>
