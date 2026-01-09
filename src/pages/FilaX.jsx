@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Truck, Plus, RefreshCw, Settings, Search, X, Trash2, Edit, Clock, LayoutGrid, Table, GripVertical, MapPin } from "lucide-react";
+import { Truck, Plus, RefreshCw, Settings, Search, X, Trash2, Edit, Clock, LayoutGrid, Table, GripVertical, MapPin, Share2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -24,6 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import FilaKanban from "../components/fila/FilaKanban";
+import { createPageUrl } from "@/utils";
 
 export default function FilaX() {
   const [isDark, setIsDark] = useState(false);
@@ -654,6 +655,16 @@ export default function FilaX() {
               style={{ borderColor: theme.cardBorder, color: theme.text }}
             >
               <RefreshCw className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleCompartilharLink}
+              size="sm"
+              className="gap-2"
+              style={{ borderColor: theme.cardBorder, color: theme.text }}
+            >
+              <Share2 className="w-4 h-4" />
+              <span className="hidden md:inline">Link Público</span>
             </Button>
             <Button
               onClick={() => setShowAddModal(true)}
