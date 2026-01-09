@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Truck, Plus, RefreshCw, Settings, Search, X, Trash2, Edit, Clock } from "lucide-react";
+import { Truck, Plus, RefreshCw, Settings, Search, X, Trash2, Edit, Clock, LayoutGrid, Table } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import FilaKanban from "../components/fila/FilaKanban";
 
 export default function FilaX() {
   const [isDark, setIsDark] = useState(false);
@@ -44,6 +45,7 @@ export default function FilaX() {
   const [novoStatus, setNovoStatus] = useState({ nome: "", cor: "#3b82f6", icone: "🟢" });
   const [editingCell, setEditingCell] = useState(null);
   const [editValue, setEditValue] = useState("");
+  const [viewMode, setViewMode] = useState("table"); // "table" ou "kanban"
 
   const [formData, setFormData] = useState({
     motorista_id: "",
@@ -485,6 +487,41 @@ export default function FilaX() {
     }
   };
 
+  const handleDragEnd = async (result) => {
+    if (!result.destination) return;
+
+    const { source, destination, draggableId } = result;
+
+    // Se soltou no mesmo lugar, não faz nada
+    if (source.droppableId === destination.droppableId && source.index === destination.index) {
+      return;
+    }
+
+    try {
+      // Encontrar o status de destino
+      const statusDestino = statusFila.find(s => s.id === destination.droppableId);
+      if (!statusDestino) return;
+
+      const statusNormalizado = statusDestino.nome.toLowerCase().replace(/ /g, '_');
+      const updates = { status: statusNormalizado };
+
+      // Se mudou para "em_operacao", registrar saída
+      if (statusNormalizado === 'em_operacao') {
+        const item = fila.find(f => f.id === draggableId);
+        if (item && !item.data_saida_fila) {
+          updates.data_saida_fila = new Date().toISOString();
+        }
+      }
+
+      await base44.entities.FilaVeiculo.update(draggableId, updates);
+      toast.success("Status atualizado!");
+      loadData();
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      toast.error("Erro ao atualizar status");
+    }
+  };
+
   const theme = {
     bg: isDark ? '#0f172a' : '#f9fafb',
     cardBg: isDark ? '#1e293b' : '#ffffff',
@@ -516,6 +553,26 @@ export default function FilaX() {
             </p>
           </div>
           <div className="flex gap-2">
+            <div className="flex border rounded-lg" style={{ borderColor: theme.cardBorder }}>
+              <Button
+                variant={viewMode === "table" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("table")}
+                className={viewMode === "table" ? "bg-blue-600 hover:bg-blue-700" : ""}
+              >
+                <Table className="w-4 h-4 mr-2" />
+                Tabela
+              </Button>
+              <Button
+                variant={viewMode === "kanban" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("kanban")}
+                className={viewMode === "kanban" ? "bg-blue-600 hover:bg-blue-700" : ""}
+              >
+                <LayoutGrid className="w-4 h-4 mr-2" />
+                Kanban
+              </Button>
+            </div>
             <Button
               variant="outline"
               onClick={() => setShowTiposModal(true)}
@@ -581,21 +638,22 @@ export default function FilaX() {
           })}
         </div>
 
-        {/* Fila de Veículos - Agrupado por Status */}
-        {fila.length === 0 ? (
-          <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-            <CardContent className="py-12">
-              <div className="text-center">
-                <Truck className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                <p style={{ color: theme.textMuted }}>Nenhum veículo na fila</p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Fila de Veículos */}
+        {viewMode === "kanban" ? (
+          <FilaKanban
+            statusFila={statusFila}
+            fila={fila}
+            tiposFila={tiposFila}
+            onDragEnd={handleDragEnd}
+            onRemove={handleRemoverDaFila}
+            calcularTempoNaFila={calcularTempoNaFila}
+            formatarTelefone={formatarTelefone}
+            abrirWhatsApp={abrirWhatsApp}
+            theme={theme}
+          />
         ) : (
           statusFila.map(statusObj => {
             const veiculosDoStatus = fila.filter(v => v.status === statusObj.nome.toLowerCase().replace(/ /g, '_'));
-            
-            if (veiculosDoStatus.length === 0) return null;
 
             return (
               <Card key={statusObj.id} style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
@@ -606,6 +664,11 @@ export default function FilaX() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {veiculosDoStatus.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-sm" style={{ color: theme.textMuted }}>Nenhum veículo neste status</p>
+                    </div>
+                  ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
@@ -968,6 +1031,7 @@ export default function FilaX() {
                   </tbody>
                 </table>
               </div>
+            )}
             </CardContent>
           </Card>
         );
