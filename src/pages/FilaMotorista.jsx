@@ -417,6 +417,8 @@ export default function FilaMotorista() {
             <form onSubmit={handleConsultarTelefone} className="flex gap-3">
               <div className="flex-1">
                 <Input
+                  type="tel"
+                  inputMode="numeric"
                   value={consultaTelefone}
                   onChange={(e) => {
                     const valor = e.target.value.replace(/\D/g, '');
@@ -462,6 +464,8 @@ export default function FilaMotorista() {
               <div>
                 <Label className="text-gray-900">Telefone Celular *</Label>
                 <Input
+                  type="tel"
+                  inputMode="numeric"
                   value={formData.motorista_telefone}
                   onChange={(e) => {
                     const valor = e.target.value.replace(/\D/g, '');
