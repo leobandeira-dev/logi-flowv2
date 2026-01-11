@@ -43,6 +43,7 @@ import TrackingTV from './pages/TrackingTV';
 import Unitizacao from './pages/Unitizacao';
 import Usuarios from './pages/Usuarios';
 import Veiculos from './pages/Veiculos';
+import PitchDeckInvestidores from './pages/PitchDeckInvestidores';
 import __Layout from './Layout.jsx';
 
 
@@ -92,6 +93,7 @@ export const PAGES = {
     "Unitizacao": Unitizacao,
     "Usuarios": Usuarios,
     "Veiculos": Veiculos,
+    "PitchDeckInvestidores": PitchDeckInvestidores,
 }
 
 export const pagesConfig = {

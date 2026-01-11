@@ -1929,9 +1929,15 @@ export default function Configuracoes() {
                 className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
               >
                 <Presentation className="w-5 h-5 mr-2" />
-                Ver Apresentação
+                Apresentação Comercial
               </Button>
-
+              <Button
+                onClick={() => window.location.href = createPageUrl("PitchDeckInvestidores")}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+              >
+                <TrendingUp className="w-5 h-5 mr-2" />
+                Pitch Deck Investidores
+              </Button>
             </div>
           </div>
           <p className="text-gray-600">Gerencie as informações da sua empresa</p>
