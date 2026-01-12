@@ -73,6 +73,7 @@ export default function FilaX() {
     tipo_veiculo: "",
     tipo_carroceria: "",
     localizacao_atual: "",
+    cidade_uf: "",
     observacoes: ""
   });
 
@@ -357,6 +358,7 @@ export default function FilaX() {
         tipo_veiculo: "",
         tipo_carroceria: "",
         localizacao_atual: "",
+        cidade_uf: "",
         observacoes: ""
       });
       
@@ -601,7 +603,17 @@ export default function FilaX() {
           const data = await response.json();
           
           const endereco = data.display_name || `${latitude}, ${longitude}`;
-          setFormData(prev => ({ ...prev, localizacao_atual: endereco }));
+          
+          // Extrair cidade e UF do endereço
+          const cidade = data.address?.city || data.address?.town || data.address?.municipality || "";
+          const estado = data.address?.state || "";
+          const cidadeUF = cidade && estado ? `${cidade}, ${estado}` : "";
+          
+          setFormData(prev => ({ 
+            ...prev, 
+            localizacao_atual: endereco,
+            cidade_uf: cidadeUF
+          }));
           toast.success("Localização obtida!");
         } catch (error) {
           console.error("Erro ao obter endereço:", error);

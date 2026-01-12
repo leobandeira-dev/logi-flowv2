@@ -209,29 +209,42 @@ export default function AdicionarFilaCarousel({
       title: "Localização Atual",
       field: "localizacao_atual",
       render: () => (
-        <div>
-          <Label style={{ color: theme.text }}>Onde você está?</Label>
-          <div className="flex gap-2">
+        <div className="space-y-4">
+          <div>
+            <Label style={{ color: theme.text }}>Cidade e UF</Label>
             <Input
-              value={formData.localizacao_atual}
-              onChange={(e) => setFormData(prev => ({ ...prev, localizacao_atual: e.target.value }))}
-              placeholder="Ex: Pátio Central..."
-              className="text-lg h-12"
+              value={formData.cidade_uf}
+              onChange={(e) => setFormData(prev => ({ ...prev, cidade_uf: e.target.value }))}
+              placeholder="Ex: São Paulo, SP"
+              className="text-lg h-12 font-semibold"
               style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
             />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onObterLocalizacao}
-              disabled={loadingLocation}
-              className="flex-shrink-0 h-12 w-12"
-            >
-              {loadingLocation ? (
-                <RefreshCw className="w-5 h-5 animate-spin" />
-              ) : (
-                <MapPin className="w-5 h-5" />
-              )}
-            </Button>
+          </div>
+
+          <div>
+            <Label style={{ color: theme.text }}>Endereço Completo</Label>
+            <div className="flex gap-2">
+              <Input
+                value={formData.localizacao_atual}
+                onChange={(e) => setFormData(prev => ({ ...prev, localizacao_atual: e.target.value }))}
+                placeholder="Ex: Pátio Central..."
+                className="text-sm h-12"
+                style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onObterLocalizacao}
+                disabled={loadingLocation}
+                className="flex-shrink-0 h-12 w-12"
+              >
+                {loadingLocation ? (
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                ) : (
+                  <MapPin className="w-5 h-5" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )
@@ -301,7 +314,17 @@ export default function AdicionarFilaCarousel({
             const data = await response.json();
             
             const endereco = data.display_name || `${latitude}, ${longitude}`;
-            setFormData(prev => ({ ...prev, localizacao_atual: endereco }));
+            
+            // Extrair cidade e UF
+            const cidade = data.address?.city || data.address?.town || data.address?.municipality || "";
+            const estado = data.address?.state || "";
+            const cidadeUF = cidade && estado ? `${cidade}, ${estado}` : "";
+            
+            setFormData(prev => ({ 
+              ...prev, 
+              localizacao_atual: endereco,
+              cidade_uf: cidadeUF
+            }));
           } catch (error) {
             setFormData(prev => ({ 
               ...prev, 
@@ -324,8 +347,7 @@ export default function AdicionarFilaCarousel({
   const handleConfirmCheckIn = () => {
     setShowConfirmModal(false);
     if (onSubmit) {
-      const fakeEvent = { preventDefault: () => {} };
-      onSubmit(fakeEvent);
+      onSubmit();
     }
   };
 
@@ -420,17 +442,24 @@ export default function AdicionarFilaCarousel({
               </div>
 
               <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                <p className="text-sm font-medium mb-1" style={{ color: theme.text }}>Localização Atual</p>
+                <p className="text-sm font-medium mb-1" style={{ color: theme.text }}>Cidade e UF</p>
                 {loadingGPS ? (
                   <div className="flex items-center gap-2">
                     <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
                     <p className="text-sm" style={{ color: theme.textMuted }}>Obtendo localização...</p>
                   </div>
                 ) : (
-                  <p className="text-sm" style={{ color: theme.text }}>
-                    {formData.localizacao_atual || "Localização não informada"}
+                  <p className="text-base font-bold" style={{ color: theme.text }}>
+                    {formData.cidade_uf || "Não informada"}
                   </p>
                 )}
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-900/20 p-3 rounded-lg">
+                <p className="text-xs font-medium mb-1" style={{ color: theme.textMuted }}>Endereço Completo</p>
+                <p className="text-xs leading-relaxed" style={{ color: theme.text }}>
+                  {formData.localizacao_atual || "Localização não informada"}
+                </p>
               </div>
             </div>
 
