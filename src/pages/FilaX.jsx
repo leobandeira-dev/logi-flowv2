@@ -1181,12 +1181,10 @@ export default function FilaX() {
                                       status: statusNormalizado
                                     };
 
-                                    // Se mudar para status que remove da fila, registrar saída
-                                    if (statusSelecionado?.remove_da_fila && !item.data_saida_fila) {
-                                      updates.data_saida_fila = new Date().toISOString();
-                                    }
-
                                     await base44.entities.FilaVeiculo.update(item.id, updates);
+
+                                    // Atualizar estado local imediatamente
+                                    setFila(prev => prev.map(f => f.id === item.id ? {...f, status: statusNormalizado} : f));
 
                                     // Recalcular todas as posições FIFO
                                     await recalcularPosicoesFIFO(user.empresa_id);
