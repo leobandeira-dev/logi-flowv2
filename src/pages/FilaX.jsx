@@ -2146,7 +2146,7 @@ export default function FilaX() {
               <tbody>
                 {ordensHistorico.map(ordem => {
                   const temSenha = !!ordem.senha_fila;
-                  const marcacaoFila = temSenha ? fila.find(f => f.senha_fila === ordem.senha_fila) : null;
+                  const marcacaoFila = temSenha ? fila.find(f => f.senha_fila === ordem.senha_fila) || historicoFila.find(f => f.senha_fila === ordem.senha_fila) : null;
 
                   return (
                     <tr key={ordem.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800" style={{ borderColor: theme.cardBorder }}>
