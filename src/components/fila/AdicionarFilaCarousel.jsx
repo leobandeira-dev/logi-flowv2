@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, MapPin, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, RefreshCw, User, Truck, Package } from "lucide-react";
 
 export default function AdicionarFilaCarousel({ 
   formData, 
@@ -97,15 +97,18 @@ export default function AdicionarFilaCarousel({
               onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_fila_id: value }))}
             >
               <SelectTrigger 
-                className="h-12" 
+                className="h-14 transition-all duration-200 hover:shadow-md" 
                 style={{ 
-                  backgroundColor: theme.cardBg, 
-                  borderColor: showError && !formData.tipo_fila_id ? '#ef4444' : theme.cardBorder,
-                  borderWidth: showError && !formData.tipo_fila_id ? '2px' : '1px',
+                  backgroundColor: formData.tipo_fila_id ? '#dbeafe' : theme.cardBg,
+                  borderColor: showError && !formData.tipo_fila_id ? '#ef4444' : (formData.tipo_fila_id ? '#3b82f6' : theme.cardBorder),
+                  borderWidth: '2px',
                   color: theme.text 
                 }}
               >
-                <SelectValue placeholder="Selecione o tipo..." />
+                <div className="flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-600" />
+                  <SelectValue placeholder="Selecione o tipo..." />
+                </div>
               </SelectTrigger>
               <SelectContent>
                 {tiposFila.map(tipo => (
@@ -132,24 +135,27 @@ export default function AdicionarFilaCarousel({
               onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_veiculo: value }))}
             >
               <SelectTrigger 
-                className="h-12" 
+                className="h-14 transition-all duration-200 hover:shadow-md" 
                 style={{ 
-                  backgroundColor: theme.cardBg, 
-                  borderColor: showError && !formData.tipo_veiculo ? '#ef4444' : theme.cardBorder,
-                  borderWidth: showError && !formData.tipo_veiculo ? '2px' : '1px',
+                  backgroundColor: formData.tipo_veiculo ? '#dcfce7' : theme.cardBg,
+                  borderColor: showError && !formData.tipo_veiculo ? '#ef4444' : (formData.tipo_veiculo ? '#10b981' : theme.cardBorder),
+                  borderWidth: '2px',
                   color: theme.text 
                 }}
               >
-                <SelectValue placeholder="Selecione..." />
+                <div className="flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-green-600" />
+                  <SelectValue placeholder="Selecione..." />
+                </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="RODOTREM">RODOTREM</SelectItem>
-                <SelectItem value="TRUCK">TRUCK</SelectItem>
-                <SelectItem value="CARRETA 5EIXOS">5 EIXOS</SelectItem>
-                <SelectItem value="CARRETA 6EIXOS">6 EIXOS</SelectItem>
-                <SelectItem value="CARRETA 7EIXOS">7 EIXOS</SelectItem>
-                <SelectItem value="BITREM">BITREM</SelectItem>
-                <SelectItem value="BI-TRUCK">BI-TRUCK</SelectItem>
+                <SelectItem value="RODOTREM">🚛 RODOTREM</SelectItem>
+                <SelectItem value="TRUCK">🚚 TRUCK</SelectItem>
+                <SelectItem value="CARRETA 5EIXOS">🚛 5 EIXOS</SelectItem>
+                <SelectItem value="CARRETA 6EIXOS">🚛 6 EIXOS</SelectItem>
+                <SelectItem value="CARRETA 7EIXOS">🚛 7 EIXOS</SelectItem>
+                <SelectItem value="BITREM">🚛 BITREM</SelectItem>
+                <SelectItem value="BI-TRUCK">🚚 BI-TRUCK</SelectItem>
               </SelectContent>
             </Select>
             {showError && !formData.tipo_veiculo && (
@@ -166,22 +172,25 @@ export default function AdicionarFilaCarousel({
               onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_carroceria: value }))}
             >
               <SelectTrigger 
-                className="h-12" 
+                className="h-14 transition-all duration-200 hover:shadow-md" 
                 style={{ 
-                  backgroundColor: theme.cardBg, 
-                  borderColor: showError && !formData.tipo_carroceria ? '#ef4444' : theme.cardBorder,
-                  borderWidth: showError && !formData.tipo_carroceria ? '2px' : '1px',
+                  backgroundColor: formData.tipo_carroceria ? '#fef3c7' : theme.cardBg,
+                  borderColor: showError && !formData.tipo_carroceria ? '#ef4444' : (formData.tipo_carroceria ? '#f59e0b' : theme.cardBorder),
+                  borderWidth: '2px',
                   color: theme.text 
                 }}
               >
-                <SelectValue placeholder="Selecione..." />
+                <div className="flex items-center gap-2">
+                  <Package className="w-5 h-5 text-amber-600" />
+                  <SelectValue placeholder="Selecione..." />
+                </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="SIDER">SIDER</SelectItem>
-                <SelectItem value="PRANCHA">PRANCHA</SelectItem>
-                <SelectItem value="GRADE BAIXA">GRADE BAIXA</SelectItem>
-                <SelectItem value="GRADE ALTA">GRADE ALTA</SelectItem>
-                <SelectItem value="BAU">BAU</SelectItem>
+                <SelectItem value="SIDER">📦 SIDER</SelectItem>
+                <SelectItem value="PRANCHA">🛠️ PRANCHA</SelectItem>
+                <SelectItem value="GRADE BAIXA">📊 GRADE BAIXA</SelectItem>
+                <SelectItem value="GRADE ALTA">📈 GRADE ALTA</SelectItem>
+                <SelectItem value="BAU">🚚 BAU</SelectItem>
               </SelectContent>
             </Select>
             {showError && !formData.tipo_carroceria && (
