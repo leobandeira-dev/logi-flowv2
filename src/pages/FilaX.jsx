@@ -144,7 +144,13 @@ export default function FilaX() {
       ]);
 
       // Separar fila ativa (sem data_saida_fila) do histórico
-      const filaData = todasFilasData.filter(item => !item.data_saida_fila);
+      let filaData = todasFilasData.filter(item => !item.data_saida_fila);
+      
+      // Normalizar status de todas as marcações
+      filaData = filaData.map(item => ({
+        ...item,
+        status: normalizarStatus(item.status || '')
+      }));
 
       setFila(filaData);
       setTiposFila(tiposData);
