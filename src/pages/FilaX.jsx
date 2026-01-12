@@ -45,7 +45,7 @@ export default function FilaX() {
   const [editingTipo, setEditingTipo] = useState(null);
   const [novoTipo, setNovoTipo] = useState({ nome: "", cor: "#3b82f6" });
   const [editingStatus, setEditingStatus] = useState(null);
-  const [novoStatus, setNovoStatus] = useState({ nome: "", cor: "#3b82f6", icone: "🟢" });
+  const [novoStatus, setNovoStatus] = useState({ nome: "", cor: "#3b82f6", icone: "🟢", remove_da_fila: false });
   const [editingCell, setEditingCell] = useState(null);
   const [editValue, setEditValue] = useState("");
   const [viewMode, setViewMode] = useState("table"); // "table" ou "kanban"
@@ -474,7 +474,7 @@ export default function FilaX() {
         toast.success("Status criado");
       }
 
-      setNovoStatus({ nome: "", cor: "#3b82f6", icone: "🟢" });
+      setNovoStatus({ nome: "", cor: "#3b82f6", icone: "🟢", remove_da_fila: false });
       setEditingStatus(null);
       loadData();
     } catch (error) {
@@ -669,6 +669,14 @@ export default function FilaX() {
       if (!statusDestino) return;
 
       const statusNormalizado = statusDestino.nome.toLowerCase().replace(/ /g, '_');
+      
+      // Se o status remove da fila, deletar a marcação
+      if (statusDestino.remove_da_fila) {
+        await base44.entities.FilaVeiculo.delete(draggableId);
+        toast.success("Veículo removido da fila!");
+        await loadData();
+        return;
+      }
       
       // Calcular nova posição: quantos veículos já estão nesse status + 1
       const veiculosNoStatus = fila.filter(f => 
@@ -1067,23 +1075,32 @@ export default function FilaX() {
                                   const statusSelecionado = statusFila.find(s => s.id === value);
                                   const statusNormalizado = statusSelecionado?.nome.toLowerCase().replace(/ /g, '_');
                                   
-                                  // Calcular nova posição
-                                  const veiculosNoStatus = fila.filter(f => 
-                                    f.status === statusNormalizado && f.id !== item.id
-                                  );
-                                  const novaPosicao = veiculosNoStatus.length + 1;
-                                  
-                                  const updates = { 
-                                    status: statusNormalizado,
-                                    posicao_fila: novaPosicao 
-                                  };
-                                  
-                                  // Se mudar status, registrar mudança
-                                  if (statusNormalizado !== item.status && statusNormalizado === 'em_operacao' && !item.data_saida_fila) {
-                                    updates.data_saida_fila = new Date().toISOString();
-                                  }
-                                  
                                   try {
+                                    // Se o status remove da fila, deletar a marcação
+                                    if (statusSelecionado?.remove_da_fila) {
+                                      await base44.entities.FilaVeiculo.delete(item.id);
+                                      toast.success("Veículo removido da fila!");
+                                      setEditingCell(null);
+                                      await loadData();
+                                      return;
+                                    }
+                                    
+                                    // Calcular nova posição
+                                    const veiculosNoStatus = fila.filter(f => 
+                                      f.status === statusNormalizado && f.id !== item.id
+                                    );
+                                    const novaPosicao = veiculosNoStatus.length + 1;
+                                    
+                                    const updates = { 
+                                      status: statusNormalizado,
+                                      posicao_fila: novaPosicao 
+                                    };
+                                    
+                                    // Se mudar status, registrar mudança
+                                    if (statusNormalizado !== item.status && statusNormalizado === 'em_operacao' && !item.data_saida_fila) {
+                                      updates.data_saida_fila = new Date().toISOString();
+                                    }
+                                    
                                     await base44.entities.FilaVeiculo.update(item.id, updates);
                                     toast.success("Status atualizado!");
                                     setEditingCell(null);
@@ -1683,6 +1700,19 @@ export default function FilaX() {
                     />
                   </div>
                 </div>
+                <div className="mt-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={novoStatus.remove_da_fila}
+                      onChange={(e) => setNovoStatus(prev => ({ ...prev, remove_da_fila: e.target.checked }))}
+                      className="w-4 h-4 rounded border-gray-300"
+                    />
+                    <span className="text-sm" style={{ color: theme.text }}>
+                      Retirar da fila (marcações com este status são removidas)
+                    </span>
+                  </label>
+                </div>
                 <div className="flex gap-2 mt-3">
                   <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
                     {editingStatus ? "Atualizar" : "Adicionar"}
@@ -1693,7 +1723,7 @@ export default function FilaX() {
                       variant="outline"
                       onClick={() => {
                         setEditingStatus(null);
-                        setNovoStatus({ nome: "", cor: "#3b82f6", icone: "🟢" });
+                        setNovoStatus({ nome: "", cor: "#3b82f6", icone: "🟢", remove_da_fila: false });
                       }}
                     >
                       Cancelar
@@ -1715,6 +1745,11 @@ export default function FilaX() {
                       <span style={{ fontSize: '1.5rem' }}>{status.icone}</span>
                       <div className="w-4 h-4 rounded-full" style={{ backgroundColor: status.cor }} />
                       <span className="font-semibold" style={{ color: theme.text }}>{status.nome}</span>
+                      {status.remove_da_fila && (
+                        <span className="text-xs bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 px-2 py-0.5 rounded">
+                          Remove da fila
+                        </span>
+                      )}
                     </div>
                     <div className="flex gap-1">
                       <Button
@@ -1722,7 +1757,7 @@ export default function FilaX() {
                         size="sm"
                         onClick={() => {
                           setEditingStatus(status);
-                          setNovoStatus({ nome: status.nome, cor: status.cor, icone: status.icone });
+                          setNovoStatus({ nome: status.nome, cor: status.cor, icone: status.icone, remove_da_fila: status.remove_da_fila || false });
                         }}
                       >
                         <Edit className="w-4 h-4" />
