@@ -47,9 +47,17 @@ export default function FilaMotorista() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Buscar primeira empresa disponível (ou todas)
-      const empresas = await base44.entities.Empresa.filter({ status: "ativa" }, null, 1);
-      const empresaId = empresas[0]?.id;
+      // Pegar empresa_id da URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const empresaIdUrl = urlParams.get('empresa_id');
+      
+      let empresaId = empresaIdUrl;
+      
+      // Se não veio pela URL, buscar primeira empresa ativa
+      if (!empresaId) {
+        const empresas = await base44.entities.Empresa.filter({ status: "ativa" }, null, 1);
+        empresaId = empresas[0]?.id;
+      }
       
       if (!empresaId) {
         toast.error("Nenhuma empresa encontrada");
@@ -60,7 +68,7 @@ export default function FilaMotorista() {
       // Salvar empresa_id no estado
       setFormData(prev => ({ ...prev, empresa_id: empresaId }));
       
-      // Buscar tipos de fila desta empresa
+      // Buscar tipos de fila APENAS desta empresa
       const tiposData = await base44.entities.TipoFilaVeiculo.filter({ empresa_id: empresaId, ativo: true }, "ordem");
       setTiposFila(tiposData);
 
@@ -80,13 +88,22 @@ export default function FilaMotorista() {
   const verificarCadastro = async (telefone) => {
     try {
       const telefoneLimpo = telefone.replace(/\D/g, '');
-      const filas = await base44.entities.FilaVeiculo.filter({ motorista_telefone: telefoneLimpo }, "-data_entrada_fila", 1);
+      
+      // Filtrar por telefone E empresa_id para garantir fila exclusiva por empresa
+      const filas = await base44.entities.FilaVeiculo.filter({ 
+        motorista_telefone: telefoneLimpo,
+        empresa_id: formData.empresa_id 
+      }, "-data_entrada_fila", 1);
+      
       if (filas.length > 0) {
         setMinhaFila(filas[0]);
         setSubmitted(true);
         
-        // Contar total de veículos na fila com mesmo status
-        const todasFilas = await base44.entities.FilaVeiculo.filter({ status: filas[0].status });
+        // Contar total de veículos APENAS desta empresa com mesmo status
+        const todasFilas = await base44.entities.FilaVeiculo.filter({ 
+          status: filas[0].status,
+          empresa_id: formData.empresa_id 
+        });
         setTotalNaFila(todasFilas.length);
         
         // Buscar ordem vinculada se houver senha
@@ -177,8 +194,11 @@ export default function FilaMotorista() {
     }
 
     try {
-      // Verificar se já existe cadastro com este telefone
-      const existente = await base44.entities.FilaVeiculo.filter({ motorista_telefone: telefoneLimpo });
+      // Verificar se já existe cadastro com este telefone NESTA empresa
+      const existente = await base44.entities.FilaVeiculo.filter({ 
+        motorista_telefone: telefoneLimpo,
+        empresa_id: formData.empresa_id 
+      });
       if (existente.length > 0) {
         toast.error("Este telefone já está cadastrado na fila!");
         setMinhaFila(existente[0]);
@@ -189,7 +209,7 @@ export default function FilaMotorista() {
 
       const tipoSelecionado = tiposFila.find(t => t.id === formData.tipo_fila_id);
       
-      // Buscar todas as filas para calcular próxima posição
+      // Buscar todas as filas DESTA EMPRESA para calcular próxima posição
       const todasFilas = await base44.entities.FilaVeiculo.filter({ empresa_id: formData.empresa_id });
       const proximaPosicao = todasFilas.length + 1;
 
@@ -220,8 +240,11 @@ export default function FilaMotorista() {
       localStorage.setItem('fila_motorista_telefone', telefoneLimpo);
       toast.success(`Cadastro realizado! Senha: ${senhaFila}`);
       
-      // Contar total
-      const todasFilasAtual = await base44.entities.FilaVeiculo.filter({ status: "aguardando" });
+      // Contar total APENAS desta empresa
+      const todasFilasAtual = await base44.entities.FilaVeiculo.filter({ 
+        status: "aguardando",
+        empresa_id: formData.empresa_id 
+      });
       setTotalNaFila(todasFilasAtual.length);
     } catch (error) {
       console.error("Erro ao cadastrar:", error);

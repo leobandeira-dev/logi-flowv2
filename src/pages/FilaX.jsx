@@ -663,11 +663,17 @@ export default function FilaX() {
   };
 
   const handleCompartilharLink = async () => {
-    const linkPublico = "https://logiflow.com.br" + createPageUrl("FilaMotorista");
-    
     try {
+      const user = await base44.auth.me();
+      if (!user.empresa_id) {
+        toast.error("Empresa não identificada");
+        return;
+      }
+      
+      const linkPublico = "https://logiflow.com.br" + createPageUrl("FilaMotorista") + "?empresa_id=" + user.empresa_id;
+      
       await navigator.clipboard.writeText(linkPublico);
-      toast.success("Link copiado para área de transferência!");
+      toast.success("Link exclusivo da sua empresa copiado!");
     } catch (error) {
       console.error("Erro ao copiar:", error);
       toast.error("Erro ao copiar link");
