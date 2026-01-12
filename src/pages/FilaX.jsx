@@ -140,7 +140,7 @@ export default function FilaX() {
         base44.entities.Motorista.list(),
         base44.entities.Veiculo.filter({ tipo: "cavalo" }),
         base44.entities.OrdemDeCarregamento.filter({ empresa_id: user.empresa_id }, "-created_date", 500),
-        base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id, data_saida_fila: { "$ne": null } }, "-data_saida_fila", 500)
+        base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id }, "-data_saida_fila", 500).then(items => items.filter(i => i.data_saida_fila))
       ]);
 
       setFila(filaData);
