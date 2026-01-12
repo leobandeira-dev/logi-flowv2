@@ -670,14 +670,6 @@ export default function FilaX() {
 
       const statusNormalizado = statusDestino.nome.toLowerCase().replace(/ /g, '_');
       
-      // Se o status remove da fila, deletar a marcação
-      if (statusDestino.remove_da_fila) {
-        await base44.entities.FilaVeiculo.delete(draggableId);
-        toast.success("Veículo removido da fila!");
-        await loadData();
-        return;
-      }
-      
       // Calcular nova posição: quantos veículos já estão nesse status + 1
       const veiculosNoStatus = fila.filter(f => 
         f.status === statusNormalizado && f.id !== draggableId
@@ -902,14 +894,39 @@ export default function FilaX() {
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
             {statusFila.map(statusObj => {
-              const veiculosDoStatus = fila.filter(v => v.status === statusObj.nome.toLowerCase().replace(/ /g, '_'));
+              const statusNormalizado = statusObj.nome.toLowerCase().replace(/ /g, '_');
+              const veiculosDoStatus = fila.filter(v => v.status === statusNormalizado);
 
               return (
                 <Card key={statusObj.id} style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
                   <CardHeader className="p-3 md:p-6">
-                    <CardTitle className="flex items-center gap-2 text-base md:text-lg" style={{ color: theme.text }}>
-                      <span style={{ color: statusObj.cor }}>{statusObj.icone}</span>
-                      {statusObj.nome} ({veiculosDoStatus.length})
+                    <CardTitle className="flex items-center justify-between text-base md:text-lg" style={{ color: theme.text }}>
+                      <div className="flex items-center gap-2">
+                        <span style={{ color: statusObj.cor }}>{statusObj.icone}</span>
+                        {statusObj.nome} ({veiculosDoStatus.length})
+                      </div>
+                      {statusObj.remove_da_fila && veiculosDoStatus.length > 0 && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            if (!confirm(`Remover ${veiculosDoStatus.length} veículo(s) da fila?`)) return;
+                            try {
+                              for (const v of veiculosDoStatus) {
+                                await base44.entities.FilaVeiculo.delete(v.id);
+                              }
+                              toast.success(`${veiculosDoStatus.length} veículo(s) removido(s)!`);
+                              await loadData();
+                            } catch (error) {
+                              toast.error("Erro ao remover veículos");
+                            }
+                          }}
+                          className="text-xs h-7"
+                        >
+                          <Trash2 className="w-3 h-3 mr-1" />
+                          Limpar ({veiculosDoStatus.length})
+                        </Button>
+                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0 md:p-6">
@@ -1076,15 +1093,6 @@ export default function FilaX() {
                                   const statusNormalizado = statusSelecionado?.nome.toLowerCase().replace(/ /g, '_');
                                   
                                   try {
-                                    // Se o status remove da fila, deletar a marcação
-                                    if (statusSelecionado?.remove_da_fila) {
-                                      await base44.entities.FilaVeiculo.delete(item.id);
-                                      toast.success("Veículo removido da fila!");
-                                      setEditingCell(null);
-                                      await loadData();
-                                      return;
-                                    }
-                                    
                                     // Calcular nova posição
                                     const veiculosNoStatus = fila.filter(f => 
                                       f.status === statusNormalizado && f.id !== item.id
