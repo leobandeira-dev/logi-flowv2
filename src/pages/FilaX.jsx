@@ -496,11 +496,11 @@ export default function FilaX() {
     }
   };
 
-  const calcularTempoNaFila = (dataEntrada) => {
+  const calcularTempoNaFila = (dataEntrada, dataSaida) => {
     if (!dataEntrada) return "-";
-    const agora = new Date();
-    const entrada = new Date(dataEntrada);
-    const diffMs = agora - entrada;
+    const inicio = new Date(dataEntrada);
+    const fim = dataSaida ? new Date(dataSaida) : new Date();
+    const diffMs = fim - inicio;
     const diffHoras = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
@@ -681,8 +681,8 @@ export default function FilaX() {
         posicao_fila: novaPosicao 
       };
 
-      // Se mudou para "em_operacao", registrar saída
-      if (statusNormalizado === 'em_operacao') {
+      // Se mudou para status que remove da fila, registrar saída
+      if (statusDestino.remove_da_fila) {
         const item = fila.find(f => f.id === draggableId);
         if (item && !item.data_saida_fila) {
           updates.data_saida_fila = new Date().toISOString();
@@ -1104,8 +1104,8 @@ export default function FilaX() {
                                       posicao_fila: novaPosicao 
                                     };
                                     
-                                    // Se mudar status, registrar mudança
-                                    if (statusNormalizado !== item.status && statusNormalizado === 'em_operacao' && !item.data_saida_fila) {
+                                    // Se mudar para status que remove da fila, registrar saída
+                                    if (statusSelecionado?.remove_da_fila && !item.data_saida_fila) {
                                       updates.data_saida_fila = new Date().toISOString();
                                     }
                                     
