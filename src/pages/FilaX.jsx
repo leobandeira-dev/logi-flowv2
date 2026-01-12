@@ -153,6 +153,11 @@ export default function FilaX() {
 
       const todasFilasData = todasMarcacoes;
 
+      // Debug: Log dos registros encontrados
+      console.log("Total de marcações:", todasFilasData.length);
+      console.log("Com empresa_id:", todasFilasData.filter(m => m.empresa_id === user.empresa_id).length);
+      console.log("Sem data_saida_fila:", todasFilasData.filter(item => !item.data_saida_fila).length);
+      
       // Separar fila ativa (sem data_saida_fila) do histórico
       let filaData = todasFilasData.filter(item => !item.data_saida_fila);
       
