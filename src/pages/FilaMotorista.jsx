@@ -64,8 +64,9 @@ export default function FilaMotorista() {
         return;
       }
 
-      // Salvar empresa_id no estado
+      // Salvar empresa_id no estado e localStorage
       setFormData(prev => ({ ...prev, empresa_id: empresaId }));
+      localStorage.setItem('fila_empresa_id', empresaId);
 
       // Buscar tipos de fila, motoristas e veículos APENAS desta empresa
       const [tiposData, motoristasData, veiculosData] = await Promise.all([
@@ -80,8 +81,14 @@ export default function FilaMotorista() {
 
       // Verificar se já existe cadastro com este telefone no localStorage
       const telefoneSalvo = localStorage.getItem('fila_motorista_telefone');
-      if (telefoneSalvo) {
-        await verificarCadastro(telefoneSalvo);
+      const empresaSalva = localStorage.getItem('fila_empresa_id');
+      
+      if (telefoneSalvo && empresaSalva === empresaId) {
+        const resultado = await verificarCadastro(telefoneSalvo, empresaId);
+        if (resultado) {
+          // Pular direto para tela de sucesso
+          setSubmitted(true);
+        }
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -91,24 +98,24 @@ export default function FilaMotorista() {
     }
   };
 
-  const verificarCadastro = async (telefone) => {
+  const verificarCadastro = async (telefone, empresaId = null) => {
     try {
       const telefoneLimpo = telefone.replace(/\D/g, '');
+      const empresa = empresaId || formData.empresa_id;
       
       // Filtrar por telefone E empresa_id para garantir fila exclusiva por empresa
       const filas = await base44.entities.FilaVeiculo.filter({ 
         motorista_telefone: telefoneLimpo,
-        empresa_id: formData.empresa_id 
+        empresa_id: empresa 
       }, "-data_entrada_fila", 1);
       
       if (filas.length > 0) {
         setMinhaFila(filas[0]);
-        setSubmitted(true);
         
         // Contar total de veículos APENAS desta empresa com mesmo status
         const todasFilas = await base44.entities.FilaVeiculo.filter({ 
           status: filas[0].status,
-          empresa_id: formData.empresa_id 
+          empresa_id: empresa 
         });
         setTotalNaFila(todasFilas.length);
         
@@ -119,9 +126,14 @@ export default function FilaMotorista() {
             localStorage.setItem('fila_ordem_vinculada', JSON.stringify(ordens[0]));
           }
         }
+        
+        return true;
       }
+      
+      return false;
     } catch (error) {
       console.error("Erro ao verificar cadastro:", error);
+      return false;
     }
   };
 
@@ -287,6 +299,7 @@ export default function FilaMotorista() {
       setMinhaFila(novoRegistro);
       setSubmitted(true);
       localStorage.setItem('fila_motorista_telefone', telefoneLimpo);
+      localStorage.setItem('fila_empresa_id', formData.empresa_id);
       
       // Contar total APENAS desta empresa
       const todasFilasAtual = await base44.entities.FilaVeiculo.filter({ 
