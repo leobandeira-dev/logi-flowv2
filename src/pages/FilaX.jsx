@@ -133,15 +133,25 @@ export default function FilaX() {
     setLoading(true);
     try {
       const user = await base44.auth.me();
-      const [todasFilasData, tiposData, statusData, motoristasData, veiculosData, ordensData, historicoFilaData] = await Promise.all([
-        base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id }, "posicao_fila"),
+      
+      // Buscar TODAS as marcações da empresa sem paginação
+      let todasMarcacoes = [];
+      try {
+        todasMarcacoes = await base44.entities.FilaVeiculo.list('-updated_date', 10000);
+        todasMarcacoes = todasMarcacoes.filter(m => m.empresa_id === user.empresa_id);
+      } catch (e) {
+        console.log("Erro ao buscar todas as marcações:", e);
+      }
+
+      const [tiposData, statusData, motoristasData, veiculosData, ordensData] = await Promise.all([
         base44.entities.TipoFilaVeiculo.filter({ empresa_id: user.empresa_id, ativo: true }, "ordem"),
         base44.entities.StatusFilaVeiculo.filter({ empresa_id: user.empresa_id, ativo: true }, "ordem"),
         base44.entities.Motorista.list(),
         base44.entities.Veiculo.filter({ tipo: "cavalo" }),
-        base44.entities.OrdemDeCarregamento.filter({ empresa_id: user.empresa_id }, "-created_date", 500),
-        base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id }, "-updated_date", 1000)
+        base44.entities.OrdemDeCarregamento.filter({ empresa_id: user.empresa_id }, "-created_date", 500)
       ]);
+
+      const todasFilasData = todasMarcacoes;
 
       // Separar fila ativa (sem data_saida_fila) do histórico
       let filaData = todasFilasData.filter(item => !item.data_saida_fila);
