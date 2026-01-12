@@ -727,11 +727,8 @@ export default function FilaX() {
         item.id === draggableId ? { ...item, status: statusNormalizado } : item
       ));
       
-      // Recalcular todas as posições FIFO
+      // Recalcular todas as posições FIFO (sem recarregar dados depois)
       await recalcularPosicoesFIFO(user.empresa_id);
-      
-      // Recarregar dados para refletir as novas posições
-      await loadData();
       
       toast.success("Status atualizado!");
     } catch (error) {
