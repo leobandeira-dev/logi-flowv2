@@ -159,7 +159,9 @@ export default function FilaX() {
       setVeiculos(veiculosData);
       setOrdensHistorico(ordensData);
       console.log("DEBUG: historicoFilaData length:", historicoFilaData?.length, historicoFilaData);
-      setHistoricoFila(historicoFilaData);
+      // Filtrar apenas marcações que saíram da fila (têm data_saida_fila)
+      const historicoFilaFiltrado = historicoFilaData.filter(item => item.data_saida_fila);
+      setHistoricoFila(historicoFilaFiltrado);
 
       // Se não há tipos, criar os padrões
       if (tiposData.length === 0) {
