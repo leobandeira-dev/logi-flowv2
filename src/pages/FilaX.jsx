@@ -1933,15 +1933,15 @@ export default function FilaX() {
             <table className="w-full">
               <thead>
                 <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
-                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Nº Carga</th>
-                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Motorista</th>
-                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Placa</th>
-                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Senha Fila</th>
-                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Cliente</th>
-                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Origem</th>
-                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Destino</th>
-                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Data</th>
-                  <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Status Fila</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold w-32" style={{ color: theme.textMuted }}>Nº Carga</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold w-48" style={{ color: theme.textMuted }}>Motorista</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold w-28" style={{ color: theme.textMuted }}>Placa</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold w-32" style={{ color: theme.textMuted }}>Senha Fila</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Cliente</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Origem</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Destino</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold w-24" style={{ color: theme.textMuted }}>Data</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold w-40" style={{ color: theme.textMuted }}>Status Fila</th>
                 </tr>
               </thead>
               <tbody>
@@ -1951,60 +1951,63 @@ export default function FilaX() {
 
                   return (
                     <tr key={ordem.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800" style={{ borderColor: theme.cardBorder }}>
-                      <td className="p-2">
-                        <p className="text-sm font-mono" style={{ color: theme.text }}>{ordem.numero_carga}</p>
+                      <td className="px-3 py-3">
+                        <p className="text-sm font-mono font-semibold" style={{ color: theme.text }}>{ordem.numero_carga || "-"}</p>
                       </td>
-                      <td className="p-2">
+                      <td className="px-3 py-3">
                         <p className="text-sm" style={{ color: theme.text }}>
                           {ordem.motorista_nome_temp || motoristas.find(m => m.id === ordem.motorista_id)?.nome || "-"}
                         </p>
                       </td>
-                      <td className="p-2">
-                        <p className="text-sm font-mono" style={{ color: theme.text }}>
+                      <td className="px-3 py-3">
+                        <p className="text-sm font-mono font-semibold" style={{ color: theme.text }}>
                           {ordem.cavalo_placa_temp || veiculos.find(v => v.id === ordem.cavalo_id)?.placa || "-"}
                         </p>
                       </td>
-                      <td className="p-2">
+                      <td className="px-3 py-3">
                         {temSenha ? (
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-mono font-bold text-green-600">{ordem.senha_fila}</p>
+                            <p className="text-base font-mono font-bold text-green-600 dark:text-green-400">{ordem.senha_fila}</p>
                             {marcacaoFila && (
-                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                                ✓ Vinculado
+                              <span className="text-xs bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 px-2 py-0.5 rounded">
+                                ✓
                               </span>
                             )}
                           </div>
                         ) : (
-                          <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded font-semibold">
-                            ⚠️ SEM SENHA
-                          </span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-lg">⚠️</span>
+                            <span className="text-xs bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 px-2 py-1 rounded font-semibold">
+                              SEM SENHA
+                            </span>
+                          </div>
                         )}
                       </td>
-                      <td className="p-2">
-                        <p className="text-sm truncate" style={{ color: theme.text }}>{ordem.cliente}</p>
+                      <td className="px-3 py-3">
+                        <p className="text-sm" style={{ color: theme.text }}>{ordem.cliente || "-"}</p>
                       </td>
-                      <td className="p-2">
-                        <p className="text-sm truncate" style={{ color: theme.text }}>{ordem.origem}</p>
+                      <td className="px-3 py-3">
+                        <p className="text-sm" style={{ color: theme.text }}>{ordem.origem || "-"}</p>
                       </td>
-                      <td className="p-2">
-                        <p className="text-sm truncate" style={{ color: theme.text }}>{ordem.destino}</p>
+                      <td className="px-3 py-3">
+                        <p className="text-sm" style={{ color: theme.text }}>{ordem.destino || "-"}</p>
                       </td>
-                      <td className="p-2">
+                      <td className="px-3 py-3">
                         <p className="text-xs" style={{ color: theme.textMuted }}>
                           {ordem.created_date ? format(new Date(ordem.created_date), "dd/MM/yy", { locale: ptBR }) : "-"}
                         </p>
                       </td>
-                      <td className="p-2">
+                      <td className="px-3 py-3">
                         {!temSenha ? (
-                          <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
+                          <span className="text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400 px-2 py-1 rounded whitespace-nowrap">
                             Fila não respeitada
                           </span>
                         ) : marcacaoFila ? (
-                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                          <span className="text-xs bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 px-2 py-1 rounded whitespace-nowrap">
                             ✓ Fila respeitada
                           </span>
                         ) : (
-                          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                          <span className="text-xs bg-gray-100 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400 px-2 py-1 rounded whitespace-nowrap">
                             Marcação removida
                           </span>
                         )}
