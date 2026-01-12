@@ -37,8 +37,18 @@ export default function AdicionarFilaCarousel({
             onChange={(e) => setFormData(prev => ({ ...prev, motorista_nome: e.target.value }))}
             placeholder="Digite seu nome"
             className="text-lg h-12"
-            style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+            style={{ 
+              backgroundColor: theme.cardBg, 
+              borderColor: showError && !formData.motorista_nome ? '#ef4444' : theme.cardBorder,
+              borderWidth: showError && !formData.motorista_nome ? '2px' : '1px',
+              color: theme.text 
+            }}
           />
+          {showError && !formData.motorista_nome && (
+            <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+              <span>⚠️</span> Campo obrigatório
+            </p>
+          )}
         </div>
       )
     },
@@ -59,8 +69,18 @@ export default function AdicionarFilaCarousel({
             placeholder="ABC1234"
             maxLength={7}
             className="text-lg h-12 font-mono font-bold"
-            style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+            style={{ 
+              backgroundColor: theme.cardBg, 
+              borderColor: showError && (!formData.cavalo_placa || formData.cavalo_placa.length !== 7) ? '#ef4444' : theme.cardBorder,
+              borderWidth: showError && (!formData.cavalo_placa || formData.cavalo_placa.length !== 7) ? '2px' : '1px',
+              color: theme.text 
+            }}
           />
+          {showError && (!formData.cavalo_placa || formData.cavalo_placa.length !== 7) && (
+            <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+              <span>⚠️</span> {!formData.cavalo_placa ? 'Campo obrigatório' : 'Placa deve ter 7 caracteres'}
+            </p>
+          )}
         </div>
       )
     },
@@ -76,7 +96,15 @@ export default function AdicionarFilaCarousel({
               value={formData.tipo_fila_id}
               onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_fila_id: value }))}
             >
-              <SelectTrigger className="h-12" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
+              <SelectTrigger 
+                className="h-12" 
+                style={{ 
+                  backgroundColor: theme.cardBg, 
+                  borderColor: showError && !formData.tipo_fila_id ? '#ef4444' : theme.cardBorder,
+                  borderWidth: showError && !formData.tipo_fila_id ? '2px' : '1px',
+                  color: theme.text 
+                }}
+              >
                 <SelectValue placeholder="Selecione o tipo..." />
               </SelectTrigger>
               <SelectContent>
@@ -90,15 +118,28 @@ export default function AdicionarFilaCarousel({
                 ))}
               </SelectContent>
             </Select>
+            {showError && !formData.tipo_fila_id && (
+              <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                <span>⚠️</span> Campo obrigatório
+              </p>
+            )}
           </div>
 
           <div>
-            <Label style={{ color: theme.text }}>Tipo de Veículo</Label>
+            <Label style={{ color: theme.text }}>Tipo de Veículo *</Label>
             <Select
               value={formData.tipo_veiculo}
               onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_veiculo: value }))}
             >
-              <SelectTrigger className="h-12" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
+              <SelectTrigger 
+                className="h-12" 
+                style={{ 
+                  backgroundColor: theme.cardBg, 
+                  borderColor: showError && !formData.tipo_veiculo ? '#ef4444' : theme.cardBorder,
+                  borderWidth: showError && !formData.tipo_veiculo ? '2px' : '1px',
+                  color: theme.text 
+                }}
+              >
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
@@ -111,15 +152,28 @@ export default function AdicionarFilaCarousel({
                 <SelectItem value="BI-TRUCK">BI-TRUCK</SelectItem>
               </SelectContent>
             </Select>
+            {showError && !formData.tipo_veiculo && (
+              <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                <span>⚠️</span> Campo obrigatório
+              </p>
+            )}
           </div>
 
           <div>
-            <Label style={{ color: theme.text }}>Tipo de Carroceria</Label>
+            <Label style={{ color: theme.text }}>Tipo de Carroceria *</Label>
             <Select
               value={formData.tipo_carroceria}
               onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_carroceria: value }))}
             >
-              <SelectTrigger className="h-12" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
+              <SelectTrigger 
+                className="h-12" 
+                style={{ 
+                  backgroundColor: theme.cardBg, 
+                  borderColor: showError && !formData.tipo_carroceria ? '#ef4444' : theme.cardBorder,
+                  borderWidth: showError && !formData.tipo_carroceria ? '2px' : '1px',
+                  color: theme.text 
+                }}
+              >
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
@@ -130,6 +184,11 @@ export default function AdicionarFilaCarousel({
                 <SelectItem value="BAU">BAU</SelectItem>
               </SelectContent>
             </Select>
+            {showError && !formData.tipo_carroceria && (
+              <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                <span>⚠️</span> Campo obrigatório
+              </p>
+            )}
           </div>
         </div>
       )
@@ -240,40 +299,8 @@ export default function AdicionarFilaCarousel({
       {/* Current Step */}
       <div className="min-h-[120px]">
         {currentStep.render()}
-        {showError && currentStep.isMultiSelect && (
-          <div className="mt-4 space-y-2">
-            {!formData.tipo_fila_id && (
-              <p className="text-sm text-orange-600 dark:text-orange-400 flex items-center gap-2">
-                <span>⚠️</span> Tipo do Motorista é obrigatório
-              </p>
-            )}
-            {!formData.tipo_veiculo && (
-              <p className="text-sm text-orange-600 dark:text-orange-400 flex items-center gap-2">
-                <span>⚠️</span> Tipo de Veículo é obrigatório
-              </p>
-            )}
-            {!formData.tipo_carroceria && (
-              <p className="text-sm text-orange-600 dark:text-orange-400 flex items-center gap-2">
-                <span>⚠️</span> Tipo de Carroceria é obrigatório
-              </p>
-            )}
-          </div>
-        )}
-        {showError && currentStep.field === 'cavalo_placa' && formData.cavalo_placa && formData.cavalo_placa.replace(/\W/g, '').length !== 7 && (
-          <p className="text-sm text-orange-600 dark:text-orange-400 mt-2 flex items-center gap-1">
-            <span>⚠️</span> A placa deve ter exatamente 7 caracteres
-          </p>
-        )}
-        {showError && currentStep.field === 'cavalo_placa' && !formData.cavalo_placa && (
-          <p className="text-sm text-orange-600 dark:text-orange-400 mt-2 flex items-center gap-1">
-            <span>⚠️</span> Este campo é obrigatório
-          </p>
-        )}
-        {showError && isRequired && currentStep.field !== 'cavalo_placa' && !formData[currentStep.field] && (
-          <p className="text-sm text-orange-600 dark:text-orange-400 mt-2 flex items-center gap-1">
-            <span>⚠️</span> Este campo é obrigatório
-          </p>
-        )}
+
+
       </div>
 
       {/* Navigation */}
