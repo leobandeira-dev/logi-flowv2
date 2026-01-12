@@ -19,11 +19,14 @@ export default function AdicionarFilaCarousel({
   theme,
   loadingLocation,
   onObterLocalizacao,
-  preenchidoAutomatico 
+  preenchidoAutomatico,
+  onSubmit
 }) {
   const [step, setStep] = useState(0);
   const [showError, setShowError] = useState(false);
   const [openSelect, setOpenSelect] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [loadingGPS, setLoadingGPS] = useState(false);
 
   const steps = [
     {
@@ -281,6 +284,50 @@ export default function AdicionarFilaCarousel({
     setStep(step + 1);
   };
 
+  const handleCheckInClick = async () => {
+    setShowConfirmModal(true);
+    setLoadingGPS(true);
+    
+    // Tentar obter localização automaticamente
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+            );
+            const data = await response.json();
+            
+            const endereco = data.display_name || `${latitude}, ${longitude}`;
+            setFormData(prev => ({ ...prev, localizacao_atual: endereco }));
+          } catch (error) {
+            setFormData(prev => ({ 
+              ...prev, 
+              localizacao_atual: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}` 
+            }));
+          } finally {
+            setLoadingGPS(false);
+          }
+        },
+        (error) => {
+          console.error("Erro ao obter localização:", error);
+          setLoadingGPS(false);
+        }
+      );
+    } else {
+      setLoadingGPS(false);
+    }
+  };
+
+  const handleConfirmCheckIn = () => {
+    setShowConfirmModal(false);
+    if (onSubmit) {
+      onSubmit();
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Progress */}
@@ -340,13 +387,75 @@ export default function AdicionarFilaCarousel({
           </Button>
         ) : (
           <Button
-            type="submit"
+            type="button"
+            onClick={handleCheckInClick}
             className="flex-1 h-12 bg-green-600 hover:bg-green-700 font-bold"
           >
             {preenchidoAutomatico ? "Check-in" : "Entrar na Fila"}
           </Button>
         )}
       </div>
+
+      {/* Modal de Confirmação */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div 
+            className="rounded-lg shadow-xl max-w-md w-full p-6"
+            style={{ backgroundColor: theme.cardBg }}
+          >
+            <h3 className="text-xl font-bold mb-4" style={{ color: theme.text }}>
+              Confirmar Check-in
+            </h3>
+            
+            <div className="space-y-4 mb-6">
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <p className="text-sm font-medium mb-1" style={{ color: theme.text }}>Nome do Motorista</p>
+                <p className="text-base font-bold" style={{ color: theme.text }}>{formData.motorista_nome}</p>
+              </div>
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <p className="text-sm font-medium mb-1" style={{ color: theme.text }}>Placa do Cavalo</p>
+                <p className="text-base font-bold font-mono" style={{ color: theme.text }}>{formData.cavalo_placa}</p>
+              </div>
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <p className="text-sm font-medium mb-1" style={{ color: theme.text }}>Localização Atual</p>
+                {loadingGPS ? (
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
+                    <p className="text-sm" style={{ color: theme.textMuted }}>Obtendo localização...</p>
+                  </div>
+                ) : (
+                  <p className="text-sm" style={{ color: theme.text }}>
+                    {formData.localizacao_atual || "Localização não informada"}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowConfirmModal(false)}
+                disabled={loadingGPS}
+                className="flex-1"
+                style={{ borderColor: theme.cardBorder }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={handleConfirmCheckIn}
+                disabled={loadingGPS}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                Confirmar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
