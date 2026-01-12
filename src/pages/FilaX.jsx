@@ -1147,7 +1147,7 @@ export default function FilaX() {
                                             </span>
                                           </div>
                                         </td>
-                          <td className="p-3">
+                                        <td className="p-2">
                             {editingCell?.itemId === item.id && editingCell?.field === 'status' ? (
                               <Select
                                 value={editValue}
