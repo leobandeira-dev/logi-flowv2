@@ -179,49 +179,55 @@ export default function FilaMotorista() {
   }, [telefoneBusca, motoristas, veiculos]);
 
   const handleObterLocalizacao = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocalização não suportada");
-      return;
-    }
-
-    setLoadingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        
-        try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
-          );
-          const data = await response.json();
-          
-          const endereco = data.display_name || `${latitude}, ${longitude}`;
-          const cidade = data.address?.city || data.address?.town || data.address?.municipality || "";
-          const estado = data.address?.state || "";
-          const cidadeUF = cidade && estado ? `${cidade}, ${estado}` : "";
-          
-          setFormData(prev => ({ 
-            ...prev, 
-            localizacao_atual: endereco,
-            cidade_uf: cidadeUF
-          }));
-          toast.success("Localização obtida!");
-        } catch (error) {
-          setFormData(prev => ({ 
-            ...prev, 
-            localizacao_atual: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}` 
-          }));
-          toast.success("Coordenadas obtidas!");
-        } finally {
-          setLoadingLocation(false);
-        }
-      },
-      (error) => {
-        console.error("Erro ao obter localização:", error);
-        toast.error("Erro ao obter localização");
-        setLoadingLocation(false);
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        toast.error("Geolocalização não suportada");
+        resolve(false);
+        return;
       }
-    );
+
+      setLoadingLocation(true);
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+            );
+            const data = await response.json();
+            
+            const endereco = data.display_name || `${latitude}, ${longitude}`;
+            const cidade = data.address?.city || data.address?.town || data.address?.municipality || "";
+            const estado = data.address?.state || "";
+            const cidadeUF = cidade && estado ? `${cidade}, ${estado}` : "";
+            
+            setFormData(prev => ({ 
+              ...prev, 
+              localizacao_atual: endereco,
+              cidade_uf: cidadeUF
+            }));
+            toast.success("Localização obtida!");
+            setLoadingLocation(false);
+            resolve(true);
+          } catch (error) {
+            setFormData(prev => ({ 
+              ...prev, 
+              localizacao_atual: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}` 
+            }));
+            toast.success("Coordenadas obtidas!");
+            setLoadingLocation(false);
+            resolve(true);
+          }
+        },
+        (error) => {
+          console.error("Erro ao obter localização:", error);
+          toast.error("Erro ao obter localização");
+          setLoadingLocation(false);
+          resolve(false);
+        }
+      );
+    });
   };
 
   const handleSubmit = async () => {

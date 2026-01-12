@@ -226,7 +226,7 @@ export default function AdicionarFilaCarousel({
             <Button
               type="button"
               variant="outline"
-              onClick={onObterLocalizacao}
+              onClick={handleObterLocalizacao}
               disabled={loadingLocation}
               className="flex-shrink-0 h-14 w-14"
             >
@@ -307,7 +307,13 @@ export default function AdicionarFilaCarousel({
     return null;
   };
 
-  const handleNextClick = () => {
+  const handleNextClick = async () => {
+    // Se estiver no passo de localização, obter localização primeiro
+    if (currentStep.field === 'cidade_uf') {
+      await handleObterLocalizacao();
+      return; // A função handleObterLocalizacao vai avançar automaticamente
+    }
+
     // Se estiver no passo de múltiplos selects
     if (currentStep.isMultiSelect) {
       const emptyField = getEmptySelectField();
@@ -329,6 +335,15 @@ export default function AdicionarFilaCarousel({
     setShowError(false);
     setOpenSelect(false);
     setStep(step + 1);
+  };
+
+  const handleObterLocalizacao = async () => {
+    const success = await onObterLocalizacao();
+    if (success) {
+      // Avançar automaticamente se localização foi obtida com sucesso
+      setShowError(false);
+      setStep(step + 1);
+    }
   };
 
   const handleCheckInClick = () => {
@@ -389,10 +404,27 @@ export default function AdicionarFilaCarousel({
           <Button
             type="button"
             onClick={handleNextClick}
+            disabled={loadingLocation}
             className="flex-1 h-12 bg-blue-600 hover:bg-blue-700"
           >
-            Próximo
-            <ChevronRight className="w-5 h-5 ml-2" />
+            {currentStep.field === 'cidade_uf' ? (
+              loadingLocation ? (
+                <>
+                  <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                  Obtendo...
+                </>
+              ) : (
+                <>
+                  <MapPin className="w-5 h-5 mr-2" />
+                  Obter Localização
+                </>
+              )
+            ) : (
+              <>
+                Próximo
+                <ChevronRight className="w-5 h-5 ml-2" />
+              </>
+            )}
           </Button>
         ) : (
           <Button
