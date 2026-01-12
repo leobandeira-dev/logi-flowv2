@@ -143,25 +143,14 @@ export default function FilaX() {
         base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id }, "-data_saida_fila", 500).then(items => items.filter(i => i.data_saida_fila))
       ]);
 
-      // Normalizar status ao carregar
-      const filaComStatusNormalizado = filaData.map(item => ({
-        ...item,
-        status: normalizarStatus(item.status)
-      }));
-
-      const historicoComStatusNormalizado = historicoFilaData.map(item => ({
-        ...item,
-        status: normalizarStatus(item.status)
-      }));
-
-      setFila(filaComStatusNormalizado);
+      setFila(filaData);
       setTiposFila(tiposData);
       setStatusFila(statusData);
       setMotoristas(motoristasData);
       setVeiculos(veiculosData);
       setOrdensHistorico(ordensData);
-      console.log("DEBUG: historicoFilaData length:", historicoComStatusNormalizado?.length, historicoComStatusNormalizado);
-      setHistoricoFila(historicoComStatusNormalizado);
+      console.log("DEBUG: historicoFilaData length:", historicoFilaData?.length, historicoFilaData);
+      setHistoricoFila(historicoFilaData);
 
       // Se não há tipos, criar os padrões
       if (tiposData.length === 0) {
