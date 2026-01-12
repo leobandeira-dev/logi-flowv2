@@ -915,6 +915,20 @@ export default function FilaX() {
             calcularTempoNaFila={calcularTempoNaFila}
             formatarTelefone={formatarTelefone}
             abrirWhatsApp={abrirWhatsApp}
+            onArquivarOrdens={async (veiculos, statusNome) => {
+              if (!confirm(`Arquivar ${veiculos.length} veículo(s) do status "${statusNome}"?`)) return;
+              try {
+                const user = await base44.auth.me();
+                for (const v of veiculos) {
+                  await base44.entities.FilaVeiculo.delete(v.id);
+                }
+                await recalcularPosicoesFIFO(user.empresa_id);
+                toast.success(`${veiculos.length} veículo(s) arquivado(s)!`);
+                await loadData();
+              } catch (error) {
+                toast.error("Erro ao arquivar veículos");
+              }
+            }}
             theme={theme}
           />
         ) : (

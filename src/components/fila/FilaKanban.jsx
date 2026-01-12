@@ -15,6 +15,7 @@ export default function FilaKanban({
   calcularTempoNaFila, 
   formatarTelefone, 
   abrirWhatsApp,
+  onArquivarOrdens,
   theme 
 }) {
   return (
@@ -29,12 +30,25 @@ export default function FilaKanban({
                 className="rounded-t-lg p-4 mb-2"
                 style={{ backgroundColor: statusObj.cor }}
               >
-                <div className="flex items-center gap-2 text-white">
-                  <span style={{ fontSize: '1.5rem' }}>{statusObj.icone}</span>
-                  <h3 className="font-bold text-lg">{statusObj.nome}</h3>
-                  <span className="ml-auto bg-white/20 px-2 py-0.5 rounded-full text-sm">
-                    {veiculosDoStatus.length}
-                  </span>
+                <div className="flex items-center justify-between gap-2 text-white">
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: '1.5rem' }}>{statusObj.icone}</span>
+                    <h3 className="font-bold text-lg">{statusObj.nome}</h3>
+                    <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm">
+                      {veiculosDoStatus.length}
+                    </span>
+                  </div>
+                  {statusObj.remove_da_fila && veiculosDoStatus.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onArquivarOrdens(veiculosDoStatus, statusObj.nome)}
+                      className="bg-white/10 border-white/20 hover:bg-white/20 text-white h-7 text-xs"
+                    >
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Arquivar ({veiculosDoStatus.length})
+                    </Button>
+                  )}
                 </div>
               </div>
 
