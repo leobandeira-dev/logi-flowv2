@@ -137,10 +137,10 @@ export default function FilaX() {
       // Buscar TODAS as marcações da empresa sem paginação
       let todasMarcacoes = [];
       try {
-        todasMarcacoes = await base44.entities.FilaVeiculo.list('-updated_date', 10000);
-        todasMarcacoes = todasMarcacoes.filter(m => m.empresa_id === user.empresa_id);
+        todasMarcacoes = await base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id }, '-updated_date', 50000);
       } catch (e) {
         console.log("Erro ao buscar todas as marcações:", e);
+        todasMarcacoes = [];
       }
 
       const [tiposData, statusData, motoristasData, veiculosData, ordensData] = await Promise.all([
