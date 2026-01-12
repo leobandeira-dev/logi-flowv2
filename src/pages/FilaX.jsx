@@ -129,6 +129,19 @@ export default function FilaX() {
     }
   };
 
+  const normalizarStatus = (texto) => {
+    if (!texto) return "";
+    return texto
+      .toLowerCase()
+      .replace(/[àáäâã]/g, 'a')
+      .replace(/[èéëê]/g, 'e')
+      .replace(/[ìíïî]/g, 'i')
+      .replace(/[òóöô]/g, 'o')
+      .replace(/[ùúüû]/g, 'u')
+      .replace(/ç/g, 'c')
+      .replace(/ /g, '_');
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -143,14 +156,25 @@ export default function FilaX() {
         base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id }, "-data_saida_fila", 500).then(items => items.filter(i => i.data_saida_fila))
       ]);
 
-      setFila(filaData);
+      // Normalizar status ao carregar
+      const filaComStatusNormalizado = filaData.map(item => ({
+        ...item,
+        status: normalizarStatus(item.status)
+      }));
+
+      const historicoComStatusNormalizado = historicoFilaData.map(item => ({
+        ...item,
+        status: normalizarStatus(item.status)
+      }));
+
+      setFila(filaComStatusNormalizado);
       setTiposFila(tiposData);
       setStatusFila(statusData);
       setMotoristas(motoristasData);
       setVeiculos(veiculosData);
       setOrdensHistorico(ordensData);
-      console.log("DEBUG: historicoFilaData length:", historicoFilaData?.length, historicoFilaData);
-      setHistoricoFila(historicoFilaData);
+      console.log("DEBUG: historicoFilaData length:", historicoComStatusNormalizado?.length, historicoComStatusNormalizado);
+      setHistoricoFila(historicoComStatusNormalizado);
 
       // Se não há tipos, criar os padrões
       if (tiposData.length === 0) {
