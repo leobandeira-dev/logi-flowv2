@@ -1167,8 +1167,8 @@ export default function FilaX() {
                               <Select
                                 value={editValue}
                                 onValueChange={async (value) => {
-                                  const statusSelecionado = statusFila.find(s => s.id === value);
-                                  const statusNormalizado = statusSelecionado?.nome.toLowerCase().replace(/ /g, '_');
+                                   const statusSelecionado = statusFila.find(s => s.id === value);
+                                   const statusNormalizado = normalizarStatus(statusSelecionado?.nome);
                                   
                                   try {
                                     const user = await base44.auth.me();
