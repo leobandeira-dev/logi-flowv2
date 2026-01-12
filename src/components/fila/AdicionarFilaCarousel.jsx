@@ -324,7 +324,8 @@ export default function AdicionarFilaCarousel({
   const handleConfirmCheckIn = () => {
     setShowConfirmModal(false);
     if (onSubmit) {
-      onSubmit();
+      const fakeEvent = { preventDefault: () => {} };
+      onSubmit(fakeEvent);
     }
   };
 
