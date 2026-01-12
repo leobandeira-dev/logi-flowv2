@@ -704,19 +704,10 @@ export default function FilaX() {
       const statusNormalizado = statusDestino.nome.toLowerCase().replace(/ /g, '_');
       const user = await base44.auth.me();
       
-      const updates = { 
+      // Apenas atualizar o status, sem arquivar automaticamente
+      await base44.entities.FilaVeiculo.update(draggableId, { 
         status: statusNormalizado
-      };
-
-      // Se mudou para status que remove da fila, registrar saída
-      if (statusDestino.remove_da_fila) {
-        const item = fila.find(f => f.id === draggableId);
-        if (item && !item.data_saida_fila) {
-          updates.data_saida_fila = new Date().toISOString();
-        }
-      }
-
-      await base44.entities.FilaVeiculo.update(draggableId, updates);
+      });
       
       // Recalcular todas as posições FIFO
       await recalcularPosicoesFIFO(user.empresa_id);
