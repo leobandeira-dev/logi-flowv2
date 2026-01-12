@@ -102,27 +102,27 @@ export default function FilaMotorista() {
     try {
       const telefoneLimpo = telefone.replace(/\D/g, '');
       const empresa = empresaId || formData.empresa_id;
-      
+
       // Filtrar por telefone E empresa_id para garantir fila exclusiva por empresa
       const filas = await base44.entities.FilaVeiculo.filter({ 
         motorista_telefone: telefoneLimpo,
         empresa_id: empresa 
       }, "-data_entrada_fila", 1);
-      
+
       if (filas.length > 0) {
         setMinhaFila(filas[0]);
-        
-        // Contar quantos veículos estão NA FRENTE (com posição menor e mesmo status)
+
+        // Contar quantos veículos estão NA FRENTE (apenas status aguardando, com posição menor)
         const todasFilas = await base44.entities.FilaVeiculo.filter({ 
-          status: filas[0].status,
           empresa_id: empresa 
         });
-        
+
         const naFrente = todasFilas.filter(f => 
           f.posicao_fila && filas[0].posicao_fila && 
-          f.posicao_fila < filas[0].posicao_fila
+          f.posicao_fila < filas[0].posicao_fila &&
+          f.status === 'aguardando'
         ).length;
-        
+
         setTotalNaFila(naFrente);
         
         // Buscar ordem vinculada se houver senha
@@ -312,32 +312,56 @@ export default function FilaMotorista() {
 
       const senhaFila = await gerarSenhaFila();
 
-      const novoRegistro = await base44.entities.FilaVeiculo.create({
+      await base44.entities.FilaVeiculo.create({
         ...formData,
         motorista_telefone: telefoneLimpo,
         senha_fila: senhaFila,
         tipo_fila_nome: tipoSelecionado?.nome,
         status: "aguardando",
-        posicao_fila: proximaPosicao,
+        posicao_fila: 0, // Será recalculado
         data_entrada_fila: new Date().toISOString()
       });
 
-      setMinhaFila(novoRegistro);
+      // Recalcular todas as posições FIFO (importar função ou recriar)
+      const todasMarcacoes = await base44.entities.FilaVeiculo.filter({ empresa_id: formData.empresa_id });
+      const ordenadas = todasMarcacoes.sort((a, b) => {
+        const dataA = new Date(a.data_entrada_fila || 0);
+        const dataB = new Date(b.data_entrada_fila || 0);
+        return dataA - dataB;
+      });
+      
+      for (let i = 0; i < ordenadas.length; i++) {
+        const novaPosicao = i + 1;
+        if (ordenadas[i].posicao_fila !== novaPosicao) {
+          await base44.entities.FilaVeiculo.update(ordenadas[i].id, { posicao_fila: novaPosicao });
+        }
+      }
+
+      // Buscar o registro atualizado
+      const filasAtualizadas = await base44.entities.FilaVeiculo.filter({ 
+        motorista_telefone: telefoneLimpo,
+        empresa_id: formData.empresa_id 
+      }, "-data_entrada_fila", 1);
+      
+      if (filasAtualizadas.length > 0) {
+        setMinhaFila(filasAtualizadas[0]);
+        
+        // Contar quantos veículos aguardando estão NA FRENTE
+        const aguardando = await base44.entities.FilaVeiculo.filter({ 
+          status: "aguardando",
+          empresa_id: formData.empresa_id 
+        });
+        
+        const naFrente = aguardando.filter(f => 
+          f.posicao_fila < filasAtualizadas[0].posicao_fila
+        ).length;
+        
+        setTotalNaFila(naFrente);
+      }
+
       setSubmitted(true);
       localStorage.setItem('fila_motorista_telefone', telefoneLimpo);
       localStorage.setItem('fila_empresa_id', formData.empresa_id);
-      
-      // Contar quantos veículos estão NA FRENTE
-      const todasFilasAtual = await base44.entities.FilaVeiculo.filter({ 
-        status: "aguardando",
-        empresa_id: formData.empresa_id 
-      });
-      
-      const naFrente = todasFilasAtual.filter(f => 
-        f.posicao_fila < novoRegistro.posicao_fila
-      ).length;
-      
-      setTotalNaFila(naFrente);
     } catch (error) {
       console.error("Erro ao cadastrar:", error);
       toast.error("Erro ao realizar cadastro");

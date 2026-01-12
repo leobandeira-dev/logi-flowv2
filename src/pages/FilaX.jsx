@@ -104,6 +104,30 @@ export default function FilaX() {
     loadData();
   }, []);
 
+  const recalcularPosicoesFIFO = async (empresaId) => {
+    try {
+      // Buscar todas as marcações da empresa
+      const todasMarcacoes = await base44.entities.FilaVeiculo.filter({ empresa_id: empresaId });
+      
+      // Ordenar por data de entrada (FIFO)
+      const ordenadas = todasMarcacoes.sort((a, b) => {
+        const dataA = new Date(a.data_entrada_fila || 0);
+        const dataB = new Date(b.data_entrada_fila || 0);
+        return dataA - dataB;
+      });
+      
+      // Atualizar posições em lote
+      for (let i = 0; i < ordenadas.length; i++) {
+        const novaPosicao = i + 1;
+        if (ordenadas[i].posicao_fila !== novaPosicao) {
+          await base44.entities.FilaVeiculo.update(ordenadas[i].id, { posicao_fila: novaPosicao });
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao recalcular posições:", error);
+    }
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -326,9 +350,6 @@ export default function FilaX() {
     try {
       const user = await base44.auth.me();
       const tipoSelecionado = tiposFila.find(t => t.id === formData.tipo_fila_id);
-      
-      // Calcular próxima posição na fila
-      const proximaPosicao = fila.length + 1;
 
       // Pegar o primeiro status ou "aguardando" como padrão
       const statusPadrao = statusFila[0]?.nome.toLowerCase().replace(/ /g, '_') || "aguardando";
@@ -345,15 +366,18 @@ export default function FilaX() {
 
       const senhaFila = gerarSenhaFila();
 
-      const novoItem = await base44.entities.FilaVeiculo.create({
+      await base44.entities.FilaVeiculo.create({
         empresa_id: user.empresa_id,
         ...formData,
         senha_fila: senhaFila,
         tipo_fila_nome: tipoSelecionado?.nome,
         status: statusPadrao,
-        posicao_fila: proximaPosicao,
+        posicao_fila: 0, // Será recalculado
         data_entrada_fila: new Date().toISOString()
       });
+
+      // Recalcular todas as posições FIFO
+      await recalcularPosicoesFIFO(user.empresa_id);
 
       toast.success(`Check-in realizado! Senha: ${senhaFila}`);
       setShowAddModal(false);
@@ -381,8 +405,8 @@ export default function FilaX() {
         observacoes: ""
       });
       
-      // Adicionar ao estado local sem recarregar
-      setFila(prev => [...prev, novoItem]);
+      // Recarregar dados
+      await loadData();
     } catch (error) {
       console.error("Erro ao adicionar à fila:", error);
       toast.error("Erro ao adicionar veículo");
@@ -393,9 +417,14 @@ export default function FilaX() {
     if (!confirm("Remover este veículo da fila?")) return;
 
     try {
+      const user = await base44.auth.me();
       await base44.entities.FilaVeiculo.delete(id);
+      
+      // Recalcular todas as posições FIFO
+      await recalcularPosicoesFIFO(user.empresa_id);
+      
       toast.success("Veículo removido da fila");
-      setFila(prev => prev.filter(item => item.id !== id));
+      await loadData();
     } catch (error) {
       console.error("Erro ao remover:", error);
       toast.error("Erro ao remover veículo");
@@ -669,16 +698,10 @@ export default function FilaX() {
       if (!statusDestino) return;
 
       const statusNormalizado = statusDestino.nome.toLowerCase().replace(/ /g, '_');
-      
-      // Calcular nova posição: quantos veículos já estão nesse status + 1
-      const veiculosNoStatus = fila.filter(f => 
-        f.status === statusNormalizado && f.id !== draggableId
-      );
-      const novaPosicao = veiculosNoStatus.length + 1;
+      const user = await base44.auth.me();
       
       const updates = { 
-        status: statusNormalizado,
-        posicao_fila: novaPosicao 
+        status: statusNormalizado
       };
 
       // Se mudou para status que remove da fila, registrar saída
@@ -690,6 +713,9 @@ export default function FilaX() {
       }
 
       await base44.entities.FilaVeiculo.update(draggableId, updates);
+      
+      // Recalcular todas as posições FIFO
+      await recalcularPosicoesFIFO(user.empresa_id);
       
       // Recarregar dados para refletir as novas posições
       await loadData();
@@ -912,9 +938,14 @@ export default function FilaX() {
                           onClick={async () => {
                             if (!confirm(`Remover ${veiculosDoStatus.length} veículo(s) da fila?`)) return;
                             try {
+                              const user = await base44.auth.me();
                               for (const v of veiculosDoStatus) {
                                 await base44.entities.FilaVeiculo.delete(v.id);
                               }
+
+                              // Recalcular posições FIFO
+                              await recalcularPosicoesFIFO(user.empresa_id);
+
                               toast.success(`${veiculosDoStatus.length} veículo(s) removido(s)!`);
                               await loadData();
                             } catch (error) {
@@ -1103,23 +1134,21 @@ export default function FilaX() {
                                   const statusNormalizado = statusSelecionado?.nome.toLowerCase().replace(/ /g, '_');
                                   
                                   try {
-                                    // Calcular nova posição
-                                    const veiculosNoStatus = fila.filter(f => 
-                                      f.status === statusNormalizado && f.id !== item.id
-                                    );
-                                    const novaPosicao = veiculosNoStatus.length + 1;
-                                    
+                                    const user = await base44.auth.me();
                                     const updates = { 
-                                      status: statusNormalizado,
-                                      posicao_fila: novaPosicao 
+                                      status: statusNormalizado
                                     };
-                                    
+
                                     // Se mudar para status que remove da fila, registrar saída
                                     if (statusSelecionado?.remove_da_fila && !item.data_saida_fila) {
                                       updates.data_saida_fila = new Date().toISOString();
                                     }
-                                    
+
                                     await base44.entities.FilaVeiculo.update(item.id, updates);
+
+                                    // Recalcular todas as posições FIFO
+                                    await recalcularPosicoesFIFO(user.empresa_id);
+
                                     toast.success("Status atualizado!");
                                     setEditingCell(null);
                                     await loadData();
