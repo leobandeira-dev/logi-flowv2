@@ -52,6 +52,7 @@ export default function FilaX() {
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState("fila"); // "fila" ou "historico"
   const [ordensHistorico, setOrdensHistorico] = useState([]);
+  const [historicoFila, setHistoricoFila] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
   const [etapaModal, setEtapaModal] = useState("telefone"); // "telefone" ou "formulario"
   const [telefoneBusca, setTelefoneBusca] = useState("");
@@ -138,8 +139,12 @@ export default function FilaX() {
         base44.entities.StatusFilaVeiculo.filter({ empresa_id: user.empresa_id, ativo: true }, "ordem"),
         base44.entities.Motorista.list(),
         base44.entities.Veiculo.filter({ tipo: "cavalo" }),
-        base44.entities.OrdemDeCarregamento.filter({ empresa_id: user.empresa_id }, "-created_date", 500)
+        base44.entities.OrdemDeCarregamento.filter({ empresa_id: user.empresa_id }, "-created_date", 500),
+        base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id, data_saida_fila: { "$ne": null } }, "-data_saida_fila", 500)
       ]);
+      const [filaData, tiposData, statusData, motoristasData, veiculosData, ordensData, historicoFilaData] = await Promise.all([
+        base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id, data_saida_fila: null }, "posicao_fila"),
+//...
 
       setFila(filaData);
       setTiposFila(tiposData);
@@ -1974,7 +1979,7 @@ export default function FilaX() {
                 </tr>
               </thead>
               <tbody>
-                {fila.filter(m => m.data_saida_fila).map((marcacao, index) => {
+                {historicoFila.map((marcacao, index) => {
                   const tipo = tiposFila.find(t => t.id === marcacao.tipo_fila_id);
                   const status = statusFila.find(s => s.nome.toLowerCase().replace(/ /g, '_') === marcacao.status);
                   
@@ -2037,7 +2042,7 @@ export default function FilaX() {
               </tbody>
             </table>
 
-            {fila.filter(m => m.data_saida_fila).length === 0 && (
+            {historicoFila.length === 0 && (
               <div className="text-center py-8">
                 <p className="text-sm" style={{ color: theme.textMuted }}>Nenhuma marcação no histórico</p>
               </div>
@@ -2045,12 +2050,12 @@ export default function FilaX() {
           </div>
 
           {/* Resumo Estatístico */}
-          {fila.filter(m => m.data_saida_fila).length > 0 && (
+          {historicoFila.length > 0 && (
             <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border" style={{ borderColor: '#3b82f6' }}>
                 <p className="text-xs text-blue-600 dark:text-blue-400">Total de Marcações</p>
                 <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                  {fila.filter(m => m.data_saida_fila).length}
+                  {historicoFila.length}
                 </p>
               </div>
               <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border" style={{ borderColor: '#16a34a' }}>
