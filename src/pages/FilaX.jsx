@@ -57,6 +57,7 @@ export default function FilaX() {
   const [telefoneBusca, setTelefoneBusca] = useState("");
   const [buscandoMotorista, setBuscandoMotorista] = useState(false);
   const [preenchidoAutomatico, setPreenchidoAutomatico] = useState(false);
+  const [motoristaEncontrado, setMotoristaEncontrado] = useState(false);
 
   const [formData, setFormData] = useState({
     motorista_id: "",
@@ -277,18 +278,20 @@ export default function FilaX() {
           tipo_carroceria: cavalo?.carroceria || ""
         }));
 
+        setMotoristaEncontrado(true);
         setPreenchidoAutomatico(true);
         setEtapaModal("formulario");
-        toast.success("Dados carregados! Confirme o check-in");
+        toast.success("Cadastro encontrado! Dados carregados");
       } else {
         // Motorista não encontrado, preencher apenas telefone
         setFormData(prev => ({
           ...prev,
           motorista_telefone: telefoneLimpo
         }));
+        setMotoristaEncontrado(false);
         setPreenchidoAutomatico(false);
         setEtapaModal("formulario");
-        toast.info("Preencha os dados para cadastro");
+        toast.info("Novo cadastro - Preencha os dados");
       }
     } catch (error) {
       console.error("Erro ao buscar motorista:", error);
@@ -345,6 +348,7 @@ export default function FilaX() {
       setEtapaModal("telefone");
       setTelefoneBusca("");
       setPreenchidoAutomatico(false);
+      setMotoristaEncontrado(false);
       setFormData({
         motorista_id: "",
         motorista_nome: "",
@@ -1336,6 +1340,7 @@ export default function FilaX() {
           setEtapaModal("telefone");
           setTelefoneBusca("");
           setPreenchidoAutomatico(false);
+          setMotoristaEncontrado(false);
         }}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
             <DialogHeader>
@@ -1398,6 +1403,7 @@ export default function FilaX() {
                 loadingLocation={loadingLocation}
                 onObterLocalizacao={handleObterLocalizacao}
                 preenchidoAutomatico={preenchidoAutomatico}
+                motoristaEncontrado={motoristaEncontrado}
                 onSubmit={handleAdicionarFila}
               />
             ) : (
