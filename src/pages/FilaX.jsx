@@ -170,7 +170,7 @@ export default function FilaX() {
       setOrdensHistorico(ordensData);
       console.log("DEBUG: historicoFilaData length:", historicoFilaData?.length, historicoFilaData);
       // Filtrar apenas marcações que saíram da fila (têm data_saida_fila)
-      const historicoFilaFiltrado = historicoFilaData.filter(item => item.data_saida_fila);
+      const historicoFilaFiltrado = todasMarcacoes.filter(item => item.data_saida_fila);
       setHistoricoFila(historicoFilaFiltrado);
 
       // Se não há tipos, criar os padrões
