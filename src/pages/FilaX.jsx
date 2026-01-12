@@ -722,13 +722,8 @@ export default function FilaX() {
         status: statusNormalizado
       });
       
-      // Atualizar estado local imediatamente para feedback visual
-      setFila(prev => prev.map(item => 
-        item.id === draggableId ? { ...item, status: statusNormalizado } : item
-      ));
-      
-      // Recalcular todas as posições FIFO (sem recarregar dados depois)
-      await recalcularPosicoesFIFO(user.empresa_id);
+      // Recarregar dados para refletir a mudança nas colunas
+      await loadData();
       
       toast.success("Status atualizado!");
     } catch (error) {
