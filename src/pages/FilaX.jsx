@@ -129,19 +129,6 @@ export default function FilaX() {
     }
   };
 
-  const normalizarStatus = (texto) => {
-    if (!texto) return "";
-    return texto
-      .toLowerCase()
-      .replace(/[àáäâã]/g, 'a')
-      .replace(/[èéëê]/g, 'e')
-      .replace(/[ìíïî]/g, 'i')
-      .replace(/[òóöô]/g, 'o')
-      .replace(/[ùúüû]/g, 'u')
-      .replace(/ç/g, 'c')
-      .replace(/ /g, '_');
-  };
-
   const loadData = async () => {
     setLoading(true);
     try {
