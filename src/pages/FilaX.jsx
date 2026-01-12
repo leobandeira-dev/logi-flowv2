@@ -1964,7 +1964,7 @@ export default function FilaX() {
                           {ordem.cavalo_placa_temp || veiculos.find(v => v.id === ordem.cavalo_id)?.placa || "-"}
                         </p>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-3 whitespace-nowrap">
                         {temSenha ? (
                           <div className="flex items-center gap-2">
                             <p className="text-base font-mono font-bold text-green-600 dark:text-green-400">{ordem.senha_fila}</p>
@@ -1975,12 +1975,10 @@ export default function FilaX() {
                             )}
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1">
-                            <span className="text-lg">⚠️</span>
-                            <span className="text-xs bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 px-2 py-1 rounded font-semibold">
-                              SEM SENHA
-                            </span>
-                          </div>
+                          <span className="inline-flex items-center gap-1.5 text-xs bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 px-2.5 py-1 rounded font-semibold">
+                            <span className="text-sm">⚠️</span>
+                            SEM SENHA
+                          </span>
                         )}
                       </td>
                       <td className="px-3 py-3">
