@@ -576,25 +576,6 @@ export default function FilaMotorista() {
     </div>
   );
 }
-
-/* OLD CODE BELOW - TO BE REMOVED
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4">
-      <div className="max-w-2xl mx-auto py-8">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Truck className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Fila de Veículos</h1>
-          <p className="text-gray-600">Cadastre-se ou consulte sua posição</p>
-        </div>
-
-        <Card className="shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-lg">Novo Cadastro</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <form className="space-y-4">
               {/* Dados do Motorista */}
               <div>
                 <Label className="text-gray-900">Nome Completo *</Label>
