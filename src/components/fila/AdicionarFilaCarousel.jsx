@@ -239,7 +239,7 @@ export default function AdicionarFilaCarousel({
           </div>
           {showError && !formData.cidade_uf && (
             <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-              <span>⚠️</span> Campo obrigatório
+              <span>⚠️</span> É necessário obter sua localização para entrar na fila
             </p>
           )}
         </div>
@@ -308,10 +308,17 @@ export default function AdicionarFilaCarousel({
   };
 
   const handleNextClick = async () => {
-    // Se estiver no passo de localização, obter localização primeiro
+    // Se estiver no passo de localização
     if (currentStep.field === 'cidade_uf') {
+      // Se já tem localização, avançar
+      if (formData.cidade_uf) {
+        setShowError(false);
+        setStep(step + 1);
+        return;
+      }
+      // Senão, tentar obter localização
       await handleObterLocalizacao();
-      return; // A função handleObterLocalizacao vai avançar automaticamente
+      return;
     }
 
     // Se estiver no passo de múltiplos selects
@@ -339,10 +346,13 @@ export default function AdicionarFilaCarousel({
 
   const handleObterLocalizacao = async () => {
     const success = await onObterLocalizacao();
-    if (success) {
+    if (success && formData.cidade_uf) {
       // Avançar automaticamente se localização foi obtida com sucesso
       setShowError(false);
       setStep(step + 1);
+    } else {
+      // Mostrar erro se não conseguiu obter localização
+      setShowError(true);
     }
   };
 
@@ -412,6 +422,11 @@ export default function AdicionarFilaCarousel({
                 <>
                   <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
                   Obtendo...
+                </>
+              ) : formData.cidade_uf ? (
+                <>
+                  Entrar na Fila
+                  <ChevronRight className="w-5 h-5 ml-2" />
                 </>
               ) : (
                 <>
