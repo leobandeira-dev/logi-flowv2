@@ -133,8 +133,8 @@ export default function FilaX() {
     setLoading(true);
     try {
       const user = await base44.auth.me();
-      const [filaData, tiposData, statusData, motoristasData, veiculosData, ordensData] = await Promise.all([
-        base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id }, "posicao_fila"),
+      const [filaData, tiposData, statusData, motoristasData, veiculosData, ordensData, historicoFilaData] = await Promise.all([
+        base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id, data_saida_fila: null }, "posicao_fila"),
         base44.entities.TipoFilaVeiculo.filter({ empresa_id: user.empresa_id, ativo: true }, "ordem"),
         base44.entities.StatusFilaVeiculo.filter({ empresa_id: user.empresa_id, ativo: true }, "ordem"),
         base44.entities.Motorista.list(),
@@ -142,9 +142,6 @@ export default function FilaX() {
         base44.entities.OrdemDeCarregamento.filter({ empresa_id: user.empresa_id }, "-created_date", 500),
         base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id, data_saida_fila: { "$ne": null } }, "-data_saida_fila", 500)
       ]);
-      const [filaData, tiposData, statusData, motoristasData, veiculosData, ordensData, historicoFilaData] = await Promise.all([
-        base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id, data_saida_fila: null }, "posicao_fila"),
-//...
 
       setFila(filaData);
       setTiposFila(tiposData);
@@ -152,6 +149,7 @@ export default function FilaX() {
       setMotoristas(motoristasData);
       setVeiculos(veiculosData);
       setOrdensHistorico(ordensData);
+      setHistoricoFila(historicoFilaData);
 
       // Se não há tipos, criar os padrões
       if (tiposData.length === 0) {
@@ -2062,7 +2060,7 @@ export default function FilaX() {
                 <p className="text-xs text-green-600 dark:text-green-400">Tempo Médio de Espera</p>
                 <p className="text-2xl font-bold text-green-700 dark:text-green-300">
                   {(() => {
-                    const marcacoesComTempo = fila.filter(m => m.data_entrada_fila && m.data_saida_fila);
+                    const marcacoesComTempo = historicoFila;
                     if (marcacoesComTempo.length === 0) return "-";
                     
                     const tempoTotal = marcacoesComTempo.reduce((acc, m) => {
@@ -2083,7 +2081,7 @@ export default function FilaX() {
                 <p className="text-xs text-purple-600 dark:text-purple-400">Tempo Mínimo</p>
                 <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">
                   {(() => {
-                    const marcacoesComTempo = fila.filter(m => m.data_entrada_fila && m.data_saida_fila);
+                    const marcacoesComTempo = historicoFila;
                     if (marcacoesComTempo.length === 0) return "-";
                     
                     const tempos = marcacoesComTempo.map(m => {
@@ -2104,7 +2102,7 @@ export default function FilaX() {
                 <p className="text-xs text-orange-600 dark:text-orange-400">Tempo Máximo</p>
                 <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
                   {(() => {
-                    const marcacoesComTempo = fila.filter(m => m.data_entrada_fila && m.data_saida_fila);
+                    const marcacoesComTempo = historicoFila;
                     if (marcacoesComTempo.length === 0) return "-";
                     
                     const tempos = marcacoesComTempo.map(m => {
