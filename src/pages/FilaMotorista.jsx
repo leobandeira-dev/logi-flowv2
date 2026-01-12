@@ -112,12 +112,18 @@ export default function FilaMotorista() {
       if (filas.length > 0) {
         setMinhaFila(filas[0]);
         
-        // Contar total de veículos APENAS desta empresa com mesmo status
+        // Contar quantos veículos estão NA FRENTE (com posição menor e mesmo status)
         const todasFilas = await base44.entities.FilaVeiculo.filter({ 
           status: filas[0].status,
           empresa_id: empresa 
         });
-        setTotalNaFila(todasFilas.length);
+        
+        const naFrente = todasFilas.filter(f => 
+          f.posicao_fila && filas[0].posicao_fila && 
+          f.posicao_fila < filas[0].posicao_fila
+        ).length;
+        
+        setTotalNaFila(naFrente);
         
         // Buscar ordem vinculada se houver senha
         if (filas[0].senha_fila) {
@@ -275,16 +281,36 @@ export default function FilaMotorista() {
       const proximaPosicao = todasFilas.length + 1;
 
       // Gerar senha única alfanumérica de 4 dígitos
-      const gerarSenhaFila = () => {
+      const gerarSenhaFila = async () => {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         let senha = '';
-        for (let i = 0; i < 4; i++) {
-          senha += chars.charAt(Math.floor(Math.random() * chars.length));
+        let tentativas = 0;
+        const maxTentativas = 50;
+        
+        while (tentativas < maxTentativas) {
+          senha = '';
+          for (let i = 0; i < 4; i++) {
+            senha += chars.charAt(Math.floor(Math.random() * chars.length));
+          }
+          
+          // Verificar se senha já existe nesta empresa
+          const senhaExistente = await base44.entities.FilaVeiculo.filter({ 
+            senha_fila: senha,
+            empresa_id: formData.empresa_id 
+          });
+          
+          if (senhaExistente.length === 0) {
+            return senha;
+          }
+          
+          tentativas++;
         }
-        return senha;
+        
+        // Fallback: usar timestamp se não conseguir gerar senha única
+        return Date.now().toString().slice(-4);
       };
 
-      const senhaFila = gerarSenhaFila();
+      const senhaFila = await gerarSenhaFila();
 
       const novoRegistro = await base44.entities.FilaVeiculo.create({
         ...formData,
@@ -301,12 +327,17 @@ export default function FilaMotorista() {
       localStorage.setItem('fila_motorista_telefone', telefoneLimpo);
       localStorage.setItem('fila_empresa_id', formData.empresa_id);
       
-      // Contar total APENAS desta empresa
+      // Contar quantos veículos estão NA FRENTE
       const todasFilasAtual = await base44.entities.FilaVeiculo.filter({ 
         status: "aguardando",
         empresa_id: formData.empresa_id 
       });
-      setTotalNaFila(todasFilasAtual.length);
+      
+      const naFrente = todasFilasAtual.filter(f => 
+        f.posicao_fila < novoRegistro.posicao_fila
+      ).length;
+      
+      setTotalNaFila(naFrente);
     } catch (error) {
       console.error("Erro ao cadastrar:", error);
       toast.error("Erro ao realizar cadastro");
@@ -389,7 +420,7 @@ export default function FilaMotorista() {
                 <div className="inline-flex items-center justify-center w-24 h-24 bg-blue-100 rounded-full mb-3">
                   <span className="text-4xl font-bold text-blue-600">{minhaFila.posicao_fila || 1}</span>
                 </div>
-                <p className="text-sm text-gray-600">de {totalNaFila} veículos</p>
+                <p className="text-sm text-gray-600">{totalNaFila} {totalNaFila === 1 ? 'veículo' : 'veículos'} na sua frente</p>
               </div>
 
               <div className="space-y-3 border-t pt-4">
