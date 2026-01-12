@@ -1376,17 +1376,16 @@ export default function FilaX() {
                 </Button>
               </div>
             ) : isMobile ? (
-              <form onSubmit={handleAdicionarFila}>
-                <AdicionarFilaCarousel
-                  formData={formData}
-                  setFormData={setFormData}
-                  tiposFila={tiposFila}
-                  theme={theme}
-                  loadingLocation={loadingLocation}
-                  onObterLocalizacao={handleObterLocalizacao}
-                  preenchidoAutomatico={preenchidoAutomatico}
-                />
-              </form>
+              <AdicionarFilaCarousel
+                formData={formData}
+                setFormData={setFormData}
+                tiposFila={tiposFila}
+                theme={theme}
+                loadingLocation={loadingLocation}
+                onObterLocalizacao={handleObterLocalizacao}
+                preenchidoAutomatico={preenchidoAutomatico}
+                onSubmit={handleAdicionarFila}
+              />
             ) : (
               <form onSubmit={handleAdicionarFila} className="space-y-4">
               {/* Telefone */}
