@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, MapPin, RefreshCw, User, Truck, Package } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, RefreshCw, User, Truck, Package, CheckCircle } from "lucide-react";
 
 export default function AdicionarFilaCarousel({ 
   formData, 
