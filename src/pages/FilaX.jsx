@@ -157,14 +157,18 @@ export default function FilaX() {
       const filaAtiva = todasMarcacoes.filter(item => !item.data_saida_fila);
       const historicoFilaFiltrado = todasMarcacoes.filter(item => item.data_saida_fila);
       
-      // Normalizar status apenas da fila ativa
+      // Normalizar status para ambas as listas
       const filaData = filaAtiva.map(item => ({
+        ...item,
+        status: normalizarStatus(item.status || '')
+      }));
+      const historicoData = historicoFilaFiltrado.map(item => ({
         ...item,
         status: normalizarStatus(item.status || '')
       }));
 
       setFila(filaData);
-      setHistoricoFila(historicoFilaFiltrado);
+      setHistoricoFila(historicoData);
       setTiposFila(tiposData);
       setStatusFila(statusData);
       setMotoristas(motoristasData);
@@ -736,10 +740,16 @@ export default function FilaX() {
       const statusNormalizado = normalizarStatus(statusDestino.nome);
       const user = await base44.auth.me();
       
-      // Apenas atualizar o status, sem arquivar automaticamente
-      await base44.entities.FilaVeiculo.update(draggableId, { 
+      const updates = { 
         status: statusNormalizado
-      });
+      };
+
+      if (statusDestino.remove_da_fila) {
+        updates.data_saida_fila = new Date().toISOString();
+      }
+      
+      // Apenas atualizar o status, e data_saida_fila se necessário
+      await base44.entities.FilaVeiculo.update(draggableId, updates);
       
       // Recarregar dados para refletir a mudança nas colunas
       await loadData();
@@ -1999,7 +2009,7 @@ export default function FilaX() {
               <tbody>
                 {historicoFila.map((marcacao, index) => {
                   const tipo = tiposFila.find(t => t.id === marcacao.tipo_fila_id);
-                  const status = statusFila.find(s => s.nome.toLowerCase().replace(/ /g, '_') === marcacao.status);
+                  const status = statusFila.find(s => normalizarStatus(s.nome) === marcacao.status);
                   
                   return (
                     <tr key={marcacao.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800" style={{ borderColor: theme.cardBorder }}>
