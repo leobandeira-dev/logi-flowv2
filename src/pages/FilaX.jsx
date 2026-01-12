@@ -714,7 +714,7 @@ export default function FilaX() {
       const statusDestino = statusFila.find(s => s.id === destination.droppableId);
       if (!statusDestino) return;
 
-      const statusNormalizado = statusDestino.nome.toLowerCase().replace(/ /g, '_');
+      const statusNormalizado = normalizarStatus(statusDestino.nome);
       const user = await base44.auth.me();
       
       // Apenas atualizar o status, sem arquivar automaticamente
