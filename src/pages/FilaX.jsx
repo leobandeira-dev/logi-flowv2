@@ -856,6 +856,13 @@ export default function FilaX() {
             Fila Atual
           </Button>
           <Button
+            variant={abaAtiva === "historico_marcacoes" ? "default" : "outline"}
+            onClick={() => setAbaAtiva("historico_marcacoes")}
+            className={abaAtiva === "historico_marcacoes" ? "bg-blue-600" : ""}
+          >
+            Histórico de Marcações
+          </Button>
+          <Button
             variant={abaAtiva === "historico" ? "default" : "outline"}
             onClick={() => setAbaAtiva("historico")}
             className={abaAtiva === "historico" ? "bg-blue-600" : ""}
@@ -1943,6 +1950,176 @@ export default function FilaX() {
           </DialogContent>
         </Dialog>
         </>
+        )}
+
+        {abaAtiva === "historico_marcacoes" && (
+        <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+        <CardHeader>
+          <CardTitle style={{ color: theme.text }}>Histórico de Marcações na Fila</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
+                  <th className="text-left px-3 py-3 text-xs font-semibold w-12" style={{ color: theme.textMuted }}>#</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold" style={{ color: theme.textMuted }}>Motorista</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold w-28" style={{ color: theme.textMuted }}>Placa</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold w-24" style={{ color: theme.textMuted }}>Senha</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold w-20" style={{ color: theme.textMuted }}>Tipo</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold w-32" style={{ color: theme.textMuted }}>Entrada</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold w-32" style={{ color: theme.textMuted }}>Saída</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold w-28" style={{ color: theme.textMuted }}>Tempo Espera</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold w-28" style={{ color: theme.textMuted }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fila.filter(m => m.data_saida_fila).map((marcacao, index) => {
+                  const tipo = tiposFila.find(t => t.id === marcacao.tipo_fila_id);
+                  const status = statusFila.find(s => s.nome.toLowerCase().replace(/ /g, '_') === marcacao.status);
+                  
+                  return (
+                    <tr key={marcacao.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800" style={{ borderColor: theme.cardBorder }}>
+                      <td className="px-3 py-3">
+                        <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                          <span className="font-bold text-xs" style={{ color: theme.textMuted }}>
+                            {marcacao.posicao_fila || index + 1}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <p className="text-sm font-semibold" style={{ color: theme.text }}>{marcacao.motorista_nome}</p>
+                        <p className="text-xs" style={{ color: theme.textMuted }}>{formatarTelefone(marcacao.motorista_telefone)}</p>
+                      </td>
+                      <td className="px-3 py-3">
+                        <p className="text-sm font-mono font-semibold" style={{ color: theme.text }}>{marcacao.cavalo_placa}</p>
+                      </td>
+                      <td className="px-3 py-3">
+                        <p className="text-sm font-mono font-bold text-blue-600 dark:text-blue-400">{marcacao.senha_fila}</p>
+                      </td>
+                      <td className="px-3 py-3">
+                        {tipo && (
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tipo.cor }} />
+                            <span className="text-xs" style={{ color: theme.text }}>{tipo.nome}</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-3 py-3">
+                        <p className="text-xs" style={{ color: theme.text }}>
+                          {marcacao.data_entrada_fila ? format(new Date(marcacao.data_entrada_fila), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "-"}
+                        </p>
+                      </td>
+                      <td className="px-3 py-3">
+                        <p className="text-xs text-green-600 dark:text-green-400">
+                          {marcacao.data_saida_fila ? format(new Date(marcacao.data_saida_fila), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "-"}
+                        </p>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-green-600 flex-shrink-0" />
+                          <span className="text-xs font-semibold text-green-600 dark:text-green-400">
+                            {calcularTempoNaFila(marcacao.data_entrada_fila, marcacao.data_saida_fila)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        {status && (
+                          <div className="flex items-center gap-2">
+                            <span>{status.icone}</span>
+                            <span className="text-xs" style={{ color: theme.text }}>{status.nome}</span>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {fila.filter(m => m.data_saida_fila).length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-sm" style={{ color: theme.textMuted }}>Nenhuma marcação no histórico</p>
+              </div>
+            )}
+          </div>
+
+          {/* Resumo Estatístico */}
+          {fila.filter(m => m.data_saida_fila).length > 0 && (
+            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border" style={{ borderColor: '#3b82f6' }}>
+                <p className="text-xs text-blue-600 dark:text-blue-400">Total de Marcações</p>
+                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                  {fila.filter(m => m.data_saida_fila).length}
+                </p>
+              </div>
+              <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border" style={{ borderColor: '#16a34a' }}>
+                <p className="text-xs text-green-600 dark:text-green-400">Tempo Médio de Espera</p>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                  {(() => {
+                    const marcacoesComTempo = fila.filter(m => m.data_entrada_fila && m.data_saida_fila);
+                    if (marcacoesComTempo.length === 0) return "-";
+                    
+                    const tempoTotal = marcacoesComTempo.reduce((acc, m) => {
+                      const entrada = new Date(m.data_entrada_fila);
+                      const saida = new Date(m.data_saida_fila);
+                      return acc + (saida - entrada);
+                    }, 0);
+                    
+                    const tempoMedio = tempoTotal / marcacoesComTempo.length;
+                    const horas = Math.floor(tempoMedio / (1000 * 60 * 60));
+                    const minutos = Math.floor((tempoMedio % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    return horas > 0 ? `${horas}h ${minutos}min` : `${minutos}min`;
+                  })()}
+                </p>
+              </div>
+              <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border" style={{ borderColor: '#9333ea' }}>
+                <p className="text-xs text-purple-600 dark:text-purple-400">Tempo Mínimo</p>
+                <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+                  {(() => {
+                    const marcacoesComTempo = fila.filter(m => m.data_entrada_fila && m.data_saida_fila);
+                    if (marcacoesComTempo.length === 0) return "-";
+                    
+                    const tempos = marcacoesComTempo.map(m => {
+                      const entrada = new Date(m.data_entrada_fila);
+                      const saida = new Date(m.data_saida_fila);
+                      return saida - entrada;
+                    });
+                    
+                    const tempoMin = Math.min(...tempos);
+                    const horas = Math.floor(tempoMin / (1000 * 60 * 60));
+                    const minutos = Math.floor((tempoMin % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    return horas > 0 ? `${horas}h ${minutos}min` : `${minutos}min`;
+                  })()}
+                </p>
+              </div>
+              <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border" style={{ borderColor: '#f97316' }}>
+                <p className="text-xs text-orange-600 dark:text-orange-400">Tempo Máximo</p>
+                <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
+                  {(() => {
+                    const marcacoesComTempo = fila.filter(m => m.data_entrada_fila && m.data_saida_fila);
+                    if (marcacoesComTempo.length === 0) return "-";
+                    
+                    const tempos = marcacoesComTempo.map(m => {
+                      const entrada = new Date(m.data_entrada_fila);
+                      const saida = new Date(m.data_saida_fila);
+                      return saida - entrada;
+                    });
+                    
+                    const tempoMax = Math.max(...tempos);
+                    const horas = Math.floor(tempoMax / (1000 * 60 * 60));
+                    const minutos = Math.floor((tempoMax % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    return horas > 0 ? `${horas}h ${minutos}min` : `${minutos}min`;
+                  })()}
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+        </Card>
         )}
 
         {abaAtiva === "historico" && (
