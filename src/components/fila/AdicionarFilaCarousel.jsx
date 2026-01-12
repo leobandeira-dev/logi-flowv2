@@ -208,41 +208,73 @@ export default function AdicionarFilaCarousel({
       title: "Localização Atual",
       field: "cidade_uf",
       render: () => (
-        <div className="space-y-4">
-          <div>
-            <Label style={{ color: theme.text }}>Cidade e UF</Label>
+        <div>
+          <Label style={{ color: theme.text }}>Cidade e UF *</Label>
+          <div className="flex gap-2">
             <Input
               value={formData.cidade_uf}
               onChange={(e) => setFormData(prev => ({ ...prev, cidade_uf: e.target.value }))}
               placeholder="Ex: São Paulo, SP"
-              className="text-base h-12"
-              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+              className="text-lg h-14"
+              style={{ 
+                backgroundColor: theme.cardBg, 
+                borderColor: showError && !formData.cidade_uf ? '#ef4444' : theme.cardBorder,
+                borderWidth: showError && !formData.cidade_uf ? '2px' : '1px',
+                color: theme.text 
+              }}
             />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onObterLocalizacao}
+              disabled={loadingLocation}
+              className="flex-shrink-0 h-14 w-14"
+            >
+              {loadingLocation ? (
+                <RefreshCw className="w-5 h-5 animate-spin" />
+              ) : (
+                <MapPin className="w-5 h-5" />
+              )}
+            </Button>
           </div>
-
-          <div>
-            <Label style={{ color: theme.text }}>Endereço Completo</Label>
-            <div className="flex gap-2">
-              <Input
-                value={formData.localizacao_atual}
-                onChange={(e) => setFormData(prev => ({ ...prev, localizacao_atual: e.target.value }))}
-                placeholder="Ex: Pátio Central..."
-                className="text-base h-12"
-                style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onObterLocalizacao}
-                disabled={loadingLocation}
-                className="flex-shrink-0 h-12 w-12"
-              >
-                {loadingLocation ? (
-                  <RefreshCw className="w-5 h-5 animate-spin" />
-                ) : (
-                  <MapPin className="w-5 h-5" />
-                )}
-              </Button>
+          {showError && !formData.cidade_uf && (
+            <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+              <span>⚠️</span> Campo obrigatório
+            </p>
+          )}
+        </div>
+      )
+    },
+    {
+      title: "Confirmar Check-in",
+      field: "confirmacao",
+      render: () => (
+        <div className="space-y-4">
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border-2 border-blue-200 dark:border-blue-700">
+            <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-3">
+              Confirme seus dados para check-in:
+            </p>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-xs text-gray-600 dark:text-gray-400">Motorista:</span>
+                <span className="text-xs font-semibold" style={{ color: theme.text }}>{formData.motorista_nome}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-gray-600 dark:text-gray-400">Placa:</span>
+                <span className="text-xs font-mono font-bold" style={{ color: theme.text }}>{formData.cavalo_placa}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-gray-600 dark:text-gray-400">Tipo Veículo:</span>
+                <span className="text-xs font-semibold" style={{ color: theme.text }}>{formData.tipo_veiculo}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-gray-600 dark:text-gray-400">Carroceria:</span>
+                <span className="text-xs font-semibold" style={{ color: theme.text }}>{formData.tipo_carroceria}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-gray-600 dark:text-gray-400">Localização:</span>
+                <span className="text-xs font-semibold text-right" style={{ color: theme.text }}>{formData.cidade_uf || "Não informada"}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -252,12 +284,15 @@ export default function AdicionarFilaCarousel({
 
   const currentStep = steps[step];
   const isLastStep = step === steps.length - 1;
-  const isRequired = ['motorista_nome', 'cavalo_placa', 'tipo_fila_id'].includes(currentStep.field);
+  const isRequired = ['motorista_nome', 'cavalo_placa', 'tipo_fila_id', 'cidade_uf'].includes(currentStep.field);
   
   const validateCurrentStep = () => {
     if (currentStep.field === 'cavalo_placa') {
       const placaLimpa = formData.cavalo_placa?.replace(/\W/g, '') || '';
       return placaLimpa.length === 7;
+    }
+    if (currentStep.field === 'confirmacao') {
+      return true; // Confirmação sempre válida
     }
     return isRequired ? !!formData[currentStep.field] : true;
   };
