@@ -374,21 +374,6 @@ export default function AdicionarFilaCarousel({
         <h3 className="text-xl font-bold" style={{ color: theme.text }}>
           {currentStep.title}
         </h3>
-
-        {/* Feedback de motorista encontrado/novo */}
-        {step === 0 && formData.motorista_nome && (
-          <div className={`mt-3 p-2 rounded-lg text-sm ${
-            motoristaEncontrado 
-              ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
-              : 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
-          }`}>
-            {motoristaEncontrado ? (
-              <>✓ Cadastro encontrado! Dados carregados</>
-            ) : (
-              <>ℹ️ Novo cadastro - Preencha os dados</>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Current Step */}

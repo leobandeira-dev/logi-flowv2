@@ -58,6 +58,7 @@ export default function FilaX() {
   const [buscandoMotorista, setBuscandoMotorista] = useState(false);
   const [preenchidoAutomatico, setPreenchidoAutomatico] = useState(false);
   const [motoristaEncontrado, setMotoristaEncontrado] = useState(false);
+  const [feedbackTelefone, setFeedbackTelefone] = useState(null); // null, 'encontrado', 'novo'
 
   const [formData, setFormData] = useState({
     motorista_id: "",
@@ -246,6 +247,59 @@ export default function FilaX() {
     toast.success("Veículo selecionado");
   };
 
+  // Buscar motorista automaticamente ao completar telefone
+  useEffect(() => {
+    const verificarMotorista = async () => {
+      const telefoneLimpo = telefoneBusca.replace(/\D/g, '');
+      
+      if (telefoneLimpo.length !== 11) {
+        setFeedbackTelefone(null);
+        return;
+      }
+
+      setBuscandoMotorista(true);
+      try {
+        const motoristasEncontrados = motoristas.filter(m => 
+          m.celular?.replace(/\D/g, '') === telefoneLimpo
+        );
+
+        if (motoristasEncontrados.length > 0) {
+          const motorista = motoristasEncontrados[0];
+          const cavalo = veiculos.find(v => v.id === motorista.cavalo_id);
+          
+          setFormData(prev => ({
+            ...prev,
+            motorista_id: motorista.id,
+            motorista_nome: motorista.nome,
+            motorista_telefone: telefoneLimpo,
+            cavalo_id: motorista.cavalo_id || "",
+            cavalo_placa: cavalo?.placa || "",
+            tipo_veiculo: cavalo?.tipo || "",
+            tipo_carroceria: cavalo?.carroceria || ""
+          }));
+
+          setMotoristaEncontrado(true);
+          setPreenchidoAutomatico(true);
+          setFeedbackTelefone('encontrado');
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            motorista_telefone: telefoneLimpo
+          }));
+          setMotoristaEncontrado(false);
+          setPreenchidoAutomatico(false);
+          setFeedbackTelefone('novo');
+        }
+      } catch (error) {
+        console.error("Erro ao buscar motorista:", error);
+      } finally {
+        setBuscandoMotorista(false);
+      }
+    };
+
+    verificarMotorista();
+  }, [telefoneBusca, motoristas, veiculos]);
+
   const handleBuscarMotorista = async () => {
     const telefoneLimpo = telefoneBusca.replace(/\D/g, '');
     
@@ -254,51 +308,7 @@ export default function FilaX() {
       return;
     }
 
-    setBuscandoMotorista(true);
-    try {
-      // Buscar motorista por telefone
-      const motoristasEncontrados = motoristas.filter(m => 
-        m.celular?.replace(/\D/g, '') === telefoneLimpo
-      );
-
-      if (motoristasEncontrados.length > 0) {
-        const motorista = motoristasEncontrados[0];
-        
-        // Preencher dados automaticamente
-        const cavalo = veiculos.find(v => v.id === motorista.cavalo_id);
-        
-        setFormData(prev => ({
-          ...prev,
-          motorista_id: motorista.id,
-          motorista_nome: motorista.nome,
-          motorista_telefone: telefoneLimpo,
-          cavalo_id: motorista.cavalo_id || "",
-          cavalo_placa: cavalo?.placa || "",
-          tipo_veiculo: cavalo?.tipo || "",
-          tipo_carroceria: cavalo?.carroceria || ""
-        }));
-
-        setMotoristaEncontrado(true);
-        setPreenchidoAutomatico(true);
-        setEtapaModal("formulario");
-        toast.success("Cadastro encontrado! Dados carregados");
-      } else {
-        // Motorista não encontrado, preencher apenas telefone
-        setFormData(prev => ({
-          ...prev,
-          motorista_telefone: telefoneLimpo
-        }));
-        setMotoristaEncontrado(false);
-        setPreenchidoAutomatico(false);
-        setEtapaModal("formulario");
-        toast.info("Novo cadastro - Preencha os dados");
-      }
-    } catch (error) {
-      console.error("Erro ao buscar motorista:", error);
-      toast.error("Erro ao buscar dados");
-    } finally {
-      setBuscandoMotorista(false);
-    }
+    setEtapaModal("formulario");
   };
 
   const handleAdicionarFila = async (e) => {
@@ -349,6 +359,7 @@ export default function FilaX() {
       setTelefoneBusca("");
       setPreenchidoAutomatico(false);
       setMotoristaEncontrado(false);
+      setFeedbackTelefone(null);
       setFormData({
         motorista_id: "",
         motorista_nome: "",
@@ -1341,6 +1352,7 @@ export default function FilaX() {
           setTelefoneBusca("");
           setPreenchidoAutomatico(false);
           setMotoristaEncontrado(false);
+          setFeedbackTelefone(null);
         }}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
             <DialogHeader>
@@ -1376,6 +1388,46 @@ export default function FilaX() {
                     style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                     autoFocus
                   />
+                  
+                  {/* Feedback de busca */}
+                  {buscandoMotorista && (
+                    <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Verificando cadastro...</p>
+                    </div>
+                  )}
+                  
+                  {!buscandoMotorista && feedbackTelefone === 'encontrado' && (
+                    <div className="mt-3 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-green-700 dark:text-green-300">Cadastro encontrado!</p>
+                          <p className="text-xs text-green-600 dark:text-green-400">Seus dados foram carregados</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {!buscandoMotorista && feedbackTelefone === 'novo' && (
+                    <div className="mt-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Novo cadastro</p>
+                          <p className="text-xs text-blue-600 dark:text-blue-400">Preencha os dados para continuar</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Button
@@ -1384,14 +1436,7 @@ export default function FilaX() {
                   disabled={buscandoMotorista || telefoneBusca.replace(/\D/g, '').length !== 11}
                   className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-lg font-bold"
                 >
-                  {buscandoMotorista ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Buscando...
-                    </>
-                  ) : (
-                    "Continuar"
-                  )}
+                  Continuar
                 </Button>
               </div>
             ) : isMobile ? (
