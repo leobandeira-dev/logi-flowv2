@@ -765,9 +765,10 @@ export default function FilaX() {
               size="sm"
               className="gap-2"
               style={{ borderColor: theme.cardBorder, color: theme.text }}
+              title="Copiar link exclusivo da sua empresa"
             >
               <Share2 className="w-4 h-4" />
-              <span className="hidden md:inline">Link Público</span>
+              <span className="hidden md:inline">Link Exclusivo</span>
             </Button>
             <Button
               onClick={() => setShowAddModal(true)}
