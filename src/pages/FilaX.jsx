@@ -669,7 +669,17 @@ export default function FilaX() {
       if (!statusDestino) return;
 
       const statusNormalizado = statusDestino.nome.toLowerCase().replace(/ /g, '_');
-      const updates = { status: statusNormalizado };
+      
+      // Calcular nova posição: quantos veículos já estão nesse status + 1
+      const veiculosNoStatus = fila.filter(f => 
+        f.status === statusNormalizado && f.id !== draggableId
+      );
+      const novaPosicao = veiculosNoStatus.length + 1;
+      
+      const updates = { 
+        status: statusNormalizado,
+        posicao_fila: novaPosicao 
+      };
 
       // Se mudou para "em_operacao", registrar saída
       if (statusNormalizado === 'em_operacao') {
@@ -681,10 +691,8 @@ export default function FilaX() {
 
       await base44.entities.FilaVeiculo.update(draggableId, updates);
       
-      // Atualizar estado local sem recarregar
-      setFila(prev => prev.map(item => 
-        item.id === draggableId ? { ...item, ...updates } : item
-      ));
+      // Recarregar dados para refletir as novas posições
+      await loadData();
       
       toast.success("Status atualizado!");
     } catch (error) {
@@ -1055,21 +1063,34 @@ export default function FilaX() {
                             {editingCell?.itemId === item.id && editingCell?.field === 'status' ? (
                               <Select
                                 value={editValue}
-                                onValueChange={(value) => {
+                                onValueChange={async (value) => {
                                   const statusSelecionado = statusFila.find(s => s.id === value);
                                   const statusNormalizado = statusSelecionado?.nome.toLowerCase().replace(/ /g, '_');
-                                  const updates = { status: statusNormalizado };
+                                  
+                                  // Calcular nova posição
+                                  const veiculosNoStatus = fila.filter(f => 
+                                    f.status === statusNormalizado && f.id !== item.id
+                                  );
+                                  const novaPosicao = veiculosNoStatus.length + 1;
+                                  
+                                  const updates = { 
+                                    status: statusNormalizado,
+                                    posicao_fila: novaPosicao 
+                                  };
+                                  
                                   // Se mudar status, registrar mudança
                                   if (statusNormalizado !== item.status && statusNormalizado === 'em_operacao' && !item.data_saida_fila) {
                                     updates.data_saida_fila = new Date().toISOString();
                                   }
-                                  base44.entities.FilaVeiculo.update(item.id, updates)
-                                    .then(() => {
-                                      toast.success("Status atualizado!");
-                                      setEditingCell(null);
-                                      loadData();
-                                    })
-                                    .catch(() => toast.error("Erro ao atualizar"));
+                                  
+                                  try {
+                                    await base44.entities.FilaVeiculo.update(item.id, updates);
+                                    toast.success("Status atualizado!");
+                                    setEditingCell(null);
+                                    await loadData();
+                                  } catch (error) {
+                                    toast.error("Erro ao atualizar");
+                                  }
                                 }}
                               >
                                 <SelectTrigger className="h-7 text-xs w-36" style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6' }}>
