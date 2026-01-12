@@ -26,8 +26,6 @@ export default function AdicionarFilaCarousel({
   const [step, setStep] = useState(0);
   const [showError, setShowError] = useState(false);
   const [openSelect, setOpenSelect] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [loadingGPS, setLoadingGPS] = useState(false);
 
   const steps = [
     {
@@ -208,7 +206,7 @@ export default function AdicionarFilaCarousel({
     },
     {
       title: "Localização Atual",
-      field: "localizacao_atual",
+      field: "cidade_uf",
       render: () => (
         <div className="space-y-4">
           <div>
@@ -217,7 +215,7 @@ export default function AdicionarFilaCarousel({
               value={formData.cidade_uf}
               onChange={(e) => setFormData(prev => ({ ...prev, cidade_uf: e.target.value }))}
               placeholder="Ex: São Paulo, SP"
-              className="text-lg h-12 font-semibold"
+              className="text-base h-12"
               style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
             />
           </div>
@@ -229,7 +227,7 @@ export default function AdicionarFilaCarousel({
                 value={formData.localizacao_atual}
                 onChange={(e) => setFormData(prev => ({ ...prev, localizacao_atual: e.target.value }))}
                 placeholder="Ex: Pátio Central..."
-                className="text-sm h-12"
+                className="text-base h-12"
                 style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
               />
               <Button
@@ -298,55 +296,7 @@ export default function AdicionarFilaCarousel({
     setStep(step + 1);
   };
 
-  const handleCheckInClick = async () => {
-    setShowConfirmModal(true);
-    setLoadingGPS(true);
-    
-    // Tentar obter localização automaticamente
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          
-          try {
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
-            );
-            const data = await response.json();
-            
-            const endereco = data.display_name || `${latitude}, ${longitude}`;
-            
-            // Extrair cidade e UF
-            const cidade = data.address?.city || data.address?.town || data.address?.municipality || "";
-            const estado = data.address?.state || "";
-            const cidadeUF = cidade && estado ? `${cidade}, ${estado}` : "";
-            
-            setFormData(prev => ({ 
-              ...prev, 
-              localizacao_atual: endereco,
-              cidade_uf: cidadeUF
-            }));
-          } catch (error) {
-            setFormData(prev => ({ 
-              ...prev, 
-              localizacao_atual: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}` 
-            }));
-          } finally {
-            setLoadingGPS(false);
-          }
-        },
-        (error) => {
-          console.error("Erro ao obter localização:", error);
-          setLoadingGPS(false);
-        }
-      );
-    } else {
-      setLoadingGPS(false);
-    }
-  };
-
-  const handleConfirmCheckIn = () => {
-    setShowConfirmModal(false);
+  const handleCheckInClick = () => {
     if (onSubmit) {
       onSubmit();
     }
@@ -415,124 +365,10 @@ export default function AdicionarFilaCarousel({
             onClick={handleCheckInClick}
             className="flex-1 h-12 bg-green-600 hover:bg-green-700 font-bold"
           >
-            {preenchidoAutomatico ? "Check-in" : "Entrar na Fila"}
+            Check-in
           </Button>
         )}
-      </div>
-
-      {/* Modal de Confirmação */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div 
-            className="rounded-2xl shadow-2xl w-full max-w-md my-8 overflow-hidden"
-            style={{ backgroundColor: theme.cardBg }}
-          >
-            {/* Header */}
-            <div className="bg-gradient-to-r from-green-600 to-green-500 text-white px-6 py-5">
-              <div className="flex items-center justify-center gap-3">
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                  <CheckCircle className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">Confirmar Check-in</h3>
-                  <p className="text-xs text-green-100 mt-0.5">Revise seus dados antes de continuar</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-5 space-y-4">
-              {/* Nome do Motorista */}
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/30 dark:to-blue-900/10 p-4 rounded-xl border-2 border-blue-200 dark:border-blue-800">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <User className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-1">Motorista</p>
-                    <p className="text-lg font-bold truncate" style={{ color: theme.text }}>{formData.motorista_nome}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Placa do Veículo */}
-              <div className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/30 dark:to-green-900/10 p-4 rounded-xl border-2 border-green-200 dark:border-green-800">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Truck className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide mb-1">Placa do Veículo</p>
-                    <div className="bg-white dark:bg-gray-900 px-3 py-2 rounded-lg border-2 border-green-300 dark:border-green-700 inline-block">
-                      <p className="text-2xl font-black font-mono tracking-widest" style={{ color: theme.text }}>{formData.cavalo_placa}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Localização */}
-              <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-900/30 dark:to-amber-900/10 p-4 rounded-xl border-2 border-amber-200 dark:border-amber-800">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-1">Localização Atual</p>
-                    {loadingGPS ? (
-                      <div className="flex items-center gap-2">
-                        <RefreshCw className="w-4 h-4 animate-spin text-amber-600" />
-                        <p className="text-sm text-amber-600 dark:text-amber-400">Obtendo GPS...</p>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-base font-bold mb-1" style={{ color: theme.text }}>
-                          {formData.cidade_uf || "Não informada"}
-                        </p>
-                        {formData.localizacao_atual && (
-                          <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
-                            {formData.localizacao_atual}
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Botões */}
-            <div className="px-5 pb-5 flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowConfirmModal(false)}
-                disabled={loadingGPS}
-                className="flex-1 h-12 font-semibold"
-                style={{ borderColor: theme.cardBorder }}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                onClick={handleConfirmCheckIn}
-                disabled={loadingGPS}
-                className="flex-1 h-12 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-bold text-base shadow-lg"
-              >
-                {loadingGPS ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Aguarde...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5 mr-2" />
-                    Confirmar
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
         </div>
-      )}
     </div>
   );
 }
