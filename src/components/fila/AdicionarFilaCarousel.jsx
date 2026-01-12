@@ -424,55 +424,89 @@ export default function AdicionarFilaCarousel({
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div 
-            className="rounded-xl shadow-2xl w-full max-w-md my-8"
+            className="rounded-2xl shadow-2xl w-full max-w-md my-8 overflow-hidden"
             style={{ backgroundColor: theme.cardBg }}
           >
-            <div className="bg-blue-600 text-white px-6 py-4 rounded-t-xl">
-              <h3 className="text-lg font-bold text-center">
-                Confirmar Check-in
-              </h3>
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-600 to-green-500 text-white px-6 py-5">
+              <div className="flex items-center justify-center gap-3">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <CheckCircle className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Confirmar Check-in</h3>
+                  <p className="text-xs text-green-100 mt-0.5">Revise seus dados antes de continuar</p>
+                </div>
+              </div>
             </div>
 
-            <div className="p-4 space-y-3">
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border-l-4 border-blue-600">
-                <p className="text-[10px] font-medium mb-1 text-blue-800 dark:text-blue-300 uppercase">Nome do Motorista</p>
-                <p className="text-base font-bold" style={{ color: theme.text }}>{formData.motorista_nome}</p>
-              </div>
-
-              <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border-l-4 border-green-600">
-                <p className="text-[10px] font-medium mb-1 text-green-800 dark:text-green-300 uppercase">Placa do Cavalo</p>
-                <p className="text-xl font-bold font-mono tracking-wider" style={{ color: theme.text }}>{formData.cavalo_placa}</p>
-              </div>
-
-              <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border-l-4 border-amber-600">
-                <p className="text-[10px] font-medium mb-1 text-amber-800 dark:text-amber-300 uppercase">Cidade e UF</p>
-                {loadingGPS ? (
-                  <div className="flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4 animate-spin text-amber-600" />
-                    <p className="text-sm" style={{ color: theme.textMuted }}>Obtendo localização...</p>
+            <div className="p-5 space-y-4">
+              {/* Nome do Motorista */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/30 dark:to-blue-900/10 p-4 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <User className="w-5 h-5 text-white" />
                   </div>
-                ) : (
-                  <p className="text-base font-bold" style={{ color: theme.text }}>
-                    {formData.cidade_uf || "Não informada"}
-                  </p>
-                )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide mb-1">Motorista</p>
+                    <p className="text-lg font-bold truncate" style={{ color: theme.text }}>{formData.motorista_nome}</p>
+                  </div>
+                </div>
               </div>
 
-              <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border-l-4 border-gray-400">
-                <p className="text-[10px] font-semibold mb-1 uppercase tracking-wide" style={{ color: theme.textMuted }}>Endereço Completo</p>
-                <p className="text-xs leading-relaxed break-words" style={{ color: theme.text }}>
-                  {formData.localizacao_atual || "Localização não informada"}
-                </p>
+              {/* Placa do Veículo */}
+              <div className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/30 dark:to-green-900/10 p-4 rounded-xl border-2 border-green-200 dark:border-green-800">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Truck className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide mb-1">Placa do Veículo</p>
+                    <div className="bg-white dark:bg-gray-900 px-3 py-2 rounded-lg border-2 border-green-300 dark:border-green-700 inline-block">
+                      <p className="text-2xl font-black font-mono tracking-widest" style={{ color: theme.text }}>{formData.cavalo_placa}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Localização */}
+              <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-900/30 dark:to-amber-900/10 p-4 rounded-xl border-2 border-amber-200 dark:border-amber-800">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-1">Localização Atual</p>
+                    {loadingGPS ? (
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4 animate-spin text-amber-600" />
+                        <p className="text-sm text-amber-600 dark:text-amber-400">Obtendo GPS...</p>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-base font-bold mb-1" style={{ color: theme.text }}>
+                          {formData.cidade_uf || "Não informada"}
+                        </p>
+                        {formData.localizacao_atual && (
+                          <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                            {formData.localizacao_atual}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="px-4 pb-4 flex gap-3">
+            {/* Botões */}
+            <div className="px-5 pb-5 flex gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setShowConfirmModal(false)}
                 disabled={loadingGPS}
-                className="flex-1 h-11"
+                className="flex-1 h-12 font-semibold"
                 style={{ borderColor: theme.cardBorder }}
               >
                 Cancelar
@@ -481,9 +515,19 @@ export default function AdicionarFilaCarousel({
                 type="button"
                 onClick={handleConfirmCheckIn}
                 disabled={loadingGPS}
-                className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-bold"
+                className="flex-1 h-12 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-bold text-base shadow-lg"
               >
-                Confirmar Check-in
+                {loadingGPS ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Aguarde...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Confirmar
+                  </>
+                )}
               </Button>
             </div>
           </div>
