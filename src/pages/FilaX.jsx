@@ -1175,9 +1175,6 @@ export default function FilaX() {
 
                                     await base44.entities.FilaVeiculo.update(item.id, updates);
 
-                                    // Atualizar estado local imediatamente
-                                    setFila(prev => prev.map(f => f.id === item.id ? {...f, status: statusNormalizado} : f));
-
                                     // Recalcular todas as posições FIFO
                                     await recalcularPosicoesFIFO(user.empresa_id);
 
