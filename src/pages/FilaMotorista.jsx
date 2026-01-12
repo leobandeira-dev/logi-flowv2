@@ -2,20 +2,11 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Truck, MapPin, RefreshCw, CheckCircle, Clock, Loader2 } from "lucide-react";
+import { Truck, CheckCircle, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import AdicionarFilaCarousel from "../components/fila/AdicionarFilaCarousel";
 
 export default function FilaMotorista() {
   const [loading, setLoading] = useState(true);
@@ -25,6 +16,14 @@ export default function FilaMotorista() {
   const [totalNaFila, setTotalNaFila] = useState(0);
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [etapa, setEtapa] = useState("telefone"); // "telefone" ou "formulario"
+  const [telefoneBusca, setTelefoneBusca] = useState("");
+  const [buscandoMotorista, setBuscandoMotorista] = useState(false);
+  const [feedbackTelefone, setFeedbackTelefone] = useState(null);
+  const [motoristaEncontrado, setMotoristaEncontrado] = useState(false);
+  const [preenchidoAutomatico, setPreenchidoAutomatico] = useState(false);
+  const [motoristas, setMotoristas] = useState([]);
+  const [veiculos, setVeiculos] = useState([]);
   
   const [formData, setFormData] = useState({
     empresa_id: "",
@@ -50,15 +49,15 @@ export default function FilaMotorista() {
       // Pegar empresa_id da URL
       const urlParams = new URLSearchParams(window.location.search);
       const empresaIdUrl = urlParams.get('empresa_id');
-      
+
       let empresaId = empresaIdUrl;
-      
+
       // Se não veio pela URL, buscar primeira empresa ativa
       if (!empresaId) {
         const empresas = await base44.entities.Empresa.filter({ status: "ativa" }, null, 1);
         empresaId = empresas[0]?.id;
       }
-      
+
       if (!empresaId) {
         toast.error("Nenhuma empresa encontrada");
         setLoading(false);
@@ -67,10 +66,17 @@ export default function FilaMotorista() {
 
       // Salvar empresa_id no estado
       setFormData(prev => ({ ...prev, empresa_id: empresaId }));
-      
-      // Buscar tipos de fila APENAS desta empresa
-      const tiposData = await base44.entities.TipoFilaVeiculo.filter({ empresa_id: empresaId, ativo: true }, "ordem");
+
+      // Buscar tipos de fila, motoristas e veículos APENAS desta empresa
+      const [tiposData, motoristasData, veiculosData] = await Promise.all([
+        base44.entities.TipoFilaVeiculo.filter({ empresa_id: empresaId, ativo: true }, "ordem"),
+        base44.entities.Motorista.filter({ status: "ativo" }),
+        base44.entities.Veiculo.filter({ status: "disponível" })
+      ]);
+
       setTiposFila(tiposData);
+      setMotoristas(motoristasData);
+      setVeiculos(veiculosData);
 
       // Verificar se já existe cadastro com este telefone no localStorage
       const telefoneSalvo = localStorage.getItem('fila_motorista_telefone');
@@ -119,27 +125,58 @@ export default function FilaMotorista() {
     }
   };
 
-  const handleConsultarTelefone = async (e) => {
-    e.preventDefault();
-    const telefoneLimpo = consultaTelefone.replace(/\D/g, '');
-    
-    if (telefoneLimpo.length !== 11) {
-      toast.error("Digite um telefone válido com DDD");
-      return;
-    }
-
-    setConsultando(true);
-    try {
-      await verificarCadastro(telefoneLimpo);
-      if (!submitted) {
-        toast.error("Nenhum cadastro encontrado com este telefone");
+  // Buscar motorista automaticamente ao completar telefone
+  useEffect(() => {
+    const verificarMotorista = async () => {
+      const telefoneLimpo = telefoneBusca.replace(/\D/g, '');
+      
+      if (telefoneLimpo.length !== 11) {
+        setFeedbackTelefone(null);
+        return;
       }
-    } catch (error) {
-      toast.error("Erro ao consultar");
-    } finally {
-      setConsultando(false);
-    }
-  };
+
+      setBuscandoMotorista(true);
+      try {
+        const motoristasEncontrados = motoristas.filter(m => 
+          m.celular?.replace(/\D/g, '') === telefoneLimpo
+        );
+
+        if (motoristasEncontrados.length > 0) {
+          const motorista = motoristasEncontrados[0];
+          const cavalo = veiculos.find(v => v.id === motorista.cavalo_id);
+          
+          setFormData(prev => ({
+            ...prev,
+            motorista_id: motorista.id,
+            motorista_nome: motorista.nome,
+            motorista_telefone: telefoneLimpo,
+            cavalo_id: motorista.cavalo_id || "",
+            cavalo_placa: cavalo?.placa || "",
+            tipo_veiculo: cavalo?.tipo || "",
+            tipo_carroceria: cavalo?.carroceria || ""
+          }));
+
+          setMotoristaEncontrado(true);
+          setPreenchidoAutomatico(true);
+          setFeedbackTelefone('encontrado');
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            motorista_telefone: telefoneLimpo
+          }));
+          setMotoristaEncontrado(false);
+          setPreenchidoAutomatico(false);
+          setFeedbackTelefone('novo');
+        }
+      } catch (error) {
+        console.error("Erro ao buscar motorista:", error);
+      } finally {
+        setBuscandoMotorista(false);
+      }
+    };
+
+    verificarMotorista();
+  }, [telefoneBusca, motoristas, veiculos]);
 
   const handleObterLocalizacao = () => {
     if (!navigator.geolocation) {
@@ -159,7 +196,15 @@ export default function FilaMotorista() {
           const data = await response.json();
           
           const endereco = data.display_name || `${latitude}, ${longitude}`;
-          setFormData(prev => ({ ...prev, localizacao_atual: endereco }));
+          const cidade = data.address?.city || data.address?.town || data.address?.municipality || "";
+          const estado = data.address?.state || "";
+          const cidadeUF = cidade && estado ? `${cidade}, ${estado}` : "";
+          
+          setFormData(prev => ({ 
+            ...prev, 
+            localizacao_atual: endereco,
+            cidade_uf: cidadeUF
+          }));
           toast.success("Localização obtida!");
         } catch (error) {
           setFormData(prev => ({ 
@@ -179,9 +224,7 @@ export default function FilaMotorista() {
     );
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!formData.motorista_nome || !formData.cavalo_placa || !formData.tipo_fila_id || !formData.motorista_telefone) {
       toast.error("Preencha nome, telefone, placa e tipo do motorista");
       return;
@@ -238,7 +281,6 @@ export default function FilaMotorista() {
       setMinhaFila(novoRegistro);
       setSubmitted(true);
       localStorage.setItem('fila_motorista_telefone', telefoneLimpo);
-      toast.success(`Cadastro realizado! Senha: ${senhaFila}`);
       
       // Contar total APENAS desta empresa
       const todasFilasAtual = await base44.entities.FilaVeiculo.filter({ 
@@ -420,6 +462,122 @@ export default function FilaMotorista() {
     );
   }
 
+  const theme = {
+    bg: '#f9fafb',
+    cardBg: '#ffffff',
+    cardBorder: '#e5e7eb',
+    text: '#111827',
+    textMuted: '#6b7280'
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4">
+      <div className="max-w-md mx-auto py-8">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Truck className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Check-in na Fila</h1>
+          <p className="text-gray-600">Entre na fila de veículos</p>
+        </div>
+
+        <Card className="shadow-xl">
+          <CardContent className="p-6">
+            {etapa === "telefone" ? (
+              <div className="space-y-6">
+                <div className="text-center mb-4">
+                  <p className="text-sm text-gray-600">
+                    Digite seu celular para continuar
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Telefone Celular</label>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    value={telefoneBusca}
+                    onChange={(e) => {
+                      const valor = e.target.value.replace(/\D/g, '');
+                      if (valor.length <= 11) {
+                        const formatado = valor.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+                        setTelefoneBusca(valor.length === 11 ? formatado : valor);
+                      }
+                    }}
+                    placeholder="(00) 00000-0000"
+                    maxLength={15}
+                    className="w-full text-lg h-14 text-center font-bold rounded-lg border border-gray-300 px-4"
+                    autoFocus
+                  />
+                  
+                  {buscandoMotorista && (
+                    <div className="mt-3 p-3 rounded-lg bg-gray-50 flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                      <p className="text-sm text-gray-600">Verificando cadastro...</p>
+                    </div>
+                  )}
+                  
+                  {!buscandoMotorista && feedbackTelefone === 'encontrado' && (
+                    <div className="mt-3 p-3 rounded-lg bg-green-50 border border-green-200">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <CheckCircle className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-green-700">Cadastro encontrado!</p>
+                          <p className="text-xs text-green-600">Seus dados foram carregados</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {!buscandoMotorista && feedbackTelefone === 'novo' && (
+                    <div className="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-blue-700">Novo cadastro</p>
+                          <p className="text-xs text-blue-600">Preencha os dados para continuar</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={() => setEtapa("formulario")}
+                  disabled={buscandoMotorista || telefoneBusca.replace(/\D/g, '').length !== 11}
+                  className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-lg font-bold"
+                >
+                  Continuar
+                </Button>
+              </div>
+            ) : (
+              <AdicionarFilaCarousel
+                formData={formData}
+                setFormData={setFormData}
+                tiposFila={tiposFila}
+                theme={theme}
+                loadingLocation={loadingLocation}
+                onObterLocalizacao={handleObterLocalizacao}
+                preenchidoAutomatico={preenchidoAutomatico}
+                motoristaEncontrado={motoristaEncontrado}
+                onSubmit={handleSubmit}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+/* OLD CODE BELOW - TO BE REMOVED
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4">
       <div className="max-w-2xl mx-auto py-8">
@@ -431,48 +589,12 @@ export default function FilaMotorista() {
           <p className="text-gray-600">Cadastre-se ou consulte sua posição</p>
         </div>
 
-        {/* Consultar por Telefone */}
-        <Card className="shadow-xl mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Consultar Cadastro</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <form onSubmit={handleConsultarTelefone} className="flex gap-3">
-              <div className="flex-1">
-                <Input
-                  type="tel"
-                  inputMode="numeric"
-                  value={consultaTelefone}
-                  onChange={(e) => {
-                    const valor = e.target.value.replace(/\D/g, '');
-                    if (valor.length <= 11) {
-                      const formatado = valor.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
-                      setConsultaTelefone(valor.length === 11 ? formatado : valor);
-                    }
-                  }}
-                  placeholder="(00) 00000-0000"
-                  maxLength={15}
-                  className="text-lg"
-                />
-              </div>
-              <Button type="submit" disabled={consultando} className="bg-green-600 hover:bg-green-700">
-                {consultando ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  "Consultar"
-                )}
-              </Button>
-            </form>
-            <p className="text-xs text-gray-500 mt-2">Digite seu celular para verificar sua posição na fila</p>
-          </CardContent>
-        </Card>
-
         <Card className="shadow-xl">
           <CardHeader>
             <CardTitle className="text-lg">Novo Cadastro</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form className="space-y-4">
               {/* Dados do Motorista */}
               <div>
                 <Label className="text-gray-900">Nome Completo *</Label>

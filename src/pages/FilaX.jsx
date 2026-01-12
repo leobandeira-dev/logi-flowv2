@@ -59,6 +59,8 @@ export default function FilaX() {
   const [preenchidoAutomatico, setPreenchidoAutomatico] = useState(false);
   const [motoristaEncontrado, setMotoristaEncontrado] = useState(false);
   const [feedbackTelefone, setFeedbackTelefone] = useState(null); // null, 'encontrado', 'novo'
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [filaCriada, setFilaCriada] = useState(null);
 
   const [formData, setFormData] = useState({
     motorista_id: "",
