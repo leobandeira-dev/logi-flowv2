@@ -1951,16 +1951,8 @@ export default function FilaX() {
 
                   return (
                     <tr key={ordem.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800" style={{ borderColor: theme.cardBorder }}>
-                      <td className="px-3 py-3">
-                        {ordem.numero_carga ? (
-                          <div className="text-sm font-mono font-semibold leading-tight" style={{ color: theme.text }}>
-                            {ordem.numero_carga.split('-').map((parte, idx) => (
-                              <div key={idx}>{parte}{idx < ordem.numero_carga.split('-').length - 1 ? '-' : ''}</div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm" style={{ color: theme.textMuted }}>-</p>
-                        )}
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <p className="text-sm font-mono font-semibold" style={{ color: theme.text }}>{ordem.numero_carga || "-"}</p>
                       </td>
                       <td className="px-3 py-3">
                         <p className="text-sm" style={{ color: theme.text }}>
