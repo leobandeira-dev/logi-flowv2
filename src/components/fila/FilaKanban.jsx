@@ -19,7 +19,7 @@ export default function FilaKanban({
 }) {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statusFila.map(statusObj => {
           const veiculosDoStatus = fila.filter(v => v.status === statusObj.nome.toLowerCase().replace(/ /g, '_'));
           
