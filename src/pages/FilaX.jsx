@@ -950,7 +950,7 @@ export default function FilaX() {
                           size="sm"
                           variant="outline"
                           onClick={async () => {
-                            if (!confirm(`Remover ${veiculosDoStatus.length} veículo(s) da fila?`)) return;
+                            if (!confirm(`Arquivar ${veiculosDoStatus.length} veículo(s) do status "${statusObj.nome}"?`)) return;
                             try {
                               const user = await base44.auth.me();
                               for (const v of veiculosDoStatus) {
@@ -960,16 +960,16 @@ export default function FilaX() {
                               // Recalcular posições FIFO
                               await recalcularPosicoesFIFO(user.empresa_id);
 
-                              toast.success(`${veiculosDoStatus.length} veículo(s) removido(s)!`);
+                              toast.success(`${veiculosDoStatus.length} veículo(s) arquivado(s)!`);
                               await loadData();
                             } catch (error) {
-                              toast.error("Erro ao remover veículos");
+                              toast.error("Erro ao arquivar veículos");
                             }
                           }}
                           className="text-xs h-7"
                         >
                           <Trash2 className="w-3 h-3 mr-1" />
-                          Limpar ({veiculosDoStatus.length})
+                          Arquivar ({veiculosDoStatus.length})
                         </Button>
                       )}
                     </CardTitle>
