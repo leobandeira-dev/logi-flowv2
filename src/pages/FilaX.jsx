@@ -133,15 +133,17 @@ export default function FilaX() {
     setLoading(true);
     try {
       const user = await base44.auth.me();
-      const [filaData, tiposData, statusData, motoristasData, veiculosData, ordensData, historicoFilaData] = await Promise.all([
+      const [filaData, tiposData, statusData, motoristasData, veiculosData, ordensData, allFilaData] = await Promise.all([
         base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id, data_saida_fila: null }, "posicao_fila"),
         base44.entities.TipoFilaVeiculo.filter({ empresa_id: user.empresa_id, ativo: true }, "ordem"),
         base44.entities.StatusFilaVeiculo.filter({ empresa_id: user.empresa_id, ativo: true }, "ordem"),
         base44.entities.Motorista.list(),
         base44.entities.Veiculo.filter({ tipo: "cavalo" }),
         base44.entities.OrdemDeCarregamento.filter({ empresa_id: user.empresa_id }, "-created_date", 500),
-        base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id, data_saida_fila: { "$ne": null } }, "-data_saida_fila", 500)
+        base44.entities.FilaVeiculo.list(null, 1000)
       ]);
+
+      const historicoFilaData = allFilaData.filter(item => item.empresa_id === user.empresa_id && item.data_saida_fila);
 
       setFila(filaData);
       setTiposFila(tiposData);
