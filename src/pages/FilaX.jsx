@@ -1007,16 +1007,26 @@ export default function FilaX() {
                                 </div>
                                 <div>
                                   <p className="text-[10px]" style={{ color: theme.textMuted }}>Entrada</p>
-                                  <p style={{ color: theme.text }}>
+                                  <p className="text-xs" style={{ color: theme.text }}>
                                     {item.data_entrada_fila ? format(new Date(item.data_entrada_fila), "dd/MM HH:mm", { locale: ptBR }) : "-"}
                                   </p>
+                                  {item.data_saida_fila && (
+                                    <>
+                                      <p className="text-[10px] mt-1" style={{ color: theme.textMuted }}>Saída</p>
+                                      <p className="text-xs text-green-600 dark:text-green-400">
+                                        {format(new Date(item.data_saida_fila), "dd/MM HH:mm", { locale: ptBR })}
+                                      </p>
+                                    </>
+                                  )}
                                 </div>
                                 <div>
-                                  <p className="text-[10px]" style={{ color: theme.textMuted }}>Tempo na Fila</p>
+                                  <p className="text-[10px]" style={{ color: theme.textMuted }}>
+                                    {item.data_saida_fila ? "Tempo Total" : "Tempo na Fila"}
+                                  </p>
                                   <div className="flex items-center gap-1">
-                                    <Clock className="w-3 h-3 text-orange-600 flex-shrink-0" />
-                                    <span className="text-xs font-semibold text-orange-600">
-                                      {calcularTempoNaFila(item.data_entrada_fila)}
+                                    <Clock className={`w-3 h-3 flex-shrink-0 ${item.data_saida_fila ? 'text-green-600' : 'text-orange-600'}`} />
+                                    <span className={`text-xs font-semibold ${item.data_saida_fila ? 'text-green-600 dark:text-green-400' : 'text-orange-600'}`}>
+                                      {calcularTempoNaFila(item.data_entrada_fila, item.data_saida_fila)}
                                     </span>
                                   </div>
                                 </div>
@@ -1347,15 +1357,22 @@ export default function FilaX() {
                             )}
                           </td>
                           <td className="p-2">
-                            <p className="text-xs truncate" style={{ color: theme.text }}>
-                              {item.data_entrada_fila ? format(new Date(item.data_entrada_fila), "dd/MM HH:mm", { locale: ptBR }) : "-"}
-                            </p>
+                            <div className="text-xs">
+                              <p style={{ color: theme.text }}>
+                                {item.data_entrada_fila ? format(new Date(item.data_entrada_fila), "dd/MM HH:mm", { locale: ptBR }) : "-"}
+                              </p>
+                              {item.data_saida_fila && (
+                                <p className="text-green-600 dark:text-green-400 mt-0.5">
+                                  Saída: {format(new Date(item.data_saida_fila), "dd/MM HH:mm", { locale: ptBR })}
+                                </p>
+                              )}
+                            </div>
                           </td>
                           <td className="p-2">
                             <div className="flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-orange-600 flex-shrink-0" />
-                              <span className="text-xs font-semibold text-orange-600 truncate">
-                                {calcularTempoNaFila(item.data_entrada_fila)}
+                              <Clock className={`w-3 h-3 flex-shrink-0 ${item.data_saida_fila ? 'text-green-600' : 'text-orange-600'}`} />
+                              <span className={`text-xs font-semibold truncate ${item.data_saida_fila ? 'text-green-600 dark:text-green-400' : 'text-orange-600'}`}>
+                                {calcularTempoNaFila(item.data_entrada_fila, item.data_saida_fila)}
                               </span>
                             </div>
                           </td>
