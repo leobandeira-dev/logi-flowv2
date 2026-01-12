@@ -421,9 +421,9 @@ export default function AdicionarFilaCarousel({
 
       {/* Modal de Confirmação */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div 
-            className="rounded-xl shadow-2xl w-full max-w-sm"
+            className="rounded-xl shadow-2xl w-full max-w-md my-8"
             style={{ backgroundColor: theme.cardBg }}
           >
             <div className="bg-blue-600 text-white px-6 py-4 rounded-t-xl">
@@ -432,46 +432,46 @@ export default function AdicionarFilaCarousel({
               </h3>
             </div>
 
-            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border-l-4 border-blue-600">
-                <p className="text-xs font-medium mb-1 text-blue-800 dark:text-blue-300">Nome do Motorista</p>
-                <p className="text-lg font-bold" style={{ color: theme.text }}>{formData.motorista_nome}</p>
+            <div className="p-4 space-y-3">
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border-l-4 border-blue-600">
+                <p className="text-[10px] font-medium mb-1 text-blue-800 dark:text-blue-300 uppercase">Nome do Motorista</p>
+                <p className="text-base font-bold" style={{ color: theme.text }}>{formData.motorista_nome}</p>
               </div>
 
-              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border-l-4 border-green-600">
-                <p className="text-xs font-medium mb-1 text-green-800 dark:text-green-300">Placa do Cavalo</p>
-                <p className="text-2xl font-bold font-mono tracking-wider" style={{ color: theme.text }}>{formData.cavalo_placa}</p>
+              <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border-l-4 border-green-600">
+                <p className="text-[10px] font-medium mb-1 text-green-800 dark:text-green-300 uppercase">Placa do Cavalo</p>
+                <p className="text-xl font-bold font-mono tracking-wider" style={{ color: theme.text }}>{formData.cavalo_placa}</p>
               </div>
 
-              <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border-l-4 border-amber-600">
-                <p className="text-xs font-medium mb-1 text-amber-800 dark:text-amber-300">Cidade e UF</p>
+              <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border-l-4 border-amber-600">
+                <p className="text-[10px] font-medium mb-1 text-amber-800 dark:text-amber-300 uppercase">Cidade e UF</p>
                 {loadingGPS ? (
                   <div className="flex items-center gap-2">
                     <RefreshCw className="w-4 h-4 animate-spin text-amber-600" />
                     <p className="text-sm" style={{ color: theme.textMuted }}>Obtendo localização...</p>
                   </div>
                 ) : (
-                  <p className="text-lg font-bold" style={{ color: theme.text }}>
+                  <p className="text-base font-bold" style={{ color: theme.text }}>
                     {formData.cidade_uf || "Não informada"}
                   </p>
                 )}
               </div>
 
-              <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg">
+              <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border-l-4 border-gray-400">
                 <p className="text-[10px] font-semibold mb-1 uppercase tracking-wide" style={{ color: theme.textMuted }}>Endereço Completo</p>
-                <p className="text-xs leading-relaxed" style={{ color: theme.text }}>
+                <p className="text-xs leading-relaxed break-words" style={{ color: theme.text }}>
                   {formData.localizacao_atual || "Localização não informada"}
                 </p>
               </div>
             </div>
 
-            <div className="px-6 pb-6 flex gap-3">
+            <div className="px-4 pb-4 flex gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setShowConfirmModal(false)}
                 disabled={loadingGPS}
-                className="flex-1 h-12"
+                className="flex-1 h-11"
                 style={{ borderColor: theme.cardBorder }}
               >
                 Cancelar
@@ -480,7 +480,7 @@ export default function AdicionarFilaCarousel({
                 type="button"
                 onClick={handleConfirmCheckIn}
                 disabled={loadingGPS}
-                className="flex-1 h-12 bg-green-600 hover:bg-green-700 text-white font-bold"
+                className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-bold"
               >
                 Confirmar Check-in
               </Button>
