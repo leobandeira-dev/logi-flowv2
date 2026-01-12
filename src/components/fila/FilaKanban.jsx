@@ -52,7 +52,7 @@ export default function FilaKanban({
                 </div>
               </div>
 
-              <Droppable droppableId={statusObj.id}>
+              <Droppable droppableId={statusObj.id} isDropDisabled={statusObj.remove_da_fila}>
                 {(provided, snapshot) => (
                   <div
                     ref={provided.innerRef}
