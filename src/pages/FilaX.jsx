@@ -149,6 +149,7 @@ export default function FilaX() {
       setMotoristas(motoristasData);
       setVeiculos(veiculosData);
       setOrdensHistorico(ordensData);
+      console.log("DEBUG: historicoFilaData length:", historicoFilaData?.length, historicoFilaData);
       setHistoricoFila(historicoFilaData);
 
       // Se não há tipos, criar os padrões
