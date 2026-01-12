@@ -1094,6 +1094,7 @@ export default function FilaX() {
                         <thead>
                           <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
                             <th className="text-left p-2 text-xs font-semibold w-8" style={{ color: theme.textMuted }}></th>
+                            <th className="text-left p-2 text-xs font-semibold w-12" style={{ color: theme.textMuted }}>#</th>
                             <th className="text-left p-2 text-xs font-semibold w-20" style={{ color: theme.textMuted }}>Tipo</th>
                             <th className="text-left p-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Motorista</th>
                             <th className="text-left p-2 text-xs font-semibold w-28" style={{ color: theme.textMuted }}>CPF</th>
@@ -1138,6 +1139,13 @@ export default function FilaX() {
                                       >
                                         <td className="p-2" {...provided.dragHandleProps}>
                                           <GripVertical className="w-4 h-4 text-gray-400 cursor-grab active:cursor-grabbing" />
+                                        </td>
+                                        <td className="p-2">
+                                          <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                                            <span className="font-bold text-xs text-blue-700 dark:text-blue-300">
+                                              {item.posicao_fila || index + 1}
+                                            </span>
+                                          </div>
                                         </td>
                           <td className="p-3">
                             {editingCell?.itemId === item.id && editingCell?.field === 'status' ? (
@@ -1436,7 +1444,7 @@ export default function FilaX() {
                               {provided.placeholder}
                               {veiculosDoStatus.length === 0 && (
                                 <tr>
-                                  <td colSpan="12" className="text-center py-8">
+                                  <td colSpan="13" className="text-center py-8">
                                     <p className="text-sm" style={{ color: theme.textMuted }}>Nenhum veículo neste status</p>
                                   </td>
                                 </tr>
