@@ -133,8 +133,8 @@ export default function FilaX() {
     setLoading(true);
     try {
       const user = await base44.auth.me();
-      const [filaData, tiposData, statusData, motoristasData, veiculosData, ordensData, historicoFilaData] = await Promise.all([
-        base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id, data_saida_fila: null }, "posicao_fila"),
+      const [todasFilasData, tiposData, statusData, motoristasData, veiculosData, ordensData, historicoFilaData] = await Promise.all([
+        base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id }, "posicao_fila"),
         base44.entities.TipoFilaVeiculo.filter({ empresa_id: user.empresa_id, ativo: true }, "ordem"),
         base44.entities.StatusFilaVeiculo.filter({ empresa_id: user.empresa_id, ativo: true }, "ordem"),
         base44.entities.Motorista.list(),
@@ -142,6 +142,9 @@ export default function FilaX() {
         base44.entities.OrdemDeCarregamento.filter({ empresa_id: user.empresa_id }, "-created_date", 500),
         base44.entities.FilaVeiculo.filter({ empresa_id: user.empresa_id }, "-data_saida_fila", 500).then(items => items.filter(i => i.data_saida_fila))
       ]);
+
+      // Separar fila ativa (sem data_saida_fila) do histórico
+      const filaData = todasFilasData.filter(item => !item.data_saida_fila);
 
       setFila(filaData);
       setTiposFila(tiposData);
