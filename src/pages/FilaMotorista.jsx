@@ -531,6 +531,26 @@ export default function FilaMotorista() {
               </CardContent>
             </Card>
           )}
+
+          {/* Informações Importantes */}
+          <Card className="shadow-xl bg-amber-50 border-2 border-amber-200">
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-amber-900 mb-2">Quando há carga disponível</h3>
+                  <p className="text-sm text-amber-800">
+                    Quando houver carga disponível um de nossos operadores irá entrar em contato com você.
+                  </p>
+                </div>
+                <div className="border-t border-amber-200 pt-4">
+                  <h3 className="font-semibold text-amber-900 mb-2">Sobre sua posição</h3>
+                  <p className="text-sm text-amber-800">
+                    Sua posição é uma estimativa. A sequencia de carregamento pode ser alterada de acordo com: Tipo de veiculo, carga, restrições da carga e logística interna da empresa.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
