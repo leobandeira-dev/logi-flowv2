@@ -299,7 +299,9 @@ export default function FilaX() {
   };
 
   const handleAdicionarFila = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
 
     if (!formData.motorista_nome || !formData.cavalo_placa || !formData.tipo_fila_id || !formData.motorista_telefone) {
       toast.error("Preencha todos os campos obrigatórios");
