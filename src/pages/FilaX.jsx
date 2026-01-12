@@ -966,7 +966,11 @@ export default function FilaX() {
            <DragDropContext onDragEnd={handleDragEnd}>
              {statusFila.map(statusObj => {
                const statusNormalizado = normalizarStatus(statusObj.nome);
-               const veiculosDoStatus = fila.filter(v => v.status === statusNormalizado);
+               const veiculosDoStatus = fila.filter(v => {
+                 // Normalizar o status do veículo para comparação correta
+                 const statusVeiculo = normalizarStatus(v.status || '');
+                 return statusVeiculo === statusNormalizado;
+               });
 
               return (
                 <Card key={statusObj.id} style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
