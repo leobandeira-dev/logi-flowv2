@@ -134,7 +134,7 @@ export default function AdicionarFilaCarousel({
           <div>
             <Label style={{ color: theme.text }}>Tipo de Veículo *</Label>
             <Select
-              value={formData.tipo_veiculo}
+              value={formData.tipo_veiculo || undefined}
               onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_veiculo: value }))}
             >
               <SelectTrigger 
@@ -147,7 +147,7 @@ export default function AdicionarFilaCarousel({
                 }}
               >
                 <div className="flex items-center gap-2">
-                  <Truck className="w-5 h-5 text-green-600" />
+                  <Truck className={`w-5 h-5 ${formData.tipo_veiculo ? 'text-green-600' : 'text-gray-400'}`} />
                   <SelectValue placeholder="Selecione..." />
                 </div>
               </SelectTrigger>
@@ -171,7 +171,7 @@ export default function AdicionarFilaCarousel({
           <div>
             <Label style={{ color: theme.text }}>Tipo de Carroceria *</Label>
             <Select
-              value={formData.tipo_carroceria}
+              value={formData.tipo_carroceria || undefined}
               onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_carroceria: value }))}
             >
               <SelectTrigger 
@@ -184,7 +184,7 @@ export default function AdicionarFilaCarousel({
                 }}
               >
                 <div className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-amber-600" />
+                  <Package className={`w-5 h-5 ${formData.tipo_carroceria ? 'text-amber-600' : 'text-gray-400'}`} />
                   <SelectValue placeholder="Selecione..." />
                 </div>
               </SelectTrigger>
