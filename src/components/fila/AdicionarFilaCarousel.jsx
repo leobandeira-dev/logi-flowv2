@@ -482,6 +482,30 @@ Retorne JSON com:
   };
 
   const handleNextClick = async () => {
+    // Se estiver no passo do comprovante, bloquear se não for válido
+    if (currentStep.field === 'comprovante_descarga_url') {
+      if (!formData.comprovante_descarga_url) {
+        setShowError(true);
+        return;
+      }
+      if (validandoComprovante) {
+        toast.error("Aguarde a validação do comprovante");
+        return;
+      }
+      if (comprovanteValidado && !comprovanteValidado.valido) {
+        toast.error("Envie um comprovante válido para continuar");
+        setShowError(true);
+        return;
+      }
+      if (!comprovanteValidado) {
+        toast.error("Aguarde a validação do comprovante");
+        return;
+      }
+      setShowError(false);
+      setStep(step + 1);
+      return;
+    }
+
     // Se estiver no passo de localização
     if (currentStep.field === 'cidade_uf') {
       // Se já tem localização, avançar
