@@ -103,31 +103,36 @@ export default function FilaMotorista() {
       const telefoneLimpo = telefone.replace(/\D/g, '');
       const empresa = empresaId || formData.empresa_id;
 
-      // Filtrar por telefone E empresa_id para garantir fila exclusiva por empresa
-      const filas = await base44.entities.FilaVeiculo.filter({ 
+      // Filtrar por telefone E empresa_id E SEM data_saida_fila (somente ativos na fila)
+      const todasFilas = await base44.entities.FilaVeiculo.filter({ 
         motorista_telefone: telefoneLimpo,
         empresa_id: empresa 
-      }, "-data_entrada_fila", 1);
+      }, "-data_entrada_fila");
 
-      if (filas.length > 0) {
-        setMinhaFila(filas[0]);
+      // Filtrar apenas marcações SEM data de saída (ainda na fila)
+      const filasAtivas = todasFilas.filter(f => !f.data_saida_fila);
 
-        // Contar quantos veículos estão NA FRENTE (apenas status aguardando, com posição menor)
-        const todasFilas = await base44.entities.FilaVeiculo.filter({ 
+      if (filasAtivas.length > 0) {
+        setMinhaFila(filasAtivas[0]);
+
+        // Contar quantos veículos estão NA FRENTE (apenas ativos na fila, com posição menor)
+        const todasFilasEmpresa = await base44.entities.FilaVeiculo.filter({ 
           empresa_id: empresa 
         });
 
-        const naFrente = todasFilas.filter(f => 
-          f.posicao_fila && filas[0].posicao_fila && 
-          f.posicao_fila < filas[0].posicao_fila &&
+        // Filtrar apenas veículos ATIVOS (sem data_saida_fila) na frente
+        const naFrente = todasFilasEmpresa.filter(f => 
+          !f.data_saida_fila &&
+          f.posicao_fila && filasAtivas[0].posicao_fila && 
+          f.posicao_fila < filasAtivas[0].posicao_fila &&
           f.status === 'aguardando'
         ).length;
 
         setTotalNaFila(naFrente);
         
         // Buscar ordem vinculada se houver senha
-        if (filas[0].senha_fila) {
-          const ordens = await base44.entities.OrdemDeCarregamento.filter({ senha_fila: filas[0].senha_fila }, null, 1);
+        if (filasAtivas[0].senha_fila) {
+          const ordens = await base44.entities.OrdemDeCarregamento.filter({ senha_fila: filasAtivas[0].senha_fila }, null, 1);
           if (ordens.length > 0) {
             localStorage.setItem('fila_ordem_vinculada', JSON.stringify(ordens[0]));
           }
@@ -261,14 +266,16 @@ export default function FilaMotorista() {
     }
 
     try {
-      // Verificar se já existe cadastro com este telefone NESTA empresa
-      const existente = await base44.entities.FilaVeiculo.filter({ 
+      // Verificar se já existe cadastro ATIVO (sem data_saida_fila) com este telefone NESTA empresa
+      const existentes = await base44.entities.FilaVeiculo.filter({ 
         motorista_telefone: telefoneLimpo,
         empresa_id: formData.empresa_id 
       });
-      if (existente.length > 0) {
+      const existenteAtivo = existentes.filter(e => !e.data_saida_fila);
+      
+      if (existenteAtivo.length > 0) {
         toast.error("Este telefone já está cadastrado na fila!");
-        setMinhaFila(existente[0]);
+        setMinhaFila(existenteAtivo[0]);
         setSubmitted(true);
         localStorage.setItem('fila_motorista_telefone', telefoneLimpo);
         return;
