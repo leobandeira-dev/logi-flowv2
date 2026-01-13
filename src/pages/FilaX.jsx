@@ -969,6 +969,13 @@ export default function FilaX() {
                const veiculosDoStatus = fila.filter(v => {
                  // Normalizar o status do veículo para comparação correta
                  const statusVeiculo = normalizarStatus(v.status || '');
+                 console.log('Comparando:', { 
+                   veiculo: v.motorista_nome, 
+                   statusOriginal: v.status, 
+                   statusNormalizado: statusVeiculo, 
+                   statusEsperado: statusNormalizado,
+                   match: statusVeiculo === statusNormalizado 
+                 });
                  return statusVeiculo === statusNormalizado;
                });
 
