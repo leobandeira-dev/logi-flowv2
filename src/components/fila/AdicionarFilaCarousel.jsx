@@ -10,7 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, MapPin, RefreshCw, User, Truck, Package, CheckCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, RefreshCw, User, Truck, Package, CheckCircle, Upload, AlertCircle, FileText } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 
 export default function AdicionarFilaCarousel({ 
   formData, 
@@ -25,6 +27,9 @@ export default function AdicionarFilaCarousel({
 }) {
   const [step, setStep] = useState(0);
   const [showError, setShowError] = useState(false);
+  const [uploadingComprovante, setUploadingComprovante] = useState(false);
+  const [validandoComprovante, setValidandoComprovante] = useState(false);
+  const [comprovanteValidado, setComprovanteValidado] = useState(null);
 
   const steps = [
     {
@@ -208,6 +213,172 @@ export default function AdicionarFilaCarousel({
       )
     },
     {
+      title: "Comprovante de Descarga",
+      field: "comprovante_descarga_url",
+      render: () => (
+        <div className="space-y-4">
+          <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
+            <p className="text-xs text-amber-800 font-semibold mb-2">
+              📸 Tire uma foto do comprovante de descarga
+            </p>
+            <p className="text-xs text-amber-700">
+              • Deve conter data legível<br/>
+              • Deve ser um comprovante de descarga válido
+            </p>
+          </div>
+
+          {formData.comprovante_descarga_url ? (
+            <div className="space-y-3">
+              <div className="relative rounded-lg overflow-hidden border-2 border-green-500">
+                <img 
+                  src={formData.comprovante_descarga_url} 
+                  alt="Comprovante" 
+                  className="w-full h-48 object-cover"
+                />
+                <button
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, comprovante_descarga_url: "", comprovante_validacao: "" }));
+                    setComprovanteValidado(null);
+                  }}
+                  className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full hover:bg-red-700"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {validandoComprovante ? (
+                <div className="flex items-center justify-center gap-2 p-4 bg-blue-50 rounded-lg">
+                  <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
+                  <p className="text-sm text-blue-700">Validando comprovante...</p>
+                </div>
+              ) : comprovanteValidado ? (
+                <div className={`p-4 rounded-lg border-2 ${
+                  comprovanteValidado.valido 
+                    ? 'bg-green-50 border-green-500' 
+                    : 'bg-red-50 border-red-500'
+                }`}>
+                  <div className="flex items-start gap-2">
+                    {comprovanteValidado.valido ? (
+                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    )}
+                    <div>
+                      <p className={`text-sm font-semibold ${
+                        comprovanteValidado.valido ? 'text-green-700' : 'text-red-700'
+                      }`}>
+                        {comprovanteValidado.valido ? '✅ Comprovante válido!' : '❌ Comprovante inválido'}
+                      </p>
+                      <p className={`text-xs mt-1 ${
+                        comprovanteValidado.valido ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {comprovanteValidado.mensagem}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+
+                  setUploadingComprovante(true);
+                  try {
+                    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                    setFormData(prev => ({ ...prev, comprovante_descarga_url: file_url }));
+                    
+                    // Validar com IA
+                    setValidandoComprovante(true);
+                    try {
+                      const validacao = await base44.integrations.Core.InvokeLLM({
+                        prompt: `Analise esta imagem de comprovante de descarga. Você deve verificar:
+1. Se a imagem está legível e de boa qualidade
+2. Se contém uma data visível
+3. Se é realmente um comprovante de descarga ou documento de entrega
+
+Retorne JSON com: 
+- valido (boolean): true se atende todos os critérios
+- mensagem (string): explicação curta do resultado
+- data_encontrada (string): data encontrada no documento, se houver`,
+                        file_urls: [file_url],
+                        response_json_schema: {
+                          type: "object",
+                          properties: {
+                            valido: { type: "boolean" },
+                            mensagem: { type: "string" },
+                            data_encontrada: { type: "string" }
+                          }
+                        }
+                      });
+
+                      setComprovanteValidado(validacao);
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        comprovante_validacao: JSON.stringify(validacao),
+                        comprovante_data_descarga: validacao.data_encontrada || ""
+                      }));
+
+                      if (!validacao.valido) {
+                        toast.error("Comprovante inválido. Tire uma foto melhor.");
+                      } else {
+                        toast.success("Comprovante validado com sucesso!");
+                      }
+                    } catch (err) {
+                      console.error("Erro ao validar comprovante:", err);
+                      toast.error("Erro ao validar comprovante");
+                    } finally {
+                      setValidandoComprovante(false);
+                    }
+                  } catch (error) {
+                    console.error("Erro ao fazer upload:", error);
+                    toast.error("Erro ao enviar foto");
+                  } finally {
+                    setUploadingComprovante(false);
+                  }
+                }}
+                id="comprovante-upload"
+                className="hidden"
+              />
+              <label
+                htmlFor="comprovante-upload"
+                className={`flex flex-col items-center justify-center h-48 border-2 border-dashed rounded-lg cursor-pointer transition-all ${
+                  uploadingComprovante ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                }`}
+                style={{ borderColor: showError && !formData.comprovante_descarga_url ? '#ef4444' : '#3b82f6' }}
+              >
+                {uploadingComprovante ? (
+                  <>
+                    <RefreshCw className="w-12 h-12 text-blue-600 animate-spin mb-2" />
+                    <p className="text-sm text-blue-600">Enviando foto...</p>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-12 h-12 text-blue-600 mb-2" />
+                    <p className="text-sm font-semibold text-blue-600">Toque para tirar foto</p>
+                    <p className="text-xs text-gray-500 mt-1">Comprovante de descarga</p>
+                  </>
+                )}
+              </label>
+              {showError && !formData.comprovante_descarga_url && (
+                <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
+                  <span>⚠️</span> Comprovante obrigatório
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
       title: "Localização Atual",
       field: "cidade_uf",
       render: () => (
@@ -287,7 +458,7 @@ export default function AdicionarFilaCarousel({
 
   const currentStep = steps[step];
   const isLastStep = step === steps.length - 1;
-  const isRequired = ['motorista_nome', 'cavalo_placa', 'tipo_fila_id', 'cidade_uf'].includes(currentStep.field);
+  const isRequired = ['motorista_nome', 'cavalo_placa', 'tipo_fila_id', 'comprovante_descarga_url', 'cidade_uf'].includes(currentStep.field);
   
   const validateCurrentStep = () => {
     if (currentStep.field === 'cavalo_placa') {

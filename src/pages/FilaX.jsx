@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Truck, Plus, RefreshCw, Settings, Search, X, Trash2, Edit, Clock, LayoutGrid, Table, GripVertical, MapPin, Share2, Copy, Loader2 } from "lucide-react";
+import { Truck, Plus, RefreshCw, Settings, Search, X, Trash2, Edit, Clock, LayoutGrid, Table, GripVertical, MapPin, Share2, Copy, Loader2, FileText, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -1206,6 +1206,7 @@ export default function FilaX() {
                             <th className="text-left p-2 text-xs font-semibold w-24" style={{ color: theme.textMuted }}>Impl.</th>
                             <th className="text-left p-2 text-xs font-semibold w-32" style={{ color: theme.textMuted }}>Tipo Veíc.</th>
                             <th className="text-left p-2 text-xs font-semibold w-20" style={{ color: theme.textMuted }}>Local</th>
+                            <th className="text-left p-2 text-xs font-semibold w-20" style={{ color: theme.textMuted }}>Comprov.</th>
                             <th className="text-left p-2 text-xs font-semibold w-28" style={{ color: theme.textMuted }}>Data</th>
                             <th className="text-left p-2 text-xs font-semibold w-20" style={{ color: theme.textMuted }}>Tempo</th>
                             <th className="text-left p-2 text-xs font-semibold w-12" style={{ color: theme.textMuted }}></th>
@@ -1505,6 +1506,31 @@ export default function FilaX() {
                               <p className="text-xs truncate" style={{ color: theme.text }} title={item.localizacao_atual}>
                                 {item.cidade_uf || abreviarLocalizacao(item.localizacao_atual)}
                               </p>
+                            )}
+                          </td>
+                          <td className="p-2">
+                            {item.comprovante_descarga_url ? (
+                              <button
+                                onClick={() => window.open(item.comprovante_descarga_url, '_blank')}
+                                className="flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-2 py-1 rounded"
+                                title="Ver comprovante"
+                              >
+                                <FileText className="w-4 h-4" />
+                                {(() => {
+                                  try {
+                                    const val = JSON.parse(item.comprovante_validacao || '{}');
+                                    return val.valido ? (
+                                      <CheckCircle className="w-3 h-3 text-green-600" />
+                                    ) : (
+                                      <AlertCircle className="w-3 h-3 text-red-600" />
+                                    );
+                                  } catch {
+                                    return null;
+                                  }
+                                })()}
+                              </button>
+                            ) : (
+                              <span className="text-xs" style={{ color: theme.textMuted }}>-</span>
                             )}
                           </td>
                           <td className="p-2">
