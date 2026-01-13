@@ -573,6 +573,15 @@ export default function FilaMotorista() {
                         data_saida_fila: new Date().toISOString()
                       });
 
+                      // Recalcular posições FIFO de todos os veículos restantes
+                      try {
+                        await base44.functions.invoke('recalcularPosicoesFilaFIFO', { 
+                          empresa_id: minhaFila.empresa_id 
+                        });
+                      } catch (err) {
+                        console.log("Aviso: erro ao recalcular posições (não crítico):", err);
+                      }
+
                       toast.success("Você saiu da fila com sucesso!");
                       
                       // Limpar localStorage e voltar para tela inicial
