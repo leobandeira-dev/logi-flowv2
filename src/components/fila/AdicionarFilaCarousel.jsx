@@ -439,41 +439,7 @@ Retorne JSON com:
         </div>
       )
     },
-    {
-      title: "Confirmar Check-in",
-      field: "confirmacao",
-      render: () => (
-        <div className="space-y-4">
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border-2 border-blue-200 dark:border-blue-700">
-            <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-3">
-              Confirme seus dados para check-in:
-            </p>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-xs text-gray-600 dark:text-gray-400">Motorista:</span>
-                <span className="text-xs font-semibold" style={{ color: theme.text }}>{formData.motorista_nome}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-gray-600 dark:text-gray-400">Placa:</span>
-                <span className="text-xs font-mono font-bold" style={{ color: theme.text }}>{formData.cavalo_placa}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-gray-600 dark:text-gray-400">Tipo Veículo:</span>
-                <span className="text-xs font-semibold" style={{ color: theme.text }}>{formData.tipo_veiculo}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-gray-600 dark:text-gray-400">Carroceria:</span>
-                <span className="text-xs font-semibold" style={{ color: theme.text }}>{formData.tipo_carroceria}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-gray-600 dark:text-gray-400">Localização:</span>
-                <span className="text-xs font-semibold text-right" style={{ color: theme.text }}>{formData.cidade_uf || "Não informada"}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    }
+
   ];
 
   const currentStep = steps[step];
@@ -528,10 +494,12 @@ Retorne JSON com:
 
     // Se estiver no passo de localização
     if (currentStep.field === 'cidade_uf') {
-      // Se já tem localização, avançar
+      // Se já tem localização, fazer check-in diretamente
       if (formData.cidade_uf) {
         setShowError(false);
-        setStep(step + 1);
+        if (onSubmit) {
+          onSubmit();
+        }
         return;
       }
       // Senão, tentar obter localização
@@ -562,20 +530,18 @@ Retorne JSON com:
   const handleObterLocalizacao = async () => {
     const success = await onObterLocalizacao();
     if (success && formData.cidade_uf) {
-      // Avançar automaticamente se localização foi obtida com sucesso
+      // Realizar check-in diretamente
       setShowError(false);
-      setStep(step + 1);
+      if (onSubmit) {
+        onSubmit();
+      }
     } else {
       // Mostrar erro se não conseguiu obter localização
       setShowError(true);
     }
   };
 
-  const handleCheckInClick = () => {
-    if (onSubmit) {
-      onSubmit();
-    }
-  };
+
 
   return (
     <div className="space-y-6">
@@ -634,7 +600,11 @@ Retorne JSON com:
               (currentStep.field === 'comprovante_descarga_url' && 
                 (!formData.comprovante_descarga_url || validandoComprovante || (comprovanteValidado && !comprovanteValidado.valido)))
             }
-            className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`flex-1 h-12 disabled:opacity-50 disabled:cursor-not-allowed ${
+              currentStep.field === 'cidade_uf' && formData.cidade_uf
+                ? 'bg-green-600 hover:bg-green-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
           >
             {currentStep.field === 'cidade_uf' ? (
               loadingLocation ? (
@@ -644,8 +614,8 @@ Retorne JSON com:
                 </>
               ) : formData.cidade_uf ? (
                 <>
-                  Entrar na Fila
-                  <ChevronRight className="w-5 h-5 ml-2" />
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  Fazer Check-in
                 </>
               ) : (
                 <>
@@ -659,14 +629,6 @@ Retorne JSON com:
                 <ChevronRight className="w-5 h-5 ml-2" />
               </>
             )}
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            onClick={handleCheckInClick}
-            className="flex-1 h-12 bg-green-600 hover:bg-green-700 font-bold"
-          >
-            Check-in
           </Button>
         )}
         </div>
