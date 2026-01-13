@@ -40,6 +40,8 @@ export default function FilaX() {
   const [veiculos, setVeiculos] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showTiposModal, setShowTiposModal] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [searchMotorista, setSearchMotorista] = useState("");
   const [searchPlaca, setSearchPlaca] = useState("");
