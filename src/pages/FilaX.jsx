@@ -157,6 +157,19 @@ export default function FilaX() {
       const filaAtiva = todasMarcacoes.filter(item => !item.data_saida_fila);
       const historicoFilaFiltrado = todasMarcacoes.filter(item => item.data_saida_fila);
 
+      console.log('📊 DIAGNÓSTICO FILA X:', {
+        totalMarcacoes: todasMarcacoes.length,
+        filaAtiva: filaAtiva.length,
+        historico: historicoFilaFiltrado.length,
+        statusCadastrados: statusData.map(s => ({ nome: s.nome, normalizado: normalizarStatus(s.nome) })),
+        veiculosNaFila: filaAtiva.map(v => ({ 
+          motorista: v.motorista_nome, 
+          statusOriginal: v.status,
+          statusNormalizado: normalizarStatus(v.status || ''),
+          temDataSaida: !!v.data_saida_fila
+        }))
+      });
+
       setFila(filaAtiva);
       setHistoricoFila(historicoFilaFiltrado);
       setTiposFila(tiposData);
@@ -967,16 +980,9 @@ export default function FilaX() {
              {statusFila.map(statusObj => {
                const statusNormalizado = normalizarStatus(statusObj.nome);
                const veiculosDoStatus = fila.filter(v => {
-                 // Normalizar o status do veículo para comparação correta
                  const statusVeiculo = normalizarStatus(v.status || '');
-                 console.log('Comparando:', { 
-                   veiculo: v.motorista_nome, 
-                   statusOriginal: v.status, 
-                   statusNormalizado: statusVeiculo, 
-                   statusEsperado: statusNormalizado,
-                   match: statusVeiculo === statusNormalizado 
-                 });
-                 return statusVeiculo === statusNormalizado;
+                 // Comparar tanto normalizado quanto original para máxima compatibilidade
+                 return statusVeiculo === statusNormalizado || v.status === statusObj.nome.toLowerCase() || v.status === statusNormalizado;
                });
 
               return (
