@@ -110,8 +110,11 @@ export default function FilaX() {
       // Buscar todas as marcações da empresa
       const todasMarcacoes = await base44.entities.FilaVeiculo.filter({ empresa_id: empresaId });
       
+      // Filtrar apenas marcações ATIVAS (sem data_saida_fila)
+      const marcacoesAtivas = todasMarcacoes.filter(m => !m.data_saida_fila);
+      
       // Ordenar por data de entrada (FIFO)
-      const ordenadas = todasMarcacoes.sort((a, b) => {
+      const ordenadas = marcacoesAtivas.sort((a, b) => {
         const dataA = new Date(a.data_entrada_fila || 0);
         const dataB = new Date(b.data_entrada_fila || 0);
         return dataA - dataB;
@@ -448,7 +451,11 @@ export default function FilaX() {
 
     try {
       const user = await base44.auth.me();
-      await base44.entities.FilaVeiculo.delete(id);
+      const veiculo = fila.find(v => v.id === id);
+      
+      await base44.entities.FilaVeiculo.update(id, {
+        data_saida_fila: new Date().toISOString()
+      });
       
       // Recalcular todas as posições FIFO
       await recalcularPosicoesFIFO(user.empresa_id);
@@ -775,6 +782,11 @@ export default function FilaX() {
       // Apenas atualizar o status, e data_saida_fila se necessário
       await base44.entities.FilaVeiculo.update(draggableId, updates);
       
+      // Se moveu para status que remove da fila, recalcular posições FIFO
+      if (statusDestino.remove_da_fila) {
+        await recalcularPosicoesFIFO(user.empresa_id);
+      }
+      
       // Recarregar dados para refletir a mudança nas colunas
       await loadData();
       
@@ -1033,7 +1045,9 @@ export default function FilaX() {
                             try {
                               const user = await base44.auth.me();
                               for (const v of veiculosDoStatus) {
-                                await base44.entities.FilaVeiculo.delete(v.id);
+                                await base44.entities.FilaVeiculo.update(v.id, {
+                                  data_saida_fila: new Date().toISOString()
+                                });
                               }
 
                               // Recalcular posições FIFO
