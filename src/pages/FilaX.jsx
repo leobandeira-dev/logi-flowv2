@@ -45,7 +45,7 @@ export default function FilaX() {
   const [editingTipo, setEditingTipo] = useState(null);
   const [novoTipo, setNovoTipo] = useState({ nome: "", cor: "#3b82f6" });
   const [editingStatus, setEditingStatus] = useState(null);
-  const [novoStatus, setNovoStatus] = useState({ nome: "", cor: "#3b82f6", icone: "🟢", remove_da_fila: false });
+  const [novoStatus, setNovoStatus] = useState({ nome: "", cor: "#3b82f6", icone: "🟢", remove_da_fila: false, mover_quando_vinculado: false });
   const [editingCell, setEditingCell] = useState(null);
   const [editValue, setEditValue] = useState("");
   const [viewMode, setViewMode] = useState("table"); // "table" ou "kanban"
@@ -533,7 +533,7 @@ export default function FilaX() {
         toast.success("Status criado");
       }
 
-      setNovoStatus({ nome: "", cor: "#3b82f6", icone: "🟢", remove_da_fila: false });
+      setNovoStatus({ nome: "", cor: "#3b82f6", icone: "🟢", remove_da_fila: false, mover_quando_vinculado: false });
       setEditingStatus(null);
       loadData();
     } catch (error) {
@@ -1930,7 +1930,7 @@ export default function FilaX() {
                     />
                   </div>
                 </div>
-                <div className="mt-3">
+                <div className="mt-3 space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -1940,6 +1940,17 @@ export default function FilaX() {
                     />
                     <span className="text-sm" style={{ color: theme.text }}>
                       Retirar da fila (marcações com este status são removidas)
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={novoStatus.mover_quando_vinculado}
+                      onChange={(e) => setNovoStatus(prev => ({ ...prev, mover_quando_vinculado: e.target.checked }))}
+                      className="w-4 h-4 rounded border-gray-300"
+                    />
+                    <span className="text-sm" style={{ color: theme.text }}>
+                      Mover para este status quando senha for vinculada à ordem
                     </span>
                   </label>
                 </div>
@@ -1980,6 +1991,11 @@ export default function FilaX() {
                           Remove da fila
                         </span>
                       )}
+                      {status.mover_quando_vinculado && (
+                        <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded">
+                          Move ao vincular
+                        </span>
+                      )}
                     </div>
                     <div className="flex gap-1">
                       <Button
@@ -1987,7 +2003,7 @@ export default function FilaX() {
                         size="sm"
                         onClick={() => {
                           setEditingStatus(status);
-                          setNovoStatus({ nome: status.nome, cor: status.cor, icone: status.icone, remove_da_fila: status.remove_da_fila || false });
+                          setNovoStatus({ nome: status.nome, cor: status.cor, icone: status.icone, remove_da_fila: status.remove_da_fila || false, mover_quando_vinculado: status.mover_quando_vinculado || false });
                         }}
                       >
                         <Edit className="w-4 h-4" />
