@@ -374,6 +374,7 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                   <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[90px] px-2" style={{ color: theme.textMuted }}>Tipo</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[110px] px-2" style={{ color: theme.textMuted }}>Status</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[100px] px-2" style={{ color: theme.textMuted }}>Status Aprov.</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[60px] px-2" style={{ color: theme.textMuted }}>Senha</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[100px] px-2" style={{ color: theme.textMuted }}>Operação</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[130px] px-2" style={{ color: theme.textMuted }}>Cliente</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase min-w-[150px] px-2" style={{ color: theme.textMuted }}>Rota</TableHead>
@@ -392,7 +393,7 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
               <TableBody>
                 {ordensLocal.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={17} className="text-center py-12 text-xs" style={{ color: theme.textMuted }}>
+                    <TableCell colSpan={18} className="text-center py-12 text-xs" style={{ color: theme.textMuted }}>
                       Nenhuma ordem encontrada
                     </TableCell>
                   </TableRow>
@@ -467,6 +468,18 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                             </Badge>
                           )}
                           {!["coleta_solicitada", "coleta_aprovada", "coleta_reprovada"].includes(ordem.tipo_registro) && (
+                            <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-1 px-2 align-middle">
+                          {ordem.senha_fila ? (
+                            <span className="font-mono font-bold text-xs px-2 py-0.5 rounded whitespace-nowrap" style={{ 
+                              backgroundColor: isDark ? '#1e3a8a' : '#dbeafe',
+                              color: isDark ? '#60a5fa' : '#1e40af'
+                            }}>
+                              {ordem.senha_fila}
+                            </span>
+                          ) : (
                             <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
                           )}
                         </TableCell>
