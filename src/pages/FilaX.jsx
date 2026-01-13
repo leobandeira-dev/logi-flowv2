@@ -45,7 +45,7 @@ export default function FilaX() {
   const [editingTipo, setEditingTipo] = useState(null);
   const [novoTipo, setNovoTipo] = useState({ nome: "", cor: "#3b82f6" });
   const [editingStatus, setEditingStatus] = useState(null);
-  const [novoStatus, setNovoStatus] = useState({ nome: "", cor: "#3b82f6", icone: "🟢", remove_da_fila: false, mover_quando_vinculado: false });
+  const [novoStatus, setNovoStatus] = useState({ nome: "", cor: "#3b82f6", icone: "🟢", remove_da_fila: false, mover_quando_vinculado: false, aplicar_ao_sair_fila: false });
   const [editingCell, setEditingCell] = useState(null);
   const [editValue, setEditValue] = useState("");
   const [viewMode, setViewMode] = useState("table"); // "table" ou "kanban"
@@ -533,7 +533,7 @@ export default function FilaX() {
         toast.success("Status criado");
       }
 
-      setNovoStatus({ nome: "", cor: "#3b82f6", icone: "🟢", remove_da_fila: false, mover_quando_vinculado: false });
+      setNovoStatus({ nome: "", cor: "#3b82f6", icone: "🟢", remove_da_fila: false, mover_quando_vinculado: false, aplicar_ao_sair_fila: false });
       setEditingStatus(null);
       loadData();
     } catch (error) {
@@ -1978,6 +1978,17 @@ export default function FilaX() {
                       Mover para este status quando senha for vinculada à ordem
                     </span>
                   </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={novoStatus.aplicar_ao_sair_fila}
+                      onChange={(e) => setNovoStatus(prev => ({ ...prev, aplicar_ao_sair_fila: e.target.checked }))}
+                      className="w-4 h-4 rounded border-gray-300"
+                    />
+                    <span className="text-sm" style={{ color: theme.text }}>
+                      Aplicar este status quando motorista clicar em "Sair da Fila"
+                    </span>
+                  </label>
                 </div>
                 <div className="flex gap-2 mt-3">
                   <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
@@ -2021,6 +2032,11 @@ export default function FilaX() {
                           Move ao vincular
                         </span>
                       )}
+                      {status.aplicar_ao_sair_fila && (
+                        <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400 px-2 py-0.5 rounded">
+                          Aplica ao sair
+                        </span>
+                      )}
                     </div>
                     <div className="flex gap-1">
                       <Button
@@ -2028,7 +2044,7 @@ export default function FilaX() {
                         size="sm"
                         onClick={() => {
                           setEditingStatus(status);
-                          setNovoStatus({ nome: status.nome, cor: status.cor, icone: status.icone, remove_da_fila: status.remove_da_fila || false, mover_quando_vinculado: status.mover_quando_vinculado || false });
+                          setNovoStatus({ nome: status.nome, cor: status.cor, icone: status.icone, remove_da_fila: status.remove_da_fila || false, mover_quando_vinculado: status.mover_quando_vinculado || false, aplicar_ao_sair_fila: status.aplicar_ao_sair_fila || false });
                         }}
                       >
                         <Edit className="w-4 h-4" />

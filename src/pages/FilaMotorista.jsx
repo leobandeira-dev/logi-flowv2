@@ -518,23 +518,78 @@ export default function FilaMotorista() {
                 </div>
               </div>
 
-              <Button
-                onClick={handleAtualizar}
-                disabled={refreshing}
-                className="w-full mt-6 bg-blue-600 hover:bg-blue-700"
-              >
-                {refreshing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Atualizando...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Atualizar Posição
-                  </>
-                )}
-              </Button>
+              <div className="flex gap-3 mt-6">
+                <Button
+                  onClick={handleAtualizar}
+                  disabled={refreshing}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  {refreshing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Atualizando...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Atualizar Posição
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={async () => {
+                    if (!window.confirm(
+                      "⚠️ CONFIRMAR SAÍDA DA FILA\n\n" +
+                      "Você tem certeza que deseja sair da fila?\n\n" +
+                      "Clique em OK para confirmar."
+                    )) return;
+
+                    try {
+                      // Buscar o status configurado para "sair da fila"
+                      const statusData = await base44.entities.StatusFilaVeiculo.filter({ 
+                        empresa_id: minhaFila.empresa_id,
+                        aplicar_ao_sair_fila: true,
+                        ativo: true
+                      }, null, 1);
+
+                      if (statusData.length === 0) {
+                        toast.error("Status de saída não configurado. Entre em contato com a central.");
+                        return;
+                      }
+
+                      const statusSaida = statusData[0];
+                      const statusNormalizado = statusSaida.nome
+                        .toLowerCase()
+                        .replace(/[àáäâã]/g, 'a')
+                        .replace(/[èéëê]/g, 'e')
+                        .replace(/[ìíïî]/g, 'i')
+                        .replace(/[òóöô]/g, 'o')
+                        .replace(/[ùúüû]/g, 'u')
+                        .replace(/ç/g, 'c')
+                        .replace(/ /g, '_');
+
+                      await base44.entities.FilaVeiculo.update(minhaFila.id, {
+                        status: statusNormalizado,
+                        data_saida_fila: new Date().toISOString()
+                      });
+
+                      toast.success("Você saiu da fila com sucesso!");
+                      
+                      // Limpar localStorage e voltar para tela inicial
+                      localStorage.removeItem('fila_motorista_telefone');
+                      localStorage.removeItem('fila_ordem_vinculada');
+                      window.location.reload();
+                    } catch (error) {
+                      console.error("Erro ao sair da fila:", error);
+                      toast.error("Erro ao sair da fila. Tente novamente.");
+                    }
+                  }}
+                  variant="outline"
+                  className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                >
+                  Sair da Fila
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
