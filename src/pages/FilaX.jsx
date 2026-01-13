@@ -156,19 +156,9 @@ export default function FilaX() {
       // Separar fila ativa (sem data_saida_fila) do histórico
       const filaAtiva = todasMarcacoes.filter(item => !item.data_saida_fila);
       const historicoFilaFiltrado = todasMarcacoes.filter(item => item.data_saida_fila);
-      
-      // Normalizar status para ambas as listas
-      const filaData = filaAtiva.map(item => ({
-        ...item,
-        status: normalizarStatus(item.status || '')
-      }));
-      const historicoData = historicoFilaFiltrado.map(item => ({
-        ...item,
-        status: normalizarStatus(item.status || '')
-      }));
 
-      setFila(filaData);
-      setHistoricoFila(historicoData);
+      setFila(filaAtiva);
+      setHistoricoFila(historicoFilaFiltrado);
       setTiposFila(tiposData);
       setStatusFila(statusData);
       setMotoristas(motoristasData);
