@@ -609,8 +609,12 @@ Retorne JSON com:
           <Button
             type="button"
             onClick={handleNextClick}
-            disabled={loadingLocation}
-            className="flex-1 h-12 bg-blue-600 hover:bg-blue-700"
+            disabled={
+              loadingLocation || 
+              (currentStep.field === 'comprovante_descarga_url' && 
+                (!formData.comprovante_descarga_url || validandoComprovante || (comprovanteValidado && !comprovanteValidado.valido)))
+            }
+            className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {currentStep.field === 'cidade_uf' ? (
               loadingLocation ? (
