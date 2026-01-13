@@ -46,14 +46,33 @@ export default function FilaMotorista() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Pegar empresa_id da URL
+      // Pegar código de acesso da URL (prioritário) ou empresa_id (compatibilidade)
       const urlParams = new URLSearchParams(window.location.search);
+      const codigoAcesso = urlParams.get('codigo');
       const empresaIdUrl = urlParams.get('empresa_id');
 
-      let empresaId = empresaIdUrl;
+      let empresaId = null;
 
-      // Se não veio pela URL, buscar primeira empresa ativa
-      if (!empresaId) {
+      // Prioridade 1: Buscar por código de acesso (mais seguro)
+      if (codigoAcesso) {
+        const empresas = await base44.entities.Empresa.filter({ 
+          codigo_acesso_fila: codigoAcesso.toUpperCase(),
+          status: "ativa" 
+        }, null, 1);
+        empresaId = empresas[0]?.id;
+        
+        if (!empresaId) {
+          toast.error("Código de acesso inválido");
+          setLoading(false);
+          return;
+        }
+      } 
+      // Prioridade 2: empresa_id direto (manter compatibilidade)
+      else if (empresaIdUrl) {
+        empresaId = empresaIdUrl;
+      }
+      // Prioridade 3: buscar primeira empresa ativa
+      else {
         const empresas = await base44.entities.Empresa.filter({ status: "ativa" }, null, 1);
         empresaId = empresas[0]?.id;
       }
