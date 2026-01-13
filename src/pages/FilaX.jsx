@@ -1765,49 +1765,79 @@ export default function FilaX() {
               {/* Nome Motorista */}
               <div>
                 <Label style={{ color: theme.text }}>Nome Motorista *</Label>
-                <div className="relative">
-                  <Input
-                    value={formData.motorista_nome}
-                    onChange={(e) => {
-                      const nome = e.target.value;
-                      setFormData(prev => ({ ...prev, motorista_nome: nome }));
-                      
-                      // Buscar motorista ao digitar (mínimo 3 caracteres)
-                      if (nome.length >= 3) {
-                        const motorista = motoristas.find(m => 
-                          m.nome?.toLowerCase().includes(nome.toLowerCase())
-                        );
-                        
-                        if (motorista) {
-                          // Buscar veículos vinculados
-                          const cavalo = veiculos.find(v => v.id === motorista.cavalo_id);
-                          const implemento1 = veiculos.find(v => v.id === motorista.implemento1_id);
-                          const implemento2 = veiculos.find(v => v.id === motorista.implemento2_id);
-                          
-                          setFormData(prev => ({
-                            ...prev,
-                            motorista_id: motorista.id,
-                            motorista_nome: motorista.nome,
-                            motorista_cpf: motorista.cpf,
-                            motorista_telefone: motorista.celular,
-                            cavalo_id: motorista.cavalo_id || "",
-                            cavalo_placa: cavalo?.placa || "",
-                            implemento1_id: motorista.implemento1_id || "",
-                            implemento1_placa: implemento1?.placa || "",
-                            implemento2_id: motorista.implemento2_id || "",
-                            implemento2_placa: implemento2?.placa || "",
-                            tipo_veiculo: cavalo?.tipo || "",
-                            tipo_carroceria: cavalo?.carroceria || ""
-                          }));
-                          
-                          toast.success("Dados do motorista carregados!");
-                        }
-                      }
-                    }}
-                    placeholder="Nome completo"
-                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                  />
-                </div>
+                <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-start text-left font-normal"
+                      style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                    >
+                      {formData.motorista_nome || "Selecione ou digite o nome..."}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0" align="start" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                    <Command style={{ backgroundColor: theme.cardBg }}>
+                      <CommandInput 
+                        placeholder="Buscar motorista..." 
+                        value={searchQuery}
+                        onValueChange={setSearchQuery}
+                        style={{ backgroundColor: theme.cardBg, color: theme.text }}
+                      />
+                      <CommandList>
+                        <CommandEmpty style={{ color: theme.textSecondary }}>Nenhum motorista encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {motoristas
+                            .filter(m => !searchQuery || m.nome?.toLowerCase().includes(searchQuery.toLowerCase()))
+                            .slice(0, 10)
+                            .map((motorista) => {
+                              const cavalo = veiculos.find(v => v.id === motorista.cavalo_id);
+                              return (
+                                <CommandItem
+                                  key={motorista.id}
+                                  value={motorista.nome}
+                                  onSelect={() => {
+                                    const implemento1 = veiculos.find(v => v.id === motorista.implemento1_id);
+                                    const implemento2 = veiculos.find(v => v.id === motorista.implemento2_id);
+                                    
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      motorista_id: motorista.id,
+                                      motorista_nome: motorista.nome,
+                                      motorista_cpf: motorista.cpf,
+                                      motorista_telefone: motorista.celular,
+                                      cavalo_id: motorista.cavalo_id || "",
+                                      cavalo_placa: cavalo?.placa || "",
+                                      implemento1_id: motorista.implemento1_id || "",
+                                      implemento1_placa: implemento1?.placa || "",
+                                      implemento2_id: motorista.implemento2_id || "",
+                                      implemento2_placa: implemento2?.placa || "",
+                                      tipo_veiculo: cavalo?.tipo || "",
+                                      tipo_carroceria: cavalo?.carroceria || ""
+                                    }));
+                                    
+                                    setSearchOpen(false);
+                                    setSearchQuery("");
+                                    toast.success("Motorista selecionado!");
+                                  }}
+                                  style={{ color: theme.text }}
+                                >
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{motorista.nome}</span>
+                                    {cavalo && (
+                                      <span className="text-xs opacity-70">
+                                        {cavalo.placa} - {cavalo.tipo}
+                                      </span>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              );
+                            })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               {/* Placa do Cavalo */}
