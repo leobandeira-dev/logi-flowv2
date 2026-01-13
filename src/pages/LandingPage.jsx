@@ -105,6 +105,8 @@ const FAIXAS_PROCESSAMENTO = [
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("visao-geral");
+  const [user, setUser] = useState(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   
   // Estados da calculadora
   const [addonsSelecionados, setAddonsSelecionados] = useState([]);
@@ -124,6 +126,23 @@ export default function LandingPage() {
   const [enviando, setEnviando] = useState(false);
   const [propostaEnviada, setPropostaEnviada] = useState(false);
   const [camposComErro, setCamposComErro] = useState([]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        if (currentUser) {
+          setUser(currentUser);
+          window.location.href = createPageUrl("Inicio");
+        }
+      } catch (error) {
+        // Usuário não autenticado
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem('precos_customizados');
@@ -222,7 +241,7 @@ export default function LandingPage() {
   };
 
   const handleLogin = () => {
-    base44.auth.redirectToLogin(window.location.origin);
+    base44.auth.redirectToLogin(createPageUrl("Inicio"));
   };
 
   const handleSolicitarProposta = async () => {
@@ -330,6 +349,14 @@ Enviado em ${new Date().toLocaleString('pt-BR')}`
   const pacoteBase = obterPacoteBase();
   const addons = obterAddons();
   const totais = calcularTotais();
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
