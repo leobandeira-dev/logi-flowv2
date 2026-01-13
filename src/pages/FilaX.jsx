@@ -776,14 +776,16 @@ export default function FilaX() {
       const empresaData = await base44.entities.Empresa.get(user.empresa_id);
       
       if (!empresaData.codigo_acesso_fila) {
-        toast.error("Configure o código de acesso em Configurações primeiro");
+        if (confirm("Você precisa gerar um código de acesso primeiro. Deseja ir para Configurações agora?")) {
+          window.location.href = createPageUrl("Configuracoes");
+        }
         return;
       }
       
       const linkPublico = `https://logiflow.com.br/FilaMotorista?codigo=${empresaData.codigo_acesso_fila}`;
       
       await navigator.clipboard.writeText(linkPublico);
-      toast.success("Link exclusivo copiado! (código seguro de 4 dígitos)");
+      toast.success(`Link copiado: ...?codigo=${empresaData.codigo_acesso_fila}`);
     } catch (error) {
       console.error("Erro ao copiar:", error);
       toast.error("Erro ao copiar link");
