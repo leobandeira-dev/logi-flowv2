@@ -2161,11 +2161,22 @@ export default function FilaX() {
                         </div>
                       </td>
                       <td className="px-3 py-3">
-                        {status && (
+                        {status ? (
                           <div className="flex items-center gap-2">
                             <span>{status.icone}</span>
                             <span className="text-xs" style={{ color: theme.text }}>{status.nome}</span>
                           </div>
+                        ) : marcacao.status ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400 px-2 py-1 rounded font-mono">
+                              {marcacao.status}
+                            </span>
+                            <span className="text-xs" style={{ color: theme.textMuted }}>
+                              (não cadastrado)
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs" style={{ color: theme.textMuted }}>-</span>
                         )}
                       </td>
                     </tr>
