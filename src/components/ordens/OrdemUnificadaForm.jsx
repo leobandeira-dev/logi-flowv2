@@ -2405,20 +2405,34 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
                       <Label className={getFieldError('senha_fila') ? 'text-red-600 font-semibold' : 'font-semibold'}>
                         Senha Fila *{getFieldError('senha_fila') && <span className="ml-2 text-xs">⚠️</span>}
                       </Label>
-                      <div className="relative">
-                        <Input 
-                          value={formData.senha_fila || ""} 
-                          onChange={(e) => handleChange("senha_fila", e.target.value.toUpperCase())} 
-                          placeholder="4 dígitos" 
-                          maxLength={4}
-                          className={`font-mono font-bold text-lg ${getFieldError('senha_fila') ? 'border-red-500 border-2 bg-red-50 text-red-600' : 'border-blue-500 border-2 bg-blue-50 text-blue-600'}`}
-                          disabled={verificandoSenha}
-                        />
-                        {verificandoSenha && (
-                          <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                          </div>
-                        )}
+                      <div className="flex gap-2 items-start">
+                        <div className="relative flex-1">
+                          <Input 
+                            value={formData.senha_fila || ""} 
+                            onChange={(e) => handleChange("senha_fila", e.target.value.toUpperCase())} 
+                            placeholder="4 dígitos" 
+                            maxLength={4}
+                            className={`font-mono font-bold text-lg ${getFieldError('senha_fila') ? 'border-red-500 border-2 bg-red-50 text-red-600' : 'border-blue-500 border-2 bg-blue-50 text-blue-600'}`}
+                            disabled={verificandoSenha}
+                          />
+                          {verificandoSenha && (
+                            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 pt-2">
+                          <input
+                            type="checkbox"
+                            id="carga_dedicada"
+                            checked={formData.carga_dedicada || false}
+                            onChange={(e) => handleChange("carga_dedicada", e.target.checked)}
+                            className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                          />
+                          <Label htmlFor="carga_dedicada" className="text-xs font-medium text-purple-700 cursor-pointer whitespace-nowrap">
+                            Dedicada
+                          </Label>
+                        </div>
                       </div>
                       {getFieldError('senha_fila') && <p className="text-xs text-red-600 mt-1 font-medium">{getFieldError('senha_fila')}</p>}
                     </div>
