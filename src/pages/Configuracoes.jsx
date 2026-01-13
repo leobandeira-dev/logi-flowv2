@@ -1997,6 +1997,10 @@ export default function Configuracoes() {
           <TabsList className="mb-6">
             <TabsTrigger value="empresa">Dados da Empresa</TabsTrigger>
             <TabsTrigger value="logo">Logo e Identidade</TabsTrigger>
+            <TabsTrigger value="fila">
+              <Truck className="w-4 h-4 mr-2" />
+              Link Fila Motorista
+            </TabsTrigger>
             {user?.email === "leonardobandeir@gmail.com" && (
               <TabsTrigger value="documentacao">
                 <FileText className="w-4 h-4 mr-2" />
@@ -2250,6 +2254,132 @@ export default function Configuracoes() {
                     </Button>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="fila">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Truck className="w-5 h-5" />
+                  Link de Acesso para Fila de Motoristas
+                </CardTitle>
+                <CardDescription>
+                  Compartilhe este link com motoristas para que eles possam se cadastrar na fila
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {empresa?.codigo_acesso_fila ? (
+                  <div className="space-y-6">
+                    <div className="bg-blue-50 p-6 rounded-lg border-2 border-blue-200">
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Código de Acesso</Label>
+                      <div className="flex items-center gap-3">
+                        <div className="text-4xl font-mono font-bold text-blue-600 bg-white px-6 py-3 rounded-lg border-2 border-blue-300">
+                          {empresa.codigo_acesso_fila}
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard.writeText(empresa.codigo_acesso_fila);
+                            setSuccess(true);
+                            setTimeout(() => setSuccess(false), 2000);
+                          }}
+                        >
+                          Copiar Código
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium text-gray-700">Link Completo (Seguro)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          readOnly
+                          value={`https://logiflow.com.br/FilaMotorista?codigo=${empresa.codigo_acesso_fila}`}
+                          className="font-mono text-sm bg-gray-50"
+                        />
+                        <Button
+                          onClick={() => {
+                            navigator.clipboard.writeText(`https://logiflow.com.br/FilaMotorista?codigo=${empresa.codigo_acesso_fila}`);
+                            setSuccess(true);
+                            setTimeout(() => setSuccess(false), 2000);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          Copiar Link
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-600">
+                        Este link usa um código alfanumérico de 4 dígitos ao invés do ID do banco de dados, garantindo maior segurança.
+                      </p>
+                    </div>
+
+                    <Alert className="bg-green-50 border-green-200">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <AlertDescription className="text-green-800">
+                        <strong>Link configurado com sucesso!</strong> Compartilhe este link com motoristas via WhatsApp, SMS ou impresso.
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <Alert className="bg-yellow-50 border-yellow-200">
+                      <AlertCircle className="w-4 h-4 text-yellow-600" />
+                      <AlertDescription className="text-yellow-800">
+                        Sua empresa ainda não possui um código de acesso configurado. Clique no botão abaixo para gerar.
+                      </AlertDescription>
+                    </Alert>
+
+                    <Button
+                      onClick={async () => {
+                        setSaving(true);
+                        try {
+                          // Gerar código alfanumérico de 4 dígitos
+                          const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                          let codigo = '';
+                          let tentativas = 0;
+                          
+                          while (tentativas < 50) {
+                            codigo = '';
+                            for (let i = 0; i < 4; i++) {
+                              codigo += chars.charAt(Math.floor(Math.random() * chars.length));
+                            }
+                            
+                            // Verificar se código já existe
+                            const existe = await base44.entities.Empresa.filter({ codigo_acesso_fila: codigo });
+                            if (existe.length === 0) break;
+                            tentativas++;
+                          }
+
+                          await base44.entities.Empresa.update(empresa.id, { codigo_acesso_fila: codigo });
+                          await loadData();
+                          setSuccess(true);
+                          setTimeout(() => setSuccess(false), 3000);
+                        } catch (error) {
+                          console.error("Erro ao gerar código:", error);
+                          setError("Erro ao gerar código de acesso. Tente novamente.");
+                        } finally {
+                          setSaving(false);
+                        }
+                      }}
+                      disabled={saving}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Gerando...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Gerar Código de Acesso
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
