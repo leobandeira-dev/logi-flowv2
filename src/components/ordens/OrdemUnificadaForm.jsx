@@ -185,7 +185,7 @@ export default function OrdemUnificadaForm({
   // Determinar quais campos são obrigatórios e visíveis de acordo com o tipo
   const camposObrigatorios = {
     coleta: ['destinatario', 'destinatario_cnpj'], // Para coletas: apenas destinatário obrigatório
-    carregamento: ['cliente', 'origem', 'destino', 'produto', 'peso', 'motorista_id', 'operacao_id'],
+    carregamento: ['cliente', 'origem', 'destino', 'produto', 'peso', 'motorista_id', 'operacao_id', 'senha_fila'],
     recebimento: ['origem', 'destinatario'],
     entrega: ['cliente', 'origem', 'destino', 'produto', 'peso', 'motorista_id']
   };
@@ -1289,6 +1289,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
       case 'operacao': return obrigatorios.includes('operacao_id') && !formData.operacao_id ? 'Selecione uma operação' : null;
       case 'destinatario': return obrigatorios.includes('destinatario') && !formData.destinatario ? 'Destinatário é obrigatório' : null;
       case 'destinatario_cnpj': return obrigatorios.includes('destinatario_cnpj') && !formData.destinatario_cnpj ? 'CNPJ do destinatário é obrigatório' : null;
+      case 'senha_fila': return obrigatorios.includes('senha_fila') && (!formData.senha_fila || formData.senha_fila.length !== 4) ? 'Senha Fila (4 dígitos) é obrigatória' : null;
       case 'preco':
         if (!obrigatorios.includes('peso')) return null;
         const hasPriceMethod = (!!formData.valor_tonelada && parseFloat(formData.valor_tonelada) > 0) ||
@@ -1312,6 +1313,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
     if (obrigatorios.includes('motorista_id') && !formData.motorista_id) return false;
     if (obrigatorios.includes('motorista_id') && formData.motorista_id && !motoristaTelefone) return false;
     if (obrigatorios.includes('operacao_id') && !formData.operacao_id) return false;
+    if (obrigatorios.includes('senha_fila') && (!formData.senha_fila || formData.senha_fila.length !== 4)) return false;
     
     // Verificar preço apenas se peso é obrigatório
     if (obrigatorios.includes('peso')) {
@@ -1341,6 +1343,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
       if (obrigatorios.includes('operacao_id') && !formData.operacao_id) camposFaltando.push("Operação");
       if (obrigatorios.includes('destinatario') && !formData.destinatario) camposFaltando.push("Destinatário");
       if (obrigatorios.includes('destinatario_cnpj') && !formData.destinatario_cnpj) camposFaltando.push("CNPJ do Destinatário");
+      if (obrigatorios.includes('senha_fila') && (!formData.senha_fila || formData.senha_fila.length !== 4)) camposFaltando.push("Senha Fila (4 dígitos)");
       
       if (obrigatorios.includes('peso')) {
         const hasPriceMethod = (!!formData.valor_tonelada && parseFloat(formData.valor_tonelada) > 0) ||
@@ -2360,15 +2363,17 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
 
                   <div className="grid grid-cols-5 gap-4">
                     <div>
-                      <Label>Senha Fila</Label>
+                      <Label className={getFieldError('senha_fila') ? 'text-red-600 font-semibold' : 'font-semibold'}>
+                        Senha Fila *{getFieldError('senha_fila') && <span className="ml-2 text-xs">⚠️</span>}
+                      </Label>
                       <Input 
                         value={formData.senha_fila || ""} 
                         onChange={(e) => handleChange("senha_fila", e.target.value.toUpperCase())} 
                         placeholder="4 dígitos" 
                         maxLength={4}
-                        className="font-mono font-bold text-blue-600"
-                        style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }} 
+                        className={`font-mono font-bold text-lg ${getFieldError('senha_fila') ? 'border-red-500 border-2 bg-red-50 text-red-600' : 'border-blue-500 border-2 bg-blue-50 text-blue-600'}`}
                       />
+                      {getFieldError('senha_fila') && <p className="text-xs text-red-600 mt-1 font-medium">{getFieldError('senha_fila')}</p>}
                     </div>
                     <div>
                       <Label>Viagem</Label>
