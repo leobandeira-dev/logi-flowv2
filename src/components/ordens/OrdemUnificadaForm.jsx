@@ -2413,7 +2413,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
                             placeholder="4 dígitos" 
                             maxLength={4}
                             className={`font-mono font-bold text-lg ${getFieldError('senha_fila') ? 'border-red-500 border-2 bg-red-50 text-red-600' : 'border-blue-500 border-2 bg-blue-50 text-blue-600'}`}
-                            disabled={verificandoSenha}
+                            disabled={verificandoSenha || formData.carga_dedicada}
                           />
                           {verificandoSenha && (
                             <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
