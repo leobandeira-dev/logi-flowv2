@@ -1501,6 +1501,107 @@ export default function FilaX() {
                 </Card>
               );
             })}
+
+            {/* Coluna para veículos com status não cadastrados */}
+            {(() => {
+              const statusCadastrados = statusFila.map(s => normalizarStatus(s.nome));
+              const veiculosSemStatus = fila.filter(v => {
+                const statusVeiculo = normalizarStatus(v.status || '');
+                return !statusCadastrados.includes(statusVeiculo) && statusVeiculo;
+              });
+
+              if (veiculosSemStatus.length === 0) return null;
+
+              return (
+                <Card style={{ backgroundColor: theme.cardBg, borderColor: '#f59e0b' }}>
+                  <CardHeader className="p-3 md:p-6 border-b border-orange-300">
+                    <CardTitle className="flex items-center justify-between text-base md:text-lg">
+                      <div className="flex items-center gap-2">
+                        <span className="text-orange-500">⚠️</span>
+                        <span style={{ color: theme.text }}>Status Não Cadastrados ({veiculosSemStatus.length})</span>
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-3 space-y-3">
+                    <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg border border-orange-200">
+                      <p className="text-xs text-orange-700 dark:text-orange-400">
+                        Estes veículos possuem status antigos que não estão mais cadastrados no sistema.
+                        Atualize o status deles ou cadastre os status em falta.
+                      </p>
+                    </div>
+                    {veiculosSemStatus.map((item, index) => (
+                      <Card key={item.id} style={{ backgroundColor: isDark ? '#0f172a' : '#fff9f0', borderColor: '#f59e0b' }}>
+                        <CardContent className="p-3">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center flex-shrink-0">
+                                <span className="font-bold text-xs text-orange-700 dark:text-orange-300">
+                                  {item.posicao_fila || index + 1}
+                                </span>
+                              </div>
+                              <p className="font-bold text-sm" style={{ color: theme.text }}>{item.motorista_nome}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-400 px-2 py-1 rounded font-mono">
+                                {item.status || "sem status"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                            <div>
+                              <p className="text-[10px]" style={{ color: theme.textMuted }}>Cavalo</p>
+                              <p className="font-mono font-bold text-sm" style={{ color: theme.text }}>{item.cavalo_placa || "-"}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px]" style={{ color: theme.textMuted }}>Senha</p>
+                              <p className="font-mono font-bold text-xs text-blue-600 dark:text-blue-400">{item.senha_fila || "-"}</p>
+                            </div>
+                            <div className="col-span-2">
+                              <p className="text-[10px]" style={{ color: theme.textMuted }}>Tempo na Fila</p>
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-orange-600 flex-shrink-0" />
+                                <span className="text-xs font-semibold text-orange-600">
+                                  {calcularTempoNaFila(item.data_entrada_fila)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-xs h-8"
+                              onClick={async () => {
+                                if (statusFila.length > 0) {
+                                  const statusPadrao = normalizarStatus(statusFila[0].nome);
+                                  try {
+                                    await base44.entities.FilaVeiculo.update(item.id, { status: statusPadrao });
+                                    toast.success(`Status atualizado para ${statusFila[0].nome}`);
+                                    await loadData();
+                                  } catch (error) {
+                                    toast.error("Erro ao atualizar status");
+                                  }
+                                }
+                              }}
+                            >
+                              Atualizar Status
+                            </Button>
+                            <button
+                              onClick={() => handleRemoverDaFila(item.id)}
+                              className="text-red-600 hover:text-red-700 p-1"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </CardContent>
+                </Card>
+              );
+            })()}
           </DragDropContext>
         )}
 
