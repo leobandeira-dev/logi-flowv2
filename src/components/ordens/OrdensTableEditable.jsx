@@ -472,7 +472,14 @@ export default function OrdensTableEditable({ ordens, motoristas, veiculos, oper
                           )}
                         </TableCell>
                         <TableCell className="py-1 px-2 align-middle">
-                          {ordem.senha_fila ? (
+                          {ordem.carga_dedicada ? (
+                            <span className="font-mono font-bold text-xs px-2 py-0.5 rounded whitespace-nowrap" style={{ 
+                              backgroundColor: isDark ? '#581c87' : '#f3e8ff',
+                              color: isDark ? '#c084fc' : '#7e22ce'
+                            }}>
+                              DEDI
+                            </span>
+                          ) : ordem.senha_fila ? (
                             <span className="font-mono font-bold text-xs px-2 py-0.5 rounded whitespace-nowrap" style={{ 
                               backgroundColor: isDark ? '#1e3a8a' : '#dbeafe',
                               color: isDark ? '#60a5fa' : '#1e40af'
