@@ -672,8 +672,7 @@ export default function Layout({ children, currentPageName }) {
 
   const handleLogout = async () => {
     try {
-      await base44.auth.logout();
-      window.location.reload();
+      await base44.auth.logout(createPageUrl("LandingPage"));
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
     }
