@@ -591,46 +591,44 @@ Retorne JSON com:
             Anterior
           </Button>
         )}
-        {!isLastStep ? (
-          <Button
-            type="button"
-            onClick={handleNextClick}
-            disabled={
-              loadingLocation || 
-              (currentStep.field === 'comprovante_descarga_url' && 
-                (!formData.comprovante_descarga_url || validandoComprovante || (comprovanteValidado && !comprovanteValidado.valido)))
-            }
-            className={`flex-1 h-12 disabled:opacity-50 disabled:cursor-not-allowed ${
-              currentStep.field === 'cidade_uf' && formData.cidade_uf
-                ? 'bg-green-600 hover:bg-green-700'
-                : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-          >
-            {currentStep.field === 'cidade_uf' ? (
-              loadingLocation ? (
-                <>
-                  <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
-                  Obtendo...
-                </>
-              ) : formData.cidade_uf ? (
-                <>
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Fazer Check-in
-                </>
-              ) : (
-                <>
-                  <MapPin className="w-5 h-5 mr-2" />
-                  Obter Localização
-                </>
-              )
+        <Button
+          type="button"
+          onClick={handleNextClick}
+          disabled={
+            loadingLocation || 
+            (currentStep.field === 'comprovante_descarga_url' && 
+              (!formData.comprovante_descarga_url || validandoComprovante || (comprovanteValidado && !comprovanteValidado.valido)))
+          }
+          className={`flex-1 h-12 disabled:opacity-50 disabled:cursor-not-allowed ${
+            currentStep.field === 'cidade_uf' && formData.cidade_uf
+              ? 'bg-green-600 hover:bg-green-700'
+              : 'bg-blue-600 hover:bg-blue-700'
+          }`}
+        >
+          {currentStep.field === 'cidade_uf' ? (
+            loadingLocation ? (
+              <>
+                <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                Obtendo...
+              </>
+            ) : formData.cidade_uf ? (
+              <>
+                <CheckCircle className="w-5 h-5 mr-2" />
+                Fazer Check-in
+              </>
             ) : (
               <>
-                Próximo
-                <ChevronRight className="w-5 h-5 ml-2" />
+                <MapPin className="w-5 h-5 mr-2" />
+                Obter Localização
               </>
-            )}
-          </Button>
+            )
+          ) : (
+            <>
+              Próximo
+              <ChevronRight className="w-5 h-5 ml-2" />
+            </>
           )}
+        </Button>
           </div>
           </div>
           );
