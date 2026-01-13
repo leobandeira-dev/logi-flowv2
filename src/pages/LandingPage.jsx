@@ -22,7 +22,8 @@ import {
   X,
   MessageCircle,
   Calculator,
-  Phone
+  Phone,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
