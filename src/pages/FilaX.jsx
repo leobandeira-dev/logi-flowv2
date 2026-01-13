@@ -1762,49 +1762,62 @@ export default function FilaX() {
               />
             ) : (
               <form onSubmit={handleAdicionarFila} className="space-y-4">
-              {/* Placa do Cavalo */}
+              {/* Nome Motorista */}
               <div>
-                <Label style={{ color: theme.text }}>Placa do Cavalo *</Label>
-                <Input
-                  value={formData.cavalo_placa}
-                  onChange={(e) => {
-                    const placa = e.target.value.toUpperCase();
-                    setFormData(prev => ({ ...prev, cavalo_placa: placa }));
-                    
-                    // Buscar motorista vinculado à placa
-                    if (placa.length >= 3) {
-                      const veiculo = veiculos.find(v => v.placa?.toUpperCase().includes(placa));
-                      if (veiculo) {
-                        const motorista = motoristas.find(m => m.cavalo_id === veiculo.id);
+                <Label style={{ color: theme.text }}>Nome Motorista *</Label>
+                <div className="relative">
+                  <Input
+                    value={formData.motorista_nome}
+                    onChange={(e) => {
+                      const nome = e.target.value;
+                      setFormData(prev => ({ ...prev, motorista_nome: nome }));
+                      
+                      // Buscar motorista ao digitar (mínimo 3 caracteres)
+                      if (nome.length >= 3) {
+                        const motorista = motoristas.find(m => 
+                          m.nome?.toLowerCase().includes(nome.toLowerCase())
+                        );
+                        
                         if (motorista) {
+                          // Buscar veículos vinculados
+                          const cavalo = veiculos.find(v => v.id === motorista.cavalo_id);
+                          const implemento1 = veiculos.find(v => v.id === motorista.implemento1_id);
+                          const implemento2 = veiculos.find(v => v.id === motorista.implemento2_id);
+                          
                           setFormData(prev => ({
                             ...prev,
                             motorista_id: motorista.id,
                             motorista_nome: motorista.nome,
                             motorista_cpf: motorista.cpf,
                             motorista_telefone: motorista.celular,
-                            cavalo_id: veiculo.id,
-                            tipo_veiculo: veiculo.tipo,
-                            tipo_carroceria: veiculo.carroceria
+                            cavalo_id: motorista.cavalo_id || "",
+                            cavalo_placa: cavalo?.placa || "",
+                            implemento1_id: motorista.implemento1_id || "",
+                            implemento1_placa: implemento1?.placa || "",
+                            implemento2_id: motorista.implemento2_id || "",
+                            implemento2_placa: implemento2?.placa || "",
+                            tipo_veiculo: cavalo?.tipo || "",
+                            tipo_carroceria: cavalo?.carroceria || ""
                           }));
-                          toast.success("Motorista encontrado!");
+                          
+                          toast.success("Dados do motorista carregados!");
                         }
                       }
-                    }
-                  }}
-                  placeholder="ABC1234"
-                  className="font-mono font-bold"
-                  style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
-                />
+                    }}
+                    placeholder="Nome completo"
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
               </div>
 
-              {/* Nome Motorista */}
+              {/* Placa do Cavalo */}
               <div>
-                <Label style={{ color: theme.text }}>Nome Motorista *</Label>
+                <Label style={{ color: theme.text }}>Placa do Cavalo *</Label>
                 <Input
-                  value={formData.motorista_nome}
-                  onChange={(e) => setFormData(prev => ({ ...prev, motorista_nome: e.target.value }))}
-                  placeholder="Nome completo"
+                  value={formData.cavalo_placa}
+                  onChange={(e) => setFormData(prev => ({ ...prev, cavalo_placa: e.target.value.toUpperCase() }))}
+                  placeholder="ABC1234"
+                  className="font-mono font-bold"
                   style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                 />
               </div>
