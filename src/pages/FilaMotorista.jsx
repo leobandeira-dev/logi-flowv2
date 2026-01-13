@@ -451,112 +451,82 @@ export default function FilaMotorista() {
       JSON.parse(localStorage.getItem('fila_ordem_vinculada') || 'null') : null;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4 flex items-center justify-center">
-        <div className="max-w-md w-full space-y-6">
-          <div className="text-center mb-6">
-            <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-12 h-12 text-white" />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-3 flex items-center justify-center">
+        <div className="max-w-md w-full max-h-screen overflow-y-auto">
+          <div className="text-center mb-3">
+            <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2">
+              <CheckCircle className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Cadastro Realizado!</h1>
-            <p className="text-gray-600 mt-2">Você está na fila de veículos</p>
+            <h1 className="text-xl font-bold text-gray-900">Cadastro Realizado!</h1>
+            <p className="text-xs text-gray-600">Sua posição na fila</p>
           </div>
 
-          {/* Senha da Fila */}
-          <Card className="shadow-xl border-2 border-blue-500">
-            <CardHeader className="bg-blue-600 text-white rounded-t-lg">
-              <CardTitle className="text-center">Sua Senha da Fila</CardTitle>
+          <Card className="shadow-lg border-2 border-blue-500 mb-2">
+            <CardHeader className="bg-blue-600 text-white py-2 px-4 rounded-t-lg">
+              <CardTitle className="text-center text-sm">Senha: <span className="text-2xl font-mono ml-1">{minhaFila.senha_fila}</span></CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-              <div className="text-center mb-4">
-                <p className="text-6xl font-bold text-blue-600 font-mono">{minhaFila.senha_fila}</p>
-                <p className="text-sm text-gray-600 mt-2">Informe esta senha ao criar a ordem de carga</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-xl">
-            <CardHeader className="bg-gray-700 text-white rounded-t-lg">
-              <CardTitle className="text-center">Sua Posição</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-24 h-24 bg-blue-100 rounded-full mb-3">
-                  <span className="text-4xl font-bold text-blue-600">{minhaFila.posicao_fila || 1}</span>
+            <CardContent className="p-3">
+              <div className="text-center mb-3">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full">
+                  <span className="text-3xl font-bold text-blue-600">{minhaFila.posicao_fila || 1}</span>
                 </div>
-                <p className="text-sm text-gray-600">{totalNaFila} {totalNaFila === 1 ? 'veículo' : 'veículos'} na sua frente</p>
+                <p className="text-xs text-gray-600 mt-1">{totalNaFila} {totalNaFila === 1 ? 'veículo' : 'veículos'} na frente</p>
               </div>
 
-              <div className="space-y-3 border-t pt-4">
+              <div className="space-y-1.5 text-xs border-t pt-2">
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Motorista:</span>
-                  <span className="text-sm font-semibold text-gray-900">{minhaFila.motorista_nome}</span>
+                  <span className="text-gray-600">Motorista:</span>
+                  <span className="font-semibold text-gray-900 text-right flex-1 ml-2">{minhaFila.motorista_nome}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Placa:</span>
-                  <span className="text-sm font-mono font-bold text-gray-900">{minhaFila.cavalo_placa}</span>
+                  <span className="text-gray-600">Placa:</span>
+                  <span className="font-mono font-bold text-gray-900">{minhaFila.cavalo_placa}</span>
                 </div>
                 {minhaFila.tipo_fila_nome && (
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Tipo:</span>
-                    <span className="text-sm font-semibold text-gray-900">{minhaFila.tipo_fila_nome}</span>
+                    <span className="text-gray-600">Tipo:</span>
+                    <span className="font-semibold text-gray-900">{minhaFila.tipo_fila_nome}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Entrada:</span>
-                  <span className="text-sm text-gray-900">
-                    {minhaFila.data_entrada_fila ? format(new Date(minhaFila.data_entrada_fila), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "-"}
+                  <span className="text-gray-600">Entrada:</span>
+                  <span className="text-gray-900">
+                    {minhaFila.data_entrada_fila ? format(new Date(minhaFila.data_entrada_fila), "HH:mm", { locale: ptBR }) : "-"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Tempo na fila:</span>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4 text-orange-600" />
-                    <span className="text-sm font-semibold text-orange-600">
+                  <span className="text-gray-600">Tempo:</span>
+                  <div className="flex items-center gap-0.5">
+                    <Clock className="w-3 h-3 text-orange-600" />
+                    <span className="font-semibold text-orange-600">
                       {calcularTempoNaFila(minhaFila.data_entrada_fila)}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-6">
+              <div className="flex gap-2 mt-3">
                 <Button
                   onClick={handleAtualizar}
                   disabled={refreshing}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 h-8 text-xs"
                 >
-                  {refreshing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Atualizando...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Atualizar Posição
-                    </>
-                  )}
+                  {refreshing ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+                  Atualizar
                 </Button>
                 <Button
                   onClick={async () => {
-                    if (!window.confirm(
-                      "⚠️ CONFIRMAR SAÍDA DA FILA\n\n" +
-                      "Você tem certeza que deseja sair da fila?\n\n" +
-                      "Clique em OK para confirmar."
-                    )) return;
-
+                    if (!window.confirm("Tem certeza que deseja sair da fila?")) return;
                     try {
-                      // Buscar o status configurado para "sair da fila"
                       const statusData = await base44.entities.StatusFilaVeiculo.filter({ 
                         empresa_id: minhaFila.empresa_id,
                         aplicar_ao_sair_fila: true,
                         ativo: true
                       }, null, 1);
-
                       if (statusData.length === 0) {
-                        toast.error("Status de saída não configurado. Entre em contato com a central.");
+                        toast.error("Status não configurado");
                         return;
                       }
-
                       const statusSaida = statusData[0];
                       const statusNormalizado = statusSaida.nome
                         .toLowerCase()
@@ -567,36 +537,27 @@ export default function FilaMotorista() {
                         .replace(/[ùúüû]/g, 'u')
                         .replace(/ç/g, 'c')
                         .replace(/ /g, '_');
-
                       await base44.entities.FilaVeiculo.update(minhaFila.id, {
                         status: statusNormalizado,
                         data_saida_fila: new Date().toISOString()
                       });
-
-                      // Recalcular posições FIFO de todos os veículos restantes
                       try {
-                        await base44.functions.invoke('recalcularPosicoesFilaFIFO', { 
-                          empresa_id: minhaFila.empresa_id 
-                        });
+                        await base44.functions.invoke('recalcularPosicoesFilaFIFO', { empresa_id: minhaFila.empresa_id });
                       } catch (err) {
-                        console.log("Aviso: erro ao recalcular posições (não crítico):", err);
+                        console.log("Aviso:", err);
                       }
-
-                      toast.success("Você saiu da fila com sucesso!");
-                      
-                      // Limpar localStorage e voltar para tela inicial
+                      toast.success("Saiu da fila!");
                       localStorage.removeItem('fila_motorista_telefone');
                       localStorage.removeItem('fila_ordem_vinculada');
                       window.location.reload();
                     } catch (error) {
-                      console.error("Erro ao sair da fila:", error);
-                      toast.error("Erro ao sair da fila. Tente novamente.");
+                      toast.error("Erro ao sair");
                     }
                   }}
                   variant="outline"
-                  className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                  className="flex-1 border-red-300 text-red-600 hover:bg-red-50 h-8 text-xs"
                 >
-                  Sair da Fila
+                  Sair
                 </Button>
               </div>
             </CardContent>
@@ -604,52 +565,31 @@ export default function FilaMotorista() {
 
           {/* Ordem Vinculada */}
           {ordemVinculada && (
-            <Card className="shadow-xl border-2 border-green-500">
-              <CardHeader className="bg-green-600 text-white rounded-t-lg">
-                <CardTitle className="text-center">Ordem Vinculada</CardTitle>
+            <Card className="shadow-lg border-2 border-green-500 mb-2">
+              <CardHeader className="bg-green-600 text-white py-1.5 px-3 rounded-t-lg">
+                <CardTitle className="text-xs">Ordem: {ordemVinculada.numero_carga}</CardTitle>
               </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Nº Carga:</span>
-                    <span className="text-sm font-mono font-bold text-gray-900">{ordemVinculada.numero_carga}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Cliente:</span>
-                    <span className="text-sm font-semibold text-gray-900">{ordemVinculada.cliente}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Origem:</span>
-                    <span className="text-sm text-gray-900">{ordemVinculada.origem}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Destino:</span>
-                    <span className="text-sm text-gray-900">{ordemVinculada.destino}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Produto:</span>
-                    <span className="text-sm text-gray-900">{ordemVinculada.produto}</span>
-                  </div>
+              <CardContent className="p-2.5">
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between"><span className="text-gray-600">Cliente:</span><span className="font-semibold">{ordemVinculada.cliente}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600">Origem:</span><span>{ordemVinculada.origem}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600">Destino:</span><span>{ordemVinculada.destino}</span></div>
                 </div>
               </CardContent>
             </Card>
           )}
 
           {/* Informações Importantes */}
-          <Card className="shadow-xl bg-amber-50 border-2 border-amber-200">
-            <CardContent className="p-6">
-              <div className="space-y-4">
+          <Card className="shadow-lg bg-amber-50 border border-amber-200">
+            <CardContent className="p-2.5">
+              <div className="space-y-2 text-xs">
                 <div>
-                  <h3 className="font-semibold text-amber-900 mb-2">Quando há carga disponível</h3>
-                  <p className="text-sm text-amber-800">
-                    Quando houver carga disponível um de nossos operadores irá entrar em contato com você.
-                  </p>
+                  <h3 className="font-bold text-amber-900">Quando há carga disponível</h3>
+                  <p className="text-amber-800">Nossos operadores entrarão em contato com você.</p>
                 </div>
-                <div className="border-t border-amber-200 pt-4">
-                  <h3 className="font-semibold text-amber-900 mb-2">Sobre sua posição</h3>
-                  <p className="text-sm text-amber-800">
-                    Sua posição é uma estimativa. A sequencia de carregamento pode ser alterada de acordo com: Tipo de veiculo, carga, restrições da carga e logística interna da empresa.
-                  </p>
+                <div className="border-t border-amber-200 pt-1.5">
+                  <h3 className="font-bold text-amber-900">Sobre sua posição</h3>
+                  <p className="text-amber-800">É uma estimativa. A sequência pode mudar conforme tipo de veículo, carga e logística.</p>
                 </div>
               </div>
             </CardContent>
