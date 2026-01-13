@@ -254,30 +254,50 @@ export default function AdicionarFilaCarousel({
                   <p className="text-sm text-blue-700">Validando comprovante...</p>
                 </div>
               ) : comprovanteValidado ? (
-                <div className={`p-4 rounded-lg border-2 ${
-                  comprovanteValidado.valido 
-                    ? 'bg-green-50 border-green-500' 
-                    : 'bg-red-50 border-red-500'
-                }`}>
-                  <div className="flex items-start gap-2">
-                    {comprovanteValidado.valido ? (
-                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                    )}
-                    <div>
-                      <p className={`text-sm font-semibold ${
-                        comprovanteValidado.valido ? 'text-green-700' : 'text-red-700'
-                      }`}>
-                        {comprovanteValidado.valido ? '✅ Comprovante válido!' : '❌ Comprovante inválido'}
-                      </p>
-                      <p className={`text-xs mt-1 ${
-                        comprovanteValidado.valido ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {comprovanteValidado.mensagem}
-                      </p>
+                <div className="space-y-3">
+                  <div className={`p-4 rounded-lg border-2 ${
+                    comprovanteValidado.valido 
+                      ? 'bg-green-50 border-green-500' 
+                      : 'bg-red-50 border-red-500'
+                  }`}>
+                    <div className="flex items-start gap-2">
+                      {comprovanteValidado.valido ? (
+                        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      )}
+                      <div>
+                        <p className={`text-sm font-semibold ${
+                          comprovanteValidado.valido ? 'text-green-700' : 'text-red-700'
+                        }`}>
+                          {comprovanteValidado.valido ? '✅ Comprovante válido!' : '❌ Comprovante inválido'}
+                        </p>
+                        <p className={`text-xs mt-1 ${
+                          comprovanteValidado.valido ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {comprovanteValidado.mensagem}
+                        </p>
+                      </div>
                     </div>
                   </div>
+                  
+                  {!comprovanteValidado.valido && (
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, comprovante_descarga_url: "", comprovante_validacao: "" }));
+                        setComprovanteValidado(null);
+                        // Reabrir o file input
+                        setTimeout(() => {
+                          document.getElementById('comprovante-upload')?.click();
+                        }, 100);
+                      }}
+                      className="w-full h-12 bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Upload className="w-5 h-5 mr-2" />
+                      Tirar Outra Foto
+                    </Button>
+                  )}
                 </div>
               ) : null}
             </div>
