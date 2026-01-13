@@ -130,13 +130,13 @@ export default function LandingPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const currentUser = await base44.auth.me();
-        if (currentUser) {
-          setUser(currentUser);
-          window.location.href = createPageUrl("Inicio");
+        const isAuth = await base44.auth.isAuthenticated();
+        if (isAuth) {
+          window.location.replace(createPageUrl("Inicio"));
+          return;
         }
       } catch (error) {
-        // Usuário não autenticado
+        console.error("Erro ao verificar autenticação:", error);
       } finally {
         setCheckingAuth(false);
       }
