@@ -600,6 +600,27 @@ export default function FilaX() {
     window.open(`https://wa.me/${numero}`, '_blank');
   };
 
+  const abreviarLocalizacao = (localizacao) => {
+    if (!localizacao) return "-";
+    
+    // Se já tem cidade_uf formatado, usar ele
+    const partes = localizacao.split(',').map(p => p.trim());
+    
+    // Tentar extrair bairro (geralmente vem antes da cidade)
+    // Formato comum: "Rua, Número, Bairro, Cidade, Estado"
+    if (partes.length >= 3) {
+      const bairro = partes[partes.length - 3] || "";
+      const cidade = partes[partes.length - 2] || "";
+      const uf = partes[partes.length - 1] || "";
+      
+      // Montar string abreviada
+      const abreviado = [bairro, cidade, uf].filter(p => p).join(', ');
+      return abreviado || localizacao;
+    }
+    
+    return localizacao;
+  };
+
   const handleDoubleClick = (itemId, field, currentValue) => {
     setEditingCell({ itemId, field });
     setEditValue(currentValue || "");
@@ -1105,8 +1126,10 @@ export default function FilaX() {
                                   </p>
                                 </div>
                                 <div className="col-span-2">
-                                  <p className="text-[10px]" style={{ color: theme.textMuted }}>Localização</p>
-                                  <p className="truncate" style={{ color: theme.text }}>{item.localizacao_atual || "-"}</p>
+                                  <p className="text-[10px]" style={{ color: theme.textMuted }}>Local</p>
+                                  <p className="truncate" style={{ color: theme.text }} title={item.localizacao_atual}>
+                                    {item.cidade_uf || abreviarLocalizacao(item.localizacao_atual)}
+                                  </p>
                                 </div>
                                 <div>
                                   <p className="text-[10px]" style={{ color: theme.textMuted }}>Entrada</p>
@@ -1457,7 +1480,9 @@ export default function FilaX() {
                                 style={{ backgroundColor: theme.cardBg, borderColor: '#3b82f6', color: theme.text }}
                               />
                             ) : (
-                              <p className="text-xs truncate" style={{ color: theme.text }} title={item.localizacao_atual}>{item.localizacao_atual || "-"}</p>
+                              <p className="text-xs truncate" style={{ color: theme.text }} title={item.localizacao_atual}>
+                                {item.cidade_uf || abreviarLocalizacao(item.localizacao_atual)}
+                              </p>
                             )}
                           </td>
                           <td className="p-2">
