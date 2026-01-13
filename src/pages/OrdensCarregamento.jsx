@@ -271,6 +271,11 @@ export default function OrdensCarregamento() {
         await base44.entities.OrdemDeCarregamento.update(editingOrdem.id, ordemData);
         ordemId = editingOrdem.id;
         
+        // Se senha_fila foi adicionada/atualizada, mover veículo para status configurado
+        if (ordemData.senha_fila && ordemData.senha_fila !== editingOrdem.senha_fila) {
+          await moverVeiculoParaStatusVinculado(ordemData.senha_fila);
+        }
+        
         const mudouParaAlocado = tipoNegociacao === "alocado" && editingOrdem.tipo_negociacao !== "alocado";
         if (mudouParaAlocado) {
           toast.success("Ordem alocada com sucesso! Motorista e veículo definidos.");
@@ -285,6 +290,12 @@ export default function OrdensCarregamento() {
         console.log(`✅ ORDENS - Ordem criada:`, ordemId.slice(-6));
 
         await vincularPrimeiraEtapa(ordemId);
+        
+        // Se senha_fila foi informada, mover veículo para status configurado
+        if (ordemData.senha_fila) {
+          await moverVeiculoParaStatusVinculado(ordemData.senha_fila);
+        }
+        
         toast.success("Ordem de carregamento criada com sucesso!");
       }
 
@@ -628,6 +639,38 @@ export default function OrdensCarregamento() {
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       toast.error("Erro ao carregar dados para endereçamento");
+    }
+  };
+
+  const moverVeiculoParaStatusVinculado = async (senhaFila) => {
+    try {
+      // Buscar o veículo na fila com essa senha
+      const veiculosNaFila = await base44.entities.FilaVeiculo.list();
+      const veiculoNaFila = veiculosNaFila.find(v => v.senha_fila === senhaFila);
+      
+      if (!veiculoNaFila) {
+        console.log("Veículo não encontrado na fila para senha:", senhaFila);
+        return;
+      }
+
+      // Buscar o status que tem a flag "mover_quando_vinculado"
+      const todosStatus = await base44.entities.StatusFilaVeiculo.list();
+      const statusVinculado = todosStatus.find(s => s.mover_quando_vinculado === true);
+
+      if (!statusVinculado) {
+        console.log("Nenhum status configurado com flag 'mover_quando_vinculado'");
+        return;
+      }
+
+      // Atualizar o status do veículo na fila
+      await base44.entities.FilaVeiculo.update(veiculoNaFila.id, {
+        status: statusVinculado.nome
+      });
+
+      console.log(`✅ Veículo movido para status: ${statusVinculado.nome}`);
+    } catch (error) {
+      console.error("Erro ao mover veículo para status vinculado:", error);
+      // Não bloquear o salvamento da ordem por esse erro
     }
   };
 
