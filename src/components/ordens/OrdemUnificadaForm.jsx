@@ -2358,7 +2358,18 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-5 gap-4">
+                    <div>
+                      <Label>Senha Fila</Label>
+                      <Input 
+                        value={formData.senha_fila || ""} 
+                        onChange={(e) => handleChange("senha_fila", e.target.value.toUpperCase())} 
+                        placeholder="4 dígitos" 
+                        maxLength={4}
+                        className="font-mono font-bold text-blue-600"
+                        style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }} 
+                      />
+                    </div>
                     <div>
                       <Label>Viagem</Label>
                       <Input value={formData.viagem || ""} onChange={(e) => handleChange("viagem", e.target.value)} placeholder="Número da viagem" 
