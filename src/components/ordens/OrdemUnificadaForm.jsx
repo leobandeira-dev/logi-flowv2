@@ -167,6 +167,11 @@ export default function OrdemUnificadaForm({
   const [senhaJaUsada, setSenhaJaUsada] = useState(false);
   const [verificandoSenha, setVerificandoSenha] = useState(false);
   
+  // Busca de veículos na fila
+  const [showBuscarFila, setShowBuscarFila] = useState(false);
+  const [veiculosFila, setVeiculosFila] = useState([]);
+  const [loadingFila, setLoadingFila] = useState(false);
+  
   // Modais de Notas Fiscais
   const [showNotaForm, setShowNotaForm] = useState(false);
   const [notaParaEditar, setNotaParaEditar] = useState(null);
@@ -557,6 +562,43 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
     } finally {
       setVerificandoSenha(false);
     }
+  };
+
+  const handleBuscarVeiculosFila = async () => {
+    setLoadingFila(true);
+    try {
+      const fila = await base44.entities.FilaVeiculo.filter({ status: "aguardando" }, "-created_date", 100);
+      setVeiculosFila(fila);
+    } catch (error) {
+      console.error("Erro ao buscar fila:", error);
+      toast.error("Erro ao carregar veículos da fila");
+    } finally {
+      setLoadingFila(false);
+    }
+  };
+
+  const handleSelecionarVeiculoFila = async (veiculo) => {
+    // Preencher senha
+    handleChange("senha_fila", veiculo.senha_fila);
+    
+    // Preencher motorista se existir
+    if (veiculo.motorista_nome && !formData.motorista_id) {
+      handleChange("motorista_nome_temp", veiculo.motorista_nome);
+    }
+    
+    // Preencher placas temporárias se não tiver veículos cadastrados
+    if (veiculo.cavalo_placa && !formData.cavalo_id) {
+      handleChange("cavalo_placa_temp", veiculo.cavalo_placa);
+    }
+    if (veiculo.implemento1_placa && !formData.implemento1_id) {
+      handleChange("implemento1_placa_temp", veiculo.implemento1_placa);
+    }
+    if (veiculo.implemento2_placa && !formData.implemento2_id) {
+      handleChange("implemento2_placa_temp", veiculo.implemento2_placa);
+    }
+    
+    setShowBuscarFila(false);
+    toast.success(`Veículo ${veiculo.cavalo_placa} selecionado!`);
   };
 
   // ======= FUNÇÕES DE IMPORTAÇÃO DE NOTAS FISCAIS =======
@@ -2421,6 +2463,21 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
                             </div>
                           )}
                         </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            handleBuscarVeiculosFila();
+                            setShowBuscarFila(true);
+                          }}
+                          disabled={formData.carga_dedicada}
+                          className="h-10 px-3 flex items-center gap-1.5"
+                          title="Buscar veículos na fila"
+                        >
+                          <Search className="w-4 h-4" />
+                          Fila
+                        </Button>
                         <div className="flex items-center gap-1.5 pt-2">
                           <input
                             type="checkbox"
@@ -3425,6 +3482,119 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
                 Cancelar
               </Button>
             </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Modal de Busca de Veículos na Fila */}
+      {showBuscarFila && (
+        <Dialog open={showBuscarFila} onOpenChange={setShowBuscarFila}>
+          <DialogContent className="max-w-3xl max-h-[80vh]" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+            <DialogHeader>
+              <DialogTitle style={{ color: theme.text }}>Veículos Disponíveis na Fila</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {loadingFila ? (
+                <div className="text-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-blue-600" />
+                  <p className="text-sm" style={{ color: theme.textMuted }}>Carregando veículos da fila...</p>
+                </div>
+              ) : (
+                <div className="overflow-y-auto max-h-[50vh] space-y-2">
+                  {veiculosFila.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Truck className="w-12 h-12 mx-auto mb-3 opacity-20" style={{ color: theme.textMuted }} />
+                      <p className="text-sm" style={{ color: theme.textMuted }}>Nenhum veículo disponível na fila</p>
+                    </div>
+                  ) : (
+                    veiculosFila.map((veiculo) => (
+                      <div
+                        key={veiculo.id}
+                        className="border rounded-lg p-3 cursor-pointer hover:shadow-md transition-all"
+                        style={{ 
+                          borderColor: theme.cardBorder, 
+                          backgroundColor: isDark ? '#0f172a' : '#ffffff'
+                        }}
+                        onClick={() => handleSelecionarVeiculoFila(veiculo)}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge className="bg-blue-600 text-white font-mono font-bold">
+                                {veiculo.senha_fila}
+                              </Badge>
+                              {veiculo.tipo_fila_nome && (
+                                <Badge variant="outline" style={{ borderColor: theme.cardBorder, color: theme.text }}>
+                                  {veiculo.tipo_fila_nome}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div>
+                                <p className="font-medium mb-1" style={{ color: theme.textMuted }}>Motorista:</p>
+                                <p style={{ color: theme.text }}>{veiculo.motorista_nome}</p>
+                                {veiculo.motorista_cpf && (
+                                  <p className="text-xs" style={{ color: theme.textMuted }}>CPF: {veiculo.motorista_cpf}</p>
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-medium mb-1" style={{ color: theme.textMuted }}>Veículos:</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {veiculo.cavalo_placa && (
+                                    <Badge variant="outline" className="font-mono text-xs">
+                                      {veiculo.cavalo_placa}
+                                    </Badge>
+                                  )}
+                                  {veiculo.implemento1_placa && (
+                                    <Badge variant="outline" className="font-mono text-xs">
+                                      {veiculo.implemento1_placa}
+                                    </Badge>
+                                  )}
+                                  {veiculo.implemento2_placa && (
+                                    <Badge variant="outline" className="font-mono text-xs">
+                                      {veiculo.implemento2_placa}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            {veiculo.tipo_veiculo && (
+                              <div className="mt-2 flex gap-2 text-xs">
+                                <Badge variant="outline" style={{ borderColor: theme.cardBorder, color: theme.text }}>
+                                  {veiculo.tipo_veiculo}
+                                </Badge>
+                                {veiculo.tipo_carroceria && (
+                                  <Badge variant="outline" style={{ borderColor: theme.cardBorder, color: theme.text }}>
+                                    {veiculo.tipo_carroceria}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelecionarVeiculoFila(veiculo);
+                            }}
+                          >
+                            <Check className="w-4 h-4 mr-1" />
+                            Selecionar
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setShowBuscarFila(false)} variant="outline" className="w-full">
+                Fechar
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
