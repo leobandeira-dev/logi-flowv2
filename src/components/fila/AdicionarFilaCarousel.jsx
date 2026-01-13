@@ -438,8 +438,7 @@ Retorne JSON com:
           )}
         </div>
       )
-    },
-
+    }
   ];
 
   const currentStep = steps[step];
@@ -450,9 +449,6 @@ Retorne JSON com:
     if (currentStep.field === 'cavalo_placa') {
       const placaLimpa = formData.cavalo_placa?.replace(/\W/g, '') || '';
       return placaLimpa.length === 7;
-    }
-    if (currentStep.field === 'confirmacao') {
-      return true; // Confirmação sempre válida
     }
     return isRequired ? !!formData[currentStep.field] : true;
   };
