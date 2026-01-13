@@ -201,6 +201,9 @@ export default function FilaX() {
         await loadData();
         return;
       }
+
+      // Recalcular posições FIFO sempre ao carregar dados para garantir ordem correta
+      await recalcularPosicoesFIFO(empresa);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       toast.error("Erro ao carregar dados");
