@@ -164,6 +164,8 @@ export default function OrdemUnificadaForm({
   
   // Validação
   const [showValidation, setShowValidation] = useState(false);
+  const [senhaJaUsada, setSenhaJaUsada] = useState(false);
+  const [verificandoSenha, setVerificandoSenha] = useState(false);
   
   // Modais de Notas Fiscais
   const [showNotaForm, setShowNotaForm] = useState(false);
@@ -527,6 +529,34 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Verificar senha única quando campo senha_fila for alterado
+    if (field === 'senha_fila' && value && value.length === 4) {
+      verificarSenhaUnica(value);
+    } else if (field === 'senha_fila') {
+      setSenhaJaUsada(false);
+    }
+  };
+
+  const verificarSenhaUnica = async (senha) => {
+    if (!senha || senha.length !== 4) return;
+    
+    setVerificandoSenha(true);
+    try {
+      const todasOrdens = await base44.entities.OrdemDeCarregamento.filter({ senha_fila: senha });
+      
+      // Se estiver editando, permitir a própria senha
+      const senhaEmUso = todasOrdens.some(o => o.id !== editingOrdem?.id);
+      setSenhaJaUsada(senhaEmUso);
+      
+      if (senhaEmUso) {
+        toast.error(`Senha "${senha}" já está sendo usada em outra ordem!`);
+      }
+    } catch (error) {
+      console.error("Erro ao verificar senha:", error);
+    } finally {
+      setVerificandoSenha(false);
+    }
   };
 
   // ======= FUNÇÕES DE IMPORTAÇÃO DE NOTAS FISCAIS =======
@@ -1289,7 +1319,14 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
       case 'operacao': return obrigatorios.includes('operacao_id') && !formData.operacao_id ? 'Selecione uma operação' : null;
       case 'destinatario': return obrigatorios.includes('destinatario') && !formData.destinatario ? 'Destinatário é obrigatório' : null;
       case 'destinatario_cnpj': return obrigatorios.includes('destinatario_cnpj') && !formData.destinatario_cnpj ? 'CNPJ do destinatário é obrigatório' : null;
-      case 'senha_fila': return obrigatorios.includes('senha_fila') && (!formData.senha_fila || formData.senha_fila.length !== 4) ? 'Senha Fila (4 dígitos) é obrigatória' : null;
+      case 'senha_fila': 
+        if (obrigatorios.includes('senha_fila') && (!formData.senha_fila || formData.senha_fila.length !== 4)) {
+          return 'Senha Fila (4 dígitos) é obrigatória';
+        }
+        if (senhaJaUsada) {
+          return 'Esta senha já está sendo usada em outra ordem';
+        }
+        return null;
       case 'preco':
         if (!obrigatorios.includes('peso')) return null;
         const hasPriceMethod = (!!formData.valor_tonelada && parseFloat(formData.valor_tonelada) > 0) ||
@@ -1314,6 +1351,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
     if (obrigatorios.includes('motorista_id') && formData.motorista_id && !motoristaTelefone) return false;
     if (obrigatorios.includes('operacao_id') && !formData.operacao_id) return false;
     if (obrigatorios.includes('senha_fila') && (!formData.senha_fila || formData.senha_fila.length !== 4)) return false;
+    if (senhaJaUsada) return false;
     
     // Verificar preço apenas se peso é obrigatório
     if (obrigatorios.includes('peso')) {
@@ -1344,6 +1382,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
       if (obrigatorios.includes('destinatario') && !formData.destinatario) camposFaltando.push("Destinatário");
       if (obrigatorios.includes('destinatario_cnpj') && !formData.destinatario_cnpj) camposFaltando.push("CNPJ do Destinatário");
       if (obrigatorios.includes('senha_fila') && (!formData.senha_fila || formData.senha_fila.length !== 4)) camposFaltando.push("Senha Fila (4 dígitos)");
+      if (senhaJaUsada) camposFaltando.push("Senha Fila (já em uso - escolha outra)");
       
       if (obrigatorios.includes('peso')) {
         const hasPriceMethod = (!!formData.valor_tonelada && parseFloat(formData.valor_tonelada) > 0) ||
@@ -2366,13 +2405,21 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
                       <Label className={getFieldError('senha_fila') ? 'text-red-600 font-semibold' : 'font-semibold'}>
                         Senha Fila *{getFieldError('senha_fila') && <span className="ml-2 text-xs">⚠️</span>}
                       </Label>
-                      <Input 
-                        value={formData.senha_fila || ""} 
-                        onChange={(e) => handleChange("senha_fila", e.target.value.toUpperCase())} 
-                        placeholder="4 dígitos" 
-                        maxLength={4}
-                        className={`font-mono font-bold text-lg ${getFieldError('senha_fila') ? 'border-red-500 border-2 bg-red-50 text-red-600' : 'border-blue-500 border-2 bg-blue-50 text-blue-600'}`}
-                      />
+                      <div className="relative">
+                        <Input 
+                          value={formData.senha_fila || ""} 
+                          onChange={(e) => handleChange("senha_fila", e.target.value.toUpperCase())} 
+                          placeholder="4 dígitos" 
+                          maxLength={4}
+                          className={`font-mono font-bold text-lg ${getFieldError('senha_fila') ? 'border-red-500 border-2 bg-red-50 text-red-600' : 'border-blue-500 border-2 bg-blue-50 text-blue-600'}`}
+                          disabled={verificandoSenha}
+                        />
+                        {verificandoSenha && (
+                          <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                          </div>
+                        )}
+                      </div>
                       {getFieldError('senha_fila') && <p className="text-xs text-red-600 mt-1 font-medium">{getFieldError('senha_fila')}</p>}
                     </div>
                     <div>
