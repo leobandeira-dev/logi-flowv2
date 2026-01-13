@@ -375,8 +375,8 @@ export default function FilaX() {
       e.preventDefault();
     }
 
-    if (!formData.motorista_nome || !formData.cavalo_placa || !formData.tipo_fila_id || !formData.motorista_telefone) {
-      toast.error("Preencha todos os campos obrigatórios");
+    if (!formData.motorista_nome || !formData.cavalo_placa || !formData.tipo_fila_id) {
+      toast.error("Preencha todos os campos obrigatórios (nome, placa e tipo)");
       return;
     }
 
@@ -1762,22 +1762,38 @@ export default function FilaX() {
               />
             ) : (
               <form onSubmit={handleAdicionarFila} className="space-y-4">
-              {/* Telefone */}
+              {/* Placa do Cavalo */}
               <div>
-                <Label style={{ color: theme.text }}>Telefone Celular *</Label>
+                <Label style={{ color: theme.text }}>Placa do Cavalo *</Label>
                 <Input
-                  type="tel"
-                  inputMode="numeric"
-                  value={formData.motorista_telefone}
+                  value={formData.cavalo_placa}
                   onChange={(e) => {
-                    const valor = e.target.value.replace(/\D/g, '');
-                    if (valor.length <= 11) {
-                      const formatado = valor.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
-                      setFormData(prev => ({ ...prev, motorista_telefone: valor.length === 11 ? formatado : valor }));
+                    const placa = e.target.value.toUpperCase();
+                    setFormData(prev => ({ ...prev, cavalo_placa: placa }));
+                    
+                    // Buscar motorista vinculado à placa
+                    if (placa.length >= 3) {
+                      const veiculo = veiculos.find(v => v.placa?.toUpperCase().includes(placa));
+                      if (veiculo) {
+                        const motorista = motoristas.find(m => m.cavalo_id === veiculo.id);
+                        if (motorista) {
+                          setFormData(prev => ({
+                            ...prev,
+                            motorista_id: motorista.id,
+                            motorista_nome: motorista.nome,
+                            motorista_cpf: motorista.cpf,
+                            motorista_telefone: motorista.celular,
+                            cavalo_id: veiculo.id,
+                            tipo_veiculo: veiculo.tipo,
+                            tipo_carroceria: veiculo.carroceria
+                          }));
+                          toast.success("Motorista encontrado!");
+                        }
+                      }
                     }
                   }}
-                  placeholder="(00) 00000-0000"
-                  maxLength={15}
+                  placeholder="ABC1234"
+                  className="font-mono font-bold"
                   style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                 />
               </div>
@@ -1793,14 +1809,22 @@ export default function FilaX() {
                 />
               </div>
 
-              {/* Placa do Cavalo */}
+              {/* Telefone */}
               <div>
-                <Label style={{ color: theme.text }}>Placa do Cavalo *</Label>
+                <Label style={{ color: theme.text }}>Telefone Celular</Label>
                 <Input
-                  value={formData.cavalo_placa}
-                  onChange={(e) => setFormData(prev => ({ ...prev, cavalo_placa: e.target.value.toUpperCase() }))}
-                  placeholder="ABC1234"
-                  className="font-mono font-bold"
+                  type="tel"
+                  inputMode="numeric"
+                  value={formData.motorista_telefone}
+                  onChange={(e) => {
+                    const valor = e.target.value.replace(/\D/g, '');
+                    if (valor.length <= 11) {
+                      const formatado = valor.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+                      setFormData(prev => ({ ...prev, motorista_telefone: valor.length === 11 ? formatado : valor }));
+                    }
+                  }}
+                  placeholder="(00) 00000-0000"
+                  maxLength={15}
                   style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                 />
               </div>
