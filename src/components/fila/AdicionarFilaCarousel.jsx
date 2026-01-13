@@ -25,7 +25,6 @@ export default function AdicionarFilaCarousel({
 }) {
   const [step, setStep] = useState(0);
   const [showError, setShowError] = useState(false);
-  const [openSelect, setOpenSelect] = useState(false);
 
   const steps = [
     {
@@ -133,11 +132,13 @@ export default function AdicionarFilaCarousel({
           <div>
             <Label style={{ color: theme.text }}>Tipo de Veículo *</Label>
             <Select
-              value={formData.tipo_veiculo || undefined}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_veiculo: value }))}
+              value={formData.tipo_veiculo || ""}
+              onValueChange={(value) => {
+                setFormData(prev => ({ ...prev, tipo_veiculo: value }));
+              }}
             >
               <SelectTrigger 
-                className="h-14 transition-all duration-200 hover:shadow-md" 
+                className="h-14 transition-all duration-200" 
                 style={{ 
                   backgroundColor: formData.tipo_veiculo ? '#dcfce7' : theme.cardBg,
                   borderColor: showError && !formData.tipo_veiculo ? '#ef4444' : (formData.tipo_veiculo ? '#10b981' : theme.cardBorder),
@@ -170,11 +171,13 @@ export default function AdicionarFilaCarousel({
           <div>
             <Label style={{ color: theme.text }}>Tipo de Carroceria *</Label>
             <Select
-              value={formData.tipo_carroceria || undefined}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_carroceria: value }))}
+              value={formData.tipo_carroceria || ""}
+              onValueChange={(value) => {
+                setFormData(prev => ({ ...prev, tipo_carroceria: value }));
+              }}
             >
               <SelectTrigger 
-                className="h-14 transition-all duration-200 hover:shadow-md" 
+                className="h-14 transition-all duration-200" 
                 style={{ 
                   backgroundColor: formData.tipo_carroceria ? '#fef3c7' : theme.cardBg,
                   borderColor: showError && !formData.tipo_carroceria ? '#ef4444' : (formData.tipo_carroceria ? '#f59e0b' : theme.cardBorder),
@@ -326,11 +329,9 @@ export default function AdicionarFilaCarousel({
       const emptyField = getEmptySelectField();
       if (emptyField) {
         setShowError(true);
-        setOpenSelect(true);
         return;
       }
       setShowError(false);
-      setOpenSelect(false);
       setStep(step + 1);
       return;
     }
@@ -340,7 +341,6 @@ export default function AdicionarFilaCarousel({
       return;
     }
     setShowError(false);
-    setOpenSelect(false);
     setStep(step + 1);
   };
 
