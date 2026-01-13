@@ -107,6 +107,7 @@ export default function OrdensTable({ ordens, motoristas, veiculos, loading, onE
               <TableHeader>
                 <TableRow className="hover:bg-transparent" style={{ borderBottomColor: theme.border }}>
                   <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Nº Carga</TableHead>
+                  <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Senha</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Tipo</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Cliente</TableHead>
                   <TableHead className="h-8 text-[10px] font-bold uppercase" style={{ color: theme.textMuted }}>Rota</TableHead>
@@ -119,7 +120,7 @@ export default function OrdensTable({ ordens, motoristas, veiculos, loading, onE
               <TableBody>
                 {ordens.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-12 text-xs" style={{ color: theme.textMuted }}>
+                    <TableCell colSpan={9} className="text-center py-12 text-xs" style={{ color: theme.textMuted }}>
                       Nenhuma ordem encontrada
                     </TableCell>
                   </TableRow>
@@ -153,6 +154,18 @@ export default function OrdensTable({ ordens, motoristas, veiculos, loading, onE
                           <span className="font-mono font-bold text-xs" style={{ color: isDark ? '#60a5fa' : '#1d4ed8' }}>
                             {ordem.numero_carga || `#${ordem.id.slice(-6)}`}
                           </span>
+                        </TableCell>
+                        <TableCell className="py-1 px-2">
+                          {ordem.senha_fila ? (
+                            <span className="font-mono font-bold text-xs px-2 py-0.5 rounded" style={{ 
+                              backgroundColor: isDark ? '#1e3a8a' : '#dbeafe',
+                              color: isDark ? '#60a5fa' : '#1e40af'
+                            }}>
+                              {ordem.senha_fila}
+                            </span>
+                          ) : (
+                            <span className="text-[9px]" style={{ color: theme.textMuted }}>-</span>
+                          )}
                         </TableCell>
                         <TableCell className="py-1 px-2">
                           <Badge className={`text-[9px] h-4 px-1.5 font-bold border-2 ${
