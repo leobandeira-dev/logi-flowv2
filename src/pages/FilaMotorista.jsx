@@ -38,6 +38,7 @@ export default function FilaMotorista() {
   });
   const [consultaTelefone, setConsultaTelefone] = useState("");
   const [consultando, setConsultando] = useState(false);
+  const [empresa, setEmpresa] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -86,6 +87,10 @@ export default function FilaMotorista() {
       // Salvar empresa_id no estado e localStorage
       setFormData(prev => ({ ...prev, empresa_id: empresaId }));
       localStorage.setItem('fila_empresa_id', empresaId);
+
+      // Buscar dados da empresa
+      const empresaData = await base44.entities.Empresa.get(empresaId);
+      setEmpresa(empresaData);
 
       // Buscar tipos de fila, motoristas e veículos APENAS desta empresa
       const [tiposData, motoristasData, veiculosData] = await Promise.all([
@@ -746,6 +751,7 @@ export default function FilaMotorista() {
                 preenchidoAutomatico={preenchidoAutomatico}
                 motoristaEncontrado={motoristaEncontrado}
                 onSubmit={handleSubmit}
+                celularSuporte={empresa?.celular_suporte}
               />
             )}
           </CardContent>
