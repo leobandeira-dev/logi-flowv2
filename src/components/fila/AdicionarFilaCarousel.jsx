@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, MapPin, RefreshCw, User, Truck, Package, CheckCircle, Upload, AlertCircle, FileText } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, RefreshCw, User, Truck, Package, CheckCircle, Upload, AlertCircle, FileText, MessageCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
@@ -23,7 +23,8 @@ export default function AdicionarFilaCarousel({
   onObterLocalizacao,
   preenchidoAutomatico,
   onSubmit,
-  motoristaEncontrado
+  motoristaEncontrado,
+  celularSuporte
 }) {
   const [step, setStep] = useState(0);
   const [showError, setShowError] = useState(false);
@@ -31,13 +32,39 @@ export default function AdicionarFilaCarousel({
   const [validandoComprovante, setValidandoComprovante] = useState(false);
   const [comprovanteValidado, setComprovanteValidado] = useState(null);
 
+  const abrirAjudaWhatsApp = (telaAtual) => {
+    if (!celularSuporte) {
+      alert("Número de suporte não configurado. Entre em contato com a transportadora.");
+      return;
+    }
+    
+    const celularLimpo = celularSuporte.replace(/\D/g, '');
+    const mensagem = encodeURIComponent(
+      `Olá, estou com dificuldade na tela: "${telaAtual}" do sistema de marcação de fila.\n\nPreciso de ajuda de um operador.`
+    );
+    
+    window.open(`https://wa.me/55${celularLimpo}?text=${mensagem}`, '_blank');
+  };
+
   const steps = [
     {
       title: "Nome do Motorista",
       field: "motorista_nome",
       render: () => (
         <div>
-          <Label style={{ color: theme.text }}>Nome Completo *</Label>
+          <div className="flex items-center justify-between mb-2">
+            <Label style={{ color: theme.text }}>Nome Completo *</Label>
+            {celularSuporte && (
+              <button
+                type="button"
+                onClick={() => abrirAjudaWhatsApp("Nome do Motorista")}
+                className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 underline"
+              >
+                <MessageCircle className="w-3 h-3" />
+                Ajuda
+              </button>
+            )}
+          </div>
           <Input
             value={formData.motorista_nome}
             onChange={(e) => setFormData(prev => ({ ...prev, motorista_nome: e.target.value }))}
@@ -63,7 +90,19 @@ export default function AdicionarFilaCarousel({
       field: "cavalo_placa",
       render: () => (
         <div>
-          <Label style={{ color: theme.text }}>Placa do Cavalo *</Label>
+          <div className="flex items-center justify-between mb-2">
+            <Label style={{ color: theme.text }}>Placa do Cavalo *</Label>
+            {celularSuporte && (
+              <button
+                type="button"
+                onClick={() => abrirAjudaWhatsApp("Placa do Cavalo")}
+                className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 underline"
+              >
+                <MessageCircle className="w-3 h-3" />
+                Ajuda
+              </button>
+            )}
+          </div>
           <Input
             value={formData.cavalo_placa}
             onChange={(e) => {
@@ -97,7 +136,19 @@ export default function AdicionarFilaCarousel({
       render: () => (
         <div className="space-y-4">
           <div>
-            <Label style={{ color: theme.text }}>Tipo do Motorista *</Label>
+            <div className="flex items-center justify-between mb-2">
+              <Label style={{ color: theme.text }}>Tipo do Motorista *</Label>
+              {celularSuporte && (
+                <button
+                  type="button"
+                  onClick={() => abrirAjudaWhatsApp("Tipo de Motorista, Veículo e Carroceria")}
+                  className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 underline"
+                >
+                  <MessageCircle className="w-3 h-3" />
+                  Ajuda
+                </button>
+              )}
+            </div>
             <Select
               value={formData.tipo_fila_id}
               onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_fila_id: value }))}
@@ -217,6 +268,18 @@ export default function AdicionarFilaCarousel({
       field: "comprovante_descarga_url",
       render: () => (
         <div className="space-y-4">
+          {celularSuporte && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => abrirAjudaWhatsApp("Comprovante de Descarga")}
+                className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 underline"
+              >
+                <MessageCircle className="w-3 h-3" />
+                Ajuda
+              </button>
+            </div>
+          )}
           <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
             <p className="text-xs text-amber-800 font-semibold mb-2">
               📸 Tire uma foto do comprovante de descarga
@@ -403,7 +466,19 @@ Retorne JSON com:
       field: "cidade_uf",
       render: () => (
         <div>
-          <Label style={{ color: theme.text }}>Cidade e UF *</Label>
+          <div className="flex items-center justify-between mb-2">
+            <Label style={{ color: theme.text }}>Cidade e UF *</Label>
+            {celularSuporte && (
+              <button
+                type="button"
+                onClick={() => abrirAjudaWhatsApp("Localização Atual")}
+                className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 underline"
+              >
+                <MessageCircle className="w-3 h-3" />
+                Ajuda
+              </button>
+            )}
+          </div>
           <div className="flex gap-2">
             <Input
               value={formData.cidade_uf}

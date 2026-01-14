@@ -87,6 +87,7 @@ export default function Configuracoes() {
     cep: "",
     telefone: "",
     email: "",
+    celular_suporte: "",
     inscricao_estadual: "",
     logo_url: "",
     timezone: "America/Sao_Paulo"
@@ -1633,6 +1634,7 @@ export default function Configuracoes() {
           cep: empresaData.cep || "",
           telefone: empresaData.telefone || "",
           email: empresaData.email || "",
+          celular_suporte: empresaData.celular_suporte || "",
           inscricao_estadual: empresaData.inscricao_estadual || "",
           logo_url: empresaData.logo_url || "",
           timezone: empresaData.timezone || "America/Sao_Paulo"
@@ -1657,6 +1659,7 @@ export default function Configuracoes() {
             cep: primeiraEmpresa.cep || "",
             telefone: primeiraEmpresa.telefone || "",
             email: primeiraEmpresa.email || "",
+            celular_suporte: primeiraEmpresa.celular_suporte || "",
             inscricao_estadual: primeiraEmpresa.inscricao_estadual || "",
             logo_url: primeiraEmpresa.logo_url || "",
             timezone: primeiraEmpresa.timezone || "America/Sao_Paulo"
@@ -2123,6 +2126,21 @@ export default function Configuracoes() {
                         placeholder="contato@empresa.com.br"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="celular_suporte">
+                      Celular de Suporte (WhatsApp)
+                    </Label>
+                    <Input
+                      id="celular_suporte"
+                      value={formData.celular_suporte}
+                      onChange={(e) => handleInputChange("celular_suporte", e.target.value)}
+                      placeholder="(11) 99999-9999"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Este número será usado no botão de ajuda do app de marcação de motoristas
+                    </p>
                   </div>
 
                   <div>
