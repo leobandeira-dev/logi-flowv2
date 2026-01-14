@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Shield, Check, X, Users, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Plus, Edit, Shield, Check, X, Users, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const PAGINAS_DISPONIVEIS = [
@@ -67,6 +68,13 @@ export default function PermissoesPerfilUsuario() {
 
       if (!currentUser.empresa_id) {
         toast.error("Usuário sem empresa vinculada");
+        setLoading(false);
+        return;
+      }
+
+      // Apenas admin ou role específico pode gerenciar permissões
+      if (currentUser.role !== 'admin' && currentUser.tipo_perfil !== 'operador') {
+        toast.error("Sem permissão para gerenciar configurações");
         setLoading(false);
         return;
       }
@@ -169,6 +177,32 @@ export default function PermissoesPerfilUsuario() {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!user?.empresa_id) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <Alert variant="destructive">
+          <AlertCircle className="w-4 h-4" />
+          <AlertDescription>
+            Você precisa estar vinculado a uma empresa para gerenciar permissões de usuários.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (user.role !== 'admin' && user.tipo_perfil !== 'operador') {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <Alert variant="destructive">
+          <AlertCircle className="w-4 h-4" />
+          <AlertDescription>
+            Apenas administradores e operadores podem gerenciar permissões de usuários.
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
