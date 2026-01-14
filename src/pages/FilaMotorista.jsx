@@ -315,10 +315,6 @@ export default function FilaMotorista() {
 
       const tipoSelecionado = tiposFila.find(t => t.id === formData.tipo_fila_id);
       
-      // Buscar todas as filas DESTA EMPRESA para calcular próxima posição
-      const todasFilas = await base44.entities.FilaVeiculo.filter({ empresa_id: formData.empresa_id });
-      const proximaPosicao = todasFilas.length + 1;
-
       // Gerar senha única alfanumérica de 4 dígitos
       const gerarSenhaFila = async () => {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
