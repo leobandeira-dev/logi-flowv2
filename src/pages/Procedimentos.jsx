@@ -12,7 +12,8 @@ import {
   ClipboardCheck,
   Package,
   Truck,
-  FileSpreadsheet
+  FileSpreadsheet,
+  User
 } from "lucide-react";
 import { 
   InstrucaoOrdensCarregamentoDetalhada, 
@@ -26,6 +27,7 @@ import { AnexosProcedimentoTransportes } from "../components/procedimentos/Anexo
 import { ProcedimentoGestaoTransportes as ProcedimentoGestaoTransportesABNT } from "../components/procedimentos/ProcedimentoTransportesABNT";
 import { FormularioOrdemCarregamento as FormularioABNT } from "../components/procedimentos/FormularioABNT";
 import { InstrucaoFilaX } from "../components/procedimentos/FilaX";
+import { GuiaMotoristoFilaX } from "../components/procedimentos/GuiaMotoristoFilaX";
 
 export default function Procedimentos() {
   const [user, setUser] = useState(null);
@@ -264,6 +266,20 @@ export default function Procedimentos() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card 
+              onClick={() => setProcedimentoSelecionado("guia_motorista")}
+              className={`cursor-pointer transition-all ${procedimentoSelecionado === "guia_motorista" ? 'ring-2 ring-blue-600' : ''}`}
+              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+            >
+              <CardContent className="p-4 flex items-center gap-3">
+                <User className="w-8 h-8 text-green-600" />
+                <div>
+                  <h3 className="font-bold text-sm" style={{ color: theme.text }}>Guia do Motorista</h3>
+                  <p className="text-xs" style={{ color: theme.textMuted }}>GU-LOG-001</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -292,6 +308,9 @@ export default function Procedimentos() {
           )}
           {procedimentoSelecionado === "fila_x" && (
             <InstrucaoFilaX theme={theme} isDark={isDark} />
+          )}
+          {procedimentoSelecionado === "guia_motorista" && (
+            <GuiaMotoristoFilaX theme={theme} isDark={isDark} />
           )}
         </div>
       </div>
