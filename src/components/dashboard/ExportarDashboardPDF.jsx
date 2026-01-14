@@ -127,15 +127,15 @@ export default function ExportarDashboardPDF({
         doc.text('Operação', leftMargin + 2, yPos + 5);
         doc.text('Total', leftMargin + 70, yPos + 5);
         doc.text('Alocadas', leftMargin + 95, yPos + 5);
-        doc.text('Finalizadas', leftMargin + 125, yPos + 5);
-        doc.text('Taxa', leftMargin + 160, yPos + 5);
+        doc.text('Em Oferta', leftMargin + 125, yPos + 5);
+        doc.text('% Aloc', leftMargin + 160, yPos + 5);
         yPos += 9;
 
         doc.setFont('helvetica', 'normal');
         operacoes.forEach(([operacao, stats], idx) => {
           checkNewPage(10);
           
-          const taxaFinalizacao = stats.total > 0 ? Math.round((stats.finalizadas / stats.total) * 100) : 0;
+          const taxaAlocacao = stats.total > 0 ? Math.round((stats.alocadas / stats.total) * 100) : 0;
           
           // Fundo alternado
           if (idx % 2 === 0) {
@@ -146,8 +146,8 @@ export default function ExportarDashboardPDF({
           doc.text(operacao.substring(0, 25), leftMargin + 2, yPos + 3);
           doc.text(String(stats.total), leftMargin + 70, yPos + 3);
           doc.text(String(stats.alocadas), leftMargin + 95, yPos + 3);
-          doc.text(String(stats.finalizadas), leftMargin + 125, yPos + 3);
-          doc.text(`${taxaFinalizacao}%`, leftMargin + 160, yPos + 3);
+          doc.text(String(stats.ofertas), leftMargin + 125, yPos + 3);
+          doc.text(`${taxaAlocacao}%`, leftMargin + 160, yPos + 3);
           
           yPos += 6;
         });
