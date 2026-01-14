@@ -225,7 +225,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 style={{ transform: 'scaleX(-1)' }}
               />
 
-              {/* Overlay com Feedback Sutil por Cor */}
+              {/* Overlay com Feedback por Cor */}
               <div 
                 className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
                 style={{ zIndex: 5 }}
@@ -233,11 +233,11 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 <div 
                   className="shadow-lg transition-all duration-300"
                   style={{
-                    width: '80%',
-                    height: '80%',
+                    width: '85%',
+                    height: '85%',
                     aspectRatio: '1/1',
-                    maxWidth: '80%',
-                    maxHeight: '80%',
+                    maxWidth: '85%',
+                    maxHeight: '85%',
                     boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
                     borderRadius: '12px',
                     position: 'relative',
@@ -315,20 +315,23 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                     borderWidth: scanFeedback ? '10px' : '8px'
                   }}></div>
 
-                  {/* Indicador Central */}
-                  {scanFeedback && (
+                  {/* Feedback Textual Central */}
+                  {scanFeedback && scanFeedback !== 'processing' && (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div 
-                        className={`w-3 h-3 rounded-full ${
+                        className={`px-6 py-3 rounded-xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
                           scanFeedback === 'success' 
-                            ? 'bg-green-500' 
+                            ? 'bg-green-600' 
                             : scanFeedback === 'duplicate'
-                            ? 'bg-yellow-500'
-                            : scanFeedback === 'error'
-                            ? 'bg-red-500'
-                            : 'bg-blue-500'
-                        } ${scanFeedback === 'processing' ? 'animate-pulse' : ''}`}
-                      ></div>
+                            ? 'bg-yellow-600'
+                            : 'bg-red-600'
+                        }`}
+                        style={{ fontSize: '18px' }}
+                      >
+                        {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
+                        {scanFeedback === 'duplicate' && '⚠ JÁ BIPADO'}
+                        {scanFeedback === 'error' && '✗ ERRO'}
+                      </div>
                     </div>
                   )}
                 </div>

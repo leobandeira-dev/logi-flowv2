@@ -1796,110 +1796,54 @@ export default function EtiquetasMae() {
         {showUnitizacaoModal && etiquetaSelecionada && (
           <Dialog open={showUnitizacaoModal} onOpenChange={setShowUnitizacaoModal}>
             <DialogContent 
-              className="max-w-md w-[95vw] max-h-[90vh] overflow-y-auto p-4" 
+              className="max-w-full w-full h-full max-h-full overflow-y-auto p-0 m-0 sm:max-w-md sm:w-[95vw] sm:max-h-[90vh] sm:p-4 sm:m-auto" 
               style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
             >
-              <DialogHeader className="pb-2">
-                <DialogTitle className="text-base" style={{ color: theme.text }}>
-                  Unitização - {etiquetaSelecionada.codigo}
+              <DialogHeader className="pb-2 px-4 pt-4 sm:px-0 sm:pt-0 sticky top-0 z-10" style={{ backgroundColor: theme.cardBg }}>
+                <DialogTitle className="text-base sm:text-lg" style={{ color: theme.text }}>
+                  {etiquetaSelecionada.codigo}
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-3 py-2">
-                <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', borderColor: '#3b82f6', borderWidth: '2px' }}>
-                  <CardContent className="p-3">
-                    <div className="grid grid-cols-4 gap-2">
-                      <div className="text-center p-2 rounded-lg" style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff' }}>
-                        <p className="text-[10px] mb-1" style={{ color: theme.textMuted }}>Volumes</p>
-                        <p className="text-xl font-bold text-blue-600">{volumesVinculados.length}</p>
-                      </div>
-                      <div className="text-center p-2 rounded-lg" style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff' }}>
-                        <p className="text-[10px] mb-1" style={{ color: theme.textMuted }}>Peso Total</p>
-                        <p className="text-base font-bold text-green-600">
-                          {volumesVinculados.reduce((sum, v) => sum + (v.peso_volume || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
-                        </p>
-                        <p className="text-[10px] text-green-600">kg</p>
-                      </div>
-                      <div className="text-center p-2 rounded-lg" style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff' }}>
-                        <p className="text-[10px] mb-1" style={{ color: theme.textMuted }}>M³</p>
-                        <p className="text-base font-bold text-purple-600">
-                          {volumesVinculados.reduce((sum, v) => sum + (v.m3 || 0), 0).toFixed(3)}
-                        </p>
-                      </div>
-                      <div className="text-center p-2 rounded-lg" style={{ backgroundColor: isDark ? '#1e293b' : '#ffffff' }}>
-                        <p className="text-[10px] mb-1" style={{ color: theme.textMuted }}>Notas Fiscais</p>
-                        <p className="text-xl font-bold text-yellow-600">
-                          {[...new Set(volumesVinculados.map(v => v.nota_fiscal_id))].length}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              <div className="space-y-3 py-2 px-4 sm:px-0">
+                {/* Resumo Compacto */}
+                <div className="grid grid-cols-4 gap-2 p-3 rounded-lg border-2" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', borderColor: '#3b82f6' }}>
+                  <div className="text-center">
+                    <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Volumes</p>
+                    <p className="text-2xl font-bold text-blue-600">{volumesVinculados.length}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Peso Total</p>
+                    <p className="text-lg font-bold text-green-600">
+                      {volumesVinculados.reduce((sum, v) => sum + (v.peso_volume || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+                    </p>
+                    <p className="text-[10px] text-green-600">kg</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>M³</p>
+                    <p className="text-lg font-bold text-purple-600">
+                      {volumesVinculados.reduce((sum, v) => sum + (v.m3 || 0), 0).toFixed(3)}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Notas</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {[...new Set(volumesVinculados.map(v => v.nota_fiscal_id))].length}
+                    </p>
+                  </div>
+                </div>
 
                 {etiquetaSelecionada.status !== "finalizada" && (
-                  <Card style={{ backgroundColor: theme.cardBg, borderColor: '#10b981', borderWidth: '2px' }}>
-                    <CardHeader className="pb-2 pt-3 px-3">
-                      <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
-                        <Scan className="w-4 h-4 text-green-600" />
-                        Bipe os Volumes
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-3 pt-0">
-                      <div className="space-y-2">
-                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2">
-                          <p className="text-xs" style={{ color: isDark ? '#86efac' : '#15803d' }}>
-                            ✓ Bipe volumes ou chave NF-e (44 dígitos)
-                          </p>
-                        </div>
-
-                        <div className="relative">
-                          <Input
-                            placeholder="Bipe volume ou chave NF-e..."
-                            value={codigoScanner}
-                            onChange={(e) => {
-                              const valor = e.target.value;
-                              setCodigoScanner(valor);
-                              
-                              // Auto-buscar quando completar 44 dígitos (chave NF-e)
-                              const apenasNumeros = valor.replace(/\D/g, '');
-                              if (apenasNumeros.length === 44) {
-                                // Pequeno delay para garantir que o estado foi atualizado
-                                setTimeout(() => {
-                                  handleScan(valor);
-                                }, 100);
-                              }
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                handleScan(codigoScanner);
-                              }
-                            }}
-                            autoFocus
-                            className="text-base h-12 font-mono pr-12"
-                            style={{ backgroundColor: theme.inputBg, borderColor: '#10b981', borderWidth: '2px', color: theme.text }}
-                            disabled={processando}
-                          />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowVolumeCameraScanner(true)}
-                            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-10 w-10 p-0"
-                            title="Escanear com câmera"
-                            disabled={processando}
-                          >
-                            <Camera className="w-5 h-5 text-green-600" />
-                          </Button>
-                        </div>
-
-                        {processando && (
-                          <div className="flex items-center justify-center gap-2 text-green-600 py-2">
-                            <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
-                            <span className="text-sm">Vinculando...</span>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div className="sticky top-14 sm:relative sm:top-0 z-10 -mx-4 px-4 py-2 sm:mx-0 sm:px-0 sm:py-0" style={{ backgroundColor: theme.bg }}>
+                    <Button
+                      onClick={() => setShowVolumeCameraScanner(true)}
+                      className="bg-green-600 hover:bg-green-700 w-full h-14 text-base font-bold shadow-lg"
+                      disabled={processando}
+                    >
+                      <Camera className="w-6 h-6 mr-2" />
+                      ESCANEAR VOLUMES
+                    </Button>
+                  </div>
                 )}
 
                 {volumesVinculados.length > 0 && (
@@ -1979,8 +1923,21 @@ export default function EtiquetasMae() {
                           });
                         })()}
                       </div>
+                    </CardContent>
+                  </Card>
+                )}
 
-                      <div className="space-y-2 max-h-60 overflow-y-auto border-t pt-2 mt-2" style={{ borderColor: theme.cardBorder }}>
+                {/* Lista de Volumes - Compacta para Mobile */}
+                {volumesVinculados.length > 0 && (
+                  <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                    <CardHeader className="pb-2 pt-3 px-3">
+                      <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
+                        <Package className="w-4 h-4 text-purple-600" />
+                        Todos os Volumes ({volumesVinculados.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-3 pt-0">
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
                         {volumesVinculados.slice().reverse().map((volume, index) => {
                           const nota = notas.find(n => n.id === volume.nota_fiscal_id);
                           const isRecent = index < 3;
@@ -1988,49 +1945,29 @@ export default function EtiquetasMae() {
                           return (
                             <div 
                               key={volume.id} 
-                              className={`flex items-center justify-between p-2 border rounded-lg transition-all ${isRecent ? 'animate-in slide-in-from-top-2' : ''}`}
+                              className={`flex items-center gap-2 p-2 border rounded-lg transition-all ${isRecent ? 'animate-in slide-in-from-top-2' : ''}`}
                               style={{ 
                                 borderColor: isRecent ? '#10b981' : theme.cardBorder,
                                 backgroundColor: isRecent ? (isDark ? '#064e3b33' : '#d1fae533') : 'transparent'
                               }}
                             >
-                              <div className="flex items-center gap-2 flex-1 min-w-0">
-                                <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-mono font-semibold truncate" style={{ color: theme.text }}>
-                                    {volume.identificador_unico}
-                                  </p>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    <p className="text-[10px]" style={{ color: theme.textMuted }}>
-                                      NF: {nota?.numero_nota || '-'}
-                                    </p>
-                                    <p className="text-[10px]" style={{ color: theme.textMuted }}>
-                                      {volume.peso_volume?.toLocaleString('pt-BR')} kg
-                                    </p>
-                                    {origensVolumes[volume.id] && (
-                                      <Badge 
-                                        className={`text-[8px] h-4 px-1 font-semibold ${
-                                          origensVolumes[volume.id] === "Importado" 
-                                            ? "bg-green-600 text-white border-green-700"
-                                            : "bg-blue-600 text-white border-blue-700"
-                                        }`}
-                                      >
-                                        {origensVolumes[volume.id]}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
+                              <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-mono font-bold truncate" style={{ color: theme.text }}>
+                                  {volume.identificador_unico}
+                                </p>
+                                <p className="text-xs" style={{ color: theme.textMuted }}>
+                                  NF {nota?.numero_nota || '-'} • {volume.peso_volume?.toLocaleString('pt-BR')} kg
+                                </p>
                               </div>
                               {etiquetaSelecionada.status !== "finalizada" && (
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleDesvincularVolume(volume)}
-                                  className="h-7 w-7 p-0 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 ml-2"
+                                  className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
                                 >
-                                  <Trash2 className="w-3 h-3" />
+                                  <Trash2 className="w-4 h-4" />
                                 </Button>
                               )}
                             </div>
@@ -2042,7 +1979,29 @@ export default function EtiquetasMae() {
                 )}
               </div>
 
-              <DialogFooter className="flex-col sm:flex-row gap-2 pt-4">
+              <DialogFooter className="flex-col gap-2 pt-4 px-4 pb-4 sm:px-0 sm:pb-0 sticky bottom-0" style={{ backgroundColor: theme.cardBg }}>
+                {etiquetaSelecionada.status !== "finalizada" && (
+                  <Button
+                    onClick={handleFinalizar}
+                    disabled={volumesVinculados.length === 0}
+                    className="bg-green-600 hover:bg-green-700 w-full h-12 text-base font-bold shadow-lg"
+                  >
+                    <CheckCircle2 className="w-5 h-5 mr-2" />
+                    FINALIZAR ({volumesVinculados.length})
+                  </Button>
+                )}
+                {etiquetaSelecionada.status === "finalizada" && (
+                  <Button
+                    onClick={() => {
+                      setShowUnitizacaoModal(false);
+                      handleReabrir(etiquetaSelecionada);
+                    }}
+                    className="bg-orange-600 hover:bg-orange-700 w-full h-12 text-base font-bold"
+                  >
+                    <Edit className="w-5 h-5 mr-2" />
+                    REABRIR
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -2052,33 +2011,11 @@ export default function EtiquetasMae() {
                     setCodigoScanner("");
                     loadData();
                   }}
-                  className="w-full sm:w-auto order-3 sm:order-1"
+                  className="w-full h-10"
                   style={{ borderColor: theme.cardBorder, color: theme.text }}
                 >
                   Fechar
                 </Button>
-                {etiquetaSelecionada.status === "finalizada" && (
-                  <Button
-                    onClick={() => {
-                      setShowUnitizacaoModal(false);
-                      handleReabrir(etiquetaSelecionada);
-                    }}
-                    className="bg-orange-600 hover:bg-orange-700 w-full sm:w-auto order-2"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Reabrir para Edição
-                  </Button>
-                )}
-                {etiquetaSelecionada.status !== "finalizada" && (
-                  <Button
-                    onClick={handleFinalizar}
-                    disabled={volumesVinculados.length === 0}
-                    className="bg-green-600 hover:bg-green-700 w-full sm:w-auto order-1 sm:order-2"
-                  >
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Finalizar ({volumesVinculados.length} volumes)
-                  </Button>
-                )}
               </DialogFooter>
             </DialogContent>
           </Dialog>
