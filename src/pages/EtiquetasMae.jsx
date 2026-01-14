@@ -1914,6 +1914,65 @@ export default function EtiquetasMae() {
                     </CardHeader>
                     <CardContent className="p-3 pt-0">
                       <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {volumesVinculados.slice().reverse().map((volume, index) => {
+                          const nota = notas.find(n => n.id === volume.nota_fiscal_id);
+                          const isRecent = index < 3;
+
+                          return (
+                            <div 
+                              key={volume.id} 
+                              className={`flex items-center justify-between p-2 border rounded-lg transition-all ${isRecent ? 'animate-in slide-in-from-top-2' : ''}`}
+                              style={{ 
+                                borderColor: isRecent ? '#10b981' : theme.cardBorder,
+                                backgroundColor: isRecent ? (isDark ? '#064e3b33' : '#d1fae533') : 'transparent'
+                              }}
+                            >
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-mono font-semibold truncate" style={{ color: theme.text }}>
+                                    {volume.identificador_unico}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <p className="text-[10px]" style={{ color: theme.textMuted }}>
+                                      NF: {nota?.numero_nota || '-'}
+                                    </p>
+                                    <p className="text-[10px]" style={{ color: theme.textMuted }}>
+                                      {volume.peso_volume?.toLocaleString('pt-BR')} kg
+                                    </p>
+                                    {origensVolumes[volume.id] && (
+                                      <Badge 
+                                        className={`text-[8px] h-4 px-1 font-semibold ${
+                                          origensVolumes[volume.id] === "Importado" 
+                                            ? "bg-green-600 text-white border-green-700"
+                                            : "bg-blue-600 text-white border-blue-700"
+                                        }`}
+                                      >
+                                        {origensVolumes[volume.id]}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              {etiquetaSelecionada.status !== "finalizada" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDesvincularVolume(volume)}
+                                  className="h-7 w-7 p-0 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 ml-2"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
 
               <DialogFooter className="flex-col sm:flex-row gap-2 pt-4">
