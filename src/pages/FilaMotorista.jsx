@@ -351,13 +351,24 @@ export default function FilaMotorista() {
 
       const senhaFila = await gerarSenhaFila();
 
+      // Calcular posição correta ANTES de criar
+      const marcacoesExistentes = await base44.entities.FilaVeiculo.filter({ empresa_id: formData.empresa_id });
+      const marcacoesAtivas = marcacoesExistentes.filter(m => !m.data_saida_fila);
+      const proximaPosicao = marcacoesAtivas.length + 1;
+
+      console.log('📊 Criando marcação:', {
+        total_marcacoes: marcacoesExistentes.length,
+        marcacoes_ativas: marcacoesAtivas.length,
+        proxima_posicao: proximaPosicao
+      });
+
       await base44.entities.FilaVeiculo.create({
         ...formData,
         motorista_telefone: telefoneLimpo,
         senha_fila: senhaFila,
         tipo_fila_nome: tipoSelecionado?.nome,
         status: "aguardando",
-        posicao_fila: 0, // Será recalculado
+        posicao_fila: proximaPosicao,
         data_entrada_fila: new Date().toISOString()
       });
 
