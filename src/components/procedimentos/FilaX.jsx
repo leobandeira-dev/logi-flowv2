@@ -1,53 +1,192 @@
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Truck, User, CheckCircle } from "lucide-react";
 
 export function InstrucaoFilaX({ theme, isDark }) {
   return (
-    <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-      <CardContent className="p-8 space-y-6">
-        {/* Cabeçalho do Documento */}
-        <div className="border-b pb-6" style={{ borderColor: theme.cardBorder }}>
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold mb-2" style={{ color: theme.text }}>
-                INSTRUÇÃO DE TRABALHO
-              </h1>
-              <h2 className="text-xl font-semibold mb-1" style={{ color: theme.text }}>
-                Gestão da Fila X de Veículos
-              </h2>
-            </div>
-            <div className="text-right text-sm" style={{ color: theme.textMuted }}>
-              <p className="font-bold">Código: IT-LOG-004</p>
-              <p>Revisão: 01</p>
-              <p>Data: 14/01/2026</p>
-              <p>Páginas: 1/1</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-4 text-sm">
-            <div>
-              <p className="font-semibold" style={{ color: theme.text }}>Elaborado por:</p>
-              <p style={{ color: theme.textMuted }}>Gestão de Qualidade</p>
-            </div>
-            <div>
-              <p className="font-semibold" style={{ color: theme.text }}>Aprovado por:</p>
-              <p style={{ color: theme.textMuted }}>Diretor de Operações</p>
-            </div>
-            <div>
-              <p className="font-semibold" style={{ color: theme.text }}>Área:</p>
-              <p style={{ color: theme.textMuted }}>Operações Logísticas</p>
-            </div>
-          </div>
+    <div className="space-y-0">
+      {/* Cabeçalho Padrão TranSul */}
+      <div className="border-2 border-black">
+        <table className="w-full">
+          <tbody>
+            <tr>
+              <td className="border-r-2 border-black p-4 w-32 align-middle">
+                <div className="flex items-center justify-center">
+                  <Truck className="w-16 h-16 text-blue-700" />
+                </div>
+              </td>
+              <td className="border-r-2 border-black p-2 text-center align-middle">
+                <p className="font-bold text-sm">PROCEDIMENTO OPERACIONAL PADRÃO</p>
+              </td>
+              <td className="p-2 text-center align-middle w-40">
+                <p className="font-bold text-sm">N° IT-LOG-004</p>
+              </td>
+            </tr>
+            <tr>
+              <td colSpan="3" className="border-t-2 border-black p-3 text-center">
+                <h2 className="text-lg font-bold">GESTÃO DA FILA X DE VEÍCULOS</h2>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Tabela de Revisões */}
+      <div className="border-2 border-t-0 border-black">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="bg-gray-100">
+              <th colSpan="4" className="border-b border-black p-2 text-center font-bold">
+                ÍNDICE DE REVISÕES
+              </th>
+            </tr>
+            <tr className="bg-white">
+              <th className="border-r border-b border-black p-2 w-16 text-center font-bold">REV.</th>
+              <th className="border-r border-b border-black p-2 text-left font-bold">DESCRIÇÃO E/OU FOLHAS ATINGIDAS</th>
+              <th className="border-r border-b border-black p-2 w-32 text-center font-bold">REVISANDO POR:</th>
+              <th className="border-b border-black p-2 w-24 text-center font-bold">DATA</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="border-r border-b border-black p-2 text-center font-bold">00</td>
+              <td className="border-r border-b border-black p-2">Emissão Inicial</td>
+              <td className="border-r border-b border-black p-2 text-center">Gestão Qualidade</td>
+              <td className="border-b border-black p-2 text-center">14/01/2026</td>
+            </tr>
+            <tr>
+              <td className="border-r border-black p-2 text-center font-bold">01</td>
+              <td className="border-r border-black p-2"></td>
+              <td className="border-r border-black p-2 text-center"></td>
+              <td className="border-black p-2 text-center"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Aprovações */}
+      <div className="border-2 border-t-0 border-black">
+        <table className="w-full text-xs">
+          <tbody>
+            <tr>
+              <td className="border-r border-black p-3 w-1/3 text-center align-top">
+                <p className="font-bold mb-1">ELABORADO</p>
+                <p className="font-semibold mb-1">GESTÃO DE QUALIDADE</p>
+                <p className="mb-8">Coord. de Qualidade</p>
+                <p className="font-semibold">DATA: 14/01/2026</p>
+              </td>
+              <td className="border-r border-black p-3 w-1/3 text-center align-top">
+                <p className="font-bold mb-1">VERIFICADO</p>
+                <p className="font-semibold mb-1">COORDENAÇÃO OPERACIONAL</p>
+                <p className="mb-8">Coord. de Operações</p>
+                <p className="font-semibold">DATA: 14/01/2026</p>
+              </td>
+              <td className="p-3 w-1/3 text-center align-top">
+                <p className="font-bold mb-1">APROVADO</p>
+                <p className="font-semibold mb-1">DIRETOR DE OPERAÇÕES</p>
+                <p className="mb-8">Supervisor Logística</p>
+                <p className="font-semibold">DATA: 14/01/2026</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Rodapé da primeira página */}
+      <div className="border-2 border-t-0 border-black p-2 text-right">
+        <p className="text-xs font-semibold">Rev. 00</p>
+        <p className="text-xs font-semibold">Folha 1 de 15</p>
+      </div>
+
+      {/* Quebra de página */}
+      <div className="print-page-break mt-8"></div>
+
+      {/* Cabeçalho páginas seguintes */}
+      <div className="border-2 border-black mb-4">
+        <table className="w-full">
+          <tbody>
+            <tr>
+              <td className="border-r-2 border-black p-2 w-32 align-middle text-center">
+                <Truck className="w-12 h-12 text-blue-700 mx-auto" />
+              </td>
+              <td className="border-r-2 border-black p-2 text-center align-middle">
+                <p className="font-bold text-sm">PROCEDIMENTO OPERACIONAL PADRÃO</p>
+              </td>
+              <td className="p-2 text-center align-middle w-40">
+                <p className="font-bold text-sm">N° IT-LOG-004</p>
+              </td>
+            </tr>
+            <tr>
+              <td colSpan="2" className="border-t-2 border-r-2 border-black p-2 text-center">
+                <h2 className="text-base font-bold">GESTÃO DA FILA X DE VEÍCULOS</h2>
+              </td>
+              <td className="border-t-2 border-black p-2 text-center">
+                <p className="text-xs font-semibold">Rev. 00</p>
+                <p className="text-xs font-semibold">Folha 2 de 15</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Sumário */}
+      <div className="mb-6 px-8">
+        <h3 className="text-center text-lg font-bold mb-4">Sumário</h3>
+        <div className="space-y-1 text-sm">
+          <p>1. OBJETIVO ............................................................................................................................................................ 3</p>
+          <p>2. APLICAÇÃO.......................................................................................................................................................... 3</p>
+          <p>3. DEFINIÇÕES......................................................................................................................................................... 3</p>
+          <p>4. ATRIBUIÇÕES E RESPONSABILIDADES.......................................................................................................... 4</p>
+          <p>5. PROCEDIMENTO - CHECK-IN NA FILA (Motorista)......................................................................................... 4</p>
+          <p>6. PROCEDIMENTO - GESTÃO DA FILA (Operador/Coordenador)..................................................................... 6</p>
+          <p>7. REGRAS DE NEGÓCIO E VALIDAÇÕES.......................................................................................................... 7</p>
+          <p>8. CONFIGURAÇÕES.............................................................................................................................................. 8</p>
+          <p>9. BOAS PRÁTICAS................................................................................................................................................ 9</p>
+          <p>10. INDICADORES DE DESEMPENHO................................................................................................................ 10</p>
+          <p>11. FLUXOGRAMA DO PROCESSO..................................................................................................................... 11</p>
+          <p>12. SISTEMA DE AJUDA INTEGRADO................................................................................................................ 11</p>
+          <p>13. DOCUMENTOS RELACIONADOS................................................................................................................... 12</p>
+          <p>14. ANEXOS........................................................................................................................................................... 12</p>
         </div>
+      </div>
+
+      {/* Quebra de página */}
+      <div className="print-page-break"></div>
+
+      {/* Cabeçalho página 3 */}
+      <div className="border-2 border-black mb-4">
+        <table className="w-full">
+          <tbody>
+            <tr>
+              <td className="border-r-2 border-black p-2 w-32 align-middle text-center">
+                <Truck className="w-12 h-12 text-blue-700 mx-auto" />
+              </td>
+              <td className="border-r-2 border-black p-2 text-center align-middle">
+                <p className="font-bold text-sm">PROCEDIMENTO OPERACIONAL PADRÃO</p>
+              </td>
+              <td className="p-2 text-center align-middle w-40">
+                <p className="font-bold text-sm">N° IT-LOG-004</p>
+              </td>
+            </tr>
+            <tr>
+              <td colSpan="2" className="border-t-2 border-r-2 border-black p-2 text-center">
+                <h2 className="text-base font-bold">GESTÃO DA FILA X DE VEÍCULOS</h2>
+              </td>
+              <td className="border-t-2 border-black p-2 text-center">
+                <p className="text-xs font-semibold">Rev. 00</p>
+                <p className="text-xs font-semibold">Folha 3 de 15</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Conteúdo */}
+      <div className="px-8 space-y-6">
 
         {/* 1. Objetivo */}
         <section>
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-            <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">1</span>
-            OBJETIVO
-          </h3>
-          <p className="text-sm leading-relaxed" style={{ color: theme.textMuted }}>
+          <h3 className="text-base font-bold mb-3">1. OBJETIVO</h3>
+          <p className="text-sm leading-relaxed text-justify">
             Estabelecer os critérios e procedimentos para gestão da fila de veículos disponíveis para carregamento, 
             garantindo organização, priorização adequada, rastreabilidade das marcações e eficiência na alocação 
             de recursos conforme disponibilidade e tipo de carga.
@@ -56,59 +195,53 @@ export function InstrucaoFilaX({ theme, isDark }) {
 
         {/* 2. Aplicação */}
         <section>
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-            <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">2</span>
-            APLICAÇÃO
-          </h3>
-          <p className="text-sm leading-relaxed mb-2" style={{ color: theme.textMuted }}>
+          <h3 className="text-base font-bold mb-3">2. APLICAÇÃO</h3>
+          <p className="text-sm leading-relaxed text-justify mb-2">
             Esta instrução de trabalho aplica-se a:
           </p>
-          <ul className="list-disc list-inside text-sm space-y-1 ml-4" style={{ color: theme.textMuted }}>
-            <li>Coordenadores de expedição responsáveis pela gestão da fila</li>
-            <li>Operadores logísticos que fazem alocação de veículos</li>
-            <li>Motoristas que utilizam o app externo para check-in na fila</li>
-            <li>Gestores que monitoram a disponibilidade de recursos</li>
+          <ul className="text-sm space-y-1 ml-6">
+            <li>• Coordenadores de expedição responsáveis pela gestão da fila</li>
+            <li>• Operadores logísticos que fazem alocação de veículos</li>
+            <li>• Motoristas que utilizam o app externo para check-in na fila</li>
+            <li>• Gestores que monitoram a disponibilidade de recursos</li>
           </ul>
         </section>
 
         {/* 3. Definições */}
         <section>
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-            <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">3</span>
-            DEFINIÇÕES
-          </h3>
+          <h3 className="text-base font-bold mb-3">3. DEFINIÇÕES</h3>
           <div className="space-y-3 text-sm">
             <div>
-              <p className="font-semibold" style={{ color: theme.text }}>3.1 Fila X:</p>
-              <p style={{ color: theme.textMuted }}>
+              <p className="font-bold">3.1 Fila X:</p>
+              <p className="text-justify">
                 Sistema de gerenciamento de veículos disponíveis aguardando alocação para cargas. 
                 Organiza motoristas por ordem de chegada (FIFO - First In, First Out) e tipo de veículo.
               </p>
             </div>
             <div>
-              <p className="font-semibold" style={{ color: theme.text }}>3.2 Marcação de Placa:</p>
-              <p style={{ color: theme.textMuted }}>
+              <p className="font-bold">3.2 Marcação de Placa:</p>
+              <p className="text-justify">
                 Registro de entrada de veículo na fila, contendo dados do motorista, veículo, 
                 tipo de operação e localização atual.
               </p>
             </div>
             <div>
-              <p className="font-semibold" style={{ color: theme.text }}>3.3 Senha de Fila:</p>
-              <p style={{ color: theme.textMuted }}>
+              <p className="font-bold">3.3 Senha de Fila:</p>
+              <p className="text-justify">
                 Código alfanumérico único de 4 caracteres gerado automaticamente pelo sistema 
                 para identificação do veículo na fila e vinculação posterior com ordem de carregamento.
               </p>
             </div>
             <div>
-              <p className="font-semibold" style={{ color: theme.text }}>3.4 Status da Fila:</p>
-              <p style={{ color: theme.textMuted }}>
+              <p className="font-bold">3.4 Status da Fila:</p>
+              <p className="text-justify">
                 Estados configuráveis que identificam a situação atual do veículo 
                 (ex: Aguardando, Em Operação, Indisponível). Status podem ser customizados por empresa.
               </p>
             </div>
             <div>
-              <p className="font-semibold" style={{ color: theme.text }}>3.5 Posição FIFO:</p>
-              <p style={{ color: theme.textMuted }}>
+              <p className="font-bold">3.5 Posição FIFO:</p>
+              <p className="text-justify">
                 Ordem sequencial calculada automaticamente baseada na data/hora de entrada na fila. 
                 Veículos que entraram primeiro têm prioridade na alocação.
               </p>
@@ -118,35 +251,32 @@ export function InstrucaoFilaX({ theme, isDark }) {
 
         {/* 4. Responsabilidades */}
         <section>
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-            <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">4</span>
-            RESPONSABILIDADES
-          </h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex gap-3">
-              <p className="font-semibold w-48" style={{ color: theme.text }}>Motorista:</p>
-              <p style={{ color: theme.textMuted }}>
+          <h3 className="text-base font-bold mb-3">4. ATRIBUIÇÕES E RESPONSABILIDADES</h3>
+          <div className="space-y-3 text-sm">
+            <div>
+              <p className="font-bold">4.1 Motorista</p>
+              <p className="text-justify">
                 Realizar check-in na fila através do app externo quando veículo estiver vazio, 
                 manter dados cadastrais atualizados e aguardar contato para alocação.
               </p>
             </div>
-            <div className="flex gap-3">
-              <p className="font-semibold w-48" style={{ color: theme.text }}>Coordenador de Expedição:</p>
-              <p style={{ color: theme.textMuted }}>
+            <div>
+              <p className="font-bold">4.2 Coordenador de Expedição</p>
+              <p className="text-justify">
                 Monitorar a fila em tempo real, alocar veículos conforme disponibilidade e necessidade, 
                 gerenciar status e prioridades.
               </p>
             </div>
-            <div className="flex gap-3">
-              <p className="font-semibold w-48" style={{ color: theme.text }}>Operador Logístico:</p>
-              <p style={{ color: theme.textMuted }}>
+            <div>
+              <p className="font-bold">4.3 Operador Logístico</p>
+              <p className="text-justify">
                 Vincular senha da fila à ordem de carregamento, atualizar status do veículo 
                 conforme avanço da operação.
               </p>
             </div>
-            <div className="flex gap-3">
-              <p className="font-semibold w-48" style={{ color: theme.text }}>Gestor de Operações:</p>
-              <p style={{ color: theme.textMuted }}>
+            <div>
+              <p className="font-bold">4.4 Gestor de Operações</p>
+              <p className="text-justify">
                 Monitorar tempo médio de espera, taxa de utilização da fila e garantir 
                 equilíbrio entre oferta e demanda de veículos.
               </p>
@@ -156,100 +286,73 @@ export function InstrucaoFilaX({ theme, isDark }) {
 
         {/* 5. Procedimento - Check-in do Motorista */}
         <section>
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-            <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">5</span>
-            PROCEDIMENTO - CHECK-IN NA FILA (Motorista)
-          </h3>
+          <h3 className="text-base font-bold mb-3">5. DESCRIÇÃO TÉCNICA</h3>
+          <h4 className="text-sm font-bold mb-3">5.1 Procedimento de Check-in na Fila (Motorista)</h4>
 
           <div className="space-y-3">
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                1
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-sm mb-1" style={{ color: theme.text }}>Acessar Link da Fila</p>
-                <p className="text-xs" style={{ color: theme.textMuted }}>
-                  Acesse o link fornecido pela transportadora (ex: logiflow.com.br/FilaMotorista?codigo=XXXX). 
-                  O link contém código de acesso único da empresa para segurança.
+            <div>
+              <p className="font-bold text-sm mb-1">Passo 1 - Acessar Link da Fila</p>
+              <p className="text-sm text-justify">
+                Acesse o link fornecido pela transportadora (ex: logiflow.com.br/FilaMotorista?codigo=XXXX). 
+                O link contém código de acesso único da empresa para segurança.
+              </p>
+            </div>
+
+            <div>
+              <p className="font-bold text-sm mb-1">Passo 2 - Informar Telefone Celular</p>
+              <p className="text-sm text-justify mb-2">
+                Digite seu número de celular com DDD (11 dígitos). O sistema verifica automaticamente 
+                se você já possui cadastro e preenche dados automaticamente.
+              </p>
+              <div className="bg-gray-100 border border-gray-300 rounded p-2">
+                <p className="text-xs">
+                  <strong>Nota:</strong> Se cadastrado, dados serão carregados automaticamente (nome, placa, tipo de veículo)
                 </p>
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                2
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-sm mb-1" style={{ color: theme.text }}>Informar Telefone Celular</p>
-                <p className="text-xs mb-2" style={{ color: theme.textMuted }}>
-                  Digite seu número de celular com DDD (11 dígitos). O sistema verifica automaticamente 
-                  se você já possui cadastro e preenche dados automaticamente.
-                </p>
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded p-2">
-                  <p className="text-xs text-green-800 dark:text-green-300">
-                    ✓ Se cadastrado: Dados carregados automaticamente (nome, placa, tipo de veículo)
-                  </p>
-                </div>
-              </div>
+            <div>
+              <p className="font-bold text-sm mb-1">Passo 3 - Preencher Dados Obrigatórios</p>
+              <p className="text-sm text-justify mb-2">
+                Sistema apresenta wizard em 4 etapas:
+              </p>
+              <ul className="text-sm space-y-1 ml-6">
+                <li>• <strong>Etapa 1:</strong> Nome completo do motorista</li>
+                <li>• <strong>Etapa 2:</strong> Placa do cavalo (7 caracteres alfanuméricos)</li>
+                <li>• <strong>Etapa 3:</strong> Tipo do motorista (Frota/Acionista/Terceiro), Tipo de veículo e Tipo de carroceria</li>
+                <li>• <strong>Etapa 4:</strong> Upload de comprovante de descarga (foto validada por IA)</li>
+                <li>• <strong>Etapa 5:</strong> Localização atual (obtida via GPS do celular)</li>
+              </ul>
             </div>
 
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                3
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-sm mb-1" style={{ color: theme.text }}>Preencher Dados Obrigatórios</p>
-                <p className="text-xs mb-2" style={{ color: theme.textMuted }}>
-                  Sistema apresenta wizard em 4 etapas:
-                </p>
-                <ul className="text-xs space-y-1 ml-4 list-disc" style={{ color: theme.textMuted }}>
-                  <li><strong>Passo 1:</strong> Nome completo do motorista</li>
-                  <li><strong>Passo 2:</strong> Placa do cavalo (7 caracteres alfanuméricos)</li>
-                  <li><strong>Passo 3:</strong> Tipo do motorista (Frota/Acionista/Terceiro), Tipo de veículo e Tipo de carroceria</li>
-                  <li><strong>Passo 4:</strong> Upload de comprovante de descarga (foto validada por IA)</li>
-                  <li><strong>Passo 5:</strong> Localização atual (obtida via GPS do celular)</li>
-                </ul>
-              </div>
+            <div>
+              <p className="font-bold text-sm mb-1">Passo 4 - Validação de Comprovante por IA</p>
+              <p className="text-sm text-justify mb-2">
+                O sistema utiliza inteligência artificial para validar o comprovante de descarga:
+              </p>
+              <ul className="text-sm space-y-1 ml-6">
+                <li>• Verifica se a imagem está legível</li>
+                <li>• Identifica se contém uma data visível</li>
+                <li>• Confirma se é um comprovante de descarga válido</li>
+                <li>• Se inválido, solicita nova foto</li>
+              </ul>
             </div>
 
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                4
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-sm mb-1" style={{ color: theme.text }}>Validação de Comprovante</p>
-                <p className="text-xs mb-2" style={{ color: theme.textMuted }}>
-                  O sistema utiliza IA para validar o comprovante de descarga:
+            <div>
+              <p className="font-bold text-sm mb-1">Passo 5 - Confirmação de Check-in</p>
+              <p className="text-sm text-justify mb-2">
+                Sistema gera automaticamente:
+              </p>
+              <ul className="text-sm space-y-1 ml-6">
+                <li>• <strong>Senha única</strong> de 4 caracteres alfanuméricos</li>
+                <li>• <strong>Posição na fila</strong> calculada automaticamente (FIFO)</li>
+                <li>• <strong>Timestamp</strong> de entrada</li>
+                <li>• <strong>Status inicial:</strong> "Aguardando"</li>
+              </ul>
+              <div className="bg-gray-100 border border-gray-300 rounded p-2 mt-2">
+                <p className="text-xs">
+                  <strong>Nota:</strong> O motorista visualiza sua posição, senha e tempo de espera em tempo real.
                 </p>
-                <ul className="text-xs space-y-1 ml-4 list-disc" style={{ color: theme.textMuted }}>
-                  <li>Verifica se a imagem está legível</li>
-                  <li>Identifica se contém uma data visível</li>
-                  <li>Confirma se é um comprovante de descarga válido</li>
-                  <li>Se inválido, solicita nova foto</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                5
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-sm mb-1" style={{ color: theme.text }}>Confirmação de Check-in</p>
-                <p className="text-xs mb-2" style={{ color: theme.textMuted }}>
-                  Sistema gera automaticamente:
-                </p>
-                <ul className="text-xs space-y-1 ml-4 list-disc" style={{ color: theme.textMuted }}>
-                  <li><strong>Senha única</strong> de 4 caracteres alfanuméricos</li>
-                  <li><strong>Posição na fila</strong> calculada automaticamente (FIFO)</li>
-                  <li><strong>Timestamp</strong> de entrada</li>
-                  <li><strong>Status inicial:</strong> "Aguardando"</li>
-                </ul>
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded p-2 mt-2">
-                  <p className="text-xs text-blue-800 dark:text-blue-300">
-                    💡 O motorista visualiza sua posição, senha e tempo de espera em tempo real.
-                  </p>
-                </div>
               </div>
             </div>
           </div>
@@ -257,151 +360,114 @@ export function InstrucaoFilaX({ theme, isDark }) {
 
         {/* 6. Procedimento - Gestão da Fila (Operador) */}
         <section>
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-            <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">6</span>
-            PROCEDIMENTO - GESTÃO DA FILA (Operador/Coordenador)
-          </h3>
+          <h4 className="text-sm font-bold mb-3">5.2 Procedimento de Gestão da Fila (Operador/Coordenador)</h4>
 
           <div className="space-y-3">
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                1
+            <div>
+              <p className="font-bold text-sm mb-1">Etapa 1 - Acessar Módulo Fila X</p>
+              <p className="text-sm text-justify">
+                Navegue até: <strong>Operações → Fila X</strong>
+              </p>
+            </div>
+
+            <div>
+              <p className="font-bold text-sm mb-1">Etapa 2 - Visualizações Disponíveis</p>
+              <div className="text-sm space-y-1 ml-4">
+                <p>• <strong>Tabela:</strong> Lista completa com filtros por status, tipo de fila, período</p>
+                <p>• <strong>Kanban:</strong> Cards organizados por status (Aguardando, Em Operação, Indisponível) com drag-and-drop</p>
               </div>
-              <div className="flex-1">
-                <p className="font-semibold text-sm mb-1" style={{ color: theme.text }}>Acessar Módulo Fila X</p>
-                <p className="text-xs" style={{ color: theme.textMuted }}>
-                  Navegue até: <strong>Operações → Fila X</strong>
+            </div>
+
+            <div>
+              <p className="font-bold text-sm mb-1">Etapa 3 - Alocar Veículo a uma Ordem</p>
+              <p className="text-sm text-justify mb-2">
+                Para vincular um veículo da fila a uma ordem de carregamento:
+              </p>
+              <ol className="text-sm space-y-1 ml-6">
+                <li>1. Identifique o veículo disponível compatível com a carga (tipo de veículo, carroceria)</li>
+                <li>2. Copie a <strong>senha da fila</strong> (4 caracteres exibidos no card)</li>
+                <li>3. Acesse a ordem de carregamento que receberá o veículo</li>
+                <li>4. Cole a senha no campo "Senha Fila"</li>
+                <li>5. Sistema vincula automaticamente motorista e veículo à ordem</li>
+                <li>6. Status do veículo na fila é atualizado conforme configuração</li>
+              </ol>
+            </div>
+
+            <div>
+              <p className="font-bold text-sm mb-1">Etapa 4 - Gerenciar Status dos Veículos</p>
+              <p className="text-sm text-justify mb-1">
+                <strong>Via Drag-and-Drop (Kanban):</strong> Arraste o card do veículo para a coluna do novo status.
+              </p>
+              <p className="text-sm text-justify mb-2">
+                <strong>Via Menu de Ações:</strong> Clique nos 3 pontos e selecione o novo status.
+              </p>
+              <div className="bg-gray-100 border border-gray-300 rounded p-2">
+                <p className="text-xs">
+                  <strong>Importante:</strong> Status que têm a flag "remove_da_fila = true" marcam data de saída automaticamente 
+                  e removem o veículo da contagem ativa.
                 </p>
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                2
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-sm mb-1" style={{ color: theme.text }}>Visualizações Disponíveis</p>
-                <div className="text-xs space-y-2" style={{ color: theme.textMuted }}>
-                  <div className="flex gap-2">
-                    <p className="font-semibold">• Tabela:</p>
-                    <p>Lista completa com filtros por status, tipo de fila, período</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <p className="font-semibold">• Kanban:</p>
-                    <p>Cards organizados por status (Aguardando, Em Operação, Indisponível) com drag-and-drop</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                3
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-sm mb-1" style={{ color: theme.text }}>Alocar Veículo a uma Ordem</p>
-                <p className="text-xs mb-2" style={{ color: theme.textMuted }}>
-                  Para vincular um veículo da fila a uma ordem de carregamento:
-                </p>
-                <ol className="text-xs space-y-1 ml-4 list-decimal" style={{ color: theme.textMuted }}>
-                  <li>Identifique o veículo disponível compatível com a carga (tipo de veículo, carroceria)</li>
-                  <li>Copie a <strong>senha da fila</strong> (4 caracteres exibidos no card)</li>
-                  <li>Acesse a ordem de carregamento que receberá o veículo</li>
-                  <li>Cole a senha no campo "Senha Fila"</li>
-                  <li>Sistema vincula automaticamente motorista e veículo à ordem</li>
-                  <li>Status do veículo na fila é atualizado conforme configuração</li>
-                </ol>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                4
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-sm mb-1" style={{ color: theme.text }}>Gerenciar Status dos Veículos</p>
-                <p className="text-xs mb-2" style={{ color: theme.textMuted }}>
-                  <strong>Via Drag-and-Drop (Kanban):</strong> Arraste o card do veículo para a coluna do novo status.
-                </p>
-                <p className="text-xs mb-2" style={{ color: theme.textMuted }}>
-                  <strong>Via Menu de Ações:</strong> Clique nos 3 pontos e selecione o novo status.
-                </p>
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded p-2 mt-2">
-                  <p className="text-xs text-amber-800 dark:text-amber-300">
-                    ⚠️ Status que têm a flag "remove_da_fila = true" marcam data de saída automaticamente 
-                    e removem o veículo da contagem ativa.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                5
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-sm mb-1" style={{ color: theme.text }}>Recálculo Automático de Posições</p>
-                <p className="text-xs" style={{ color: theme.textMuted }}>
-                  O sistema recalcula automaticamente as posições FIFO sempre que:
-                </p>
-                <ul className="text-xs space-y-1 ml-4 list-disc" style={{ color: theme.textMuted }}>
-                  <li>Um novo veículo entra na fila (check-in)</li>
-                  <li>Um veículo sai da fila (alocação ou remoção)</li>
-                  <li>Status de um veículo é alterado</li>
-                </ul>
-                <p className="text-xs mt-2" style={{ color: theme.textMuted }}>
-                  Apenas veículos ATIVOS (sem data_saida_fila) são considerados no cálculo.
-                </p>
-              </div>
+            <div>
+              <p className="font-bold text-sm mb-1">Etapa 5 - Recálculo Automático de Posições</p>
+              <p className="text-sm text-justify mb-2">
+                O sistema recalcula automaticamente as posições FIFO sempre que:
+              </p>
+              <ul className="text-sm space-y-1 ml-6">
+                <li>• Um novo veículo entra na fila (check-in)</li>
+                <li>• Um veículo sai da fila (alocação ou remoção)</li>
+                <li>• Status de um veículo é alterado</li>
+              </ul>
+              <p className="text-sm mt-2 text-justify">
+                Apenas veículos ATIVOS (sem data_saida_fila) são considerados no cálculo.
+              </p>
             </div>
           </div>
         </section>
 
         {/* 7. Regras de Negócio */}
         <section>
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-            <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">7</span>
-            REGRAS DE NEGÓCIO E VALIDAÇÕES
-          </h3>
-          <div className="space-y-2 text-sm">
+          <h3 className="text-base font-bold mb-3">6. REGRAS DE NEGÓCIO E VALIDAÇÕES</h3>
+          <div className="space-y-3 text-sm">
             <div>
-              <p className="font-semibold" style={{ color: theme.text }}>7.1 Validações no Check-in:</p>
-              <ul className="list-disc list-inside ml-4 space-y-1 text-xs" style={{ color: theme.textMuted }}>
-                <li>Telefone deve ter 11 dígitos (DDD + número)</li>
-                <li>Placa deve ter 7 caracteres alfanuméricos</li>
-                <li>Veículo deve estar VAZIO (confirmação obrigatória)</li>
-                <li>Comprovante de descarga é obrigatório e validado por IA</li>
-                <li>Localização GPS deve ser obtida para registro de cidade/UF</li>
-                <li>Não permitir duplicação de telefone ativo na mesma empresa</li>
+              <p className="font-bold mb-1">6.1 Validações no Check-in:</p>
+              <ul className="ml-6 space-y-1">
+                <li>• Telefone deve ter 11 dígitos (DDD + número)</li>
+                <li>• Placa deve ter 7 caracteres alfanuméricos</li>
+                <li>• Veículo deve estar VAZIO (confirmação obrigatória)</li>
+                <li>• Comprovante de descarga é obrigatório e validado por IA</li>
+                <li>• Localização GPS deve ser obtida para registro de cidade/UF</li>
+                <li>• Não permitir duplicação de telefone ativo na mesma empresa</li>
               </ul>
             </div>
             
             <div>
-              <p className="font-semibold" style={{ color: theme.text }}>7.2 Geração de Senha:</p>
-              <ul className="list-disc list-inside ml-4 space-y-1 text-xs" style={{ color: theme.textMuted }}>
-                <li>Sistema gera código alfanumérico único de 4 caracteres</li>
-                <li>Verifica unicidade dentro da empresa (máximo 50 tentativas)</li>
-                <li>Fallback: usa timestamp se não conseguir gerar senha única</li>
+              <p className="font-bold mb-1">6.2 Geração de Senha:</p>
+              <ul className="ml-6 space-y-1">
+                <li>• Sistema gera código alfanumérico único de 4 caracteres</li>
+                <li>• Verifica unicidade dentro da empresa (máximo 50 tentativas)</li>
+                <li>• Fallback: usa timestamp se não conseguir gerar senha única</li>
               </ul>
             </div>
 
             <div>
-              <p className="font-semibold" style={{ color: theme.text }}>7.3 Cálculo de Posição FIFO:</p>
-              <ul className="list-disc list-inside ml-4 space-y-1 text-xs" style={{ color: theme.textMuted }}>
-                <li>Posição = (quantidade de veículos ativos na frente) + 1</li>
-                <li>Considera apenas veículos sem data_saida_fila</li>
-                <li>Ordenação por data_entrada_fila (mais antigo primeiro)</li>
-                <li>Recálculo automático após qualquer alteração</li>
+              <p className="font-bold mb-1">6.3 Cálculo de Posição FIFO:</p>
+              <ul className="ml-6 space-y-1">
+                <li>• Posição = (quantidade de veículos ativos na frente) + 1</li>
+                <li>• Considera apenas veículos sem data_saida_fila</li>
+                <li>• Ordenação por data_entrada_fila (mais antigo primeiro)</li>
+                <li>• Recálculo automático após qualquer alteração</li>
               </ul>
             </div>
 
             <div>
-              <p className="font-semibold" style={{ color: theme.text }}>7.4 Bloqueio de Veículos Carregados:</p>
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded p-3 mt-2">
-                <p className="text-xs text-red-800 dark:text-red-300 font-semibold">
+              <p className="font-bold mb-1">6.4 Bloqueio de Veículos Carregados:</p>
+              <div className="bg-gray-100 border border-gray-400 rounded p-3 mt-2">
+                <p className="text-xs font-bold">
                   ⚠️ REGRA CRÍTICA: Apenas veículos VAZIOS podem fazer check-in na fila.
                 </p>
-                <p className="text-xs text-red-700 dark:text-red-400 mt-1">
+                <p className="text-xs mt-1">
                   Veículos carregados que marcarem placa podem ser bloqueados pelo sistema. 
                   O motorista deve confirmar explicitamente que o veículo está vazio antes de continuar.
                 </p>
@@ -412,114 +478,100 @@ export function InstrucaoFilaX({ theme, isDark }) {
 
         {/* 8. Tipos e Status */}
         <section>
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-            <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">8</span>
-            CONFIGURAÇÕES
-          </h3>
+          <h3 className="text-base font-bold mb-3">7. CONFIGURAÇÕES</h3>
           
           <div className="mb-4">
-            <h4 className="font-bold text-base mb-3" style={{ color: theme.text }}>
-              8.1 Tipos de Fila Configuráveis
-            </h4>
-            <p className="text-xs mb-2" style={{ color: theme.textMuted }}>
+            <p className="font-bold text-sm mb-2">7.1 Tipos de Fila Configuráveis</p>
+            <p className="text-sm text-justify mb-2">
               Cada empresa pode configurar seus próprios tipos de fila (ex: Frota, Acionista, Agregado, Terceiro).
             </p>
-            <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
-              <CardContent className="p-3">
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <p className="font-semibold mb-1" style={{ color: theme.text }}>Campos do Tipo:</p>
-                    <ul className="list-disc ml-4" style={{ color: theme.textMuted }}>
-                      <li>Nome (ex: "Frota")</li>
-                      <li>Cor para identificação visual</li>
-                      <li>Ordem de exibição</li>
-                      <li>Status ativo/inativo</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-1" style={{ color: theme.text }}>Configuração:</p>
-                    <p style={{ color: theme.textMuted }}>
-                      Acesse: <strong>Fila X → Gerenciar Tipos</strong> para criar, editar ou desativar tipos.
-                    </p>
-                  </div>
+            <div className="bg-gray-50 border border-gray-300 rounded p-3">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="font-bold mb-1">Campos do Tipo:</p>
+                  <ul className="ml-4">
+                    <li>• Nome (ex: "Frota")</li>
+                    <li>• Cor para identificação visual</li>
+                    <li>• Ordem de exibição</li>
+                    <li>• Status ativo/inativo</li>
+                  </ul>
                 </div>
-              </CardContent>
-            </Card>
+                <div>
+                  <p className="font-bold mb-1">Configuração:</p>
+                  <p>
+                    Acesse: <strong>Fila X → Gerenciar Tipos</strong> para criar, editar ou desativar tipos.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="mb-4">
-            <h4 className="font-bold text-base mb-3" style={{ color: theme.text }}>
-              8.2 Status da Fila Configuráveis
-            </h4>
-            <p className="text-xs mb-2" style={{ color: theme.textMuted }}>
+            <p className="font-bold text-sm mb-2">7.2 Status da Fila Configuráveis</p>
+            <p className="text-sm text-justify mb-2">
               Status personalizados para gerenciar o ciclo de vida do veículo na fila.
             </p>
-            <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
-              <CardContent className="p-3">
-                <div className="text-xs space-y-2">
-                  <div>
-                    <p className="font-semibold mb-1" style={{ color: theme.text }}>Campos do Status:</p>
-                    <ul className="list-disc ml-4 space-y-1" style={{ color: theme.textMuted }}>
-                      <li><strong>Nome:</strong> Ex: "Aguardando", "Em Operação", "Indisponível"</li>
-                      <li><strong>Cor:</strong> Identificação visual em hexadecimal</li>
-                      <li><strong>Ícone:</strong> Emoji para representação</li>
-                      <li><strong>Remove da fila:</strong> Se true, marca data de saída automaticamente</li>
-                      <li><strong>Mover quando vinculado:</strong> Se true, aplica este status ao vincular senha a uma ordem</li>
-                      <li><strong>Aplicar ao sair:</strong> Se true, status usado quando motorista clica "Sair da Fila" no app</li>
-                      <li><strong>Ordem de exibição</strong></li>
-                    </ul>
-                  </div>
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded p-2">
-                    <p className="text-xs text-blue-800 dark:text-blue-300">
-                      💡 <strong>Configuração:</strong> Acesse <strong>Fila X → Gerenciar Status</strong> para personalizar.
-                    </p>
-                  </div>
+            <div className="bg-gray-50 border border-gray-300 rounded p-3">
+              <div className="text-sm space-y-2">
+                <div>
+                  <p className="font-bold mb-1">Campos do Status:</p>
+                  <ul className="ml-4 space-y-1">
+                    <li>• <strong>Nome:</strong> Ex: "Aguardando", "Em Operação", "Indisponível"</li>
+                    <li>• <strong>Cor:</strong> Identificação visual em hexadecimal</li>
+                    <li>• <strong>Ícone:</strong> Emoji para representação</li>
+                    <li>• <strong>Remove da fila:</strong> Se true, marca data de saída automaticamente</li>
+                    <li>• <strong>Mover quando vinculado:</strong> Se true, aplica este status ao vincular senha a uma ordem</li>
+                    <li>• <strong>Aplicar ao sair:</strong> Se true, status usado quando motorista clica "Sair da Fila" no app</li>
+                    <li>• <strong>Ordem de exibição</strong></li>
+                  </ul>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="bg-gray-100 border border-gray-400 rounded p-2">
+                  <p className="text-xs">
+                    <strong>Nota:</strong> Acesse <strong>Fila X → Gerenciar Status</strong> para personalizar.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
         {/* 9. Boas Práticas */}
         <section>
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-            <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">9</span>
-            BOAS PRÁTICAS
-          </h3>
-          <div className="space-y-3 text-sm" style={{ color: theme.textMuted }}>
+          <h3 className="text-base font-bold mb-3">8. BOAS PRÁTICAS</h3>
+          <div className="space-y-3 text-sm">
             <div>
-              <p className="font-semibold mb-1" style={{ color: theme.text }}>✅ Para Motoristas:</p>
-              <ul className="list-disc ml-6 space-y-1 text-xs">
-                <li>Faça check-in apenas quando o veículo estiver completamente vazio</li>
-                <li>Mantenha seus dados cadastrais atualizados para agilizar futuras marcações</li>
-                <li>Tire foto clara do comprovante de descarga (legível, com data visível)</li>
-                <li>Aguarde contato da central - não ligue perguntando posição</li>
-                <li>Clique "Atualizar" para ver sua posição em tempo real</li>
-                <li>Use o botão "Ajuda" em cada campo se tiver dúvidas</li>
+              <p className="font-bold mb-1">8.1 Para Motoristas:</p>
+              <ul className="ml-6 space-y-1">
+                <li>• Faça check-in apenas quando o veículo estiver completamente vazio</li>
+                <li>• Mantenha seus dados cadastrais atualizados para agilizar futuras marcações</li>
+                <li>• Tire foto clara do comprovante de descarga (legível, com data visível)</li>
+                <li>• Aguarde contato da central - não ligue perguntando posição</li>
+                <li>• Clique "Atualizar" para ver sua posição em tempo real</li>
+                <li>• Use o botão "Ajuda" em cada campo se tiver dúvidas</li>
               </ul>
             </div>
 
             <div>
-              <p className="font-semibold mb-1" style={{ color: theme.text }}>✅ Para Operadores:</p>
-              <ul className="list-disc ml-6 space-y-1 text-xs">
-                <li>Priorize veículos por posição FIFO quando houver múltiplas opções compatíveis</li>
-                <li>Vincule senha da fila à ordem ANTES de comunicar motorista (evita confusão)</li>
-                <li>Atualize status do veículo conforme progresso da operação</li>
-                <li>Use filtros para encontrar rapidamente veículos específicos (tipo, localização)</li>
-                <li>Monitore tempo de espera médio para evitar acúmulo excessivo na fila</li>
-                <li>Archive veículos inativos regularmente para manter fila organizada</li>
+              <p className="font-bold mb-1">8.2 Para Operadores:</p>
+              <ul className="ml-6 space-y-1">
+                <li>• Priorize veículos por posição FIFO quando houver múltiplas opções compatíveis</li>
+                <li>• Vincule senha da fila à ordem ANTES de comunicar motorista (evita confusão)</li>
+                <li>• Atualize status do veículo conforme progresso da operação</li>
+                <li>• Use filtros para encontrar rapidamente veículos específicos (tipo, localização)</li>
+                <li>• Monitore tempo de espera médio para evitar acúmulo excessivo na fila</li>
+                <li>• Archive veículos inativos regularmente para manter fila organizada</li>
               </ul>
             </div>
 
             <div>
-              <p className="font-semibold mb-1" style={{ color: theme.text }}>✅ Para Gestores:</p>
-              <ul className="list-disc ml-6 space-y-1 text-xs">
-                <li>Configure tipos de fila conforme sua operação (Frota, Acionista, etc.)</li>
-                <li>Personalize status para refletir seu workflow real</li>
-                <li>Monitore tempo médio de permanência na fila (meta: ≤ 4 horas)</li>
-                <li>Analise taxa de utilização (veículos alocados vs total na fila)</li>
-                <li>Compartilhe link de check-in via WhatsApp, SMS ou impresso</li>
-                <li>Configure número de celular de suporte nas Configurações para ajuda aos motoristas</li>
+              <p className="font-bold mb-1">8.3 Para Gestores:</p>
+              <ul className="ml-6 space-y-1">
+                <li>• Configure tipos de fila conforme sua operação (Frota, Acionista, etc.)</li>
+                <li>• Personalize status para refletir seu workflow real</li>
+                <li>• Monitore tempo médio de permanência na fila (meta: ≤ 4 horas)</li>
+                <li>• Analise taxa de utilização (veículos alocados vs total na fila)</li>
+                <li>• Compartilhe link de check-in via WhatsApp, SMS ou impresso</li>
+                <li>• Configure número de celular de suporte nas Configurações para ajuda aos motoristas</li>
               </ul>
             </div>
           </div>
@@ -527,47 +579,38 @@ export function InstrucaoFilaX({ theme, isDark }) {
 
         {/* 10. Indicadores */}
         <section>
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-            <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">10</span>
-            INDICADORES DE DESEMPENHO
-          </h3>
-          <div className="grid grid-cols-3 gap-3">
-            <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
-              <CardContent className="p-3 text-center">
-                <p className="text-xs font-semibold mb-1" style={{ color: theme.text }}>Tempo Médio de Espera</p>
-                <p className="text-xs" style={{ color: theme.textMuted }}>
-                  Média de tempo entre entrada e alocação
-                </p>
-                <p className="text-xs font-bold text-green-600 mt-1">Meta: ≤ 4h</p>
-              </CardContent>
-            </Card>
-            <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
-              <CardContent className="p-3 text-center">
-                <p className="text-xs font-semibold mb-1" style={{ color: theme.text }}>Taxa de Utilização</p>
-                <p className="text-xs" style={{ color: theme.textMuted }}>
-                  (Veículos Alocados / Total na Fila) × 100
-                </p>
-                <p className="text-xs font-bold text-green-600 mt-1">Meta: ≥ 85%</p>
-              </CardContent>
-            </Card>
-            <Card style={{ backgroundColor: isDark ? '#0f172a' : '#f9fafb', borderColor: theme.cardBorder }}>
-              <CardContent className="p-3 text-center">
-                <p className="text-xs font-semibold mb-1" style={{ color: theme.text }}>Check-ins Válidos</p>
-                <p className="text-xs" style={{ color: theme.textMuted }}>
-                  % de check-ins aprovados sem bloqueio
-                </p>
-                <p className="text-xs font-bold text-green-600 mt-1">Meta: ≥ 98%</p>
-              </CardContent>
-            </Card>
-          </div>
+          <h3 className="text-base font-bold mb-3">9. INDICADORES DE DESEMPENHO</h3>
+          <table className="w-full text-xs border-2 border-black">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-black p-2 text-left font-bold">Indicador</th>
+                <th className="border border-black p-2 text-left font-bold">Fórmula/Descrição</th>
+                <th className="border border-black p-2 text-center font-bold w-20">Meta</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-black p-2 font-bold">Tempo Médio de Espera</td>
+                <td className="border border-black p-2">Média de tempo entre entrada e alocação</td>
+                <td className="border border-black p-2 text-center font-bold">≤ 4h</td>
+              </tr>
+              <tr className="bg-gray-50">
+                <td className="border border-black p-2 font-bold">Taxa de Utilização</td>
+                <td className="border border-black p-2">(Veículos Alocados / Total na Fila) × 100</td>
+                <td className="border border-black p-2 text-center font-bold">≥ 85%</td>
+              </tr>
+              <tr>
+                <td className="border border-black p-2 font-bold">Check-ins Válidos</td>
+                <td className="border border-black p-2">% de check-ins aprovados sem bloqueio</td>
+                <td className="border border-black p-2 text-center font-bold">≥ 98%</td>
+              </tr>
+            </tbody>
+          </table>
         </section>
 
         {/* 11. Fluxograma */}
         <section>
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-            <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">11</span>
-            FLUXOGRAMA DO PROCESSO
-          </h3>
+          <h3 className="text-base font-bold mb-3">10. FLUXOGRAMA DO PROCESSO</h3>
           <div className="border rounded p-4" style={{ borderColor: theme.cardBorder, backgroundColor: isDark ? '#0f172a' : '#f9fafb' }}>
             <div className="flex items-center justify-center gap-2 text-xs flex-wrap">
               <div className="bg-green-600 text-white px-3 py-2 rounded font-bold">
@@ -603,30 +646,27 @@ export function InstrucaoFilaX({ theme, isDark }) {
 
         {/* 12. Suporte ao Motorista */}
         <section>
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-            <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">12</span>
-            SISTEMA DE AJUDA INTEGRADO
-          </h3>
-          <p className="text-sm mb-3" style={{ color: theme.textMuted }}>
+          <h3 className="text-base font-bold mb-3">11. SISTEMA DE AJUDA INTEGRADO</h3>
+          <p className="text-sm mb-3 text-justify">
             O app de marcação possui botões de ajuda em cada campo que permitem comunicação direta com a central via WhatsApp.
           </p>
           <div className="space-y-2 text-sm">
             <div>
-              <p className="font-semibold" style={{ color: theme.text }}>12.1 Configuração:</p>
-              <p className="text-xs ml-4" style={{ color: theme.textMuted }}>
+              <p className="font-bold mb-1">11.1 Configuração:</p>
+              <p className="ml-4 text-justify">
                 Acesse <strong>Configurações → Dados da Empresa</strong> e informe o "Celular de Suporte (WhatsApp)". 
                 Este número será usado nos botões de ajuda do app externo.
               </p>
             </div>
             <div>
-              <p className="font-semibold" style={{ color: theme.text }}>12.2 Funcionamento:</p>
-              <p className="text-xs ml-4 mb-2" style={{ color: theme.textMuted }}>
+              <p className="font-bold mb-1">11.2 Funcionamento:</p>
+              <p className="ml-4 mb-2 text-justify">
                 Quando o motorista clica no botão "Ajuda", o sistema:
               </p>
-              <ul className="list-disc list-inside ml-8 text-xs space-y-1" style={{ color: theme.textMuted }}>
-                <li>Abre conversa no WhatsApp com o número configurado</li>
-                <li>Preenche mensagem automática informando a tela onde está tendo dificuldade</li>
-                <li>Permite que operador preste suporte em tempo real</li>
+              <ul className="ml-8 space-y-1">
+                <li>• Abre conversa no WhatsApp com o número configurado</li>
+                <li>• Preenche mensagem automática informando a tela onde está tendo dificuldade</li>
+                <li>• Permite que operador preste suporte em tempo real</li>
               </ul>
             </div>
           </div>
@@ -634,28 +674,22 @@ export function InstrucaoFilaX({ theme, isDark }) {
 
         {/* 13. Documentos Relacionados */}
         <section>
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-            <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">13</span>
-            DOCUMENTOS RELACIONADOS
-          </h3>
-          <ul className="list-disc list-inside text-sm space-y-1 ml-4" style={{ color: theme.textMuted }}>
-            <li>PO-LOG-001 - Procedimento Operacional de Gestão de Transportes</li>
-            <li>IT-LOG-001 - Instrução de Trabalho para Gestão de Ordens de Carregamento</li>
-            <li>IT-LOG-002 - Instrução de Trabalho para Tracking e Rastreamento</li>
-            <li>Manual do Sistema Log Flow (MAN-LOG-001)</li>
+          <h3 className="text-base font-bold mb-3">12. DOCUMENTOS DE REFERÊNCIA</h3>
+          <ul className="text-sm space-y-1 ml-6">
+            <li>• PO-LOG-001 - Procedimento Operacional de Gestão de Transportes</li>
+            <li>• IT-LOG-001 - Instrução de Trabalho para Gestão de Ordens de Carregamento</li>
+            <li>• IT-LOG-002 - Instrução de Trabalho para Tracking e Rastreamento</li>
+            <li>• MAN-LOG-001 - Manual do Sistema Log Flow</li>
           </ul>
         </section>
 
         {/* 14. Anexos */}
         <section>
-          <h3 className="text-lg font-bold mb-3 flex items-center gap-2" style={{ color: theme.text }}>
-            <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">14</span>
-            ANEXOS
-          </h3>
+          <h3 className="text-base font-bold mb-3">13. ANEXOS</h3>
 
           {/* Anexo A - Fluxograma */}
           <div className="mb-6 print-page-break">
-            <h4 className="font-bold text-base mb-4 bg-gray-200 dark:bg-gray-800 px-3 py-2" style={{ color: theme.text }}>
+            <h4 className="font-bold text-sm mb-4 bg-gray-100 border-2 border-black px-3 py-2">
               ANEXO A - Fluxograma Detalhado do Processo de Check-in
             </h4>
             
@@ -900,73 +934,73 @@ export function InstrucaoFilaX({ theme, isDark }) {
 
           {/* Anexo B - Tabela de Veículos */}
           <div className="mb-6 print-page-break">
-            <h4 className="font-bold text-base mb-4 bg-gray-200 dark:bg-gray-800 px-3 py-2" style={{ color: theme.text }}>
+            <h4 className="font-bold text-sm mb-4 bg-gray-100 border-2 border-black px-3 py-2">
               ANEXO B - Tabela de Tipos de Veículo e Carroceria Padronizados
             </h4>
             
             <div className="space-y-4">
               {/* Tipos de Veículo */}
               <div>
-                <p className="text-sm font-bold mb-2" style={{ color: theme.text }}>B.1 Tipos de Veículo (Enum Padrão)</p>
-                <table className="w-full text-xs border" style={{ borderColor: theme.cardBorder }}>
-                  <thead style={{ backgroundColor: isDark ? '#0f172a' : '#f3f4f6' }}>
+                <p className="text-sm font-bold mb-2">B.1 Tipos de Veículo (Enum Padrão)</p>
+                <table className="w-full text-xs border-2 border-black">
+                  <thead className="bg-gray-100">
                     <tr>
-                      <th className="border p-2 text-left w-12" style={{ borderColor: theme.cardBorder, color: theme.text }}>#</th>
-                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Tipo de Veículo</th>
-                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Capacidade Típica</th>
-                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Eixos</th>
-                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Aplicação Comum</th>
+                      <th className="border border-black p-2 text-left w-12 font-bold">#</th>
+                      <th className="border border-black p-2 text-left font-bold">Tipo de Veículo</th>
+                      <th className="border border-black p-2 text-left font-bold">Capacidade Típica</th>
+                      <th className="border border-black p-2 text-left font-bold">Eixos</th>
+                      <th className="border border-black p-2 text-left font-bold">Aplicação Comum</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>1</td>
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>RODOTREM</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>45-57 toneladas</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>9 eixos</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Longas distâncias, cargas pesadas</td>
+                      <td className="border border-black p-2 text-center font-bold">1</td>
+                      <td className="border border-black p-2 font-bold">RODOTREM</td>
+                      <td className="border border-black p-2">45-57 toneladas</td>
+                      <td className="border border-black p-2">9 eixos</td>
+                      <td className="border border-black p-2">Longas distâncias, cargas pesadas</td>
                     </tr>
                     <tr className="bg-gray-50">
-                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>2</td>
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>TRUCK</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>10-14 toneladas</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>2-3 eixos</td>
-                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Entregas urbanas, fracionadas</td>
+                      <td className="border border-black p-2 text-center font-bold">2</td>
+                      <td className="border border-black p-2 font-bold">TRUCK</td>
+                      <td className="border border-black p-2">10-14 toneladas</td>
+                      <td className="border border-black p-2">2-3 eixos</td>
+                      <td className="border border-black p-2">Entregas urbanas, fracionadas</td>
                     </tr>
                     <tr>
-                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>3</td>
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>CARRETA 5 EIXOS</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>25-27 toneladas</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>5 eixos</td>
-                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Cargas médias, regionais</td>
+                      <td className="border border-black p-2 text-center font-bold">3</td>
+                      <td className="border border-black p-2 font-bold">CARRETA 5 EIXOS</td>
+                      <td className="border border-black p-2">25-27 toneladas</td>
+                      <td className="border border-black p-2">5 eixos</td>
+                      <td className="border border-black p-2">Cargas médias, regionais</td>
                     </tr>
                     <tr className="bg-gray-50">
-                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>4</td>
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>CARRETA 6 EIXOS</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>30-33 toneladas</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>6 eixos</td>
-                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Cargas pesadas, longas distâncias</td>
+                      <td className="border border-black p-2 text-center font-bold">4</td>
+                      <td className="border border-black p-2 font-bold">CARRETA 6 EIXOS</td>
+                      <td className="border border-black p-2">30-33 toneladas</td>
+                      <td className="border border-black p-2">6 eixos</td>
+                      <td className="border border-black p-2">Cargas pesadas, longas distâncias</td>
                     </tr>
                     <tr>
-                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>5</td>
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>CARRETA 7 EIXOS</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>35-40 toneladas</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>7 eixos</td>
-                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Cargas muito pesadas</td>
+                      <td className="border border-black p-2 text-center font-bold">5</td>
+                      <td className="border border-black p-2 font-bold">CARRETA 7 EIXOS</td>
+                      <td className="border border-black p-2">35-40 toneladas</td>
+                      <td className="border border-black p-2">7 eixos</td>
+                      <td className="border border-black p-2">Cargas muito pesadas</td>
                     </tr>
                     <tr className="bg-gray-50">
-                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>6</td>
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>BITREM</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>45-50 toneladas</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>7-9 eixos</td>
-                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Granéis, alta capacidade</td>
+                      <td className="border border-black p-2 text-center font-bold">6</td>
+                      <td className="border border-black p-2 font-bold">BITREM</td>
+                      <td className="border border-black p-2">45-50 toneladas</td>
+                      <td className="border border-black p-2">7-9 eixos</td>
+                      <td className="border border-black p-2">Granéis, alta capacidade</td>
                     </tr>
                     <tr>
-                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>7</td>
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>BI-TRUCK</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>16-23 toneladas</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>4 eixos</td>
-                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Entregas regionais, carga média</td>
+                      <td className="border border-black p-2 text-center font-bold">7</td>
+                      <td className="border border-black p-2 font-bold">BI-TRUCK</td>
+                      <td className="border border-black p-2">16-23 toneladas</td>
+                      <td className="border border-black p-2">4 eixos</td>
+                      <td className="border border-black p-2">Entregas regionais, carga média</td>
                     </tr>
                   </tbody>
                 </table>
@@ -974,46 +1008,46 @@ export function InstrucaoFilaX({ theme, isDark }) {
 
               {/* Tipos de Carroceria */}
               <div>
-                <p className="text-sm font-bold mb-2" style={{ color: theme.text }}>B.2 Tipos de Carroceria (Enum Padrão)</p>
-                <table className="w-full text-xs border" style={{ borderColor: theme.cardBorder }}>
-                  <thead style={{ backgroundColor: isDark ? '#0f172a' : '#f3f4f6' }}>
+                <p className="text-sm font-bold mb-2">B.2 Tipos de Carroceria (Enum Padrão)</p>
+                <table className="w-full text-xs border-2 border-black">
+                  <thead className="bg-gray-100">
                     <tr>
-                      <th className="border p-2 text-left w-12" style={{ borderColor: theme.cardBorder, color: theme.text }}>#</th>
-                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Tipo de Carroceria</th>
-                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Características</th>
-                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Cargas Típicas</th>
+                      <th className="border border-black p-2 text-left w-12 font-bold">#</th>
+                      <th className="border border-black p-2 text-left font-bold">Tipo de Carroceria</th>
+                      <th className="border border-black p-2 text-left font-bold">Características</th>
+                      <th className="border border-black p-2 text-left font-bold">Cargas Típicas</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>1</td>
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>SIDER</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Cortina lateral retrátil</td>
-                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Pallets, cargas gerais</td>
+                      <td className="border border-black p-2 text-center font-bold">1</td>
+                      <td className="border border-black p-2 font-bold">SIDER</td>
+                      <td className="border border-black p-2">Cortina lateral retrátil</td>
+                      <td className="border border-black p-2">Pallets, cargas gerais</td>
                     </tr>
                     <tr className="bg-gray-50">
-                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>2</td>
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>PRANCHA</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Plataforma aberta, sem laterais</td>
-                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Máquinas, estruturas metálicas</td>
+                      <td className="border border-black p-2 text-center font-bold">2</td>
+                      <td className="border border-black p-2 font-bold">PRANCHA</td>
+                      <td className="border border-black p-2">Plataforma aberta, sem laterais</td>
+                      <td className="border border-black p-2">Máquinas, estruturas metálicas</td>
                     </tr>
                     <tr>
-                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>3</td>
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>GRADE BAIXA</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Laterais baixas (aprox. 60cm)</td>
-                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Sacaria, caixas, materiais leves</td>
+                      <td className="border border-black p-2 text-center font-bold">3</td>
+                      <td className="border border-black p-2 font-bold">GRADE BAIXA</td>
+                      <td className="border border-black p-2">Laterais baixas (aprox. 60cm)</td>
+                      <td className="border border-black p-2">Sacaria, caixas, materiais leves</td>
                     </tr>
                     <tr className="bg-gray-50">
-                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>4</td>
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>GRADE ALTA</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Laterais altas (aprox. 2m)</td>
-                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Volumosos, materiais a granel</td>
+                      <td className="border border-black p-2 text-center font-bold">4</td>
+                      <td className="border border-black p-2 font-bold">GRADE ALTA</td>
+                      <td className="border border-black p-2">Laterais altas (aprox. 2m)</td>
+                      <td className="border border-black p-2">Volumosos, materiais a granel</td>
                     </tr>
                     <tr>
-                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>5</td>
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>BAU</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Carroceria fechada metálica</td>
-                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Cargas frágeis, eletrônicos</td>
+                      <td className="border border-black p-2 text-center font-bold">5</td>
+                      <td className="border border-black p-2 font-bold">BAU</td>
+                      <td className="border border-black p-2">Carroceria fechada metálica</td>
+                      <td className="border border-black p-2">Cargas frágeis, eletrônicos</td>
                     </tr>
                   </tbody>
                 </table>
@@ -1023,53 +1057,53 @@ export function InstrucaoFilaX({ theme, isDark }) {
 
           {/* Anexo C - Exemplos de Status */}
           <div className="mb-6 print-page-break">
-            <h4 className="font-bold text-base mb-4 bg-gray-200 dark:bg-gray-800 px-3 py-2" style={{ color: theme.text }}>
+            <h4 className="font-bold text-sm mb-4 bg-gray-100 border-2 border-black px-3 py-2">
               ANEXO C - Exemplos de Configuração de Status Customizados
             </h4>
             
-            <p className="text-xs mb-3" style={{ color: theme.textMuted }}>
+            <p className="text-sm mb-3 text-justify">
               A seguir, apresentam-se três cenários de configuração de status para diferentes modelos operacionais:
             </p>
 
             <div className="space-y-4">
               {/* Exemplo 1 - Básico */}
               <div>
-                <p className="text-sm font-bold mb-2 text-blue-600">Exemplo 1: Configuração Básica (3 Status)</p>
-                <table className="w-full text-xs border" style={{ borderColor: theme.cardBorder }}>
-                  <thead style={{ backgroundColor: isDark ? '#0f172a' : '#f3f4f6' }}>
+                <p className="text-sm font-bold mb-2">Exemplo 1: Configuração Básica (3 Status)</p>
+                <table className="w-full text-xs border-2 border-black">
+                  <thead className="bg-gray-100">
                     <tr>
-                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Nome</th>
-                      <th className="border p-2 text-left w-16" style={{ borderColor: theme.cardBorder, color: theme.text }}>Cor</th>
-                      <th className="border p-2 text-left w-12" style={{ borderColor: theme.cardBorder, color: theme.text }}>Ícone</th>
-                      <th className="border p-2 text-center w-20" style={{ borderColor: theme.cardBorder, color: theme.text }}>Remove Fila</th>
-                      <th className="border p-2 text-center w-24" style={{ borderColor: theme.cardBorder, color: theme.text }}>Mover ao Vincular</th>
-                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Uso</th>
+                      <th className="border border-black p-2 text-left font-bold">Nome</th>
+                      <th className="border border-black p-2 text-left w-16 font-bold">Cor</th>
+                      <th className="border border-black p-2 text-left w-12 font-bold">Ícone</th>
+                      <th className="border border-black p-2 text-center w-20 font-bold">Remove Fila</th>
+                      <th className="border border-black p-2 text-center w-24 font-bold">Mover ao Vincular</th>
+                      <th className="border border-black p-2 text-left font-bold">Uso</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Aguardando</td>
-                      <td className="border p-2"><div className="w-4 h-4 bg-green-500 rounded"></div></td>
-                      <td className="border p-2 text-center">⏳</td>
-                      <td className="border p-2 text-center" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Não</td>
-                      <td className="border p-2 text-center" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Não</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Status inicial ao entrar na fila</td>
+                      <td className="border border-black p-2 font-bold">Aguardando</td>
+                      <td className="border border-black p-2"><div className="w-4 h-4 bg-green-500 rounded"></div></td>
+                      <td className="border border-black p-2 text-center">⏳</td>
+                      <td className="border border-black p-2 text-center">Não</td>
+                      <td className="border border-black p-2 text-center">Não</td>
+                      <td className="border border-black p-2">Status inicial ao entrar na fila</td>
                     </tr>
                     <tr className="bg-gray-50">
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Em Operação</td>
-                      <td className="border p-2"><div className="w-4 h-4 bg-blue-500 rounded"></div></td>
-                      <td className="border p-2 text-center">🚛</td>
-                      <td className="border p-2 text-center" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Não</td>
-                      <td className="border p-2 text-center font-bold text-green-600" style={{ borderColor: theme.cardBorder }}>Sim</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Aplicado ao vincular senha a ordem</td>
+                      <td className="border border-black p-2 font-bold">Em Operação</td>
+                      <td className="border border-black p-2"><div className="w-4 h-4 bg-blue-500 rounded"></div></td>
+                      <td className="border border-black p-2 text-center">🚛</td>
+                      <td className="border border-black p-2 text-center">Não</td>
+                      <td className="border border-black p-2 text-center font-bold">Sim</td>
+                      <td className="border border-black p-2">Aplicado ao vincular senha a ordem</td>
                     </tr>
                     <tr>
-                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Indisponível</td>
-                      <td className="border p-2"><div className="w-4 h-4 bg-red-500 rounded"></div></td>
-                      <td className="border p-2 text-center">❌</td>
-                      <td className="border p-2 text-center font-bold text-green-600" style={{ borderColor: theme.cardBorder }}>Sim</td>
-                      <td className="border p-2 text-center" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Não</td>
-                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Remove da fila (manutenção, problemas)</td>
+                      <td className="border border-black p-2 font-bold">Indisponível</td>
+                      <td className="border border-black p-2"><div className="w-4 h-4 bg-red-500 rounded"></div></td>
+                      <td className="border border-black p-2 text-center">❌</td>
+                      <td className="border border-black p-2 text-center font-bold">Sim</td>
+                      <td className="border border-black p-2 text-center">Não</td>
+                      <td className="border border-black p-2">Remove da fila (manutenção, problemas)</td>
                     </tr>
                   </tbody>
                 </table>
@@ -1143,7 +1177,7 @@ export function InstrucaoFilaX({ theme, isDark }) {
 
           {/* Anexo D - Tutorial Visual */}
           <div className="mb-6 print-page-break">
-            <h4 className="font-bold text-base mb-4 bg-gray-200 dark:bg-gray-800 px-3 py-2" style={{ color: theme.text }}>
+            <h4 className="font-bold text-sm mb-4 bg-gray-100 border-2 border-black px-3 py-2">
               ANEXO D - Tutorial Visual do App de Marcação (Motorista)
             </h4>
             
@@ -1442,11 +1476,11 @@ export function InstrucaoFilaX({ theme, isDark }) {
         </section>
 
         {/* Rodapé */}
-        <div className="border-t pt-4 mt-8 text-xs text-center" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>
-          <p>Este documento é propriedade da empresa e não deve ser reproduzido sem autorização.</p>
+        <div className="border-t-2 border-black pt-3 mt-8 text-xs text-center">
+          <p className="font-semibold">Este documento é propriedade da empresa e não deve ser reproduzido sem autorização.</p>
           <p className="mt-1">Controlado eletronicamente - A versão impressa é considerada cópia não controlada.</p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
