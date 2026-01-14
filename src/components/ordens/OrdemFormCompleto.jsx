@@ -78,7 +78,7 @@ export default function OrdemFormCompleto({ open, onClose, onSubmit, motoristas,
     destinatario: "", destinatario_cnpj: "", destino_endereco: "", destino_cep: "", destino_bairro: "", destino_cidade: "", destino_uf: "",
     data_carregamento: "", tipo_operacao: "FOB", viagem_pedido: "", notas_fiscais: "",
     volumes: "", embalagem: "", conteudo: "", qtd_entregas: 1, duv: "", numero_oc: "",
-    observacao_carga: "", solicitado_por: "", senha_fila: ""
+    observacao_carga: "", solicitado_por: "", senha_fila: "", carga_dedicada: false
   });
 
   const [valorTotal, setValorTotal] = useState(0);
@@ -152,7 +152,7 @@ export default function OrdemFormCompleto({ open, onClose, onSubmit, motoristas,
         conteudo: editingOrdem.conteudo || "", qtd_entregas: editingOrdem.qtd_entregas || 1,
         duv: editingOrdem.duv || "", numero_oc: editingOrdem.numero_oc || "",
         observacao_carga: editingOrdem.observacao_carga || "", solicitado_por: editingOrdem.solicitado_por || "",
-        senha_fila: editingOrdem.senha_fila || ""
+        senha_fila: editingOrdem.senha_fila || "", carga_dedicada: editingOrdem.carga_dedicada || false
       });
 
       const motorista = motoristas.find(m => m.id === editingOrdem.motorista_id);
@@ -181,7 +181,7 @@ export default function OrdemFormCompleto({ open, onClose, onSubmit, motoristas,
         destinatario: "", destinatario_cnpj: "", destino_endereco: "", destino_cep: "", destino_bairro: "", destino_cidade: "", destino_uf: "",
         data_carregamento: "", tipo_operacao: "FOB", viagem_pedido: "", notas_fiscais: "",
         volumes: "", embalagem: "", conteudo: "", qtd_entregas: 1, duv: "", numero_oc: "",
-        observacao_carga: "", solicitado_por: "", senha_fila: ""
+        observacao_carga: "", solicitado_por: "", senha_fila: "", carga_dedicada: false
       });
       setMotoristaSearchTerm("");
       setMotoristaTelefone("");
@@ -1472,16 +1472,37 @@ ${formData.observacao_carga ? `\n📝 *Obs:* ${formData.observacao_carga}` : ''}
 
               <div className="grid grid-cols-4 gap-4">
                 <div>
-                  <Label htmlFor="senha_fila">Senha Fila X</Label>
+                  <Label htmlFor="senha_fila" className="flex items-center gap-2">
+                    Senha Fila
+                    <label className="flex items-center gap-1 cursor-pointer ml-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.carga_dedicada}
+                        onChange={(e) => {
+                          handleInputChange("carga_dedicada", e.target.checked);
+                          if (e.target.checked) {
+                            handleInputChange("senha_fila", "DEDI");
+                          } else {
+                            handleInputChange("senha_fila", "");
+                          }
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-xs text-purple-600 font-semibold">Dedicada</span>
+                    </label>
+                  </Label>
                   <Input 
                     id="senha_fila" 
                     value={formData.senha_fila} 
                     onChange={(e) => handleInputChange("senha_fila", e.target.value)} 
-                    placeholder="000000" 
+                    placeholder={formData.carga_dedicada ? "DEDI" : "4 dígitos"} 
                     maxLength={6}
-                    className="font-mono font-bold"
+                    disabled={formData.carga_dedicada}
+                    className={`font-mono font-bold ${formData.carga_dedicada ? 'bg-purple-50 text-purple-700' : ''}`}
                   />
-                  <p className="text-xs text-gray-500 mt-1">Vincular com marcação da Fila X</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.carga_dedicada ? "Carga dedicada (não usa Fila X)" : "Vincular com marcação da Fila X"}
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="duv">DUV</Label>
