@@ -256,19 +256,19 @@ export default function ImpressaoEtiquetaMae({ open, onClose, etiqueta, empresa,
               background-color: #000;
               color: #fff;
               border: 1px solid #000;
-              padding: 2px 1.5px;
+              padding: 1.5px 1px;
               text-align: left;
               font-weight: bold;
-              font-size: 7px;
+              font-size: 6.5px;
               line-height: 1;
             }
             
             .relatorio-table-compact td {
               border: 1px solid #333;
-              padding: 2px 1px;
+              padding: 1.5px 0.5px;
               vertical-align: middle;
-              font-size: 6px;
-              line-height: 1.2;
+              font-size: 5.5px;
+              line-height: 1.1;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
@@ -368,8 +368,8 @@ export default function ImpressaoEtiquetaMae({ open, onClose, etiqueta, empresa,
   const totalVolumes = etiqueta.quantidade_volumes || 0;
   const pesoTotal = etiqueta.peso_total || 0;
   
-  // Dividir notas em páginas para formato 10x15cm (22 notas por página - otimizado)
-  const notasPorPagina = 22;
+  // Dividir notas em páginas para formato 10x15cm (30 notas por página - otimizado)
+  const notasPorPagina = 30;
   const paginasCompactas = [];
   for (let i = 0; i < notasComVolumes.length; i += notasPorPagina) {
     paginasCompactas.push(notasComVolumes.slice(i, i + notasPorPagina));
