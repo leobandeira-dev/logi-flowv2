@@ -273,6 +273,7 @@ export default function EtiquetasMae() {
       const volumeEncontrado = volumes.find(v => v.identificador_unico === codigoLimpo);
 
       if (!volumeEncontrado) {
+        playErrorBeep();
         toast.error("Volume não encontrado");
         setCodigoScanner("");
         setProcessando(false);
@@ -288,6 +289,7 @@ export default function EtiquetasMae() {
           toast.info(`Volume estava em etiqueta cancelada, vinculando aqui...`);
           // Continuar o processo normalmente - não retornar
         } else {
+          playErrorBeep();
           toast.error(`Volume já vinculado à etiqueta ${etiquetaAnterior.codigo} (status: ${etiquetaAnterior.status})`);
           setCodigoScanner("");
           setProcessando(false);
@@ -296,7 +298,8 @@ export default function EtiquetasMae() {
       }
 
       if (volumesVinculados.some(v => v.id === volumeEncontrado.id)) {
-        toast.warning("Volume já vinculado");
+        playErrorBeep();
+        toast.warning("⚠️ Volume já bipado nesta etiqueta");
         setCodigoScanner("");
         setProcessando(false);
         return;
@@ -366,7 +369,31 @@ export default function EtiquetasMae() {
       setVolumes(volumes.map(v => v.id === volumeEncontrado.id ? volumeAtualizado : v));
       setEtiquetas(etiquetas.map(e => e.id === etiquetaSelecionada.id ? etiquetaAtualizada : e));
 
-      toast.success("Volume vinculado!");
+      // Feedback com informações do volume e progresso da nota
+      const nota = notas.find(n => n.id === volumeEncontrado.nota_fiscal_id);
+      const volumesNotaAtualizados = volumesAtualizados.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
+      const todosVolumesNota = volumes.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
+      const faltamNota = todosVolumesNota.length - volumesNotaAtualizados.length;
+      
+      playSuccessBeep();
+      
+      const feedbackMsg = `✅ Volume ${volumesNotaAtualizados.length}/${todosVolumesNota.length} adicionado\n` +
+        `📋 NF ${nota?.numero_nota || '-'}\n` +
+        (faltamNota > 0 ? `⏳ Faltam ${faltamNota} volume(s)\n` : `✓ NF COMPLETA!\n`) +
+        `📦 Total: ${volumesAtualizados.length} vol. na etiqueta`;
+      
+      toast.success(feedbackMsg, { 
+        duration: faltamNota === 0 ? 4000 : 3000,
+        style: { 
+          whiteSpace: 'pre-line', 
+          fontSize: '12px', 
+          lineHeight: '1.4',
+          fontWeight: faltamNota === 0 ? 'bold' : 'normal',
+          background: faltamNota === 0 ? '#10b981' : undefined,
+          color: faltamNota === 0 ? 'white' : undefined
+        }
+      });
+      
       setCodigoScanner("");
       
       // Manter foco no campo para próxima leitura
@@ -784,7 +811,38 @@ export default function EtiquetasMae() {
         });
       }
 
-      toast.success(`✓ ${volumesParaVincular.length} volumes vinculados!`);
+      // Feedback detalhado com progresso da nota
+      const notasAfetadas = [...new Set(volumesVinculadosNovos.map(v => v.nota_fiscal_id))];
+      
+      playSuccessBeep();
+      
+      if (notasAfetadas.length === 1) {
+        const notaId = notasAfetadas[0];
+        const todosVolumesNota = volumes.filter(v => v.nota_fiscal_id === notaId);
+        const volumesVinculadosNota = volumesAtualizadosProgresso.filter(v => v.nota_fiscal_id === notaId);
+        const faltam = todosVolumesNota.length - volumesVinculadosNota.length;
+        const notaCompleta = faltam === 0 && todosVolumesNota.length > 0;
+        
+        const nota = notas.find(n => n.id === notaId) || notaFiscal;
+        
+        const feedbackMsg = notaCompleta
+          ? `✅ NF ${nota?.numero_nota} COMPLETA!\n📦 ${todosVolumesNota.length}/${todosVolumesNota.length} volumes\n✓ ${volumesParaVincular.length} volumes adicionados`
+          : `✅ ${volumesParaVincular.length} volumes adicionados\n📋 NF ${nota?.numero_nota}\n⏳ Faltam ${faltam} volume(s)\n📦 Continue escaneando...`;
+        
+        toast.success(feedbackMsg, { 
+          duration: notaCompleta ? 4000 : 3000,
+          style: { 
+            whiteSpace: 'pre-line', 
+            fontSize: '12px', 
+            lineHeight: '1.4',
+            fontWeight: notaCompleta ? 'bold' : 'normal',
+            background: notaCompleta ? '#10b981' : undefined,
+            color: notaCompleta ? 'white' : undefined
+          }
+        });
+      } else {
+        toast.success(`✓ ${volumesParaVincular.length} volumes de ${notasAfetadas.length} notas vinculados!`);
+      }
       
       // Manter foco no campo para próxima leitura
       setCodigoScanner("");
@@ -1698,117 +1756,164 @@ export default function EtiquetasMae() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="p-3 pt-0">
-                      <div className="space-y-2 max-h-60 overflow-y-auto">
-                        {volumesVinculados.slice().reverse().map((volume, index) => {
-                          const nota = notas.find(n => n.id === volume.nota_fiscal_id);
-                          const isRecent = index < 3;
+                      {/* Resumo por Nota Fiscal - Apontamento de Faltantes */}
+                      <div className="mb-3 space-y-2">
+                        {(() => {
+                          const notasOrdenadas = [];
+                          const notasProcessadas = new Set();
+                          
+                          volumesVinculados.forEach(volume => {
+                            const notaId = volume.nota_fiscal_id;
+                            if (notaId && !notasProcessadas.has(notaId)) {
+                              notasProcessadas.add(notaId);
+                              notasOrdenadas.push(notaId);
+                            }
+                          });
+                          
+                          return notasOrdenadas.map(notaId => {
+                            const nota = notas.find(n => n.id === notaId);
+                            const todosVolumesNota = volumes.filter(v => v.nota_fiscal_id === notaId);
+                            const volumesVinculadosNota = volumesVinculados.filter(v => v.nota_fiscal_id === notaId);
+                            const faltantes = todosVolumesNota.length - volumesVinculadosNota.length;
+                            const completa = faltantes === 0 && todosVolumesNota.length > 0;
 
-                          return (
-                            <div 
-                              key={volume.id} 
-                              className={`flex items-center justify-between p-2 border rounded-lg transition-all ${isRecent ? 'animate-in slide-in-from-top-2' : ''}`}
-                              style={{ 
-                                borderColor: isRecent ? '#10b981' : theme.cardBorder,
-                                backgroundColor: isRecent ? (isDark ? '#064e3b33' : '#d1fae533') : 'transparent'
-                              }}
-                            >
-                              <div className="flex items-center gap-2 flex-1 min-w-0">
-                                <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-mono font-semibold truncate" style={{ color: theme.text }}>
-                                    {volume.identificador_unico}
-                                  </p>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    <p className="text-[10px]" style={{ color: theme.textMuted }}>
-                                      NF: {nota?.numero_nota || '-'}
-                                    </p>
-                                    <p className="text-[10px]" style={{ color: theme.textMuted }}>
-                                      {volume.peso_volume?.toLocaleString('pt-BR')} kg
-                                    </p>
-                                    {origensVolumes[volume.id] && (
-                                      <Badge 
-                                        className={`text-[8px] h-4 px-1 font-semibold ${
-                                          origensVolumes[volume.id] === "Importado" 
-                                            ? "bg-green-600 text-white border-green-700"
-                                            : "bg-blue-600 text-white border-blue-700"
-                                        }`}
-                                      >
-                                        {origensVolumes[volume.id]}
+                            return (
+                              <div 
+                                key={notaId} 
+                                className="p-2 border rounded-lg"
+                                style={{ 
+                                  borderColor: completa ? '#10b981' : (faltantes > 0 ? '#f59e0b' : theme.cardBorder),
+                                  backgroundColor: completa ? (isDark ? '#06402933' : '#d1fae533') : (isDark ? '#0f172a' : '#f8fafc'),
+                                  borderWidth: completa || faltantes > 0 ? '2px' : '1px'
+                                }}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <FileText className={`w-3 h-3 flex-shrink-0 ${completa ? 'text-green-600' : 'text-blue-600'}`} />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-semibold truncate" style={{ color: theme.text }}>
+                                        NF {nota?.numero_nota || '-'}
+                                      </p>
+                                      <p className="text-[10px] truncate" style={{ color: theme.textMuted }}>
+                                        {nota?.emitente_razao_social || '-'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Badge 
+                                      className={`text-[10px] px-2 py-0.5 font-bold ${
+                                        completa 
+                                          ? 'bg-green-600 text-white' 
+                                          : (faltantes > 0 ? 'bg-orange-500 text-white' : 'bg-blue-600 text-white')
+                                      }`}
+                                    >
+                                      {volumesVinculadosNota.length}/{todosVolumesNota.length}
+                                    </Badge>
+                                    {faltantes > 0 && (
+                                      <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200 text-[10px] px-2 py-0.5 font-bold">
+                                        {faltantes} faltando
                                       </Badge>
+                                    )}
+                                    {completa && (
+                                      <CheckCircle2 className="w-4 h-4 text-green-600" />
                                     )}
                                   </div>
                                 </div>
                               </div>
-                              {etiquetaSelecionada.status !== "finalizada" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDesvincularVolume(volume)}
-                                  className="h-7 w-7 p-0 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 ml-2"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </Button>
-                              )}
-                            </div>
-                          );
-                        })}
+                            );
+                          });
+                        })()}
                       </div>
 
-                      {volumesVinculados.length > 0 && (
-                        <div className="mt-3 pt-3 border-t" style={{ borderColor: theme.cardBorder }}>
-                          <p className="text-xs font-semibold mb-2" style={{ color: theme.text }}>
-                            Resumo por Nota Fiscal
-                          </p>
-                          <div className="space-y-1.5">
-                            {(() => {
-                              // Preservar ordem de bipagem: processar volumes na ordem vinculada
-                              const notasOrdenadas = [];
-                              const notasProcessadas = new Set();
-                              
-                              volumesVinculados.forEach(volume => {
-                                const notaId = volume.nota_fiscal_id;
-                                if (notaId && !notasProcessadas.has(notaId)) {
-                                  notasProcessadas.add(notaId);
-                                  notasOrdenadas.push(notaId);
-                                }
-                              });
-                              
-                              return notasOrdenadas.map(notaId => {
-                                const nota = notas.find(n => n.id === notaId);
-                                const volumesDaNota = volumesVinculados.filter(v => v.nota_fiscal_id === notaId);
+                {/* Apontamento de Volumes por Nota Fiscal */}
+                <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                  <CardHeader className="pb-2 pt-3 px-3">
+                    <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
+                      <FileText className="w-4 h-4 text-blue-600" />
+                      Apontamento por Nota Fiscal
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-3 pt-0">
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {(() => {
+                        const notasOrdenadas = [];
+                        const notasProcessadas = new Set();
+                        
+                        volumesVinculados.forEach(volume => {
+                          const notaId = volume.nota_fiscal_id;
+                          if (notaId && !notasProcessadas.has(notaId)) {
+                            notasProcessadas.add(notaId);
+                            notasOrdenadas.push(notaId);
+                          }
+                        });
+                        
+                        return notasOrdenadas.map(notaId => {
+                          const nota = notas.find(n => n.id === notaId);
+                          const todosVolumesNota = volumes.filter(v => v.nota_fiscal_id === notaId);
+                          const volumesVinculadosNota = volumesVinculados.filter(v => v.nota_fiscal_id === notaId);
+                          const faltantes = todosVolumesNota.length - volumesVinculadosNota.length;
+                          const completa = faltantes === 0 && todosVolumesNota.length > 0;
 
-                                return (
-                                  <div 
-                                    key={notaId} 
-                                    className="flex items-center justify-between p-2 border rounded"
-                                    style={{ borderColor: theme.cardBorder, backgroundColor: isDark ? '#0f172a' : '#f8fafc' }}
-                                  >
-                                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                                      <FileText className="w-3 h-3 text-blue-600 flex-shrink-0" />
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-semibold truncate" style={{ color: theme.text }}>
-                                          NF {nota?.numero_nota || '-'}
-                                        </p>
-                                        <p className="text-[10px] truncate" style={{ color: theme.textMuted }}>
-                                          {nota?.emitente_razao_social || '-'}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 flex-shrink-0 ml-2">
-                                      {volumesDaNota.length} vol.
-                                    </Badge>
+                          return (
+                            <div 
+                              key={notaId} 
+                              className="p-2 border rounded-lg"
+                              style={{ 
+                                borderColor: completa ? '#10b981' : (faltantes > 0 ? '#f59e0b' : theme.cardBorder),
+                                backgroundColor: completa ? (isDark ? '#06402933' : '#d1fae533') : (isDark ? '#0f172a' : '#f8fafc'),
+                                borderWidth: completa || faltantes > 0 ? '2px' : '1px'
+                              }}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  <FileText className={`w-3 h-3 flex-shrink-0 ${completa ? 'text-green-600' : 'text-blue-600'}`} />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-semibold truncate" style={{ color: theme.text }}>
+                                      NF {nota?.numero_nota || '-'}
+                                    </p>
+                                    <p className="text-[10px] truncate" style={{ color: theme.textMuted }}>
+                                      {nota?.emitente_razao_social || '-'}
+                                    </p>
                                   </div>
-                                );
-                              });
-                            })()}
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge 
+                                    className={`text-[10px] px-2 py-0.5 font-bold ${
+                                      completa 
+                                        ? 'bg-green-600 text-white' 
+                                        : (faltantes > 0 ? 'bg-orange-500 text-white' : 'bg-blue-600 text-white')
+                                    }`}
+                                  >
+                                    {volumesVinculadosNota.length}/{todosVolumesNota.length}
+                                  </Badge>
+                                  {faltantes > 0 && (
+                                    <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200 text-[10px] px-2 py-0.5 font-bold">
+                                      {faltantes} faltando
+                                    </Badge>
+                                  )}
+                                  {completa && (
+                                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {volumesVinculados.length > 0 && (
+                  <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                    <CardHeader className="pb-2 pt-3 px-3">
+                      <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
+                        <Package className="w-4 h-4 text-purple-600" />
+                        Todos os Volumes ({volumesVinculados.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-3 pt-0">
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
               </div>
 
               <DialogFooter className="flex-col sm:flex-row gap-2 pt-4">
