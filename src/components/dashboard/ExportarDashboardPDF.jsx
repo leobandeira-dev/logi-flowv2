@@ -252,23 +252,56 @@ export default function ExportarDashboardPDF({
       });
       yPos += 5;
 
-      // Status de Tracking
-      if (insights.statusTracking && Object.keys(insights.statusTracking).length > 0) {
+      // Resumo de Operações
+      if (insights.operacoesStats && Object.keys(insights.operacoesStats).length > 0) {
         checkNewPage(40);
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text('Status de Tracking', leftMargin, yPos);
+        doc.text('Resumo de Operações', leftMargin, yPos);
         yPos += 8;
 
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        Object.entries(insights.statusTracking).forEach(([status, count]) => {
+        Object.entries(insights.operacoesStats).forEach(([operacao, count]) => {
           checkNewPage(8);
-          const statusFormatado = status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-          doc.text(`${statusFormatado}: ${count}`, leftMargin + 5, yPos);
+          doc.text(`${operacao}: ${count} ordens`, leftMargin + 5, yPos);
           yPos += 5;
         });
         yPos += 5;
+      }
+
+      // Análise de Performance por Operação
+      if (ordensDetalhadas.porOperacao && Object.keys(ordensDetalhadas.porOperacao).length > 0) {
+        checkNewPage(50);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Performance por Operação', leftMargin, yPos);
+        yPos += 8;
+
+        Object.entries(ordensDetalhadas.porOperacao).forEach(([operacao, stats]) => {
+          checkNewPage(30);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`${operacao}`, leftMargin, yPos);
+          yPos += 6;
+
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          
+          const taxaFinalizacao = stats.total > 0 ? Math.round((stats.finalizadas / stats.total) * 100) : 0;
+          const taxaAtraso = stats.total > 0 ? ((stats.atrasadas / stats.total) * 100).toFixed(1) : 0;
+          
+          doc.text(`Total de Ordens: ${stats.total}`, leftMargin + 5, yPos);
+          yPos += 5;
+          doc.text(`Taxa de Finalização: ${taxaFinalizacao}%`, leftMargin + 5, yPos);
+          yPos += 5;
+          doc.text(`Taxa de Atraso: ${taxaAtraso}%`, leftMargin + 5, yPos);
+          yPos += 5;
+          doc.text(`Ordens Finalizadas: ${stats.finalizadas}`, leftMargin + 5, yPos);
+          yPos += 5;
+          doc.text(`Ordens Atrasadas: ${stats.atrasadas}`, leftMargin + 5, yPos);
+          yPos += 10;
+        });
       }
 
       // Fluxo de Processos
