@@ -256,19 +256,19 @@ export default function ImpressaoEtiquetaMae({ open, onClose, etiqueta, empresa,
               background-color: #000;
               color: #fff;
               border: 1px solid #000;
-              padding: 1.5px 1px;
+              padding: 2px 1.5px;
               text-align: left;
               font-weight: bold;
-              font-size: 6.5px;
-              line-height: 1;
+              font-size: 7.5px;
+              line-height: 1.1;
             }
             
             .relatorio-table-compact td {
               border: 1px solid #333;
-              padding: 1.5px 0.5px;
+              padding: 2px 1px;
               vertical-align: middle;
-              font-size: 5.5px;
-              line-height: 1.1;
+              font-size: 7px;
+              line-height: 1.2;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
@@ -368,8 +368,8 @@ export default function ImpressaoEtiquetaMae({ open, onClose, etiqueta, empresa,
   const totalVolumes = etiqueta.quantidade_volumes || 0;
   const pesoTotal = etiqueta.peso_total || 0;
   
-  // Dividir notas em páginas para formato 10x15cm (30 notas por página - otimizado)
-  const notasPorPagina = 30;
+  // Dividir notas em páginas para formato 10x15cm (28 notas por página - otimizado para legibilidade)
+  const notasPorPagina = 28;
   const paginasCompactas = [];
   for (let i = 0; i < notasComVolumes.length; i += notasPorPagina) {
     paginasCompactas.push(notasComVolumes.slice(i, i + notasPorPagina));
@@ -570,21 +570,21 @@ export default function ImpressaoEtiquetaMae({ open, onClose, etiqueta, empresa,
                             const ordemGlobal = pageIndex * notasPorPagina + localIndex + 1;
                             return (
                               <tr key={item.nota.id}>
-                                <td style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '6.5px' }}>{ordemGlobal}</td>
-                                <td style={{ fontWeight: 'bold', fontSize: '6.5px' }}>{item.nota.numero_nota}</td>
-                                <td style={{ fontSize: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <td style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '7.5px' }}>{ordemGlobal}</td>
+                                <td style={{ fontWeight: 'bold', fontSize: '7.5px' }}>{item.nota.numero_nota}</td>
+                                <td style={{ fontSize: '7px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {item.nota.emitente_razao_social?.substring(0, 60) || '-'}
                                 </td>
-                                <td style={{ fontSize: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <td style={{ fontSize: '7px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {item.nota.destinatario_cidade?.substring(0, 20) || '-'}
                                 </td>
-                                <td style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '6.5px' }}>
+                                <td style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '7.5px' }}>
                                   {item.nota.destinatario_uf || '-'}
                                 </td>
-                                <td style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '6.5px' }}>
+                                <td style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '7.5px' }}>
                                   {item.quantidade}
                                 </td>
-                                <td style={{ textAlign: 'center', fontSize: '6.5px', fontWeight: 'bold' }}>
+                                <td style={{ textAlign: 'center', fontSize: '7.5px', fontWeight: 'bold' }}>
                                   {item.peso.toFixed(0)}
                                 </td>
                               </tr>
