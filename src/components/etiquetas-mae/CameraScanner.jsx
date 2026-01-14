@@ -10,13 +10,13 @@ import {
 } from "@/components/ui/dialog";
 import QrScanner from "qr-scanner";
 
-export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual, progressoAtual }) {
+export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual, progressoAtual, externalFeedback }) {
   const videoRef = useRef(null);
   const [scanning, setScanning] = useState(false);
   const [manualInput, setManualInput] = useState("");
   const [useManualMode, setUseManualMode] = useState(false);
   const qrScannerRef = useRef(null);
-  const [scanFeedback, setScanFeedback] = useState(null); // 'success' | 'duplicate' | null
+  const [scanFeedback, setScanFeedback] = useState(null); // 'success' | 'duplicate' | 'error' | 'processing' | null
 
   useEffect(() => {
     if (open && !useManualMode) {
@@ -46,14 +46,23 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
             console.log('📦 Código processado:', finalCode);
 
-            // Bloquear novos scans por 800ms
+            // Bloquear novos scans
             setScanFeedback('processing');
 
             const scanResult = await Promise.resolve(onScan(finalCode));
 
             console.log('✅ Resultado do scan:', scanResult);
 
-            // Liberar para próximo scan após processamento
+            // Aplicar feedback baseado no resultado
+            if (scanResult === 'success') {
+              setScanFeedback('success');
+            } else if (scanResult === 'duplicate') {
+              setScanFeedback('duplicate');
+            } else if (scanResult === 'error') {
+              setScanFeedback('error');
+            }
+
+            // Liberar para próximo scan
             setTimeout(() => setScanFeedback(null), 800);
           }
         },
@@ -140,6 +149,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       
       setManualInput("");
       
+      // Aplicar feedback baseado no resultado
+      if (result === 'success') {
+        setScanFeedback('success');
+      } else if (result === 'duplicate') {
+        setScanFeedback('duplicate');
+      } else if (result === 'error') {
+        setScanFeedback('error');
+      }
+      
       // Liberar para próximo scan
       setTimeout(() => setScanFeedback(null), 800);
     }
@@ -223,38 +241,94 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                     boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
                     borderRadius: '12px',
                     position: 'relative',
-                    border: scanFeedback === 'processing' 
+                    border: scanFeedback === 'success' 
+                      ? '8px solid #10b981' 
+                      : scanFeedback === 'duplicate'
+                      ? '8px solid #f59e0b'
+                      : scanFeedback === 'error'
+                      ? '8px solid #ef4444'
+                      : scanFeedback === 'processing' 
                       ? '8px solid #3b82f6' 
                       : '6px solid #60a5fa',
-                    backgroundColor: scanFeedback === 'processing' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                    backgroundColor: scanFeedback === 'success' 
+                      ? 'rgba(16, 185, 129, 0.15)' 
+                      : scanFeedback === 'duplicate'
+                      ? 'rgba(245, 158, 11, 0.15)'
+                      : scanFeedback === 'error'
+                      ? 'rgba(239, 68, 68, 0.15)'
+                      : scanFeedback === 'processing' 
+                      ? 'rgba(59, 130, 246, 0.1)' 
+                      : 'transparent'
                   }}
                 >
                   {/* Cantos com Feedback Visual */}
                   <div className="absolute top-0 left-0 w-16 h-16 border-t-8 border-l-8 transition-all duration-300" style={{ 
                     borderRadius: '12px 0 0 0', 
-                    borderColor: scanFeedback === 'processing' ? '#3b82f6' : '#60a5fa',
-                    borderWidth: scanFeedback === 'processing' ? '10px' : '8px'
+                    borderColor: scanFeedback === 'success' 
+                      ? '#10b981' 
+                      : scanFeedback === 'duplicate'
+                      ? '#f59e0b'
+                      : scanFeedback === 'error'
+                      ? '#ef4444'
+                      : scanFeedback === 'processing' 
+                      ? '#3b82f6' 
+                      : '#60a5fa',
+                    borderWidth: scanFeedback ? '10px' : '8px'
                   }}></div>
                   <div className="absolute top-0 right-0 w-16 h-16 border-t-8 border-r-8 transition-all duration-300" style={{ 
                     borderRadius: '0 12px 0 0', 
-                    borderColor: scanFeedback === 'processing' ? '#3b82f6' : '#60a5fa',
-                    borderWidth: scanFeedback === 'processing' ? '10px' : '8px'
+                    borderColor: scanFeedback === 'success' 
+                      ? '#10b981' 
+                      : scanFeedback === 'duplicate'
+                      ? '#f59e0b'
+                      : scanFeedback === 'error'
+                      ? '#ef4444'
+                      : scanFeedback === 'processing' 
+                      ? '#3b82f6' 
+                      : '#60a5fa',
+                    borderWidth: scanFeedback ? '10px' : '8px'
                   }}></div>
                   <div className="absolute bottom-0 left-0 w-16 h-16 border-b-8 border-l-8 transition-all duration-300" style={{ 
                     borderRadius: '0 0 0 12px', 
-                    borderColor: scanFeedback === 'processing' ? '#3b82f6' : '#60a5fa',
-                    borderWidth: scanFeedback === 'processing' ? '10px' : '8px'
+                    borderColor: scanFeedback === 'success' 
+                      ? '#10b981' 
+                      : scanFeedback === 'duplicate'
+                      ? '#f59e0b'
+                      : scanFeedback === 'error'
+                      ? '#ef4444'
+                      : scanFeedback === 'processing' 
+                      ? '#3b82f6' 
+                      : '#60a5fa',
+                    borderWidth: scanFeedback ? '10px' : '8px'
                   }}></div>
                   <div className="absolute bottom-0 right-0 w-16 h-16 border-b-8 border-r-8 transition-all duration-300" style={{ 
                     borderRadius: '0 0 12px 0', 
-                    borderColor: scanFeedback === 'processing' ? '#3b82f6' : '#60a5fa',
-                    borderWidth: scanFeedback === 'processing' ? '10px' : '8px'
+                    borderColor: scanFeedback === 'success' 
+                      ? '#10b981' 
+                      : scanFeedback === 'duplicate'
+                      ? '#f59e0b'
+                      : scanFeedback === 'error'
+                      ? '#ef4444'
+                      : scanFeedback === 'processing' 
+                      ? '#3b82f6' 
+                      : '#60a5fa',
+                    borderWidth: scanFeedback ? '10px' : '8px'
                   }}></div>
 
-                  {/* Indicador Central Sutil */}
-                  {scanFeedback === 'processing' && (
+                  {/* Indicador Central */}
+                  {scanFeedback && (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
+                      <div 
+                        className={`w-3 h-3 rounded-full ${
+                          scanFeedback === 'success' 
+                            ? 'bg-green-500' 
+                            : scanFeedback === 'duplicate'
+                            ? 'bg-yellow-500'
+                            : scanFeedback === 'error'
+                            ? 'bg-red-500'
+                            : 'bg-blue-500'
+                        } ${scanFeedback === 'processing' ? 'animate-pulse' : ''}`}
+                      ></div>
                     </div>
                   )}
                 </div>

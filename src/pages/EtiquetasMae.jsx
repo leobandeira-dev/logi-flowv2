@@ -38,6 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User } from "lucide-react";
 import ImpressaoEtiquetaMae from "../components/etiquetas-mae/ImpressaoEtiquetaMae";
 import CameraScanner from "../components/etiquetas-mae/CameraScanner";
+import { playSuccessBeep, playErrorBeep } from "../components/utils/audioFeedback";
 
 export default function EtiquetasMae() {
   const [etiquetas, setEtiquetas] = useState([]);
@@ -61,6 +62,7 @@ export default function EtiquetasMae() {
   const [showVolumeCameraScanner, setShowVolumeCameraScanner] = useState(false);
   const [origensVolumes, setOrigensVolumes] = useState({});
   const [historico, setHistorico] = useState([]);
+  const [cameraScanFeedback, setCameraScanFeedback] = useState(null);
   
   const [novaEtiqueta, setNovaEtiqueta] = useState({
     codigo: "",
@@ -249,9 +251,163 @@ export default function EtiquetasMae() {
     
     setCodigoScanner(codigo.trim());
     
-    setTimeout(() => {
-      handleScan(codigo.trim());
-    }, 100);
+    // Processar o scan e retornar resultado para feedback visual
+    const resultado = await handleScanComFeedback(codigo.trim());
+    return resultado;
+  };
+
+  const handleScanComFeedback = async (codigo) => {
+    if (!codigo || !codigo.trim() || !etiquetaSelecionada) return 'error';
+
+    setProcessando(true);
+    try {
+      const codigoLimpo = codigo.trim();
+      
+      // Se for chave NF-e (44 dígitos), processar nota fiscal
+      if (codigoLimpo.length === 44 && /^\d+$/.test(codigoLimpo)) {
+        await handleScanChaveNFe(codigoLimpo);
+        setCodigoScanner("");
+        setProcessando(false);
+        setCameraScanFeedback('success');
+        setTimeout(() => setCameraScanFeedback(null), 800);
+        return 'success';
+      }
+
+      const volumeEncontrado = volumes.find(v => v.identificador_unico === codigoLimpo);
+
+      if (!volumeEncontrado) {
+        playErrorBeep();
+        toast.error("Volume não encontrado");
+        setCodigoScanner("");
+        setProcessando(false);
+        setCameraScanFeedback('error');
+        setTimeout(() => setCameraScanFeedback(null), 800);
+        return 'error';
+      }
+
+      if (volumeEncontrado.etiqueta_mae_id && volumeEncontrado.etiqueta_mae_id !== etiquetaSelecionada.id) {
+        const etiquetaAnterior = await base44.entities.EtiquetaMae.get(volumeEncontrado.etiqueta_mae_id);
+        
+        if (etiquetaAnterior.status !== "cancelada") {
+          playErrorBeep();
+          toast.error(`Volume já vinculado à etiqueta ${etiquetaAnterior.codigo}`);
+          setCodigoScanner("");
+          setProcessando(false);
+          setCameraScanFeedback('error');
+          setTimeout(() => setCameraScanFeedback(null), 800);
+          return 'error';
+        }
+      }
+
+      if (volumesVinculados.some(v => v.id === volumeEncontrado.id)) {
+        playErrorBeep();
+        toast.warning("⚠️ Volume já bipado nesta etiqueta");
+        setCodigoScanner("");
+        setProcessando(false);
+        setCameraScanFeedback('duplicate');
+        setTimeout(() => setCameraScanFeedback(null), 800);
+        return 'duplicate';
+      }
+
+      // Marcar origem do volume se ainda não existir
+      if (!origensVolumes[volumeEncontrado.id]) {
+        setOrigensVolumes(prev => ({ ...prev, [volumeEncontrado.id]: "Base" }));
+      }
+
+      const volumeAtualizado = {
+        ...volumeEncontrado,
+        etiqueta_mae_id: etiquetaSelecionada.id,
+        data_vinculo_etiqueta_mae: new Date().toISOString()
+      };
+
+      const user = await base44.auth.me();
+
+      await base44.entities.Volume.update(volumeEncontrado.id, {
+        etiqueta_mae_id: etiquetaSelecionada.id,
+        data_vinculo_etiqueta_mae: new Date().toISOString()
+      });
+
+      await base44.entities.HistoricoEtiquetaMae.create({
+        etiqueta_mae_id: etiquetaSelecionada.id,
+        tipo_acao: "adicao_volume",
+        volume_id: volumeEncontrado.id,
+        volume_identificador: volumeEncontrado.identificador_unico,
+        observacao: `Volume ${volumeEncontrado.identificador_unico} adicionado`,
+        usuario_id: user.id,
+        usuario_nome: user.full_name
+      });
+
+      const novosVolumesIds = [...(etiquetaSelecionada.volumes_ids || []), volumeEncontrado.id];
+      const volumesAtualizados = [...volumesVinculados, volumeAtualizado];
+
+      const pesoTotal = volumesAtualizados.reduce((sum, v) => sum + (v.peso_volume || 0), 0);
+      const m3Total = volumesAtualizados.reduce((sum, v) => sum + (v.m3 || 0), 0);
+      const notasIds = [...new Set(volumesAtualizados.map(v => v.nota_fiscal_id).filter(Boolean))];
+
+      await base44.entities.EtiquetaMae.update(etiquetaSelecionada.id, {
+        volumes_ids: novosVolumesIds,
+        quantidade_volumes: novosVolumesIds.length,
+        peso_total: pesoTotal,
+        m3_total: m3Total,
+        notas_fiscais_ids: notasIds,
+        status: "em_unitizacao"
+      });
+
+      const etiquetaAtualizada = {
+        ...etiquetaSelecionada,
+        volumes_ids: novosVolumesIds,
+        quantidade_volumes: novosVolumesIds.length,
+        peso_total: pesoTotal,
+        m3_total: m3Total,
+        notas_fiscais_ids: notasIds,
+        status: "em_unitizacao"
+      };
+
+      setEtiquetaSelecionada(etiquetaAtualizada);
+      setVolumesVinculados(volumesAtualizados);
+      setVolumes(volumes.map(v => v.id === volumeEncontrado.id ? volumeAtualizado : v));
+      setEtiquetas(etiquetas.map(e => e.id === etiquetaSelecionada.id ? etiquetaAtualizada : e));
+
+      const nota = notas.find(n => n.id === volumeEncontrado.nota_fiscal_id);
+      const volumesNotaAtualizados = volumesAtualizados.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
+      const todosVolumesNota = volumes.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
+      const faltamNota = todosVolumesNota.length - volumesNotaAtualizados.length;
+      
+      playSuccessBeep();
+      
+      const feedbackMsg = `✅ Volume ${volumesNotaAtualizados.length}/${todosVolumesNota.length} adicionado\n` +
+        `📋 NF ${nota?.numero_nota || '-'}\n` +
+        (faltamNota > 0 ? `⏳ Faltam ${faltamNota} volume(s)\n` : `✓ NF COMPLETA!\n`) +
+        `📦 Total: ${volumesAtualizados.length} vol. na etiqueta`;
+      
+      toast.success(feedbackMsg, { 
+        duration: faltamNota === 0 ? 4000 : 3000,
+        style: { 
+          whiteSpace: 'pre-line', 
+          fontSize: '12px', 
+          lineHeight: '1.4',
+          fontWeight: faltamNota === 0 ? 'bold' : 'normal',
+          background: faltamNota === 0 ? '#10b981' : undefined,
+          color: faltamNota === 0 ? 'white' : undefined
+        }
+      });
+      
+      setCodigoScanner("");
+      setProcessando(false);
+      setCameraScanFeedback('success');
+      setTimeout(() => setCameraScanFeedback(null), 800);
+      
+      return 'success';
+    } catch (error) {
+      console.error("Erro ao processar código:", error);
+      toast.error("Erro ao processar");
+      playErrorBeep();
+      setCodigoScanner("");
+      setProcessando(false);
+      setCameraScanFeedback('error');
+      setTimeout(() => setCameraScanFeedback(null), 800);
+      return 'error';
+    }
   };
 
   const handleScan = async (codigo) => {
@@ -1960,6 +2116,7 @@ export default function EtiquetasMae() {
             onClose={() => setShowVolumeCameraScanner(false)}
             onScan={handleVolumeCameraScan}
             isDark={isDark}
+            externalFeedback={cameraScanFeedback}
           />
         )}
       </div>
