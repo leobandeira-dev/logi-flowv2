@@ -34,6 +34,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FilterModal from "../components/dashboard/FilterModal";
 import QuickEditOrdem from "../components/dashboard/QuickEditOrdem";
 import FiltroPeriodo from "../components/filtros/FiltroPeriodo";
+import ExportarDashboardPDF from "../components/dashboard/ExportarDashboardPDF";
 
 export default function Dashboard() {
   const [ordens, setOrdens] = useState([]);
@@ -65,6 +66,7 @@ export default function Dashboard() {
   const [selectedOrdemForEdit, setSelectedOrdemForEdit] = useState(null);
   const [showQuickEdit, setShowQuickEdit] = useState(false);
   const [expandedOperacao, setExpandedOperacao] = useState(null);
+  const [empresa, setEmpresa] = useState(null);
 
   // NOVO: Estado para modo de visualização dos gráficos
   const [viewMode, setViewMode] = useState("proximos7"); // "proximos7" ou "mesAtual"
@@ -88,6 +90,16 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const user = await base44.auth.me();
+      
+      // Carregar dados da empresa
+      if (user.empresa_id) {
+        try {
+          const empresaData = await base44.entities.Empresa.get(user.empresa_id);
+          setEmpresa(empresaData);
+        } catch (error) {
+          console.log("Empresa não carregada");
+        }
+      }
       
       const [ordensData, motoristasData, veiculosData, etapasData, ordensEtapasData, ocorrenciasData, operacoesData] = await Promise.all([
         base44.entities.OrdemDeCarregamento.list("-data_solicitacao"),
@@ -684,19 +696,36 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <FiltroPeriodo
-            periodoFiltro={periodoFiltro}
-            onPeriodoChange={setPeriodoFiltro}
-            anoSelecionado={anoSelecionado}
-            onAnoChange={setAnoSelecionado}
-            mesSelecionado={mesSelecionado}
-            onMesChange={setMesSelecionado}
-            dataInicioPersonalizada={dataInicioPersonalizada}
-            onDataInicioPersonalizadaChange={setDataInicioPersonalizada}
-            dataFimPersonalizada={dataFimPersonalizada}
-            onDataFimPersonalizadaChange={setDataFimPersonalizada}
-            isDark={isDark}
-          />
+          <div className="flex items-center gap-3">
+            <FiltroPeriodo
+              periodoFiltro={periodoFiltro}
+              onPeriodoChange={setPeriodoFiltro}
+              anoSelecionado={anoSelecionado}
+              onAnoChange={setAnoSelecionado}
+              mesSelecionado={mesSelecionado}
+              onMesChange={setMesSelecionado}
+              dataInicioPersonalizada={dataInicioPersonalizada}
+              onDataInicioPersonalizadaChange={setDataInicioPersonalizada}
+              dataFimPersonalizada={dataFimPersonalizada}
+              onDataFimPersonalizadaChange={setDataFimPersonalizada}
+              isDark={isDark}
+            />
+            
+            <ExportarDashboardPDF
+              metrics={metrics}
+              ordensDetalhadas={ordensDetalhadas}
+              volumeMensal={volumeMensal}
+              dadosGrafico={dadosGrafico}
+              insights={insights}
+              periodoFiltro={periodoFiltro}
+              anoSelecionado={anoSelecionado}
+              mesSelecionado={mesSelecionado}
+              dataInicioPersonalizada={dataInicioPersonalizada}
+              dataFimPersonalizada={dataFimPersonalizada}
+              filters={filters}
+              empresa={empresa}
+            />
+          </div>
 
           <div className="flex items-center gap-2 w-full lg:w-auto">
             <div className="flex gap-2 flex-wrap">
