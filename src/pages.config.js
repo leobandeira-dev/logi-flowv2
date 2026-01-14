@@ -44,6 +44,9 @@ import TrackingTV from './pages/TrackingTV';
 import Unitizacao from './pages/Unitizacao';
 import Usuarios from './pages/Usuarios';
 import Veiculos from './pages/Veiculos';
+import PermissoesPerfilEmpresa from './pages/PermissoesPerfilEmpresa';
+import PermissoesEmpresa from './pages/PermissoesEmpresa';
+import PermissoesPerfilUsuario from './pages/PermissoesPerfilUsuario';
 import __Layout from './Layout.jsx';
 
 
@@ -94,6 +97,9 @@ export const PAGES = {
     "Unitizacao": Unitizacao,
     "Usuarios": Usuarios,
     "Veiculos": Veiculos,
+    "PermissoesPerfilEmpresa": PermissoesPerfilEmpresa,
+    "PermissoesEmpresa": PermissoesEmpresa,
+    "PermissoesPerfilUsuario": PermissoesPerfilUsuario,
 }
 
 export const pagesConfig = {
