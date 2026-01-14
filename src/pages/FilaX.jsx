@@ -407,18 +407,31 @@ export default function FilaX() {
 
       const senhaFila = gerarSenhaFila();
 
-      await base44.entities.FilaVeiculo.create({
+      // Calcular posição correta ANTES de criar
+      const marcacoesAtivas = fila.filter(m => !m.data_saida_fila);
+      const proximaPosicao = marcacoesAtivas.length + 1;
+
+      const novoRegistro = await base44.entities.FilaVeiculo.create({
         empresa_id: user.empresa_id,
         ...formData,
         senha_fila: senhaFila,
         tipo_fila_nome: tipoSelecionado?.nome,
         status: statusPadrao,
-        posicao_fila: 0, // Será recalculado
+        posicao_fila: proximaPosicao,
         data_entrada_fila: new Date().toISOString()
       });
 
-      // Recalcular todas as posições FIFO
-      await recalcularPosicoesFIFO(user.empresa_id);
+      console.log('✅ Veículo adicionado na posição:', proximaPosicao);
+
+      // Recalcular todas as posições FIFO para garantir
+      try {
+        await base44.functions.invoke('recalcularPosicoesFilaFIFO', { 
+          empresa_id: user.empresa_id 
+        });
+      } catch (err) {
+        console.log("Erro ao recalcular via função:", err);
+        await recalcularPosicoesFIFO(user.empresa_id);
+      }
 
       toast.success(`Check-in realizado! Senha: ${senhaFila}`);
       setShowAddModal(false);
