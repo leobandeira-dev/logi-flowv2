@@ -652,12 +652,793 @@ export function InstrucaoFilaX({ theme, isDark }) {
             <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">14</span>
             ANEXOS
           </h3>
-          <p className="text-sm" style={{ color: theme.textMuted }}>
-            Anexo A - Fluxograma Detalhado do Processo de Check-in<br/>
-            Anexo B - Tabela de Tipos de Veículo e Carroceria Padronizados<br/>
-            Anexo C - Exemplos de Configuração de Status Customizados<br/>
-            Anexo D - Tutorial Visual do App de Marcação (Motorista)
-          </p>
+
+          {/* Anexo A - Fluxograma */}
+          <div className="mb-6 print-page-break">
+            <h4 className="font-bold text-base mb-4 bg-gray-200 dark:bg-gray-800 px-3 py-2" style={{ color: theme.text }}>
+              ANEXO A - Fluxograma Detalhado do Processo de Check-in
+            </h4>
+            
+            <div className="border rounded p-6 space-y-4" style={{ borderColor: theme.cardBorder, backgroundColor: isDark ? '#0f172a' : '#ffffff' }}>
+              {/* Etapa 1 */}
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white font-bold">
+                    1
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="border-2 border-green-600 rounded-lg p-3">
+                    <p className="font-bold text-sm mb-1" style={{ color: theme.text }}>INÍCIO - Motorista Acessa Link</p>
+                    <p className="text-xs" style={{ color: theme.textMuted }}>
+                      Motorista clica no link compartilhado pela transportadora<br/>
+                      <strong>URL:</strong> logiflow.com.br/FilaMotorista?codigo=XXXX<br/>
+                      <strong>Validação:</strong> Sistema verifica código de acesso da empresa
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <div className="w-0.5 h-8 bg-gray-400"></div>
+              </div>
+
+              {/* Etapa 2 */}
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                    2
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="border-2 border-blue-600 rounded-lg p-3">
+                    <p className="font-bold text-sm mb-1" style={{ color: theme.text }}>Input Telefone</p>
+                    <p className="text-xs" style={{ color: theme.textMuted }}>
+                      Motorista informa celular com DDD (11 dígitos)<br/>
+                      <strong>Sistema verifica:</strong> Telefone já cadastrado?
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <div className="w-0.5 h-8 bg-gray-400"></div>
+              </div>
+
+              {/* Decisão - Cadastrado? */}
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 w-12"></div>
+                <div className="flex-1">
+                  <div className="bg-yellow-100 dark:bg-yellow-900/30 border-2 border-yellow-600 rounded-lg p-3">
+                    <p className="font-bold text-sm text-center" style={{ color: theme.text }}>Motorista Cadastrado?</p>
+                    <div className="grid grid-cols-2 gap-3 mt-2 text-xs">
+                      <div className="bg-green-50 dark:bg-green-900/20 border border-green-500 rounded p-2">
+                        <p className="font-semibold text-green-700 dark:text-green-400">✓ SIM</p>
+                        <p className="text-green-600 dark:text-green-500">Preenche dados automaticamente</p>
+                      </div>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-500 rounded p-2">
+                        <p className="font-semibold text-blue-700 dark:text-blue-400">✗ NÃO</p>
+                        <p className="text-blue-600 dark:text-blue-500">Segue para wizard completo</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <div className="w-0.5 h-8 bg-gray-400"></div>
+              </div>
+
+              {/* Etapa 3-6 - Wizard */}
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    3-6
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="border-2 border-purple-600 rounded-lg p-3">
+                    <p className="font-bold text-sm mb-2" style={{ color: theme.text }}>Wizard de Dados (4 Passos)</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-purple-50 dark:bg-purple-900/20 rounded p-2">
+                        <p className="font-semibold">Passo 1: Nome Motorista</p>
+                      </div>
+                      <div className="bg-purple-50 dark:bg-purple-900/20 rounded p-2">
+                        <p className="font-semibold">Passo 2: Placa Cavalo</p>
+                      </div>
+                      <div className="bg-purple-50 dark:bg-purple-900/20 rounded p-2">
+                        <p className="font-semibold">Passo 3: Tipo Motorista/Veículo/Carroceria</p>
+                      </div>
+                      <div className="bg-purple-50 dark:bg-purple-900/20 rounded p-2">
+                        <p className="font-semibold">Passo 4: Comprovante Descarga</p>
+                      </div>
+                    </div>
+                    <p className="text-xs mt-2" style={{ color: theme.textMuted }}>
+                      Botões de "Ajuda" disponíveis em cada passo (WhatsApp com suporte)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <div className="w-0.5 h-8 bg-gray-400"></div>
+              </div>
+
+              {/* Etapa 7 - Validação IA */}
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
+                    7
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="border-2 border-indigo-600 rounded-lg p-3">
+                    <p className="font-bold text-sm mb-1" style={{ color: theme.text }}>Validação IA do Comprovante</p>
+                    <p className="text-xs mb-2" style={{ color: theme.textMuted }}>
+                      IA analisa imagem do comprovante:
+                    </p>
+                    <ul className="text-xs space-y-1 ml-4 list-disc" style={{ color: theme.textMuted }}>
+                      <li>Qualidade e legibilidade da imagem</li>
+                      <li>Presença de data visível</li>
+                      <li>Verificação se é comprovante de descarga válido</li>
+                      <li>Extração automática da data de descarga</li>
+                    </ul>
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-400 rounded p-2 mt-2">
+                      <p className="text-xs text-red-700 dark:text-red-400">
+                        ❌ Se inválido: Solicita nova foto e bloqueia continuação
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <div className="w-0.5 h-8 bg-gray-400"></div>
+              </div>
+
+              {/* Etapa 8 - Localização */}
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-cyan-600 rounded-full flex items-center justify-center text-white font-bold">
+                    8
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="border-2 border-cyan-600 rounded-lg p-3">
+                    <p className="font-bold text-sm mb-1" style={{ color: theme.text }}>Obter Localização GPS</p>
+                    <p className="text-xs" style={{ color: theme.textMuted }}>
+                      Sistema solicita permissão de geolocalização<br/>
+                      <strong>Dados obtidos:</strong> Latitude, longitude, cidade, UF<br/>
+                      <strong>API:</strong> OpenStreetMap (Nominatim) para geocodificação reversa
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <div className="w-0.5 h-8 bg-gray-400"></div>
+              </div>
+
+              {/* Etapa 9 - Confirmação */}
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold">
+                    9
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="border-2 border-orange-600 rounded-lg p-3">
+                    <p className="font-bold text-sm mb-1" style={{ color: theme.text }}>Confirmação Final</p>
+                    <p className="text-xs mb-2 font-semibold text-red-600">
+                      ⚠️ "Você confirma que seu veículo está VAZIO?"
+                    </p>
+                    <p className="text-xs" style={{ color: theme.textMuted }}>
+                      Motorista deve confirmar explicitamente<br/>
+                      Se cancelar, processo é interrompido
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <div className="w-0.5 h-8 bg-gray-400"></div>
+              </div>
+
+              {/* Etapa 10 - Processamento */}
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-purple-700 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    10
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="border-2 border-purple-700 rounded-lg p-3">
+                    <p className="font-bold text-sm mb-1" style={{ color: theme.text }}>Processamento Backend</p>
+                    <p className="text-xs mb-2" style={{ color: theme.textMuted }}>Sistema executa:</p>
+                    <ol className="text-xs space-y-1 ml-4 list-decimal" style={{ color: theme.textMuted }}>
+                      <li>Verifica duplicação de telefone ativo na empresa</li>
+                      <li>Gera senha única de 4 caracteres (max 50 tentativas)</li>
+                      <li>Calcula posição FIFO (marcações ativas + 1)</li>
+                      <li>Cria registro FilaVeiculo com todos os dados</li>
+                      <li>Executa função recalcularPosicoesFilaFIFO</li>
+                      <li>Atualiza posições de todos veículos ativos</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <div className="w-0.5 h-8 bg-gray-400"></div>
+              </div>
+
+              {/* Etapa 11 - Sucesso */}
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="border-2 border-green-600 rounded-lg p-3 bg-green-50 dark:bg-green-900/20">
+                    <p className="font-bold text-sm mb-1 text-green-700 dark:text-green-400">✓ FIM - Check-in Realizado</p>
+                    <p className="text-xs mb-2" style={{ color: theme.textMuted }}>
+                      Motorista visualiza:
+                    </p>
+                    <ul className="text-xs space-y-1 ml-4 list-disc" style={{ color: theme.textMuted }}>
+                      <li><strong>Senha da fila</strong> (4 caracteres)</li>
+                      <li><strong>Posição atual</strong> na fila</li>
+                      <li><strong>Veículos na frente</strong></li>
+                      <li><strong>Tempo de espera</strong> desde entrada</li>
+                      <li><strong>Ordem vinculada</strong> (se já alocado)</li>
+                      <li><strong>Botões:</strong> Atualizar posição | Sair da fila</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Anexo B - Tabela de Veículos */}
+          <div className="mb-6 print-page-break">
+            <h4 className="font-bold text-base mb-4 bg-gray-200 dark:bg-gray-800 px-3 py-2" style={{ color: theme.text }}>
+              ANEXO B - Tabela de Tipos de Veículo e Carroceria Padronizados
+            </h4>
+            
+            <div className="space-y-4">
+              {/* Tipos de Veículo */}
+              <div>
+                <p className="text-sm font-bold mb-2" style={{ color: theme.text }}>B.1 Tipos de Veículo (Enum Padrão)</p>
+                <table className="w-full text-xs border" style={{ borderColor: theme.cardBorder }}>
+                  <thead style={{ backgroundColor: isDark ? '#0f172a' : '#f3f4f6' }}>
+                    <tr>
+                      <th className="border p-2 text-left w-12" style={{ borderColor: theme.cardBorder, color: theme.text }}>#</th>
+                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Tipo de Veículo</th>
+                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Capacidade Típica</th>
+                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Eixos</th>
+                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Aplicação Comum</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>1</td>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>RODOTREM</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>45-57 toneladas</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>9 eixos</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Longas distâncias, cargas pesadas</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>2</td>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>TRUCK</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>10-14 toneladas</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>2-3 eixos</td>
+                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Entregas urbanas, fracionadas</td>
+                    </tr>
+                    <tr>
+                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>3</td>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>CARRETA 5 EIXOS</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>25-27 toneladas</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>5 eixos</td>
+                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Cargas médias, regionais</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>4</td>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>CARRETA 6 EIXOS</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>30-33 toneladas</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>6 eixos</td>
+                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Cargas pesadas, longas distâncias</td>
+                    </tr>
+                    <tr>
+                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>5</td>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>CARRETA 7 EIXOS</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>35-40 toneladas</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>7 eixos</td>
+                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Cargas muito pesadas</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>6</td>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>BITREM</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>45-50 toneladas</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>7-9 eixos</td>
+                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Granéis, alta capacidade</td>
+                    </tr>
+                    <tr>
+                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>7</td>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>BI-TRUCK</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>16-23 toneladas</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>4 eixos</td>
+                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Entregas regionais, carga média</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Tipos de Carroceria */}
+              <div>
+                <p className="text-sm font-bold mb-2" style={{ color: theme.text }}>B.2 Tipos de Carroceria (Enum Padrão)</p>
+                <table className="w-full text-xs border" style={{ borderColor: theme.cardBorder }}>
+                  <thead style={{ backgroundColor: isDark ? '#0f172a' : '#f3f4f6' }}>
+                    <tr>
+                      <th className="border p-2 text-left w-12" style={{ borderColor: theme.cardBorder, color: theme.text }}>#</th>
+                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Tipo de Carroceria</th>
+                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Características</th>
+                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Cargas Típicas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>1</td>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>SIDER</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Cortina lateral retrátil</td>
+                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Pallets, cargas gerais</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>2</td>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>PRANCHA</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Plataforma aberta, sem laterais</td>
+                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Máquinas, estruturas metálicas</td>
+                    </tr>
+                    <tr>
+                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>3</td>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>GRADE BAIXA</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Laterais baixas (aprox. 60cm)</td>
+                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Sacaria, caixas, materiais leves</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>4</td>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>GRADE ALTA</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Laterais altas (aprox. 2m)</td>
+                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Volumosos, materiais a granel</td>
+                    </tr>
+                    <tr>
+                      <td className="border p-2 text-center font-bold" style={{ borderColor: theme.cardBorder, color: theme.text }}>5</td>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>BAU</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Carroceria fechada metálica</td>
+                      <td className="border p-2" style={{ borderColor: theme.textMuted }}>Cargas frágeis, eletrônicos</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Anexo C - Exemplos de Status */}
+          <div className="mb-6 print-page-break">
+            <h4 className="font-bold text-base mb-4 bg-gray-200 dark:bg-gray-800 px-3 py-2" style={{ color: theme.text }}>
+              ANEXO C - Exemplos de Configuração de Status Customizados
+            </h4>
+            
+            <p className="text-xs mb-3" style={{ color: theme.textMuted }}>
+              A seguir, apresentam-se três cenários de configuração de status para diferentes modelos operacionais:
+            </p>
+
+            <div className="space-y-4">
+              {/* Exemplo 1 - Básico */}
+              <div>
+                <p className="text-sm font-bold mb-2 text-blue-600">Exemplo 1: Configuração Básica (3 Status)</p>
+                <table className="w-full text-xs border" style={{ borderColor: theme.cardBorder }}>
+                  <thead style={{ backgroundColor: isDark ? '#0f172a' : '#f3f4f6' }}>
+                    <tr>
+                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Nome</th>
+                      <th className="border p-2 text-left w-16" style={{ borderColor: theme.cardBorder, color: theme.text }}>Cor</th>
+                      <th className="border p-2 text-left w-12" style={{ borderColor: theme.cardBorder, color: theme.text }}>Ícone</th>
+                      <th className="border p-2 text-center w-20" style={{ borderColor: theme.cardBorder, color: theme.text }}>Remove Fila</th>
+                      <th className="border p-2 text-center w-24" style={{ borderColor: theme.cardBorder, color: theme.text }}>Mover ao Vincular</th>
+                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Uso</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Aguardando</td>
+                      <td className="border p-2"><div className="w-4 h-4 bg-green-500 rounded"></div></td>
+                      <td className="border p-2 text-center">⏳</td>
+                      <td className="border p-2 text-center" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Não</td>
+                      <td className="border p-2 text-center" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Não</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Status inicial ao entrar na fila</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Em Operação</td>
+                      <td className="border p-2"><div className="w-4 h-4 bg-blue-500 rounded"></div></td>
+                      <td className="border p-2 text-center">🚛</td>
+                      <td className="border p-2 text-center" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Não</td>
+                      <td className="border p-2 text-center font-bold text-green-600" style={{ borderColor: theme.cardBorder }}>Sim</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Aplicado ao vincular senha a ordem</td>
+                    </tr>
+                    <tr>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Indisponível</td>
+                      <td className="border p-2"><div className="w-4 h-4 bg-red-500 rounded"></div></td>
+                      <td className="border p-2 text-center">❌</td>
+                      <td className="border p-2 text-center font-bold text-green-600" style={{ borderColor: theme.cardBorder }}>Sim</td>
+                      <td className="border p-2 text-center" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Não</td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Remove da fila (manutenção, problemas)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Exemplo 2 - Avançado */}
+              <div>
+                <p className="text-sm font-bold mb-2 text-purple-600">Exemplo 2: Configuração Avançada (6 Status)</p>
+                <table className="w-full text-xs border" style={{ borderColor: theme.cardBorder }}>
+                  <thead style={{ backgroundColor: isDark ? '#0f172a' : '#f3f4f6' }}>
+                    <tr>
+                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Nome</th>
+                      <th className="border p-2 text-left w-16" style={{ borderColor: theme.cardBorder, color: theme.text }}>Cor</th>
+                      <th className="border p-2 text-left" style={{ borderColor: theme.cardBorder, color: theme.text }}>Descrição</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Aguardando Carga</td>
+                      <td className="border p-2"><div className="w-4 h-4 bg-green-500 rounded"></div></td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Veículo disponível, aguardando alocação</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Pré-Alocado</td>
+                      <td className="border p-2"><div className="w-4 h-4 bg-yellow-500 rounded"></div></td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Reservado para carga específica (não confirmado)</td>
+                    </tr>
+                    <tr>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Confirmado</td>
+                      <td className="border p-2"><div className="w-4 h-4 bg-blue-500 rounded"></div></td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Senha vinculada à ordem (mover_quando_vinculado: true)</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Em Vistoria</td>
+                      <td className="border p-2"><div className="w-4 h-4 bg-purple-500 rounded"></div></td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Checklist pré-viagem em andamento</td>
+                    </tr>
+                    <tr>
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Operando</td>
+                      <td className="border p-2"><div className="w-4 h-4 bg-cyan-600 rounded"></div></td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Em carregamento ou já carregado (remove_da_fila: true)</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="border p-2 font-semibold" style={{ borderColor: theme.cardBorder, color: theme.text }}>Cancelado</td>
+                      <td className="border p-2"><div className="w-4 h-4 bg-red-500 rounded"></div></td>
+                      <td className="border p-2" style={{ borderColor: theme.cardBorder, color: theme.textMuted }}>Motorista desistiu ou foi desqualificado (remove_da_fila: true, aplicar_ao_sair_fila: true)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Exemplo 3 - Workflow Complexo */}
+              <div>
+                <p className="text-sm font-bold mb-2 text-orange-600">Exemplo 3: Workflow com Priorização (8 Status)</p>
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-400 rounded p-3 text-xs">
+                  <p className="font-semibold mb-1" style={{ color: theme.text }}>Cenário: Empresa com múltiplos terminais e priorização por tipo de carga</p>
+                  <ul className="list-disc ml-4 space-y-1" style={{ color: theme.textMuted }}>
+                    <li><strong>Disponível Normal:</strong> Fila padrão FIFO</li>
+                    <li><strong>Disponível Prioridade:</strong> Cargas prioritárias (expressa)</li>
+                    <li><strong>Terminal A:</strong> Veículo direcionado ao terminal específico</li>
+                    <li><strong>Terminal B:</strong> Veículo direcionado ao terminal específico</li>
+                    <li><strong>Aguardando Checklist:</strong> Pendente vistoria técnica</li>
+                    <li><strong>Aprovado p/ Carga:</strong> Pronto para alocar</li>
+                    <li><strong>Alocado:</strong> Vinculado a ordem (remove_da_fila: true)</li>
+                    <li><strong>Bloqueado:</strong> Problema documental ou técnico</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Anexo D - Tutorial Visual */}
+          <div className="mb-6 print-page-break">
+            <h4 className="font-bold text-base mb-4 bg-gray-200 dark:bg-gray-800 px-3 py-2" style={{ color: theme.text }}>
+              ANEXO D - Tutorial Visual do App de Marcação (Motorista)
+            </h4>
+            
+            <div className="space-y-4">
+              {/* Tela 1 - Telefone */}
+              <div className="border rounded-lg p-4" style={{ borderColor: theme.cardBorder }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                    1
+                  </div>
+                  <p className="font-bold text-sm" style={{ color: theme.text }}>TELA 1: Entrada de Telefone</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border-2 border-gray-300" style={{ borderColor: theme.cardBorder }}>
+                    <p className="text-xs font-semibold mb-2 text-center" style={{ color: theme.text }}>Check-in na Fila</p>
+                    <p className="text-[10px] text-center mb-3" style={{ color: theme.textMuted }}>Digite seu celular para continuar</p>
+                    
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-400 rounded p-2 mb-3">
+                      <p className="text-[9px] text-red-700 dark:text-red-400 font-semibold">⚠️ ATENÇÃO</p>
+                      <p className="text-[8px] text-red-600 dark:text-red-500">Só marque placa se veículo VAZIO</p>
+                    </div>
+                    
+                    <div className="border rounded p-2 mb-2 text-center bg-white dark:bg-gray-800" style={{ borderColor: theme.cardBorder }}>
+                      <p className="text-xs font-mono">(00) 00000-0000</p>
+                    </div>
+                    
+                    <div className="bg-blue-600 text-white rounded p-2 text-center">
+                      <p className="text-xs font-bold">Continuar</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2 text-xs" style={{ color: theme.textMuted }}>
+                    <p className="font-semibold" style={{ color: theme.text }}>Instruções:</p>
+                    <ul className="list-disc ml-4 space-y-1">
+                      <li>Digite telefone com DDD (11 dígitos)</li>
+                      <li>Formato: (XX) XXXXX-XXXX</li>
+                      <li>Sistema busca cadastro automaticamente</li>
+                      <li>Se encontrado: dados preenchidos</li>
+                      <li>Se não encontrado: wizard completo</li>
+                    </ul>
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-400 rounded p-2 mt-2">
+                      <p className="text-[10px] text-green-700 dark:text-green-400">
+                        ✓ Cadastro encontrado = Processo mais rápido
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tela 2-5 - Wizard */}
+              <div className="border rounded-lg p-4" style={{ borderColor: theme.cardBorder }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">
+                    2-5
+                  </div>
+                  <p className="font-bold text-sm" style={{ color: theme.text }}>TELAS 2-5: Wizard de Dados (4 Passos)</p>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-300 rounded p-2 text-center">
+                    <p className="text-[10px] font-bold mb-1" style={{ color: theme.text }}>Passo 1/4</p>
+                    <User className="w-6 h-6 mx-auto mb-1 text-purple-600" />
+                    <p className="text-[9px]" style={{ color: theme.textMuted }}>Nome Motorista</p>
+                  </div>
+                  <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-300 rounded p-2 text-center">
+                    <p className="text-[10px] font-bold mb-1" style={{ color: theme.text }}>Passo 2/4</p>
+                    <Truck className="w-6 h-6 mx-auto mb-1 text-purple-600" />
+                    <p className="text-[9px]" style={{ color: theme.textMuted }}>Placa Cavalo</p>
+                  </div>
+                  <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-300 rounded p-2 text-center">
+                    <p className="text-[10px] font-bold mb-1" style={{ color: theme.text }}>Passo 3/4</p>
+                    <p className="text-lg mb-1">🚛</p>
+                    <p className="text-[9px]" style={{ color: theme.textMuted }}>Tipos</p>
+                  </div>
+                  <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-300 rounded p-2 text-center">
+                    <p className="text-[10px] font-bold mb-1" style={{ color: theme.text }}>Passo 4/4</p>
+                    <p className="text-lg mb-1">📸</p>
+                    <p className="text-[9px]" style={{ color: theme.textMuted }}>Comprovante</p>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-400 rounded p-3">
+                  <p className="text-xs font-semibold mb-2" style={{ color: theme.text }}>Funcionalidades do Wizard:</p>
+                  <ul className="text-[10px] space-y-1 ml-3 list-disc" style={{ color: theme.textMuted }}>
+                    <li><strong>Barra de Progresso:</strong> Mostra passo atual (ex: 2/4)</li>
+                    <li><strong>Validação em Tempo Real:</strong> Campos marcados em vermelho se inválidos</li>
+                    <li><strong>Botões de Navegação:</strong> Anterior / Próximo</li>
+                    <li><strong>Botão Ajuda:</strong> Em cada passo, abre WhatsApp com mensagem pré-formatada</li>
+                    <li><strong>Auto-save:</strong> Dados preservados se motorista sair e voltar</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Tela 6 - Comprovante */}
+              <div className="border rounded-lg p-4" style={{ borderColor: theme.cardBorder }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold">
+                    6
+                  </div>
+                  <p className="font-bold text-sm" style={{ color: theme.text }}>TELA 6: Upload e Validação de Comprovante</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-semibold mb-2" style={{ color: theme.text }}>Fluxo do Upload:</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold">1</div>
+                        <p className="text-[10px]" style={{ color: theme.textMuted }}>Motorista tira foto do comprovante</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold">2</div>
+                        <p className="text-[10px]" style={{ color: theme.textMuted }}>Upload automático para servidor</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold">3</div>
+                        <p className="text-[10px]" style={{ color: theme.textMuted }}>IA valida documento (5-10 seg)</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold">4</div>
+                        <p className="text-[10px]" style={{ color: theme.textMuted }}>Resultado: ✓ Válido ou ❌ Inválido</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold mb-2" style={{ color: theme.text }}>Critérios de Validação IA:</p>
+                    <div className="space-y-2 text-[10px]">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="w-3 h-3 text-green-600 flex-shrink-0 mt-0.5" />
+                        <p style={{ color: theme.textMuted }}>Imagem legível e bem focada</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="w-3 h-3 text-green-600 flex-shrink-0 mt-0.5" />
+                        <p style={{ color: theme.textMuted }}>Data visível no documento</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="w-3 h-3 text-green-600 flex-shrink-0 mt-0.5" />
+                        <p style={{ color: theme.textMuted }}>Documento de descarga/entrega válido</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="w-3 h-3 text-green-600 flex-shrink-0 mt-0.5" />
+                        <p style={{ color: theme.textMuted }}>Extração da data de descarga</p>
+                      </div>
+                    </div>
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-400 rounded p-2 mt-3">
+                      <p className="text-[10px] text-red-700 dark:text-red-400 font-semibold">
+                        Se inválido: Motorista deve tirar nova foto para continuar
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tela 7 - Localização */}
+              <div className="border rounded-lg p-4" style={{ borderColor: theme.cardBorder }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 bg-cyan-600 text-white rounded-full flex items-center justify-center font-bold">
+                    7
+                  </div>
+                  <p className="font-bold text-sm" style={{ color: theme.text }}>TELA 7: Obtenção de Localização GPS</p>
+                </div>
+                
+                <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-400 rounded p-3">
+                  <p className="text-xs font-semibold mb-2" style={{ color: theme.text }}>Funcionamento:</p>
+                  <ol className="text-[10px] space-y-1 ml-4 list-decimal" style={{ color: theme.textMuted }}>
+                    <li>Sistema solicita permissão de localização ao navegador</li>
+                    <li>Motorista autoriza compartilhamento de GPS</li>
+                    <li>Sistema captura coordenadas (latitude, longitude)</li>
+                    <li>Geocodificação reversa via OpenStreetMap (Nominatim)</li>
+                    <li>Extração de: Cidade, Estado (UF), Endereço completo</li>
+                    <li>Campo "Cidade e UF" preenchido automaticamente</li>
+                    <li>Botão "Fazer Check-in" habilitado</li>
+                  </ol>
+                  <div className="bg-green-100 dark:bg-green-900/30 border border-green-500 rounded p-2 mt-2">
+                    <p className="text-[10px] text-green-700 dark:text-green-400 font-semibold">
+                      ✓ Ao clicar "Fazer Check-in": Submissão final e entrada na fila
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tela 8 - Confirmação */}
+              <div className="border rounded-lg p-4" style={{ borderColor: theme.cardBorder }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5" />
+                  </div>
+                  <p className="font-bold text-sm" style={{ color: theme.text }}>TELA 8: Confirmação de Check-in</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border-2 border-green-500">
+                    <div className="text-center mb-3">
+                      <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <CheckCircle className="w-6 h-6 text-white" />
+                      </div>
+                      <p className="text-xs font-bold">Cadastro Realizado!</p>
+                      <p className="text-[10px]" style={{ color: theme.textMuted }}>Sua posição na fila</p>
+                    </div>
+
+                    <div className="bg-blue-600 text-white rounded-lg p-3 mb-2">
+                      <p className="text-center text-[10px]">Senha: <span className="text-lg font-mono ml-1">AB3X</span></p>
+                    </div>
+
+                    <div className="text-center mb-2">
+                      <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full">
+                        <span className="text-xl font-bold text-blue-600">7</span>
+                      </div>
+                      <p className="text-[9px] mt-1" style={{ color: theme.textMuted }}>6 veículos na frente</p>
+                    </div>
+
+                    <div className="space-y-1 text-[9px] border-t pt-2" style={{ borderColor: theme.cardBorder }}>
+                      <div className="flex justify-between">
+                        <span style={{ color: theme.textMuted }}>Motorista:</span>
+                        <span className="font-semibold">João Silva</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span style={{ color: theme.textMuted }}>Placa:</span>
+                        <span className="font-mono font-bold">ABC1234</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span style={{ color: theme.textMuted }}>Tipo:</span>
+                        <span>Frota</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span style={{ color: theme.textMuted }}>Tempo:</span>
+                        <span className="text-orange-600 font-semibold">45min</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 mt-3">
+                      <div className="flex-1 bg-blue-600 text-white rounded p-1 text-center">
+                        <p className="text-[9px] font-bold">🔄 Atualizar</p>
+                      </div>
+                      <div className="flex-1 bg-white border border-red-300 text-red-600 rounded p-1 text-center">
+                        <p className="text-[9px] font-bold">Sair</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2 text-xs" style={{ color: theme.textMuted }}>
+                    <p className="font-semibold" style={{ color: theme.text }}>Informações Exibidas:</p>
+                    <ul className="list-disc ml-4 space-y-1">
+                      <li><strong>Senha da fila:</strong> 4 caracteres únicos</li>
+                      <li><strong>Posição atual:</strong> Número grande destacado</li>
+                      <li><strong>Veículos na frente:</strong> Contagem atualizada</li>
+                      <li><strong>Dados do veículo:</strong> Nome, placa, tipo</li>
+                      <li><strong>Tempo de espera:</strong> Calculado em tempo real</li>
+                      <li><strong>Ordem vinculada:</strong> Se já alocado, mostra detalhes</li>
+                    </ul>
+                    
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-400 rounded p-2 mt-3">
+                      <p className="text-[10px] font-semibold text-amber-800 dark:text-amber-400">Importante:</p>
+                      <p className="text-[10px] text-amber-700 dark:text-amber-500">
+                        • Aguarde contato da central<br/>
+                        • Não ligue perguntando posição<br/>
+                        • Clique "Atualizar" para refresh<br/>
+                        • Posição é estimativa (pode variar)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dicas Visuais */}
+              <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950" style={{ borderColor: theme.cardBorder }}>
+                <p className="font-bold text-sm mb-3" style={{ color: theme.text }}>💡 Dicas para Motoristas:</p>
+                <div className="grid grid-cols-2 gap-3 text-[10px]">
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">✓</span>
+                    <p style={{ color: theme.textMuted }}>Mantenha dados cadastrais atualizados para check-in rápido</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">✓</span>
+                    <p style={{ color: theme.textMuted }}>Tire foto clara do comprovante (bem iluminada, sem borrão)</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">✓</span>
+                    <p style={{ color: theme.textMuted }}>Autorize GPS para localização precisa</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">✓</span>
+                    <p style={{ color: theme.textMuted }}>Use botão "Ajuda" se tiver dúvidas em qualquer passo</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-red-600 font-bold">✗</span>
+                    <p style={{ color: theme.textMuted }}>Não faça check-in com veículo carregado</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-red-600 font-bold">✗</span>
+                    <p style={{ color: theme.textMuted }}>Não ligue para perguntar posição (use botão Atualizar)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Rodapé */}
