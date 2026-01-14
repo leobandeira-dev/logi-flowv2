@@ -495,7 +495,7 @@ export default function FilaMotorista() {
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full">
                   <span className="text-3xl font-bold text-blue-600">{minhaFila.posicao_fila || 1}</span>
                 </div>
-                <p className="text-xs text-gray-600 mt-1">{totalNaFila} {totalNaFila === 1 ? 'veículo' : 'veículos'} na frente</p>
+                <p className="text-xs text-gray-600 mt-1">{(minhaFila.posicao_fila || 1) - 1} {((minhaFila.posicao_fila || 1) - 1) === 1 ? 'veículo' : 'veículos'} na frente</p>
               </div>
 
               <div className="space-y-1.5 text-xs border-t pt-2">
