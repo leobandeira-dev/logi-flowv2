@@ -305,6 +305,8 @@ const adminItems = [
   { title: "Usuários", url: createPageUrl("Usuarios"), icon: UserCog },
   { title: "Precificação", url: createPageUrl("Precificacao"), icon: Activity },
   { title: "Procedimentos", url: createPageUrl("Procedimentos"), icon: FileText },
+  { title: "Perfis de Empresa", url: createPageUrl("PermissoesPerfilEmpresa"), icon: Shield },
+  { title: "Permissões por Empresa", url: createPageUrl("PermissoesEmpresa"), icon: Shield },
 ];
 
 export default function Layout({ children, currentPageName }) {

@@ -29,6 +29,9 @@ import Operacoes from './pages/Operacoes';
 import OrdemDeEntrega from './pages/OrdemDeEntrega';
 import OrdensCarregamento from './pages/OrdensCarregamento';
 import Parceiros from './pages/Parceiros';
+import PermissoesEmpresa from './pages/PermissoesEmpresa';
+import PermissoesPerfilEmpresa from './pages/PermissoesPerfilEmpresa';
+import PermissoesPerfilUsuario from './pages/PermissoesPerfilUsuario';
 import PitchDeckInvestidores from './pages/PitchDeckInvestidores';
 import PortalTransul from './pages/PortalTransul';
 import Precificacao from './pages/Precificacao';
@@ -44,9 +47,6 @@ import TrackingTV from './pages/TrackingTV';
 import Unitizacao from './pages/Unitizacao';
 import Usuarios from './pages/Usuarios';
 import Veiculos from './pages/Veiculos';
-import PermissoesPerfilEmpresa from './pages/PermissoesPerfilEmpresa';
-import PermissoesEmpresa from './pages/PermissoesEmpresa';
-import PermissoesPerfilUsuario from './pages/PermissoesPerfilUsuario';
 import __Layout from './Layout.jsx';
 
 
@@ -82,6 +82,9 @@ export const PAGES = {
     "OrdemDeEntrega": OrdemDeEntrega,
     "OrdensCarregamento": OrdensCarregamento,
     "Parceiros": Parceiros,
+    "PermissoesEmpresa": PermissoesEmpresa,
+    "PermissoesPerfilEmpresa": PermissoesPerfilEmpresa,
+    "PermissoesPerfilUsuario": PermissoesPerfilUsuario,
     "PitchDeckInvestidores": PitchDeckInvestidores,
     "PortalTransul": PortalTransul,
     "Precificacao": Precificacao,
@@ -97,9 +100,6 @@ export const PAGES = {
     "Unitizacao": Unitizacao,
     "Usuarios": Usuarios,
     "Veiculos": Veiculos,
-    "PermissoesPerfilEmpresa": PermissoesPerfilEmpresa,
-    "PermissoesEmpresa": PermissoesEmpresa,
-    "PermissoesPerfilUsuario": PermissoesPerfilUsuario,
 }
 
 export const pagesConfig = {
