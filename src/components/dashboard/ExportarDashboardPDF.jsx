@@ -39,318 +39,191 @@ export default function ExportarDashboardPDF({
       };
 
       // Cabeçalho
-      doc.setFontSize(18);
+      doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
-      doc.text('Dashboard - Torre de Controle', leftMargin, yPos);
-      yPos += 8;
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100);
-      doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`, leftMargin, yPos);
-      yPos += 6;
+      doc.text('Relatório Executivo - Demanda de Cargas', leftMargin, yPos);
+      yPos += 10;
       
       if (empresa?.razao_social) {
-        doc.text(`Empresa: ${empresa.razao_social}`, leftMargin, yPos);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text(empresa.razao_social, leftMargin, yPos);
         yPos += 8;
       }
 
       // Período do filtro
-      doc.setTextColor(0);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Período:', leftMargin, yPos);
+      doc.setFontSize(10);
+      doc.setTextColor(80);
       doc.setFont('helvetica', 'normal');
       
       let periodTexto = '';
       if (periodoFiltro === 'mes_atual') {
-        periodTexto = 'Mês Atual';
+        periodTexto = 'Período: Mês Atual';
       } else if (periodoFiltro === 'ano_atual') {
-        periodTexto = `Ano ${anoSelecionado}`;
+        periodTexto = `Período: Ano ${anoSelecionado}`;
       } else if (periodoFiltro === 'mes_especifico') {
         const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
                        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-        periodTexto = `${meses[mesSelecionado - 1]} ${anoSelecionado}`;
+        periodTexto = `Período: ${meses[mesSelecionado - 1]}/${anoSelecionado}`;
       } else if (periodoFiltro === 'personalizado' && dataInicioPersonalizada && dataFimPersonalizada) {
-        periodTexto = `${format(new Date(dataInicioPersonalizada), 'dd/MM/yyyy')} até ${format(new Date(dataFimPersonalizada), 'dd/MM/yyyy')}`;
+        periodTexto = `Período: ${format(new Date(dataInicioPersonalizada), 'dd/MM/yyyy')} - ${format(new Date(dataFimPersonalizada), 'dd/MM/yyyy')}`;
       }
       
-      doc.text(periodTexto, leftMargin + 20, yPos);
+      doc.text(periodTexto, leftMargin, yPos);
+      yPos += 5;
+      doc.text(`Data do Relatório: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`, leftMargin, yPos);
       yPos += 10;
 
-      // Filtros aplicados
-      if (filters.tiposOrdemFiltro && filters.tiposOrdemFiltro.length > 0) {
-        checkNewPage(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Tipos de Ordem:', leftMargin, yPos);
-        doc.setFont('helvetica', 'normal');
-        doc.text(filters.tiposOrdemFiltro.join(', '), leftMargin + 35, yPos);
-        yPos += 8;
-      }
-
       // Linha separadora
-      doc.setDrawColor(200);
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.5);
       doc.line(leftMargin, yPos, rightMargin, yPos);
       yPos += 10;
 
-      // Seção: Métricas Principais
-      checkNewPage(40);
+      // Resumo Executivo
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0);
-      doc.text('Métricas Principais', leftMargin, yPos);
+      doc.text('Resumo de Demanda', leftMargin, yPos);
       yPos += 8;
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       
-      const metricas = [
-        { label: 'Total de Ordens', valor: metrics.totalOrdens, percentual: '100%' },
-        { label: 'Ofertas', valor: metrics.ofertas, percentual: `${metrics.totalOrdens > 0 ? ((metrics.ofertas / metrics.totalOrdens) * 100).toFixed(1) : 0}%` },
-        { label: 'Negociando', valor: metrics.negociando, percentual: `${metrics.totalOrdens > 0 ? ((metrics.negociando / metrics.totalOrdens) * 100).toFixed(1) : 0}%` },
-        { label: 'Alocadas', valor: metrics.ordensCompletas, percentual: `${metrics.totalOrdens > 0 ? ((metrics.ordensCompletas / metrics.totalOrdens) * 100).toFixed(1) : 0}%` },
-        { label: 'Em Viagem', valor: metrics.emViagem, percentual: `${metrics.totalOrdens > 0 ? ((metrics.emViagem / metrics.totalOrdens) * 100).toFixed(1) : 0}%` },
-        { label: 'Aguardando', valor: metrics.aguardando, percentual: `${metrics.totalOrdens > 0 ? ((metrics.aguardando / metrics.totalOrdens) * 100).toFixed(1) : 0}%` },
-        { label: 'Atrasadas', valor: metrics.atrasadas, percentual: `${metrics.totalOrdens > 0 ? ((metrics.atrasadas / metrics.totalOrdens) * 100).toFixed(1) : 0}%` },
-        { label: 'Atraso Carregamento', valor: metrics.atrasadasCarregamento, percentual: `${metrics.totalOrdens > 0 ? ((metrics.atrasadasCarregamento / metrics.totalOrdens) * 100).toFixed(1) : 0}%` },
-        { label: 'Atraso Descarga', valor: metrics.atrasadasDescarga, percentual: `${metrics.totalOrdens > 0 ? ((metrics.atrasadasDescarga / metrics.totalOrdens) * 100).toFixed(1) : 0}%` },
+      // KPIs principais em destaque
+      const kpis = [
+        { label: 'Total de Cargas', valor: metrics.totalOrdens },
+        { label: 'Taxa de Alocação', valor: `${metrics.totalOrdens > 0 ? ((metrics.ordensCompletas / metrics.totalOrdens) * 100).toFixed(1) : 0}%` },
+        { label: 'Ordens Atrasadas', valor: metrics.atrasadas },
       ];
 
-      metricas.forEach((metrica, idx) => {
-        if (idx > 0 && idx % 3 === 0) {
-          yPos += 8;
-          checkNewPage(15);
-        }
-        
-        const colIndex = idx % 3;
-        const xPos = leftMargin + (colIndex * 60);
-        
+      kpis.forEach((kpi, idx) => {
+        const xPos = leftMargin + (idx * 60);
         doc.setFont('helvetica', 'bold');
-        doc.text(metrica.label, xPos, yPos);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`${metrica.valor} (${metrica.percentual})`, xPos, yPos + 5);
+        doc.text(kpi.label, xPos, yPos);
+        doc.setFontSize(16);
+        doc.text(String(kpi.valor), xPos, yPos + 7);
+        doc.setFontSize(10);
       });
       
-      yPos += 15;
+      yPos += 18;
 
-      // Status por Operação
+      // Performance por Operação
       if (ordensDetalhadas.porOperacao && Object.keys(ordensDetalhadas.porOperacao).length > 0) {
         checkNewPage(40);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Status por Operação', leftMargin, yPos);
-        yPos += 8;
-
-        Object.entries(ordensDetalhadas.porOperacao).forEach(([operacao, stats]) => {
-          checkNewPage(25);
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.text(operacao, leftMargin, yPos);
-          yPos += 6;
-
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
-          
-          const statsTexto = [
-            `Total: ${stats.total}`,
-            `Ofertas: ${stats.ofertas}`,
-            `Negociando: ${stats.negociando}`,
-            `Alocadas: ${stats.alocadas}`,
-            `Em Viagem: ${stats.emViagem}`,
-            `Aguardando: ${stats.aguardando}`,
-            `Finalizadas: ${stats.finalizadas}`,
-            `Atrasadas: ${stats.atrasadas}`,
-            `Taxa Finalização: ${stats.total > 0 ? Math.round((stats.finalizadas / stats.total) * 100) : 0}%`
-          ];
-
-          statsTexto.forEach((texto, idx) => {
-            const colIdx = idx % 3;
-            const xPos = leftMargin + 5 + (colIdx * 60);
-            if (idx > 0 && idx % 3 === 0) yPos += 5;
-            doc.text(texto, xPos, yPos);
-          });
-          
-          yPos += 10;
-        });
-      }
-
-      // Top Rotas
-      if (ordensDetalhadas.topOrigens.length > 0 || ordensDetalhadas.topDestinos.length > 0) {
-        checkNewPage(50);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Top Rotas', leftMargin, yPos);
-        yPos += 8;
-
-        if (ordensDetalhadas.topOrigens.length > 0) {
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Top 5 Origens', leftMargin, yPos);
-          yPos += 6;
-
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
-          ordensDetalhadas.topOrigens.forEach(([origem, count], idx) => {
-            checkNewPage(8);
-            doc.text(`${idx + 1}. ${origem}: ${count} ordens`, leftMargin + 5, yPos);
-            yPos += 5;
-          });
-          yPos += 5;
-        }
-
-        if (ordensDetalhadas.topDestinos.length > 0) {
-          checkNewPage(30);
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Top 5 Destinos', leftMargin, yPos);
-          yPos += 6;
-
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
-          ordensDetalhadas.topDestinos.forEach(([destino, count], idx) => {
-            checkNewPage(8);
-            doc.text(`${idx + 1}. ${destino}: ${count} ordens`, leftMargin + 5, yPos);
-            yPos += 5;
-          });
-          yPos += 5;
-        }
-      }
-
-      // Distribuição por Frota e Modalidade
-      checkNewPage(40);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Distribuição de Ordens', leftMargin, yPos);
-      yPos += 8;
-
-      doc.setFontSize(11);
-      doc.text('Por Tipo de Frota', leftMargin, yPos);
-      yPos += 6;
-
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      Object.entries(ordensDetalhadas.porFrota).forEach(([frota, count]) => {
-        checkNewPage(8);
-        doc.text(`${frota.charAt(0).toUpperCase() + frota.slice(1)}: ${count}`, leftMargin + 5, yPos);
-        yPos += 5;
-      });
-      yPos += 5;
-
-      checkNewPage(25);
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Por Modalidade', leftMargin, yPos);
-      yPos += 6;
-
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      Object.entries(ordensDetalhadas.porModalidade).forEach(([modalidade, count]) => {
-        checkNewPage(8);
-        const modalidadeNome = modalidade === 'normal' ? 'Normal' : 
-                               modalidade === 'prioridade' ? 'Prioridade' : 'Expressa';
-        doc.text(`${modalidadeNome}: ${count}`, leftMargin + 5, yPos);
-        yPos += 5;
-      });
-      yPos += 5;
-
-      // Resumo de Operações
-      if (insights.operacoesStats && Object.keys(insights.operacoesStats).length > 0) {
-        checkNewPage(40);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Resumo de Operações', leftMargin, yPos);
-        yPos += 8;
-
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        Object.entries(insights.operacoesStats).forEach(([operacao, count]) => {
-          checkNewPage(8);
-          doc.text(`${operacao}: ${count} ordens`, leftMargin + 5, yPos);
-          yPos += 5;
-        });
-        yPos += 5;
-      }
-
-      // Análise de Performance por Operação
-      if (ordensDetalhadas.porOperacao && Object.keys(ordensDetalhadas.porOperacao).length > 0) {
-        checkNewPage(50);
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
         doc.text('Performance por Operação', leftMargin, yPos);
-        yPos += 8;
+        yPos += 10;
 
-        Object.entries(ordensDetalhadas.porOperacao).forEach(([operacao, stats]) => {
-          checkNewPage(30);
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.text(`${operacao}`, leftMargin, yPos);
-          yPos += 6;
+        // Criar tabela
+        const operacoes = Object.entries(ordensDetalhadas.porOperacao);
+        
+        // Cabeçalho da tabela
+        doc.setFillColor(230, 230, 230);
+        doc.rect(leftMargin, yPos, 180, 7, 'F');
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Operação', leftMargin + 2, yPos + 5);
+        doc.text('Total', leftMargin + 70, yPos + 5);
+        doc.text('Alocadas', leftMargin + 95, yPos + 5);
+        doc.text('Finalizadas', leftMargin + 125, yPos + 5);
+        doc.text('Taxa', leftMargin + 160, yPos + 5);
+        yPos += 9;
 
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
+        doc.setFont('helvetica', 'normal');
+        operacoes.forEach(([operacao, stats], idx) => {
+          checkNewPage(10);
           
           const taxaFinalizacao = stats.total > 0 ? Math.round((stats.finalizadas / stats.total) * 100) : 0;
-          const taxaAtraso = stats.total > 0 ? ((stats.atrasadas / stats.total) * 100).toFixed(1) : 0;
           
-          doc.text(`Total de Ordens: ${stats.total}`, leftMargin + 5, yPos);
-          yPos += 5;
-          doc.text(`Taxa de Finalização: ${taxaFinalizacao}%`, leftMargin + 5, yPos);
-          yPos += 5;
-          doc.text(`Taxa de Atraso: ${taxaAtraso}%`, leftMargin + 5, yPos);
-          yPos += 5;
-          doc.text(`Ordens Finalizadas: ${stats.finalizadas}`, leftMargin + 5, yPos);
-          yPos += 5;
-          doc.text(`Ordens Atrasadas: ${stats.atrasadas}`, leftMargin + 5, yPos);
-          yPos += 10;
+          // Fundo alternado
+          if (idx % 2 === 0) {
+            doc.setFillColor(250, 250, 250);
+            doc.rect(leftMargin, yPos - 2, 180, 6, 'F');
+          }
+          
+          doc.text(operacao.substring(0, 25), leftMargin + 2, yPos + 3);
+          doc.text(String(stats.total), leftMargin + 70, yPos + 3);
+          doc.text(String(stats.alocadas), leftMargin + 95, yPos + 3);
+          doc.text(String(stats.finalizadas), leftMargin + 125, yPos + 3);
+          doc.text(`${taxaFinalizacao}%`, leftMargin + 160, yPos + 3);
+          
+          yPos += 6;
         });
+        
+        yPos += 8;
       }
 
-      // Fluxo de Processos
-      checkNewPage(30);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Fluxo de Processos', leftMargin, yPos);
-      yPos += 8;
-
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Em Andamento: ${metrics.etapasEmAndamento}`, leftMargin + 5, yPos);
-      yPos += 5;
-      doc.text(`Concluídas: ${metrics.etapasConcluidas}`, leftMargin + 5, yPos);
-      yPos += 5;
-      doc.text(`Bloqueadas: ${metrics.etapasBloqueadas}`, leftMargin + 5, yPos);
-      yPos += 10;
-
-      // Ocorrências
-      checkNewPage(25);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Ocorrências', leftMargin, yPos);
-      yPos += 8;
-
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Total Abertas: ${metrics.ocorrenciasAbertas}`, leftMargin + 5, yPos);
-      yPos += 5;
-      doc.text(`Críticas: ${metrics.ocorrenciasCriticas}`, leftMargin + 5, yPos);
-      yPos += 10;
-
-      // Volume Mensal
-      if (volumeMensal && volumeMensal.length > 0) {
-        checkNewPage(40);
+      // Principais Rotas
+      if (ordensDetalhadas.topOrigens.length > 0 || ordensDetalhadas.topDestinos.length > 0) {
+        checkNewPage(35);
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text('Volume Mensal - Últimos 6 Meses', leftMargin, yPos);
+        doc.text('Principais Rotas', leftMargin, yPos);
         yPos += 8;
+
+        // Tabela lado a lado
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Top 5 Origens', leftMargin, yPos);
+        doc.text('Top 5 Destinos', leftMargin + 95, yPos);
+        yPos += 6;
 
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        volumeMensal.forEach((item) => {
+        
+        const maxRows = Math.max(ordensDetalhadas.topOrigens.length, ordensDetalhadas.topDestinos.length);
+        for (let i = 0; i < maxRows; i++) {
           checkNewPage(8);
-          doc.text(`${item.mes}: ${item.ordens} ordens, ${item.processos} processos, ${item.ocorrencias} ocorrências`, 
-                   leftMargin + 5, yPos);
+          if (ordensDetalhadas.topOrigens[i]) {
+            const [origem, count] = ordensDetalhadas.topOrigens[i];
+            doc.text(`${i + 1}. ${origem.substring(0, 20)}: ${count}`, leftMargin + 2, yPos);
+          }
+          if (ordensDetalhadas.topDestinos[i]) {
+            const [destino, count] = ordensDetalhadas.topDestinos[i];
+            doc.text(`${i + 1}. ${destino.substring(0, 20)}: ${count}`, leftMargin + 97, yPos);
+          }
           yPos += 5;
-        });
+        }
+        yPos += 8;
       }
+
+      // Distribuição de Demanda
+      checkNewPage(35);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Distribuição de Demanda', leftMargin, yPos);
+      yPos += 8;
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Por Tipo de Frota', leftMargin, yPos);
+      doc.text('Por Modalidade', leftMargin + 95, yPos);
+      yPos += 6;
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      
+      const frotaEntries = Object.entries(ordensDetalhadas.porFrota);
+      const modalidadeEntries = Object.entries(ordensDetalhadas.porModalidade);
+      const maxRows2 = Math.max(frotaEntries.length, modalidadeEntries.length);
+      
+      for (let i = 0; i < maxRows2; i++) {
+        checkNewPage(8);
+        if (frotaEntries[i]) {
+          const [frota, count] = frotaEntries[i];
+          doc.text(`${frota.charAt(0).toUpperCase() + frota.slice(1)}: ${count}`, leftMargin + 2, yPos);
+        }
+        if (modalidadeEntries[i]) {
+          const [modalidade, count] = modalidadeEntries[i];
+          const modalidadeNome = modalidade === 'normal' ? 'Normal' : 
+                                 modalidade === 'prioridade' ? 'Prioridade' : 'Expressa';
+          doc.text(`${modalidadeNome}: ${count}`, leftMargin + 97, yPos);
+        }
+        yPos += 5;
+      }
+      yPos += 8;
 
       // Rodapé
       const pageCount = doc.internal.getNumberOfPages();
