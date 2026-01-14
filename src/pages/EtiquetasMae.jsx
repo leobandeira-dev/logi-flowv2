@@ -247,7 +247,6 @@ export default function EtiquetasMae() {
   const handleVolumeCameraScan = async (codigo) => {
     if (!codigo || !codigo.trim()) return;
     
-    setShowVolumeCameraScanner(false);
     setCodigoScanner(codigo.trim());
     
     setTimeout(() => {
