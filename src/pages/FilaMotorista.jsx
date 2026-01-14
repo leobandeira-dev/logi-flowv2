@@ -315,6 +315,10 @@ export default function FilaMotorista() {
 
       const tipoSelecionado = tiposFila.find(t => t.id === formData.tipo_fila_id);
       
+      // Buscar todas as filas DESTA EMPRESA para calcular próxima posição
+      const todasFilas = await base44.entities.FilaVeiculo.filter({ empresa_id: formData.empresa_id });
+      const proximaPosicao = todasFilas.length + 1;
+
       // Gerar senha única alfanumérica de 4 dígitos
       const gerarSenhaFila = async () => {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -358,7 +362,7 @@ export default function FilaMotorista() {
         proxima_posicao: proximaPosicao
       });
 
-      await base44.entities.FilaVeiculo.create({
+      const novoRegistro = await base44.entities.FilaVeiculo.create({
         ...formData,
         motorista_telefone: telefoneLimpo,
         senha_fila: senhaFila,
@@ -368,19 +372,32 @@ export default function FilaMotorista() {
         data_entrada_fila: new Date().toISOString()
       });
 
-      // Recalcular todas as posições FIFO (importar função ou recriar)
-      const todasMarcacoes = await base44.entities.FilaVeiculo.filter({ empresa_id: formData.empresa_id });
-      const ordenadas = todasMarcacoes.sort((a, b) => {
-        const dataA = new Date(a.data_entrada_fila || 0);
-        const dataB = new Date(b.data_entrada_fila || 0);
-        return dataA - dataB;
-      });
-      
-      for (let i = 0; i < ordenadas.length; i++) {
-        const novaPosicao = i + 1;
-        if (ordenadas[i].posicao_fila !== novaPosicao) {
-          await base44.entities.FilaVeiculo.update(ordenadas[i].id, { posicao_fila: novaPosicao });
+      console.log('✅ Veículo criado na posição:', proximaPosicao);
+
+      // Recalcular posições FIFO automaticamente
+      try {
+        await base44.functions.invoke('recalcularPosicoesFilaFIFO', { 
+          empresa_id: formData.empresa_id 
+        });
+        console.log('✅ Recálculo FIFO executado com sucesso');
+      } catch (err) {
+        console.log("Erro ao recalcular via função, usando fallback:", err);
+        // Fallback: recalcular manualmente apenas marcações ATIVAS
+        const todasMarcacoes = await base44.entities.FilaVeiculo.filter({ empresa_id: formData.empresa_id });
+        const ativas = todasMarcacoes.filter(m => !m.data_saida_fila);
+        const ordenadas = ativas.sort((a, b) => {
+          const dataA = new Date(a.data_entrada_fila || 0);
+          const dataB = new Date(b.data_entrada_fila || 0);
+          return dataA - dataB;
+        });
+        
+        for (let i = 0; i < ordenadas.length; i++) {
+          const novaPosicao = i + 1;
+          if (ordenadas[i].posicao_fila !== novaPosicao) {
+            await base44.entities.FilaVeiculo.update(ordenadas[i].id, { posicao_fila: novaPosicao });
+          }
         }
+        console.log('✅ Recálculo FIFO executado via fallback');
       }
 
       // Buscar o registro atualizado
