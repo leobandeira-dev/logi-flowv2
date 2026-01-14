@@ -544,7 +544,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
   };
 
   const verificarSenhaUnica = async (senha) => {
-    if (!senha || senha.length !== 4) return;
+    if (!senha || senha.length !== 4 || formData.carga_dedicada) return;
     
     setVerificandoSenha(true);
     try {
@@ -1362,6 +1362,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
       case 'destinatario': return obrigatorios.includes('destinatario') && !formData.destinatario ? 'Destinatário é obrigatório' : null;
       case 'destinatario_cnpj': return obrigatorios.includes('destinatario_cnpj') && !formData.destinatario_cnpj ? 'CNPJ do destinatário é obrigatório' : null;
       case 'senha_fila': 
+        if (formData.carga_dedicada) return null; // Não valida se for carga dedicada
         if (obrigatorios.includes('senha_fila') && (!formData.senha_fila || formData.senha_fila.length !== 4)) {
           return 'Senha Fila (4 dígitos) é obrigatória';
         }
@@ -1392,7 +1393,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
     if (obrigatorios.includes('motorista_id') && !formData.motorista_id) return false;
     if (obrigatorios.includes('motorista_id') && formData.motorista_id && !motoristaTelefone) return false;
     if (obrigatorios.includes('operacao_id') && !formData.operacao_id) return false;
-    if (obrigatorios.includes('senha_fila') && (!formData.senha_fila || formData.senha_fila.length !== 4)) return false;
+    if (obrigatorios.includes('senha_fila') && !formData.carga_dedicada && (!formData.senha_fila || formData.senha_fila.length !== 4)) return false;
     if (senhaJaUsada) return false;
     
     // Verificar preço apenas se peso é obrigatório
@@ -1423,7 +1424,7 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
       if (obrigatorios.includes('operacao_id') && !formData.operacao_id) camposFaltando.push("Operação");
       if (obrigatorios.includes('destinatario') && !formData.destinatario) camposFaltando.push("Destinatário");
       if (obrigatorios.includes('destinatario_cnpj') && !formData.destinatario_cnpj) camposFaltando.push("CNPJ do Destinatário");
-      if (obrigatorios.includes('senha_fila') && (!formData.senha_fila || formData.senha_fila.length !== 4)) camposFaltando.push("Senha Fila (4 dígitos)");
+      if (obrigatorios.includes('senha_fila') && !formData.carga_dedicada && (!formData.senha_fila || formData.senha_fila.length !== 4)) camposFaltando.push("Senha Fila (4 dígitos)");
       if (senhaJaUsada) camposFaltando.push("Senha Fila (já em uso - escolha outra)");
       
       if (obrigatorios.includes('peso')) {
@@ -2444,56 +2445,68 @@ Se não encontrar nenhum código de barras válido de 44 dígitos, retorne "null
 
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className={getFieldError('senha_fila') ? 'text-red-600 font-semibold' : 'font-semibold'}>
-                          Senha Fila *{getFieldError('senha_fila') && <span className="ml-2 text-xs">⚠️</span>}
-                        </Label>
-                        <div className="flex gap-2 items-start">
-                          <div className="relative flex-1">
-                            <Input 
-                              value={formData.senha_fila || ""} 
-                              onChange={(e) => handleChange("senha_fila", e.target.value.toUpperCase())} 
-                              placeholder="4 dígitos" 
-                              maxLength={4}
-                              className={`font-mono font-bold text-lg ${getFieldError('senha_fila') ? 'border-red-500 border-2 bg-red-50 text-red-600' : 'border-blue-500 border-2 bg-blue-50 text-blue-600'}`}
-                              disabled={verificandoSenha || formData.carga_dedicada}
-                            />
-                            {verificandoSenha && (
-                              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                              </div>
-                            )}
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              handleBuscarVeiculosFila();
-                              setShowBuscarFila(true);
-                            }}
-                            disabled={formData.carga_dedicada}
-                            className="h-10 px-3 flex items-center gap-1.5"
-                            title="Buscar veículos na fila"
-                          >
-                            <Search className="w-4 h-4" />
-                            Fila
-                          </Button>
-                          <div className="flex items-center gap-1.5 pt-2">
-                            <input
-                              type="checkbox"
-                              id="carga_dedicada"
-                              checked={formData.carga_dedicada || false}
-                              onChange={(e) => handleChange("carga_dedicada", e.target.checked)}
-                              className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                            />
-                            <Label htmlFor="carga_dedicada" className="text-xs font-medium text-purple-700 cursor-pointer whitespace-nowrap">
-                              Dedicada
-                            </Label>
-                          </div>
-                        </div>
-                        {getFieldError('senha_fila') && <p className="text-xs text-red-600 mt-1 font-medium">{getFieldError('senha_fila')}</p>}
-                      </div>
+                     <div>
+                       <Label className={getFieldError('senha_fila') ? 'text-red-600 font-semibold' : 'font-semibold'}>
+                         Senha Fila *{getFieldError('senha_fila') && <span className="ml-2 text-xs">⚠️</span>}
+                         <label className="flex items-center gap-1 cursor-pointer ml-3 inline-flex">
+                           <input
+                             type="checkbox"
+                             checked={formData.carga_dedicada || false}
+                             onChange={(e) => {
+                               handleChange("carga_dedicada", e.target.checked);
+                               if (e.target.checked) {
+                                 handleChange("senha_fila", "DEDI");
+                                 setSenhaJaUsada(false);
+                               } else {
+                                 handleChange("senha_fila", "");
+                               }
+                             }}
+                             className="w-4 h-4 text-purple-600 border-gray-300 rounded"
+                           />
+                           <span className="text-xs text-purple-600 font-semibold">Dedicada</span>
+                         </label>
+                       </Label>
+                       <div className="flex gap-2 items-start">
+                         <div className="relative flex-1">
+                           <Input 
+                             value={formData.senha_fila || ""} 
+                             onChange={(e) => handleChange("senha_fila", e.target.value.toUpperCase())} 
+                             placeholder={formData.carga_dedicada ? "DEDI" : "4 dígitos"} 
+                             maxLength={6}
+                             className={`font-mono font-bold text-lg ${
+                               formData.carga_dedicada ? 'bg-purple-50 text-purple-700 border-purple-300' :
+                               getFieldError('senha_fila') ? 'border-red-500 border-2 bg-red-50 text-red-600' : 
+                               'border-blue-500 border-2 bg-blue-50 text-blue-600'
+                             }`}
+                             disabled={verificandoSenha || formData.carga_dedicada}
+                           />
+                           {verificandoSenha && (
+                             <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                               <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                             </div>
+                           )}
+                         </div>
+                         <Button
+                           type="button"
+                           variant="outline"
+                           size="sm"
+                           onClick={() => {
+                             handleBuscarVeiculosFila();
+                             setShowBuscarFila(true);
+                           }}
+                           disabled={formData.carga_dedicada}
+                           className="h-10 px-3 flex items-center gap-1.5"
+                           title="Buscar veículos na fila"
+                         >
+                           <Search className="w-4 h-4" />
+                           Fila
+                         </Button>
+                       </div>
+                       <p className="text-xs text-gray-500 mt-1">
+                         {formData.carga_dedicada ? "Carga dedicada (não usa Fila X)" : "Vincular com marcação da Fila X"}
+                       </p>
+                       {getFieldError('senha_fila') && <p className="text-xs text-red-600 mt-1 font-medium">{getFieldError('senha_fila')}</p>}
+                     </div>
                       <div>
                         <Label>Viagem</Label>
                         <Input value={formData.viagem || ""} onChange={(e) => handleChange("viagem", e.target.value)} placeholder="Número da viagem" 
