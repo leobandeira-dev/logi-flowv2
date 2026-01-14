@@ -25,6 +25,7 @@ import {
 import { AnexosProcedimentoTransportes } from "../components/procedimentos/AnexosPOLOG001ABNT";
 import { ProcedimentoGestaoTransportes as ProcedimentoGestaoTransportesABNT } from "../components/procedimentos/ProcedimentoTransportesABNT";
 import { FormularioOrdemCarregamento as FormularioABNT } from "../components/procedimentos/FormularioABNT";
+import { InstrucaoFilaX } from "../components/procedimentos/FilaX";
 
 export default function Procedimentos() {
   const [user, setUser] = useState(null);
@@ -249,6 +250,20 @@ export default function Procedimentos() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card 
+              onClick={() => setProcedimentoSelecionado("fila_x")}
+              className={`cursor-pointer transition-all ${procedimentoSelecionado === "fila_x" ? 'ring-2 ring-blue-600' : ''}`}
+              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+            >
+              <CardContent className="p-4 flex items-center gap-3">
+                <Truck className="w-8 h-8 text-cyan-600" />
+                <div>
+                  <h3 className="font-bold text-sm" style={{ color: theme.text }}>Fila X</h3>
+                  <p className="text-xs" style={{ color: theme.textMuted }}>IT-LOG-004</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -274,6 +289,9 @@ export default function Procedimentos() {
           )}
           {procedimentoSelecionado === "manual" && (
             <ManualSistemaCompleto theme={theme} isDark={isDark} />
+          )}
+          {procedimentoSelecionado === "fila_x" && (
+            <InstrucaoFilaX theme={theme} isDark={isDark} />
           )}
         </div>
       </div>
