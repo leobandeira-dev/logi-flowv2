@@ -9,12 +9,53 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { origem, destino } = await req.json();
+    const { origem, destino, tabelaPrecoId } = await req.json();
     
     if (!origem || !destino) {
       return Response.json({ 
         error: 'Origem e destino são obrigatórios' 
       }, { status: 400 });
+    }
+
+    // Se tabelaPrecoId foi fornecido, buscar a configuração de tipo_distancia
+    let origemParaCalculo = origem;
+    let destinoParaCalculo = destino;
+    
+    if (tabelaPrecoId) {
+      try {
+        const tabelasPreco = await base44.entities.TabelaPreco.filter({ id: tabelaPrecoId });
+        
+        if (tabelasPreco.length > 0) {
+          const tabela = tabelasPreco[0];
+          const tipoDistancia = tabela.tipo_distancia || 'emitente_destinatario';
+          
+          // Se a configuração requer operador logístico, buscar dados da empresa
+          if (tipoDistancia === 'emitente_operador' || tipoDistancia === 'operador_destinatario') {
+            const empresa = await base44.entities.Empresa.get(user.empresa_id);
+            
+            const enderecoOperador = [
+              empresa.endereco,
+              empresa.cidade,
+              empresa.estado,
+              empresa.cep
+            ].filter(Boolean).join(', ');
+            
+            if (tipoDistancia === 'emitente_operador') {
+              // Origem: Emitente, Destino: Operador Logístico
+              origemParaCalculo = origem;
+              destinoParaCalculo = enderecoOperador;
+            } else if (tipoDistancia === 'operador_destinatario') {
+              // Origem: Operador Logístico, Destino: Destinatário
+              origemParaCalculo = enderecoOperador;
+              destinoParaCalculo = destino;
+            }
+          }
+          // Se tipo_distancia é 'emitente_destinatario', mantém origem e destino originais
+        }
+      } catch (error) {
+        console.error("Erro ao buscar configuração da tabela:", error);
+        // Em caso de erro, continua com origem e destino originais
+      }
     }
 
     const apiKey = Deno.env.get("GOOGLE");
@@ -26,7 +67,7 @@ Deno.serve(async (req) => {
     }
 
     // Chamar Google Distance Matrix API
-    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(origem)}&destinations=${encodeURIComponent(destino)}&key=${apiKey}`;
+    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(origemParaCalculo)}&destinations=${encodeURIComponent(destinoParaCalculo)}&key=${apiKey}`;
     
     const response = await fetch(url);
     const data = await response.json();
