@@ -705,36 +705,19 @@ export default function SolicitacaoColeta() {
         return;
       }
 
-      // Chamar função backend
+      // Chamar função backend com responseType blob
       const { gerarMapaRota } = await import("@/functions/gerarMapaRota");
-      const response = await gerarMapaRota({ 
+      const blob = await gerarMapaRota({ 
         origem, 
         destino, 
         distanciaKm 
       });
       
-      console.log("Resposta da função:", response);
-      
-      // Acessar dados da resposta
-      const imageData = response.data || response;
-      
-      if (!imageData.imageBase64) {
-        throw new Error("Resposta inválida do servidor");
-      }
-      
-      // Converter base64 para Blob
-      const byteCharacters = atob(imageData.imageBase64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'image/png' });
-      
+      // Download do blob diretamente
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = imageData.filename || `mapa-rota-${distanciaKm.toFixed(0)}km.png`;
+      a.download = `mapa-rota-${distanciaKm.toFixed(0)}km.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

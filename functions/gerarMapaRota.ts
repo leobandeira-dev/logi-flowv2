@@ -45,21 +45,20 @@ Deno.serve(async (req) => {
     const mapResponse = await fetch(staticMapUrl);
     
     if (!mapResponse.ok) {
-      console.error("Erro ao buscar mapa:", await mapResponse.text());
-      return Response.json({ error: 'Erro ao gerar mapa' }, { status: 500 });
+      const errorText = await mapResponse.text();
+      console.error("Erro Google Maps API:", errorText);
+      return Response.json({ error: 'Erro ao gerar mapa via Google Maps' }, { status: 500 });
     }
     
-    const mapBuffer = await mapResponse.arrayBuffer();
+    // 5. Retornar a imagem como blob diretamente
+    const imageBlob = await mapResponse.blob();
     
-    // 5. Converter para base64 para enviar via JSON
-    const base64Image = btoa(
-      new Uint8Array(mapBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
-
-    // 6. Retornar como JSON com a imagem em base64
-    return Response.json({
-      imageBase64: base64Image,
-      filename: `mapa-rota-${distanciaKm || 0}km.png`
+    return new Response(imageBlob, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/png',
+        'Content-Disposition': `attachment; filename="mapa-rota-${distanciaKm || 0}km.png"`
+      }
     });
 
   } catch (error) {
