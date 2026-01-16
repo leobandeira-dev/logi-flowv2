@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Origem e destino são obrigatórios' }, { status: 400 });
     }
 
-    const GOOGLE_API_KEY = Deno.env.get("GOOGLE");
+    const GOOGLE_API_KEY = Deno.env.get("MAPS_STATIC_API_GERAR_IMAGEM_MAPA") || Deno.env.get("GOOGLE");
 
     // 1. Buscar rota usando Directions API
     const directionsUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(origem)}&destination=${encodeURIComponent(destino)}&mode=driving&language=pt-BR&key=${GOOGLE_API_KEY}`;
