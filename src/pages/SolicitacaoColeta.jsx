@@ -707,14 +707,23 @@ export default function SolicitacaoColeta() {
 
       // Chamar função backend
       const { gerarMapaRota } = await import("@/functions/gerarMapaRota");
-      const { data } = await gerarMapaRota({ 
+      const response = await gerarMapaRota({ 
         origem, 
         destino, 
         distanciaKm 
       });
       
+      console.log("Resposta da função:", response);
+      
+      // Acessar dados da resposta
+      const imageData = response.data || response;
+      
+      if (!imageData.imageBase64) {
+        throw new Error("Resposta inválida do servidor");
+      }
+      
       // Converter base64 para Blob
-      const byteCharacters = atob(data.imageBase64);
+      const byteCharacters = atob(imageData.imageBase64);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
@@ -725,7 +734,7 @@ export default function SolicitacaoColeta() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = data.filename || `mapa-rota-${distanciaKm.toFixed(0)}km.png`;
+      a.download = imageData.filename || `mapa-rota-${distanciaKm.toFixed(0)}km.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -733,8 +742,9 @@ export default function SolicitacaoColeta() {
       
       toast.success("Mapa baixado!");
     } catch (error) {
-      console.error("Erro ao gerar mapa:", error);
-      toast.error("Erro ao gerar mapa. Tente novamente.");
+      console.error("Erro completo ao gerar mapa:", error);
+      console.error("Detalhes:", error.response?.data);
+      toast.error("Erro ao gerar mapa: " + (error.response?.data?.error || error.message));
     }
   };
 
