@@ -706,34 +706,15 @@ export default function SolicitacaoColeta() {
       }
 
       // Chamar função backend
-      const API_KEY = "AIzaSyA8JkFiGGCOzYn0OqoJZdWKbaBJVYWRGyw";
+      const { gerarMapaRota } = await import("@/functions/gerarMapaRota");
+      const response = await gerarMapaRota({ 
+        origem, 
+        destino, 
+        distanciaKm 
+      }, { responseType: 'arraybuffer' });
       
-      // 1. Buscar rota usando Directions API
-      const directionsUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(origem)}&destination=${encodeURIComponent(destino)}&mode=driving&language=pt-BR&key=${API_KEY}`;
-      const directionsRes = await fetch(directionsUrl);
-      const directionsData = await directionsRes.json();
-
-      if (directionsData.status !== 'OK' || !directionsData.routes?.[0]) {
-        toast.error("Não foi possível obter a rota");
-        return;
-      }
-
-      const polyline = directionsData.routes[0].overview_polyline.points;
-
-      // 2. Gerar URL do mapa estático com a rota real
-      const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?` +
-        `size=1200x800&` +
-        `scale=2&` +
-        `maptype=roadmap&` +
-        `markers=color:green|label:A|${encodeURIComponent(origem)}&` +
-        `markers=color:red|label:B|${encodeURIComponent(destino)}&` +
-        `path=color:0x3b82f6|weight:5|enc:${polyline}&` +
-        `key=${API_KEY}`;
-
-      // 3. Baixar a imagem
-      const mapRes = await fetch(staticMapUrl);
-      const blob = await mapRes.blob();
-      
+      // Response.data é o ArrayBuffer da imagem
+      const blob = new Blob([response.data], { type: 'image/png' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
