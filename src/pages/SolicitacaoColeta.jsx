@@ -692,95 +692,59 @@ export default function SolicitacaoColeta() {
         origem = distanciaEmitenteOp.origem;
         destino = distanciaEmitenteOp.destino;
         distanciaKm = distanciaEmitenteOp.km;
-        titulo = "Rota: Emitente → Operador Logístico";
+        titulo = "Emitente → Operador Logístico";
       } else if (tabelaSelecionada?.tipo_distancia === "operador_destinatario" && distanciaOpDest) {
         origem = distanciaOpDest.origem;
         destino = distanciaOpDest.destino;
         distanciaKm = distanciaOpDest.km;
-        titulo = "Rota: Operador Logístico → Destinatário";
+        titulo = "Operador → Destinatário";
       } else if (distanciaEmitenteDest) {
         origem = distanciaEmitenteDest.origem;
         destino = distanciaEmitenteDest.destino;
         distanciaKm = distanciaEmitenteDest.km;
-        titulo = "Rota: Emitente → Destinatário";
+        titulo = "Emitente → Destinatário";
       }
 
       if (!origem || !destino) {
-        toast.error("Endereços não encontrados para gerar mapa");
+        toast.error("Endereços não encontrados");
         return;
       }
 
-      // Gerar URL da Static Map com rota
+      // Gerar mapa usando Static Maps API
       const GOOGLE_API_KEY = "AIzaSyA8JkFiGGCOzYn0OqoJZdWKbaBJVYWRGyw";
-      const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?size=800x600&maptype=roadmap&markers=color:green|label:A|${encodeURIComponent(origem)}&markers=color:red|label:B|${encodeURIComponent(destino)}&path=color:0x3b82f6|weight:4|${encodeURIComponent(origem)}|${encodeURIComponent(destino)}&key=${GOOGLE_API_KEY}`;
+      
+      // URL do mapa com rota
+      const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?` +
+        `size=1200x800&` +
+        `scale=2&` +
+        `maptype=roadmap&` +
+        `markers=color:green|label:A|${encodeURIComponent(origem)}&` +
+        `markers=color:red|label:B|${encodeURIComponent(destino)}&` +
+        `path=color:0x3b82f6|weight:5|${encodeURIComponent(origem)}|${encodeURIComponent(destino)}&` +
+        `key=${GOOGLE_API_KEY}`;
 
-      // Baixar imagem e processar
+      // Fazer fetch da imagem
       const response = await fetch(mapUrl);
+      if (!response.ok) {
+        throw new Error("Erro ao buscar mapa do Google");
+      }
+      
       const blob = await response.blob();
       
-      // Criar canvas para adicionar informações
-      const img = new Image();
-      const blobUrl = URL.createObjectURL(blob);
+      // Criar link de download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `mapa-${titulo.replace(/[^a-z0-9]/gi, '-')}-${distanciaKm.toFixed(0)}km.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 800;
-        canvas.height = 750;
-        const ctx = canvas.getContext('2d');
-
-        // Fundo branco
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Desenhar mapa
-        ctx.drawImage(img, 0, 50, 800, 600);
-
-        // Cabeçalho
-        ctx.fillStyle = '#3b82f6';
-        ctx.fillRect(0, 0, 800, 50);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 20px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(titulo, 400, 32);
-
-        // Rodapé com informações
-        ctx.fillStyle = '#f3f4f6';
-        ctx.fillRect(0, 650, 800, 100);
-        
-        ctx.fillStyle = '#1f2937';
-        ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText(`Distância: ${distanciaKm.toFixed(1)} km`, 20, 680);
-        
-        ctx.font = '12px Arial';
-        ctx.fillText(`Origem: ${origem.substring(0, 90)}`, 20, 705);
-        ctx.fillText(`Destino: ${destino.substring(0, 90)}`, 20, 725);
-
-        // Download
-        canvas.toBlob((finalBlob) => {
-          const downloadUrl = URL.createObjectURL(finalBlob);
-          const a = document.createElement('a');
-          a.href = downloadUrl;
-          a.download = `mapa-rota-${distanciaKm.toFixed(0)}km-${new Date().getTime()}.png`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(downloadUrl);
-          URL.revokeObjectURL(blobUrl);
-          toast.success("Mapa baixado com sucesso!");
-        });
-      };
-
-      img.onerror = () => {
-        URL.revokeObjectURL(blobUrl);
-        toast.error("Erro ao processar imagem do mapa");
-      };
-
-      img.src = blobUrl;
-
+      toast.success(`Mapa baixado: ${distanciaKm.toFixed(1)} km`);
     } catch (error) {
       console.error("Erro ao gerar mapa:", error);
-      toast.error("Erro ao gerar mapa: " + error.message);
+      toast.error("Erro ao gerar mapa");
     }
   };
 
