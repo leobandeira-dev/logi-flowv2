@@ -705,13 +705,13 @@ export default function SolicitacaoColeta() {
         return;
       }
 
-      // Chamar função backend com responseType blob
+      // Chamar função backend
       const { gerarMapaRota } = await import("@/functions/gerarMapaRota");
       const response = await gerarMapaRota({ 
         origem, 
         destino, 
         distanciaKm 
-      });
+      }, { responseType: 'arraybuffer' });
       
       // Response.data é o ArrayBuffer da imagem
       const blob = new Blob([response.data], { type: 'image/png' });
