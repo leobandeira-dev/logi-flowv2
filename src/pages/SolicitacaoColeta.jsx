@@ -707,15 +707,14 @@ export default function SolicitacaoColeta() {
 
       // Chamar função backend
       const { gerarMapaRota } = await import("@/functions/gerarMapaRota");
-      const response = await gerarMapaRota({ 
+      const imageBlob = await gerarMapaRota({ 
         origem, 
         destino, 
         distanciaKm 
       });
       
-      // A função retorna um objeto com .data contendo os bytes
-      const blob = new Blob([response.data], { type: 'image/png' });
-      const url = URL.createObjectURL(blob);
+      // Platform V2: função retorna Blob diretamente
+      const url = URL.createObjectURL(imageBlob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `mapa-rota-${distanciaKm.toFixed(0)}km.png`;
@@ -726,8 +725,8 @@ export default function SolicitacaoColeta() {
       
       toast.success("Mapa baixado!");
     } catch (error) {
-      console.error("Erro:", error);
-      toast.error("Erro ao gerar mapa: " + (error.response?.data?.error || error.message));
+      console.error("Erro ao gerar mapa:", error);
+      toast.error("Erro ao gerar mapa. Tente novamente.");
     }
   };
 
