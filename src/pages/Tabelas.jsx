@@ -251,7 +251,7 @@ export default function Tabelas() {
               Tabelas de Frete
             </h1>
             <p className="mt-1" style={{ color: theme.textMuted }}>
-              Gerencie tabelas de precificação por cliente
+              Configure as tabelas de frete e taxas do sistema
             </p>
           </div>
           <Button
@@ -259,7 +259,7 @@ export default function Tabelas() {
             className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Nova Tabela
+            Nova Tabela de Frete
           </Button>
         </div>
 
