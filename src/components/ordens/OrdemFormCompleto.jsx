@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -12,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save, X, CheckCircle, Truck, RefreshCw, AlertCircle, Plus, FileUp, CheckCircle2, Loader2, Edit, Zap } from "lucide-react";
+import { Save, X, CheckCircle, Truck, RefreshCw, AlertCircle, Plus, FileUp, CheckCircle2, Loader2, Edit, Zap, MapPin, Search, AlertTriangle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -26,6 +27,9 @@ import { cn } from "@/lib/utils";
 import MotoristaForm from "../motoristas/MotoristaForm";
 import VeiculoForm from "../veiculos/VeiculoForm";
 import OperacaoForm from "../operacoes/OperacaoForm";
+import { calcularDistancia } from "@/functions/calcularDistancia";
+import { calcularFrete } from "@/functions/calcularFrete";
+import { toast } from "sonner";
 
 const frotaOptions = [
   { value: "própria", label: "Própria" },
@@ -78,7 +82,8 @@ export default function OrdemFormCompleto({ open, onClose, onSubmit, motoristas,
     destinatario: "", destinatario_cnpj: "", destino_endereco: "", destino_cep: "", destino_bairro: "", destino_cidade: "", destino_uf: "",
     data_carregamento: "", tipo_operacao: "FOB", viagem_pedido: "", notas_fiscais: "",
     volumes: "", embalagem: "", conteudo: "", qtd_entregas: 1, duv: "", numero_oc: "",
-    observacao_carga: "", solicitado_por: "", senha_fila: "", carga_dedicada: false
+    observacao_carga: "", solicitado_por: "", senha_fila: "", carga_dedicada: false,
+    valor_nf: ""
   });
 
   const [valorTotal, setValorTotal] = useState(0);
@@ -125,6 +130,35 @@ export default function OrdemFormCompleto({ open, onClose, onSubmit, motoristas,
   const [operacaoEncontrada, setOperacaoEncontrada] = useState(null);
   const [showOperacaoForm, setShowOperacaoForm] = useState(false);
 
+  // Estados de precificação
+  const [tabelas, setTabelas] = useState([]);
+  const [tabelaSelecionada, setTabelaSelecionada] = useState(null);
+  const [showTabelaManual, setShowTabelaManual] = useState(false);
+  const [searchTabela, setSearchTabela] = useState("");
+  const [tipoFrete, setTipoFrete] = useState(null);
+  const [showTipoFreteModal, setShowTipoFreteModal] = useState(false);
+  const [precificacaoCalculada, setPrecificacaoCalculada] = useState(null);
+  const [calculandoDistancia, setCalculandoDistancia] = useState(false);
+  const [distanciaEmitenteDest, setDistanciaEmitenteDest] = useState(null);
+  const [erroCalculoDistancia, setErroCalculoDistancia] = useState(false);
+  const [kmManual, setKmManual] = useState(null);
+  const [aliquotaIcmsManual, setAliquotaIcmsManual] = useState(null);
+  const [calculandoFrete, setCalculandoFrete] = useState(false);
+
+  useEffect(() => {
+    const loadTabelas = async () => {
+      try {
+        const tabelasData = await base44.entities.TabelaPreco.filter({ ativo: true });
+        setTabelas(tabelasData);
+      } catch (error) {
+        console.error("Erro ao carregar tabelas:", error);
+      }
+    };
+    if (open) {
+      loadTabelas();
+    }
+  }, [open]);
+
   useEffect(() => {
     if (editingOrdem) {
       setFormData({
@@ -152,7 +186,8 @@ export default function OrdemFormCompleto({ open, onClose, onSubmit, motoristas,
         conteudo: editingOrdem.conteudo || "", qtd_entregas: editingOrdem.qtd_entregas || 1,
         duv: editingOrdem.duv || "", numero_oc: editingOrdem.numero_oc || "",
         observacao_carga: editingOrdem.observacao_carga || "", solicitado_por: editingOrdem.solicitado_por || "",
-        senha_fila: editingOrdem.senha_fila || "", carga_dedicada: editingOrdem.carga_dedicada || false
+        senha_fila: editingOrdem.senha_fila || "", carga_dedicada: editingOrdem.carga_dedicada || false,
+        valor_nf: editingOrdem.valor_total_consolidado || editingOrdem.valor_nf || ""
       });
 
       const motorista = motoristas.find(m => m.id === editingOrdem.motorista_id);
@@ -181,7 +216,8 @@ export default function OrdemFormCompleto({ open, onClose, onSubmit, motoristas,
         destinatario: "", destinatario_cnpj: "", destino_endereco: "", destino_cep: "", destino_bairro: "", destino_cidade: "", destino_uf: "",
         data_carregamento: "", tipo_operacao: "FOB", viagem_pedido: "", notas_fiscais: "",
         volumes: "", embalagem: "", conteudo: "", qtd_entregas: 1, duv: "", numero_oc: "",
-        observacao_carga: "", solicitado_por: "", senha_fila: "", carga_dedicada: false
+        observacao_carga: "", solicitado_por: "", senha_fila: "", carga_dedicada: false,
+        valor_nf: ""
       });
       setMotoristaSearchTerm("");
       setMotoristaTelefone("");
@@ -197,6 +233,16 @@ export default function OrdemFormCompleto({ open, onClose, onSubmit, motoristas,
     setImportError(null);
     setImportSuccess(false);
     setShowValidation(false);
+    
+    // Reset precificação
+    setTabelaSelecionada(null);
+    setShowTabelaManual(false);
+    setPrecificacaoCalculada(null);
+    setKmManual(null);
+    setAliquotaIcmsManual(null);
+    setTipoFrete(null);
+    setDistanciaEmitenteDest(null);
+    setErroCalculoDistancia(false);
   }, [editingOrdem, open, motoristas, veiculos, operacoes]);
 
   useEffect(() => {
@@ -271,6 +317,191 @@ export default function OrdemFormCompleto({ open, onClose, onSubmit, motoristas,
 
     setVeiculosAlterados(alterado);
   }, [formData.motorista_id, formData.cavalo_id, formData.implemento1_id, formData.implemento2_id, formData.implemento3_id, motoristas]);
+
+  // Buscar tabela automaticamente quando CNPJs mudarem
+  useEffect(() => {
+    const buscarTabelaAutomatica = async () => {
+      if (!formData.cliente_cnpj && !formData.destinatario_cnpj) {
+        setTabelaSelecionada(null);
+        setTipoFrete(null);
+        setShowTabelaManual(false);
+        return;
+      }
+
+      const tabelaRemetente = await buscarTabelaParceiro(formData.cliente_cnpj);
+      const tabelaDestinatario = await buscarTabelaParceiro(formData.destinatario_cnpj);
+
+      if (tabelaRemetente && tabelaDestinatario && !tipoFrete) {
+        setShowTipoFreteModal(true);
+        return;
+      }
+
+      if (tabelaRemetente && !tabelaDestinatario) {
+        const tabelaComItens = await carregarItensDaTabela(tabelaRemetente);
+        setTabelaSelecionada(tabelaComItens);
+        setShowTabelaManual(false);
+      } else if (tabelaDestinatario && !tabelaRemetente) {
+        const tabelaComItens = await carregarItensDaTabela(tabelaDestinatario);
+        setTabelaSelecionada(tabelaComItens);
+        setShowTabelaManual(false);
+      } else if (tipoFrete) {
+        const tabelaEscolhida = tipoFrete === "CIF" ? tabelaRemetente : tabelaDestinatario;
+        if (tabelaEscolhida) {
+          const tabelaComItens = await carregarItensDaTabela(tabelaEscolhida);
+          setTabelaSelecionada(tabelaComItens);
+          setShowTabelaManual(false);
+        }
+      } else {
+        setTabelaSelecionada(null);
+        setShowTabelaManual(true);
+      }
+    };
+
+    buscarTabelaAutomatica();
+  }, [formData.cliente_cnpj, formData.destinatario_cnpj, tipoFrete, tabelas]);
+
+  // Recalcular distância e frete quando mudam os parâmetros
+  useEffect(() => {
+    if (tabelaSelecionada && formData.peso && formData.origem_cidade && formData.destino_cidade) {
+      calcularDistancias();
+    }
+  }, [formData.origem_cidade, formData.origem_uf, formData.destino_cidade, formData.destino_uf, tabelaSelecionada]);
+
+  useEffect(() => {
+    if (tabelaSelecionada && formData.peso && (distanciaEmitenteDest || kmManual)) {
+      calcularFreteAutomatico();
+    }
+  }, [tabelaSelecionada, formData.peso, formData.valor_nf, kmManual, aliquotaIcmsManual, distanciaEmitenteDest]);
+
+  const buscarTabelaParceiro = async (cnpj) => {
+    if (!cnpj) return null;
+
+    try {
+      const parceiros = await base44.entities.Parceiro.list();
+      const parceiro = parceiros.find(p => p.cnpj === cnpj.replace(/\D/g, ''));
+      
+      if (!parceiro) return null;
+
+      const tabelasParceiro = tabelas.filter(t => 
+        t.clientes_parceiros_ids?.includes(parceiro.id)
+      );
+
+      if (tabelasParceiro.length > 0) {
+        const hoje = new Date();
+        const tabelaValida = tabelasParceiro.find(t => {
+          const inicio = t.vigencia_inicio ? new Date(t.vigencia_inicio) : null;
+          const fim = t.vigencia_fim ? new Date(t.vigencia_fim) : null;
+          
+          if (inicio && hoje < inicio) return false;
+          if (fim && hoje > fim) return false;
+          
+          return true;
+        });
+
+        return tabelaValida || tabelasParceiro[0];
+      }
+    } catch (error) {
+      console.error("Erro ao buscar tabela do parceiro:", error);
+    }
+
+    return null;
+  };
+
+  const carregarItensDaTabela = async (tabela) => {
+    try {
+      const itens = await base44.entities.TabelaPrecoItem.filter(
+        { tabela_preco_id: tabela.id },
+        "ordem",
+        100
+      );
+      return { ...tabela, itens };
+    } catch (error) {
+      console.error("Erro ao carregar itens da tabela:", error);
+      return { ...tabela, itens: [] };
+    }
+  };
+
+  const calcularDistancias = async () => {
+    if (!formData.origem_cidade || !formData.origem_uf || !formData.destino_cidade || !formData.destino_uf) {
+      setDistanciaEmitenteDest(null);
+      return;
+    }
+
+    setCalculandoDistancia(true);
+    setErroCalculoDistancia(false);
+    try {
+      const origem = `${formData.origem_cidade}, ${formData.origem_uf}, Brasil`;
+      const destino = `${formData.destino_cidade}, ${formData.destino_uf}, Brasil`;
+
+      const response = await calcularDistancia({ 
+        origem, 
+        destino,
+        tabelaPrecoId: tabelaSelecionada?.id 
+      });
+
+      setDistanciaEmitenteDest({
+        km: parseFloat(response.data.distancia_km),
+        texto: response.data.distancia_texto,
+        origem: response.data.origem_endereco,
+        destino: response.data.destino_endereco
+      });
+    } catch (error) {
+      console.error("Erro ao calcular distância:", error);
+      setErroCalculoDistancia(true);
+      toast.error("API do Google Maps não disponível. Insira o KM manualmente.");
+    } finally {
+      setCalculandoDistancia(false);
+    }
+  };
+
+  const calcularFreteAutomatico = async () => {
+    if (!tabelaSelecionada || !formData.peso) {
+      setPrecificacaoCalculada(null);
+      return;
+    }
+
+    setCalculandoFrete(true);
+    try {
+      const kmParaCalculo = kmManual || distanciaEmitenteDest?.km || 0;
+      
+      if (kmParaCalculo === 0) {
+        setPrecificacaoCalculada(null);
+        setCalculandoFrete(false);
+        return;
+      }
+
+      const response = await calcularFrete({
+        tabela_preco_id: tabelaSelecionada.id,
+        peso_kg: parseFloat(formData.peso),
+        valor_nf: parseFloat(formData.valor_nf) || 0,
+        km: kmParaCalculo,
+        aliquota_icms_manual: aliquotaIcmsManual
+      });
+
+      const resultado = response.data;
+      setPrecificacaoCalculada({
+        ...resultado,
+        kmCalculado: kmParaCalculo,
+        distanciaUsada: kmManual ? "KM Manual" : "Calculado automaticamente",
+        tabela: tabelaSelecionada.nome
+      });
+    } catch (error) {
+      console.error("Erro ao calcular frete:", error);
+      toast.error("Erro ao calcular frete");
+    } finally {
+      setCalculandoFrete(false);
+    }
+  };
+
+  const handleSelecionarTabelaManual = async (tabelaId) => {
+    const tabela = tabelas.find(t => t.id === tabelaId);
+    if (tabela) {
+      const tabelaComItens = await carregarItensDaTabela(tabela);
+      setTabelaSelecionada(tabelaComItens);
+      setShowTabelaManual(false);
+      setSearchTabela("");
+    }
+  };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -499,7 +730,6 @@ export default function OrdemFormCompleto({ open, onClose, onSubmit, motoristas,
       }
 
       const dados = result.output;
-      console.log("Dados extraídos:", dados);
 
       let motoristaId = null;
       let motoristaEncontradoOuCriado = null;
@@ -659,7 +889,6 @@ export default function OrdemFormCompleto({ open, onClose, onSubmit, motoristas,
       setImportSuccess(true);
       setTimeout(() => setImportSuccess(false), 5000);
 
-      // Se está editando uma oferta, atualizar automaticamente para ordem completa
       if (editingOrdem && editingOrdem.tipo_registro === "oferta" && motoristaId) {
         await base44.entities.OrdemDeCarregamento.update(editingOrdem.id, {
           tipo_registro: "ordem_completa"
@@ -746,16 +975,13 @@ ${formData.observacao_carga ? `\n📝 *Obs:* ${formData.observacao_carga}` : ''}
   };
 
   const handleSubmit = (e) => {
-    // Calcular cliente_final baseado em tipo_operacao
     let clienteFinalNome = "";
     let clienteFinalCnpj = "";
     
     if (formData.tipo_operacao === "CIF") {
-      // CIF: cliente é o remetente (quem envia)
       clienteFinalNome = formData.cliente;
       clienteFinalCnpj = formData.cliente_cnpj;
     } else if (formData.tipo_operacao === "FOB") {
-      // FOB: cliente é o destinatário (quem recebe)
       clienteFinalNome = formData.destinatario || formData.destino;
       clienteFinalCnpj = formData.destinatario_cnpj;
     }
@@ -768,7 +994,8 @@ ${formData.observacao_carga ? `\n📝 *Obs:* ${formData.observacao_carga}` : ''}
       volumes: formData.volumes ? parseInt(formData.volumes) : null,
       qtd_entregas: formData.qtd_entregas ? parseInt(formData.qtd_entregas) : 1,
       cliente_final_nome: clienteFinalNome,
-      cliente_final_cnpj: clienteFinalCnpj
+      cliente_final_cnpj: clienteFinalCnpj,
+      valor_total_frete: precificacaoCalculada?.valor_total || valorTotal
     };
     onSubmit(dataToSubmit);
   };
@@ -779,8 +1006,8 @@ ${formData.observacao_carga ? `\n📝 *Obs:* ${formData.observacao_carga}` : ''}
     return formData.cliente && formData.origem && formData.destino &&
            formData.produto && parseFloat(formData.peso) > 0 &&
            hasPriceMethod && formData.motorista_id &&
-           motoristaTelefone && // Telefone do motorista obrigatório
-           formData.operacao_id; // Operação obrigatória
+           motoristaTelefone &&
+           formData.operacao_id;
   };
 
   const getFieldError = (fieldName) => {
@@ -809,7 +1036,6 @@ ${formData.observacao_carga ? `\n📝 *Obs:* ${formData.observacao_carga}` : ''}
 
     if (!isFormValid()) {
       setTimeout(() => {
-        // Find the first error element across tabs
         const firstErrorLabel = document.querySelector('label.text-red-600');
         const firstErrorInput = document.querySelector('input.border-red-500, select.border-red-500, button.border-red-500');
         const firstErrorP = document.querySelector('p.text-red-600');
@@ -820,15 +1046,13 @@ ${formData.observacao_carga ? `\n📝 *Obs:* ${formData.observacao_carga}` : ''}
         if (firstErrorP && (!firstErrorElement || firstErrorP.offsetTop < firstErrorElement.offsetTop)) firstErrorElement = firstErrorP;
 
         if (firstErrorElement) {
-          // Determine which tab the element belongs to
           let currentElement = firstErrorElement;
-          while (currentElement && !currentElement.classList.contains('tab-content-container')) { // Assuming tab content has a class like this
-            if (currentElement.closest('[data-state="inactive"][role="tabpanel"]')) { // If error is in inactive tab content
+          while (currentElement && !currentElement.classList.contains('tab-content-container')) {
+            if (currentElement.closest('[data-state="inactive"][role="tabpanel"]')) {
               const inactiveTabPanel = currentElement.closest('[data-state="inactive"][role="tabpanel"]');
               const tabId = inactiveTabPanel.id;
               const triggerButton = document.querySelector(`[aria-controls="${tabId}"]`);
               if (triggerButton) {
-                // Manually trigger click or update activeTab state
                 const value = triggerButton.getAttribute('value');
                 if (value) {
                   setActiveTab(value);
@@ -1147,13 +1371,12 @@ ${formData.observacao_carga ? `\n📝 *Obs:* ${formData.observacao_carga}` : ''}
 
   const isOferta = editingOrdem?.tipo_registro === "oferta";
   const semMotorista = editingOrdem && !editingOrdem.motorista_id;
-  // Mostrar upload se: é nova ordem OU é oferta OU não tem motorista ainda
   const mostrarUploadPDF = !editingOrdem || isOferta || semMotorista;
 
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle>
@@ -1240,7 +1463,7 @@ ${formData.observacao_carga ? `\n📝 *Obs:* ${formData.observacao_carga}` : ''}
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="basicos" className="relative">
                 Dados Básicos
                 {showValidation && (getFieldError('motorista') || getFieldError('telefone') || getFieldError('operacao') || getFieldError('preco')) && (
@@ -1264,6 +1487,9 @@ ${formData.observacao_carga ? `\n📝 *Obs:* ${formData.observacao_carga}` : ''}
                 {showValidation && (getFieldError('produto') || getFieldError('peso') || getFieldError('preco')) && (
                   <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
                 )}
+              </TabsTrigger>
+              <TabsTrigger value="precificacao">
+                Precificação
               </TabsTrigger>
             </TabsList>
 
@@ -1686,6 +1912,11 @@ ${formData.observacao_carga ? `\n📝 *Obs:* ${formData.observacao_carga}` : ''}
                   {getFieldError('peso') && <p className="text-xs text-red-600 mt-1 font-medium">{getFieldError('peso')}</p>}
                 </div>
                 <div>
+                  <Label htmlFor="valor_nf">Valor NF (R$)</Label>
+                  <Input id="valor_nf" type="number" step="0.01" value={formData.valor_nf}
+                    onChange={(e) => handleInputChange("valor_nf", e.target.value)} placeholder="Valor da NF" />
+                </div>
+                <div>
                   <Label htmlFor="valor_tonelada" className={getFieldError('preco') ? 'text-orange-600 font-medium' : ''}>
                     Valor/Tonelada {getFieldError('preco') && <span className="ml-2 text-xs">⚠️</span>}
                   </Label>
@@ -1702,12 +1933,6 @@ ${formData.observacao_carga ? `\n📝 *Obs:* ${formData.observacao_carga}` : ''}
                     onChange={(e) => handleInputChange("frete_viagem", e.target.value)} placeholder="Valor da viagem"
                     disabled={!!formData.valor_tonelada && parseFloat(formData.valor_tonelada) > 0}
                     className={getFieldError('preco') ? 'border-orange-400 border-2 bg-orange-50' : ''} />
-                </div>
-                <div>
-                  <Label>Valor Total</Label>
-                  <div className="p-2 bg-gray-50 rounded border text-sm font-medium">
-                    R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </div>
                 </div>
               </div>
 
@@ -1736,6 +1961,218 @@ ${formData.observacao_carga ? `\n📝 *Obs:* ${formData.observacao_carga}` : ''}
                   placeholder="Observações sobre a carga" rows={3} />
               </div>
             </TabsContent>
+
+            <TabsContent value="precificacao" className="space-y-4 tab-content-container">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Precificação Automática</h3>
+                  {tabelaSelecionada && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setTabelaSelecionada(null);
+                        setShowTabelaManual(true);
+                        setTipoFrete(null);
+                      }}
+                      className="text-xs"
+                    >
+                      Trocar Tabela
+                    </Button>
+                  )}
+                </div>
+
+                {tabelaSelecionada ? (
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                      <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+                        📋 Tabela Aplicada: {tabelaSelecionada.nome}
+                      </p>
+                      {tabelaSelecionada.codigo && (
+                        <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                          Código: {tabelaSelecionada.codigo}
+                        </p>
+                      )}
+                    </div>
+
+                    {calculandoDistancia ? (
+                      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin text-yellow-700" />
+                          <p className="text-sm text-yellow-800">Calculando distância via Google Maps...</p>
+                        </div>
+                      </div>
+                    ) : erroCalculoDistancia ? (
+                      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertTriangle className="w-4 h-4 text-red-700" />
+                          <p className="text-sm font-semibold text-red-900">API Google Maps não disponível</p>
+                        </div>
+                        <p className="text-xs text-red-700 mb-3">
+                          Não foi possível calcular a distância automaticamente. Insira o KM manualmente abaixo.
+                        </p>
+                        <div>
+                          <Label className="text-xs text-red-700">KM Manual</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              type="number"
+                              step="0.1"
+                              value={kmManual || ""}
+                              onChange={(e) => setKmManual(parseFloat(e.target.value) || null)}
+                              placeholder="Ex: 450"
+                              className="flex-1 bg-white"
+                            />
+                            <Button
+                              type="button"
+                              onClick={calcularFreteAutomatico}
+                              className="bg-red-600 hover:bg-red-700 text-white px-4"
+                              disabled={calculandoFrete}
+                            >
+                              {calculandoFrete ? <Loader2 className="w-4 h-4 animate-spin" /> : "Calcular"}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : distanciaEmitenteDest && (
+                      <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MapPin className="w-4 h-4 text-purple-700" />
+                          <p className="text-sm font-semibold text-purple-900">Distância Calculada via Google Maps</p>
+                        </div>
+                        <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-purple-300">
+                          <p className="text-lg font-bold text-purple-900">{distanciaEmitenteDest.texto}</p>
+                          <p className="text-xs text-gray-600 mt-1">De: {distanciaEmitenteDest.origem}</p>
+                          <p className="text-xs text-gray-600">Para: {distanciaEmitenteDest.destino}</p>
+                        </div>
+                        
+                        <div className="border-t pt-3 mt-3">
+                          <Label className="text-xs text-purple-700">KM Manual (Opcional)</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input
+                              type="number"
+                              step="0.1"
+                              value={kmManual || ""}
+                              onChange={(e) => setKmManual(parseFloat(e.target.value) || null)}
+                              placeholder="Ex: 1000"
+                              className="flex-1 bg-white"
+                            />
+                            <Button
+                              type="button"
+                              onClick={calcularFreteAutomatico}
+                              className="bg-purple-600 hover:bg-purple-700 text-white px-4"
+                              disabled={calculandoFrete}
+                            >
+                              {calculandoFrete ? <Loader2 className="w-4 h-4 animate-spin" /> : "Recalcular"}
+                            </Button>
+                          </div>
+                          <p className="text-xs text-purple-600 mt-1">
+                            Se preenchido, este valor será usado no lugar do cálculo automático
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {precificacaoCalculada && (
+                      <div className="space-y-3">
+                        {/* Campo ICMS Manual */}
+                        <div className="border rounded-lg p-3 bg-blue-50 dark:bg-blue-900/20 border-blue-300">
+                          <Label className="text-xs text-blue-700 mb-1 block">Alíquota ICMS (%) - Opcional</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={aliquotaIcmsManual ?? ""}
+                            onChange={(e) => setAliquotaIcmsManual(e.target.value ? parseFloat(e.target.value) : null)}
+                            placeholder={tabelaSelecionada.icms ? `Padrão: ${tabelaSelecionada.icms}%` : "Ex: 12"}
+                            className="bg-white"
+                          />
+                        </div>
+
+                        {/* Breakdown Detalhado */}
+                        <div className="border-2 rounded-lg p-4 bg-white border-blue-400">
+                          <h3 className="font-bold text-sm mb-3 text-blue-700">
+                            📊 Composição do Frete
+                          </h3>
+                          
+                          <div className="space-y-2 text-sm">
+                            {precificacaoCalculada.breakdown?.map((item, idx) => (
+                              <div key={idx} className="flex justify-between py-1 border-b border-gray-200">
+                                <span className="text-gray-600">{item.nome}</span>
+                                <span className="font-semibold">R$ {item.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                              </div>
+                            ))}
+
+                            <div className="flex justify-between py-3 bg-green-50 px-3 -mx-2 rounded-lg border-2 border-green-600 mt-3">
+                              <span className="font-bold text-lg text-green-700">VALOR TOTAL</span>
+                              <span className="font-bold text-xl text-green-700">
+                                R$ {precificacaoCalculada.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                            </div>
+
+                            {precificacaoCalculada.prazo_entrega && (
+                              <div className="bg-blue-50 p-3 rounded-lg border border-blue-300 mt-3">
+                                <p className="text-xs text-blue-700 mb-1">Prazo de Entrega</p>
+                                <p className="font-bold text-blue-900">
+                                  {precificacaoCalculada.prazo_entrega.dias} dias ({precificacaoCalculada.prazo_entrega.tipo})
+                                </p>
+                                {precificacaoCalculada.prazo_entrega.data_prevista && (
+                                  <p className="text-xs text-blue-600 mt-1">
+                                    Previsão: {new Date(precificacaoCalculada.prazo_entrega.data_prevista).toLocaleDateString('pt-BR')}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : showTabelaManual ? (
+                  <div className="space-y-3">
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <p className="text-sm text-yellow-800">
+                        ⚠ Nenhuma tabela encontrada automaticamente. Pesquise e selecione uma tabela manualmente.
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Input
+                        value={searchTabela}
+                        onChange={(e) => setSearchTabela(e.target.value)}
+                        placeholder="Pesquisar tabela por nome ou código..."
+                        className="flex-1"
+                      />
+                      <Button type="button" onClick={() => {}} variant="outline" size="sm">
+                        <Search className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    <div className="max-h-64 overflow-y-auto border rounded-lg">
+                      {tabelas
+                        .filter(t => 
+                          t.nome?.toLowerCase().includes(searchTabela.toLowerCase()) ||
+                          t.codigo?.toLowerCase().includes(searchTabela.toLowerCase())
+                        )
+                        .map(t => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => handleSelecionarTabelaManual(t.id)}
+                            className="w-full text-left p-3 hover:bg-gray-100 border-b"
+                          >
+                            <p className="text-sm font-semibold">{t.nome}</p>
+                            {t.codigo && <p className="text-xs text-gray-600">Código: {t.codigo}</p>}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p className="text-sm">Preencha os CNPJs do remetente ou destinatário para carregar a tabela automaticamente</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
           </Tabs>
 
           <DialogFooter>
@@ -1749,6 +2186,46 @@ ${formData.observacao_carga ? `\n📝 *Obs:* ${formData.observacao_carga}` : ''}
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Tipo de Frete CIF/FOB */}
+      {showTipoFreteModal && (
+        <Dialog open={showTipoFreteModal} onOpenChange={setShowTipoFreteModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Tipo de Frete</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <p className="text-sm text-gray-600">
+                Tanto o remetente quanto o destinatário possuem tabelas de frete. Qual é o tipo de frete?
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTipoFrete("CIF");
+                    setShowTipoFreteModal(false);
+                  }}
+                  className="border-2 rounded-lg p-4 hover:bg-blue-50"
+                >
+                  <p className="font-bold text-lg mb-1">CIF</p>
+                  <p className="text-xs text-gray-600">Frete pago pelo remetente</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTipoFrete("FOB");
+                    setShowTipoFreteModal(false);
+                  }}
+                  className="border-2 rounded-lg p-4 hover:bg-blue-50"
+                >
+                  <p className="font-bold text-lg mb-1">FOB</p>
+                  <p className="text-xs text-gray-600">Frete pago pelo destinatário</p>
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {showMotoristaForm && (
         <MotoristaForm
