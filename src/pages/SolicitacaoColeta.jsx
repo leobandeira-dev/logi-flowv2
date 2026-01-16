@@ -682,27 +682,23 @@ export default function SolicitacaoColeta() {
     try {
       toast.info("Gerando mapa com rota, aguarde...");
       
-      // Determinar qual rota usar baseado na configuração da tabela
+      // Determinar qual rota usar
       let origem = "";
       let destino = "";
       let distanciaKm = 0;
-      let titulo = "";
       
       if (tabelaSelecionada?.tipo_distancia === "emitente_operador" && distanciaEmitenteOp) {
         origem = distanciaEmitenteOp.origem;
         destino = distanciaEmitenteOp.destino;
         distanciaKm = distanciaEmitenteOp.km;
-        titulo = "Emitente → Operador Logístico";
       } else if (tabelaSelecionada?.tipo_distancia === "operador_destinatario" && distanciaOpDest) {
         origem = distanciaOpDest.origem;
         destino = distanciaOpDest.destino;
         distanciaKm = distanciaOpDest.km;
-        titulo = "Operador → Destinatário";
       } else if (distanciaEmitenteDest) {
         origem = distanciaEmitenteDest.origem;
         destino = distanciaEmitenteDest.destino;
         distanciaKm = distanciaEmitenteDest.km;
-        titulo = "Emitente → Destinatário";
       }
 
       if (!origem || !destino) {
@@ -710,30 +706,33 @@ export default function SolicitacaoColeta() {
         return;
       }
 
-      // Fazer chamada direta à função backend para obter o binário
-      const functionResponse = await fetch('/.netlify/functions/gerarMapaRota', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await base44.auth.me()).id}`
-        },
-        body: JSON.stringify({
-          origem,
-          destino,
-          titulo,
-          distanciaKm
-        })
-      });
+      const GOOGLE_API_KEY = "AIzaSyA8JkFiGGCOzYn0OqoJZdWKbaBJVYWRGyw";
 
-      if (!functionResponse.ok) {
-        throw new Error('Erro ao gerar mapa');
+      // 1. Buscar polyline da rota via Directions API
+      const directionsUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(origem)}&destination=${encodeURIComponent(destino)}&mode=driving&language=pt-BR&key=${GOOGLE_API_KEY}`;
+      
+      const directionsResponse = await fetch(directionsUrl);
+      const directionsData = await directionsResponse.json();
+
+      if (directionsData.status !== 'OK' || !directionsData.routes || directionsData.routes.length === 0) {
+        toast.error("Não foi possível obter a rota");
+        return;
       }
 
-      const blob = await functionResponse.blob();
+      // 2. Extrair polyline da rota
+      const polyline = directionsData.routes[0].overview_polyline.points;
+
+      // 3. Gerar URL do mapa estático com a rota real
+      const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?size=1200x800&scale=2&maptype=roadmap&markers=color:green|label:A|${encodeURIComponent(origem)}&markers=color:red|label:B|${encodeURIComponent(destino)}&path=color:0x3b82f6|weight:5|enc:${polyline}&key=${GOOGLE_API_KEY}`;
+
+      // 4. Fazer download
+      const mapResponse = await fetch(staticMapUrl);
+      const blob = await mapResponse.blob();
+      
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `mapa-rota-${distanciaKm.toFixed(0)}km-${new Date().getTime()}.png`;
+      a.download = `mapa-rota-${distanciaKm.toFixed(0)}km.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -742,7 +741,7 @@ export default function SolicitacaoColeta() {
       toast.success(`Mapa baixado: ${distanciaKm.toFixed(1)} km`);
     } catch (error) {
       console.error("Erro ao gerar mapa:", error);
-      toast.error("Erro ao gerar mapa: " + (error.response?.data?.error || error.message));
+      toast.error("Erro ao gerar mapa");
     }
   };
 
