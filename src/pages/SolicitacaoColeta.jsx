@@ -590,7 +590,11 @@ export default function SolicitacaoColeta() {
       if (formData.destino_cidade && formData.destino_uf) {
         const destinoFinal = `${formData.destino_cidade}, ${formData.destino_uf}, Brasil`;
         promises.push(
-          calcularDistancia({ origem: origemEmitente, destino: destinoFinal })
+          calcularDistancia({ 
+            origem: origemEmitente, 
+            destino: destinoFinal,
+            tabelaPrecoId: tabelaSelecionada?.id 
+          })
             .then(res => ({ tipo: 'emitente_dest', data: res.data }))
             .catch(err => ({ tipo: 'emitente_dest', error: true, message: err.message }))
         );
@@ -600,7 +604,11 @@ export default function SolicitacaoColeta() {
       if (operadorLogistico?.cidade && operadorLogistico?.estado) {
         const destinoOperador = `${operadorLogistico.cidade}, ${operadorLogistico.estado}, Brasil`;
         promises.push(
-          calcularDistancia({ origem: origemEmitente, destino: destinoOperador })
+          calcularDistancia({ 
+            origem: origemEmitente, 
+            destino: destinoOperador,
+            tabelaPrecoId: tabelaSelecionada?.id 
+          })
             .then(res => ({ tipo: 'emitente_op', data: res.data }))
             .catch(err => ({ tipo: 'emitente_op', error: true, message: err.message }))
         );
@@ -609,7 +617,11 @@ export default function SolicitacaoColeta() {
         if (formData.destino_cidade && formData.destino_uf) {
           const destinoFinal = `${formData.destino_cidade}, ${formData.destino_uf}, Brasil`;
           promises.push(
-            calcularDistancia({ origem: destinoOperador, destino: destinoFinal })
+            calcularDistancia({ 
+              origem: destinoOperador, 
+              destino: destinoFinal,
+              tabelaPrecoId: tabelaSelecionada?.id 
+            })
               .then(res => ({ tipo: 'op_dest', data: res.data }))
               .catch(err => ({ tipo: 'op_dest', error: true, message: err.message }))
           );
