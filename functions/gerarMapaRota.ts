@@ -1,0 +1,62 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { origem, destino, titulo, distanciaKm } = await req.json();
+
+    if (!origem || !destino) {
+      return Response.json({ error: 'Origem e destino são obrigatórios' }, { status: 400 });
+    }
+
+    const GOOGLE_API_KEY = Deno.env.get("GOOGLE");
+
+    // 1. Buscar rota usando Directions API
+    const directionsUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(origem)}&destination=${encodeURIComponent(destino)}&mode=driving&language=pt-BR&key=${GOOGLE_API_KEY}`;
+    
+    const directionsResponse = await fetch(directionsUrl);
+    const directionsData = await directionsResponse.json();
+
+    if (directionsData.status !== 'OK' || !directionsData.routes || directionsData.routes.length === 0) {
+      return Response.json({ error: 'Não foi possível obter a rota' }, { status: 400 });
+    }
+
+    // 2. Extrair polyline da rota
+    const route = directionsData.routes[0];
+    const polyline = route.overview_polyline.points;
+
+    // 3. Gerar URL do mapa estático com a rota real
+    const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?` +
+      `size=1200x800&` +
+      `scale=2&` +
+      `maptype=roadmap&` +
+      `markers=color:green|label:A|${encodeURIComponent(origem)}&` +
+      `markers=color:red|label:B|${encodeURIComponent(destino)}&` +
+      `path=enc:${polyline}&` +
+      `path=color:0x3b82f6|weight:5|enc:${polyline}&` +
+      `key=${GOOGLE_API_KEY}`;
+
+    // 4. Fazer fetch da imagem do mapa
+    const mapResponse = await fetch(staticMapUrl);
+    const mapBlob = await mapResponse.arrayBuffer();
+
+    // 5. Retornar a imagem
+    return new Response(mapBlob, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/png',
+        'Content-Disposition': `attachment; filename="mapa-rota-${distanciaKm || 0}km.png"`
+      }
+    });
+
+  } catch (error) {
+    console.error("Erro ao gerar mapa:", error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+});

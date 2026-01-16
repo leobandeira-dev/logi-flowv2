@@ -680,7 +680,7 @@ export default function SolicitacaoColeta() {
     }
 
     try {
-      toast.info("Gerando mapa, aguarde...");
+      toast.info("Gerando mapa com rota, aguarde...");
       
       // Determinar qual rota usar baseado na configuração da tabela
       let origem = "";
@@ -710,32 +710,20 @@ export default function SolicitacaoColeta() {
         return;
       }
 
-      // Gerar mapa usando Static Maps API
-      const GOOGLE_API_KEY = "AIzaSyA8JkFiGGCOzYn0OqoJZdWKbaBJVYWRGyw";
-      
-      // URL do mapa com rota
-      const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?` +
-        `size=1200x800&` +
-        `scale=2&` +
-        `maptype=roadmap&` +
-        `markers=color:green|label:A|${encodeURIComponent(origem)}&` +
-        `markers=color:red|label:B|${encodeURIComponent(destino)}&` +
-        `path=color:0x3b82f6|weight:5|${encodeURIComponent(origem)}|${encodeURIComponent(destino)}&` +
-        `key=${GOOGLE_API_KEY}`;
+      // Chamar função backend para gerar mapa com rota real
+      const response = await base44.functions.invoke('gerarMapaRota', {
+        origem,
+        destino,
+        titulo,
+        distanciaKm
+      });
 
-      // Fazer fetch da imagem
-      const response = await fetch(mapUrl);
-      if (!response.ok) {
-        throw new Error("Erro ao buscar mapa do Google");
-      }
-      
-      const blob = await response.blob();
-      
-      // Criar link de download
+      // Criar blob e fazer download
+      const blob = new Blob([response.data], { type: 'image/png' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `mapa-${titulo.replace(/[^a-z0-9]/gi, '-')}-${distanciaKm.toFixed(0)}km.png`;
+      a.download = `mapa-rota-${distanciaKm.toFixed(0)}km-${new Date().getTime()}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -744,7 +732,7 @@ export default function SolicitacaoColeta() {
       toast.success(`Mapa baixado: ${distanciaKm.toFixed(1)} km`);
     } catch (error) {
       console.error("Erro ao gerar mapa:", error);
-      toast.error("Erro ao gerar mapa");
+      toast.error("Erro ao gerar mapa: " + (error.response?.data?.error || error.message));
     }
   };
 
