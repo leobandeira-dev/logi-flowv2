@@ -707,14 +707,14 @@ export default function SolicitacaoColeta() {
 
       // Chamar função backend
       const { gerarMapaRota } = await import("@/functions/gerarMapaRota");
-      const response = await gerarMapaRota({ 
+      const { data } = await gerarMapaRota({ 
         origem, 
         destino, 
         distanciaKm 
       });
       
       // Converter base64 para Blob
-      const byteCharacters = atob(response.data.imageBase64);
+      const byteCharacters = atob(data.imageBase64);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
@@ -725,7 +725,7 @@ export default function SolicitacaoColeta() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = response.data.filename || `mapa-rota-${distanciaKm.toFixed(0)}km.png`;
+      a.download = data.filename || `mapa-rota-${distanciaKm.toFixed(0)}km.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
