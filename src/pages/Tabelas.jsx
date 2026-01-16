@@ -248,7 +248,7 @@ export default function Tabelas() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold" style={{ color: theme.text }}>
-              Tabelas de Preços
+              Tabelas de Frete
             </h1>
             <p className="mt-1" style={{ color: theme.textMuted }}>
               Gerencie tabelas de precificação por cliente

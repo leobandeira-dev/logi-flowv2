@@ -40,13 +40,13 @@ import ProcessarEtapasNovembro from './pages/ProcessarEtapasNovembro';
 import ProdutosPalets from './pages/ProdutosPalets';
 import Recebimento from './pages/Recebimento';
 import SAC from './pages/SAC';
+import SolicitacaoColeta from './pages/SolicitacaoColeta';
 import Tabelas from './pages/Tabelas';
 import Tracking from './pages/Tracking';
 import TrackingTV from './pages/TrackingTV';
 import Unitizacao from './pages/Unitizacao';
 import Usuarios from './pages/Usuarios';
 import Veiculos from './pages/Veiculos';
-import SolicitacaoColeta from './pages/SolicitacaoColeta';
 import __Layout from './Layout.jsx';
 
 
@@ -93,13 +93,13 @@ export const PAGES = {
     "ProdutosPalets": ProdutosPalets,
     "Recebimento": Recebimento,
     "SAC": SAC,
+    "SolicitacaoColeta": SolicitacaoColeta,
     "Tabelas": Tabelas,
     "Tracking": Tracking,
     "TrackingTV": TrackingTV,
     "Unitizacao": Unitizacao,
     "Usuarios": Usuarios,
     "Veiculos": Veiculos,
-    "SolicitacaoColeta": SolicitacaoColeta,
 }
 
 export const pagesConfig = {
