@@ -12,14 +12,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Plus, Trash2, X, Search } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2, X, Search, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { calcularDistancia } from "@/functions/calcularDistancia";
 
 export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros }) {
   const [isDark, setIsDark] = useState(false);
   const [saving, setSaving] = useState(false);
   const [searchCliente, setSearchCliente] = useState("");
   const [filteredParceiros, setFilteredParceiros] = useState(parceiros);
+  const [calculandoDistancia, setCalculandoDistancia] = useState(false);
+  const [distanciaCalculada, setDistanciaCalculada] = useState(null);
+  const [enderecoOrigem, setEnderecoOrigem] = useState("");
+  const [enderecoDestino, setEnderecoDestino] = useState("");
   const [formData, setFormData] = useState({
     nome: "",
     codigo: "",
@@ -319,6 +324,30 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
     }
   };
 
+  const handleCalcularDistancia = async () => {
+    if (!enderecoOrigem || !enderecoDestino) {
+      toast.error("Preencha origem e destino");
+      return;
+    }
+
+    setCalculandoDistancia(true);
+    try {
+      const response = await calcularDistancia({
+        origem: enderecoOrigem,
+        destino: enderecoDestino,
+        tabelaPrecoId: tabela?.id // Passa o ID da tabela para usar a configuração tipo_distancia
+      });
+
+      setDistanciaCalculada(response.data);
+      toast.success(`Distância calculada: ${response.data.distancia_km} km`);
+    } catch (error) {
+      console.error("Erro ao calcular distância:", error);
+      toast.error("Erro ao calcular distância");
+    } finally {
+      setCalculandoDistancia(false);
+    }
+  };
+
   const theme = {
     bg: isDark ? '#0f172a' : '#f9fafb',
     cardBg: isDark ? '#1e293b' : '#ffffff',
@@ -407,6 +436,84 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                     Define qual distância será usada para determinar a faixa de KM no cálculo do frete
                   </p>
                 </div>
+              )}
+
+              {tabela && formData.tipo_tabela === "peso_km" && (
+                <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm" style={{ color: theme.text }}>
+                      📍 Distâncias Calculadas via Google Maps
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs" style={{ color: theme.text }}>Origem</Label>
+                        <Input
+                          value={enderecoOrigem}
+                          onChange={(e) => setEnderecoOrigem(e.target.value)}
+                          placeholder="Ex: Cubatão, State of São Paulo, Brazil"
+                          className="text-xs"
+                          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs" style={{ color: theme.text }}>Destino</Label>
+                        <Input
+                          value={enderecoDestino}
+                          onChange={(e) => setEnderecoDestino(e.target.value)}
+                          placeholder="Ex: Imperatriz - Camaçari, State of Maranhão, Brazil"
+                          className="text-xs"
+                          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                        />
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      onClick={handleCalcularDistancia}
+                      disabled={calculandoDistancia}
+                      size="sm"
+                      className="w-full bg-purple-600 hover:bg-purple-700"
+                    >
+                      {calculandoDistancia ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                          Calculando...
+                        </>
+                      ) : (
+                        "Recalcular"
+                      )}
+                    </Button>
+
+                    {distanciaCalculada && (
+                      <div className="bg-white dark:bg-slate-800 p-3 rounded-lg border" style={{ borderColor: theme.cardBorder }}>
+                        <div className="text-sm space-y-1">
+                          <p style={{ color: theme.text }}>
+                            <span className="font-semibold" style={{ color: theme.textMuted }}>
+                              {formData.tipo_distancia === 'emitente_operador' 
+                                ? 'Emitente → Destinatário' 
+                                : formData.tipo_distancia === 'emitente_operador' 
+                                  ? 'Emitente → Operador Logístico'
+                                  : 'Operador Logístico → Destinatário'}:
+                            </span>{" "}
+                            <span className="font-bold text-purple-600">{distanciaCalculada.distancia_km} km</span>
+                          </p>
+                          <p className="text-xs" style={{ color: theme.textMuted }}>
+                            Origem: {distanciaCalculada.origem_endereco}
+                          </p>
+                          <p className="text-xs" style={{ color: theme.textMuted }}>
+                            Destino: {distanciaCalculada.destino_endereco}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    <p className="text-xs" style={{ color: theme.textMuted }}>
+                      Se preenchido, este valor será usado no lugar do cálculo automático
+                    </p>
+                  </CardContent>
+                </Card>
               )}
 
               <div>
