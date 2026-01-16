@@ -682,7 +682,6 @@ export default function SolicitacaoColeta() {
     try {
       toast.info("Gerando mapa...");
       
-      // Determinar qual rota usar
       let origem = "";
       let destino = "";
       let distanciaKm = 0;
@@ -706,12 +705,26 @@ export default function SolicitacaoColeta() {
         return;
       }
 
-      // Chamar backend - resposta já é ArrayBuffer
-      const { gerarMapaRota } = await import("@/functions/gerarMapaRota");
-      const arrayBuffer = await gerarMapaRota({ origem, destino, distanciaKm });
+      const API_KEY = "AIzaSyA8JkFiGGCOzYn0OqoJZdWKbaBJVYWRGyw";
+
+      // Buscar rota e polyline
+      const directionsUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(origem)}&destination=${encodeURIComponent(destino)}&mode=driving&key=${API_KEY}`;
+      const directionsRes = await fetch(directionsUrl);
+      const directionsData = await directionsRes.json();
+
+      if (directionsData.status !== 'OK' || !directionsData.routes?.[0]) {
+        toast.error("Não foi possível obter a rota");
+        return;
+      }
+
+      const polyline = directionsData.routes[0].overview_polyline.points;
+
+      // Gerar mapa com rota
+      const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?size=1200x800&scale=2&maptype=roadmap&markers=color:green|label:A|${encodeURIComponent(origem)}&markers=color:red|label:B|${encodeURIComponent(destino)}&path=color:0x3b82f6|weight:5|enc:${polyline}&key=${API_KEY}`;
+
+      const mapRes = await fetch(mapUrl);
+      const blob = await mapRes.blob();
       
-      // Criar blob e download
-      const blob = new Blob([arrayBuffer], { type: 'image/png' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -721,10 +734,10 @@ export default function SolicitacaoColeta() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
-      toast.success(`Mapa baixado!`);
+      toast.success("Mapa baixado!");
     } catch (error) {
       console.error("Erro:", error);
-      toast.error("Erro ao gerar mapa: " + error.message);
+      toast.error("Erro ao gerar mapa");
     }
   };
 
