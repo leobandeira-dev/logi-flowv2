@@ -710,20 +710,26 @@ export default function SolicitacaoColeta() {
         return;
       }
 
-      // Chamar função backend para gerar mapa com rota real
-      const response = await base44.functions.invoke('gerarMapaRota', {
-        origem,
-        destino,
-        titulo,
-        distanciaKm
+      // Fazer chamada direta à função backend para obter o binário
+      const functionResponse = await fetch('/.netlify/functions/gerarMapaRota', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await base44.auth.me()).id}`
+        },
+        body: JSON.stringify({
+          origem,
+          destino,
+          titulo,
+          distanciaKm
+        })
       });
 
-      // Converter ArrayBuffer para Blob
-      const arrayBuffer = response.data instanceof ArrayBuffer 
-        ? response.data 
-        : new Uint8Array(response.data).buffer;
-      
-      const blob = new Blob([arrayBuffer], { type: 'image/png' });
+      if (!functionResponse.ok) {
+        throw new Error('Erro ao gerar mapa');
+      }
+
+      const blob = await functionResponse.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
