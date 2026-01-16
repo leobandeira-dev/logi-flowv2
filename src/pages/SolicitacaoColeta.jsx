@@ -705,26 +705,16 @@ export default function SolicitacaoColeta() {
         return;
       }
 
-      const API_KEY = "AIzaSyA8JkFiGGCOzYn0OqoJZdWKbaBJVYWRGyw";
-
-      // Buscar rota e polyline
-      const directionsUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(origem)}&destination=${encodeURIComponent(destino)}&mode=driving&key=${API_KEY}`;
-      const directionsRes = await fetch(directionsUrl);
-      const directionsData = await directionsRes.json();
-
-      if (directionsData.status !== 'OK' || !directionsData.routes?.[0]) {
-        toast.error("Não foi possível obter a rota");
-        return;
-      }
-
-      const polyline = directionsData.routes[0].overview_polyline.points;
-
-      // Gerar mapa com rota
-      const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?size=1200x800&scale=2&maptype=roadmap&markers=color:green|label:A|${encodeURIComponent(origem)}&markers=color:red|label:B|${encodeURIComponent(destino)}&path=color:0x3b82f6|weight:5|enc:${polyline}&key=${API_KEY}`;
-
-      const mapRes = await fetch(mapUrl);
-      const blob = await mapRes.blob();
+      // Chamar função backend com responseType blob
+      const { gerarMapaRota } = await import("@/functions/gerarMapaRota");
+      const response = await gerarMapaRota({ 
+        origem, 
+        destino, 
+        distanciaKm 
+      });
       
+      // Response.data é o ArrayBuffer da imagem
+      const blob = new Blob([response.data], { type: 'image/png' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -737,7 +727,7 @@ export default function SolicitacaoColeta() {
       toast.success("Mapa baixado!");
     } catch (error) {
       console.error("Erro:", error);
-      toast.error("Erro ao gerar mapa");
+      toast.error("Erro ao gerar mapa: " + (error.response?.data?.error || error.message));
     }
   };
 
