@@ -707,14 +707,14 @@ export default function SolicitacaoColeta() {
 
       // Chamar função backend
       const { gerarMapaRota } = await import("@/functions/gerarMapaRota");
-      const imageData = await gerarMapaRota({ 
+      const response = await gerarMapaRota({ 
         origem, 
         destino, 
         distanciaKm 
       });
       
-      // A função retorna os dados binários diretamente
-      const blob = new Blob([imageData], { type: 'image/png' });
+      // A função retorna um objeto com .data contendo os bytes
+      const blob = new Blob([response.data], { type: 'image/png' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
