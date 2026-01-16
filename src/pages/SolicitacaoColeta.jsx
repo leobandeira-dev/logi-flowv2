@@ -706,16 +706,12 @@ export default function SolicitacaoColeta() {
         return;
       }
 
-      // Chamar backend para gerar mapa com polyline
+      // Chamar backend - resposta já é ArrayBuffer
       const { gerarMapaRota } = await import("@/functions/gerarMapaRota");
-      const response = await gerarMapaRota({ origem, destino, distanciaKm });
+      const arrayBuffer = await gerarMapaRota({ origem, destino, distanciaKm });
       
-      if (!response.data) {
-        throw new Error("Resposta vazia");
-      }
-
       // Criar blob e download
-      const blob = new Blob([response.data], { type: 'image/png' });
+      const blob = new Blob([arrayBuffer], { type: 'image/png' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
