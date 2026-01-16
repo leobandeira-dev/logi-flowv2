@@ -675,12 +675,12 @@ export default function SolicitacaoColeta() {
 
   const handleDownloadMapa = async () => {
     if (!distanciaEmitenteDest && !distanciaEmitenteOp && !distanciaOpDest) {
-      toast.error("Nenhuma distância calculada para gerar mapa");
+      toast.error("Nenhuma distância calculada");
       return;
     }
 
     try {
-      toast.info("Gerando mapa com rota, aguarde...");
+      toast.info("Gerando mapa...");
       
       // Determinar qual rota usar
       let origem = "";
@@ -706,29 +706,16 @@ export default function SolicitacaoColeta() {
         return;
       }
 
-      const GOOGLE_API_KEY = "AIzaSyA8JkFiGGCOzYn0OqoJZdWKbaBJVYWRGyw";
-
-      // 1. Buscar polyline da rota via Directions API
-      const directionsUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(origem)}&destination=${encodeURIComponent(destino)}&mode=driving&language=pt-BR&key=${GOOGLE_API_KEY}`;
+      // Chamar backend para gerar mapa com polyline
+      const { gerarMapaRota } = await import("@/functions/gerarMapaRota");
+      const response = await gerarMapaRota({ origem, destino, distanciaKm });
       
-      const directionsResponse = await fetch(directionsUrl);
-      const directionsData = await directionsResponse.json();
-
-      if (directionsData.status !== 'OK' || !directionsData.routes || directionsData.routes.length === 0) {
-        toast.error("Não foi possível obter a rota");
-        return;
+      if (!response.data) {
+        throw new Error("Resposta vazia");
       }
 
-      // 2. Extrair polyline da rota
-      const polyline = directionsData.routes[0].overview_polyline.points;
-
-      // 3. Gerar URL do mapa estático com a rota real
-      const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?size=1200x800&scale=2&maptype=roadmap&markers=color:green|label:A|${encodeURIComponent(origem)}&markers=color:red|label:B|${encodeURIComponent(destino)}&path=color:0x3b82f6|weight:5|enc:${polyline}&key=${GOOGLE_API_KEY}`;
-
-      // 4. Fazer download
-      const mapResponse = await fetch(staticMapUrl);
-      const blob = await mapResponse.blob();
-      
+      // Criar blob e download
+      const blob = new Blob([response.data], { type: 'image/png' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -738,10 +725,10 @@ export default function SolicitacaoColeta() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
-      toast.success(`Mapa baixado: ${distanciaKm.toFixed(1)} km`);
+      toast.success(`Mapa baixado!`);
     } catch (error) {
-      console.error("Erro ao gerar mapa:", error);
-      toast.error("Erro ao gerar mapa");
+      console.error("Erro:", error);
+      toast.error("Erro ao gerar mapa: " + error.message);
     }
   };
 
