@@ -49,7 +49,11 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
     pedagio: 0,
     tipo_pedagio: "fixo",
     icms: 0,
+    adicionar_icms: false,
     pis_cofins: 0,
+    incluir_pis_cofins: false,
+    desconsiderar_impostos_frete_minimo: false,
+    desconsiderar_no_frete_minimo: [],
     ad_valorem: 0,
     gris: 0,
     taxa_redespacho: 0,
@@ -59,6 +63,10 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
     taxa_entrega: 0,
     generalidades: 0,
     desconto: 0,
+    reembarque: 0,
+    devolucao: 0,
+    prazo_entrega_dias: 0,
+    tipo_prazo: "corridos",
     observacoes: "",
     ativo: true
   });
@@ -104,7 +112,11 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
         pedagio: tabela.pedagio || 0,
         tipo_pedagio: tabela.tipo_pedagio || "fixo",
         icms: tabela.icms || 0,
+        adicionar_icms: tabela.adicionar_icms || false,
         pis_cofins: tabela.pis_cofins || 0,
+        incluir_pis_cofins: tabela.incluir_pis_cofins || false,
+        desconsiderar_impostos_frete_minimo: tabela.desconsiderar_impostos_frete_minimo || false,
+        desconsiderar_no_frete_minimo: tabela.desconsiderar_no_frete_minimo || [],
         ad_valorem: tabela.ad_valorem || 0,
         gris: tabela.gris || 0,
         taxa_redespacho: tabela.taxa_redespacho || 0,
@@ -114,6 +126,10 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
         taxa_entrega: tabela.taxa_entrega || 0,
         generalidades: tabela.generalidades || 0,
         desconto: tabela.desconto || 0,
+        reembarque: tabela.reembarque || 0,
+        devolucao: tabela.devolucao || 0,
+        prazo_entrega_dias: tabela.prazo_entrega_dias || 0,
+        tipo_prazo: tabela.tipo_prazo || "corridos",
         observacoes: tabela.observacoes || "",
         ativo: tabela.ativo !== false
       });
@@ -702,6 +718,7 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                       <SelectItem value="fixo">Fixo</SelectItem>
                       <SelectItem value="percentual">Percentual</SelectItem>
                       <SelectItem value="por_eixo">Por Eixo</SelectItem>
+                      <SelectItem value="kg_por_veiculo">KG por Veículo</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -803,7 +820,7 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <div>
                   <Label style={{ color: theme.text }}>Generalidades (%)</Label>
                   <Input
@@ -823,6 +840,133 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
                     onChange={(e) => setFormData({ ...formData, desconto: parseFloat(e.target.value) || 0 })}
                     style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
                   />
+                </div>
+                <div>
+                  <Label style={{ color: theme.text }}>Reembarque (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.reembarque}
+                    onChange={(e) => setFormData({ ...formData, reembarque: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+                <div>
+                  <Label style={{ color: theme.text }}>Devolução (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.devolucao}
+                    onChange={(e) => setFormData({ ...formData, devolucao: parseFloat(e.target.value) || 0 })}
+                    style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t" style={{ borderColor: isDark ? '#334155' : '#e5e7eb' }}>
+                <p className="text-sm font-semibold mb-3" style={{ color: theme.text }}>
+                  Flags de Cálculo:
+                </p>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded border-gray-300"
+                      checked={formData.adicionar_icms}
+                      onChange={(e) => setFormData({ ...formData, adicionar_icms: e.target.checked })}
+                    />
+                    <span className="text-sm" style={{ color: theme.textMuted }}>
+                      Incluir ICMS no cálculo do frete
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded border-gray-300"
+                      checked={formData.incluir_pis_cofins}
+                      onChange={(e) => setFormData({ ...formData, incluir_pis_cofins: e.target.checked })}
+                    />
+                    <span className="text-sm" style={{ color: theme.textMuted }}>
+                      Incluir PIS/COFINS no cálculo do frete
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded border-gray-300"
+                      checked={formData.desconsiderar_impostos_frete_minimo}
+                      onChange={(e) => setFormData({ ...formData, desconsiderar_impostos_frete_minimo: e.target.checked })}
+                    />
+                    <span className="text-sm" style={{ color: theme.textMuted }}>
+                      Desconsiderar recálculo de ICMS e PIS/COFINS sobre o total em caso de frete mínimo
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t" style={{ borderColor: isDark ? '#334155' : '#e5e7eb' }}>
+                <p className="text-sm font-semibold mb-3" style={{ color: theme.text }}>
+                  Desconsiderar no Frete Mínimo:
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {['gris', 'pedagio', 'seguro', 'redespacho', 'tde'].map((item) => (
+                    <label key={item} className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded border-gray-300"
+                        checked={formData.desconsiderar_no_frete_minimo.includes(item)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({ 
+                              ...formData, 
+                              desconsiderar_no_frete_minimo: [...formData.desconsiderar_no_frete_minimo, item] 
+                            });
+                          } else {
+                            setFormData({ 
+                              ...formData, 
+                              desconsiderar_no_frete_minimo: formData.desconsiderar_no_frete_minimo.filter(i => i !== item) 
+                            });
+                          }
+                        }}
+                      />
+                      <span className="text-sm capitalize" style={{ color: theme.textMuted }}>
+                        {item === 'gris' ? 'GRIS' : item === 'tde' ? 'TDE' : item.charAt(0).toUpperCase() + item.slice(1)}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t" style={{ borderColor: isDark ? '#334155' : '#e5e7eb' }}>
+                <p className="text-sm font-semibold mb-3" style={{ color: theme.text }}>
+                  Prazo de Entrega:
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs" style={{ color: theme.text }}>Prazo (dias)</Label>
+                    <Input
+                      type="number"
+                      value={formData.prazo_entrega_dias}
+                      onChange={(e) => setFormData({ ...formData, prazo_entrega_dias: parseInt(e.target.value) || 0 })}
+                      min="0"
+                      style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs" style={{ color: theme.text }}>Tipo de Prazo</Label>
+                    <Select
+                      value={formData.tipo_prazo}
+                      onValueChange={(value) => setFormData({ ...formData, tipo_prazo: value })}
+                    >
+                      <SelectTrigger style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder, color: theme.text }}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="corridos">Dias Corridos</SelectItem>
+                        <SelectItem value="uteis">Dias Úteis</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             </CardContent>
