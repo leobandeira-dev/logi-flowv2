@@ -718,8 +718,12 @@ export default function SolicitacaoColeta() {
         distanciaKm
       });
 
-      // Criar blob e fazer download
-      const blob = new Blob([response.data], { type: 'image/png' });
+      // Converter ArrayBuffer para Blob
+      const arrayBuffer = response.data instanceof ArrayBuffer 
+        ? response.data 
+        : new Uint8Array(response.data).buffer;
+      
+      const blob = new Blob([arrayBuffer], { type: 'image/png' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
