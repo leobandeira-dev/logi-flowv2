@@ -705,19 +705,17 @@ export default function SolicitacaoColeta() {
         return;
       }
 
-      // Chamar função backend
-      const { gerarMapaRota } = await import("@/functions/gerarMapaRota");
-      const response = await gerarMapaRota({ 
+      // Chamar função backend via axios direto para obter blob
+      const response = await base44.functions.invoke('gerarMapaRota', { 
         origem, 
         destino, 
         distanciaKm 
+      }, {
+        responseType: 'blob'
       });
       
-      // Criar blob da resposta (ArrayBuffer)
-      const blob = new Blob([response.data], { type: 'image/png' });
-      
       // Download do blob
-      const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(response.data);
       const a = document.createElement('a');
       a.href = url;
       a.download = `mapa-rota-${distanciaKm.toFixed(0)}km.png`;
