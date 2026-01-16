@@ -705,15 +705,18 @@ export default function SolicitacaoColeta() {
         return;
       }
 
-      // Chamar função backend com responseType blob
+      // Chamar função backend
       const { gerarMapaRota } = await import("@/functions/gerarMapaRota");
-      const blob = await gerarMapaRota({ 
+      const response = await gerarMapaRota({ 
         origem, 
         destino, 
         distanciaKm 
       });
       
-      // Download do blob diretamente
+      // Criar blob da resposta (ArrayBuffer)
+      const blob = new Blob([response.data], { type: 'image/png' });
+      
+      // Download do blob
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
