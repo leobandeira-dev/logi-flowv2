@@ -20,24 +20,26 @@ Deno.serve(async (req) => {
     // Se tabelaPrecoId foi fornecido, buscar a configuração de tipo_distancia
     let origemParaCalculo = origem;
     let destinoParaCalculo = destino;
+    let tipoDistanciaUsado = 'emitente_destinatario';
     
     if (tabelaPrecoId) {
       try {
-        const tabelasPreco = await base44.entities.TabelaPreco.filter({ id: tabelaPrecoId });
+        const tabelasPreco = await base44.asServiceRole.entities.TabelaPreco.filter({ id: tabelaPrecoId });
         
         if (tabelasPreco.length > 0) {
           const tabela = tabelasPreco[0];
           const tipoDistancia = tabela.tipo_distancia || 'emitente_destinatario';
+          tipoDistanciaUsado = tipoDistancia;
           
           // Se a configuração requer operador logístico, buscar dados da empresa
           if (tipoDistancia === 'emitente_operador' || tipoDistancia === 'operador_destinatario') {
-            const empresa = await base44.entities.Empresa.get(user.empresa_id);
+            const empresa = await base44.asServiceRole.entities.Empresa.get(user.empresa_id);
             
             const enderecoOperador = [
               empresa.endereco,
               empresa.cidade,
               empresa.estado,
-              empresa.cep
+              'Brazil'
             ].filter(Boolean).join(', ');
             
             if (tipoDistancia === 'emitente_operador') {
@@ -95,7 +97,8 @@ Deno.serve(async (req) => {
       duracao_texto: element.duration.text,
       duracao_segundos: element.duration.value,
       origem_endereco: data.origin_addresses[0],
-      destino_endereco: data.destination_addresses[0]
+      destino_endereco: data.destination_addresses[0],
+      tipo_distancia_usado: tipoDistanciaUsado
     });
     
   } catch (error) {
