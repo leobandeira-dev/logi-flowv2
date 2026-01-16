@@ -705,15 +705,14 @@ export default function SolicitacaoColeta() {
         return;
       }
 
-      // Chamar função backend
-      const { gerarMapaRota } = await import("@/functions/gerarMapaRota");
-      const response = await gerarMapaRota({ 
+      // Chamar função backend usando base44 SDK
+      const response = await base44.functions.invoke('gerarMapaRota', { 
         origem, 
         destino, 
         distanciaKm 
       });
       
-      // Criar blob da resposta (ArrayBuffer)
+      // Criar blob da resposta
       const blob = new Blob([response.data], { type: 'image/png' });
       
       // Download do blob
