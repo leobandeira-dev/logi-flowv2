@@ -263,6 +263,21 @@ export default function OrdensCarregamento() {
         cliente_final_cnpj: clienteFinalCnpj
       };
 
+      // VALIDAÇÃO DE SENHA DE FILA ÚNICA (exceto DEDI)
+      if (ordemData.senha_fila && ordemData.senha_fila.toUpperCase() !== 'DEDI') {
+        const todasAsOrdens = await base44.entities.OrdemDeCarregamento.list();
+        
+        const isDuplicate = todasAsOrdens.some(ordem => 
+          ordem.senha_fila === ordemData.senha_fila &&
+          (!editingOrdem || ordem.id !== editingOrdem.id)
+        );
+
+        if (isDuplicate) {
+          toast.error('Essa Senha da Fila já está em uso. Por favor, utilize outra.');
+          return; // Interrompe o envio
+        }
+      }
+
       let ordemId;
       let ordemSalva;
 
