@@ -38,12 +38,17 @@ Deno.serve(async (req) => {
       `maptype=roadmap&` +
       `markers=color:green|label:A|${encodeURIComponent(origem)}&` +
       `markers=color:red|label:B|${encodeURIComponent(destino)}&` +
-      `path=enc:${polyline}&` +
       `path=color:0x3b82f6|weight:5|enc:${polyline}&` +
       `key=${GOOGLE_API_KEY}`;
 
     // 4. Fazer fetch da imagem do mapa
     const mapResponse = await fetch(staticMapUrl);
+    
+    if (!mapResponse.ok) {
+      console.error("Erro ao buscar mapa:", await mapResponse.text());
+      return Response.json({ error: 'Erro ao gerar mapa' }, { status: 500 });
+    }
+    
     const mapBlob = await mapResponse.arrayBuffer();
 
     // 5. Retornar a imagem
