@@ -49,15 +49,17 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Erro ao gerar mapa' }, { status: 500 });
     }
     
-    const mapBlob = await mapResponse.arrayBuffer();
+    const mapBuffer = await mapResponse.arrayBuffer();
+    
+    // 5. Converter para base64 para enviar via JSON
+    const base64Image = btoa(
+      new Uint8Array(mapBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+    );
 
-    // 5. Retornar a imagem
-    return new Response(mapBlob, {
-      status: 200,
-      headers: {
-        'Content-Type': 'image/png',
-        'Content-Disposition': `attachment; filename="mapa-rota-${distanciaKm || 0}km.png"`
-      }
+    // 6. Retornar como JSON com a imagem em base64
+    return Response.json({
+      imageBase64: base64Image,
+      filename: `mapa-rota-${distanciaKm || 0}km.png`
     });
 
   } catch (error) {
