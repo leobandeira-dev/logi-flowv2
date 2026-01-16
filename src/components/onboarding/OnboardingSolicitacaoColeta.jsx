@@ -150,39 +150,17 @@ export default function OnboardingSolicitacaoColeta({ open, onClose, currentActi
 
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {currentStep + 1} de {steps.length}
+              Passo {currentStep + 1} de {steps.length}
             </span>
 
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={handleSkip}
-                size="sm"
-                className="text-xs"
-              >
-                Pular
-              </Button>
-              
-              {currentStep === steps.length - 1 ? (
-                <Button
-                  onClick={handleClose}
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700 text-white gap-2 text-xs"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Concluir
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleNext}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white gap-2 text-xs"
-                >
-                  Próximo
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
+            <Button
+              variant="outline"
+              onClick={handleSkip}
+              size="sm"
+              className="text-xs"
+            >
+              Pular Tutorial
+            </Button>
           </div>
 
           <div className="flex gap-1 mt-4">
