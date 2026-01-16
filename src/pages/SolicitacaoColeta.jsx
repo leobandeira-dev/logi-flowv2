@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Package, Upload, Plus, RefreshCw, X, Edit, Search, MapPin, Loader2, AlertTriangle } from "lucide-react";
+import { Package, Upload, Plus, RefreshCw, X, Edit, Search, MapPin, Loader2, AlertTriangle, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import NotaFiscalForm from "../components/notas-fiscais/NotaFiscalForm";
@@ -670,6 +670,93 @@ export default function SolicitacaoColeta() {
       toast.error("Erro ao calcular distâncias via API");
     } finally {
       setCalculandoDistancia(false);
+    }
+  };
+
+  const handleDownloadMapa = async () => {
+    if (!distanciaEmitenteDest && !distanciaEmitenteOp && !distanciaOpDest) {
+      toast.error("Nenhuma distância calculada para gerar mapa");
+      return;
+    }
+
+    try {
+      const GOOGLE_API_KEY = "AIzaSyA8JkFiGGCOzYn0OqoJZdWKbaBJVYWRGyw";
+      
+      // Determinar qual rota usar baseado na configuração da tabela
+      let origem = "";
+      let destino = "";
+      let titulo = "";
+      
+      if (tabelaSelecionada?.tipo_distancia === "emitente_operador" && distanciaEmitenteOp) {
+        origem = distanciaEmitenteOp.origem;
+        destino = distanciaEmitenteOp.destino;
+        titulo = "Emitente → Operador Logístico";
+      } else if (tabelaSelecionada?.tipo_distancia === "operador_destinatario" && distanciaOpDest) {
+        origem = distanciaOpDest.origem;
+        destino = distanciaOpDest.destino;
+        titulo = "Operador Logístico → Destinatário";
+      } else if (distanciaEmitenteDest) {
+        origem = distanciaEmitenteDest.origem;
+        destino = distanciaEmitenteDest.destino;
+        titulo = "Emitente → Destinatário";
+      }
+
+      // Gerar URL da Static Map com rota
+      const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?size=800x600&maptype=roadmap&markers=color:green|label:A|${encodeURIComponent(origem)}&markers=color:red|label:B|${encodeURIComponent(destino)}&path=color:0x0000ff|weight:5|${encodeURIComponent(origem)}|${encodeURIComponent(destino)}&key=${GOOGLE_API_KEY}`;
+
+      // Criar canvas para adicionar informações
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = mapUrl;
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 700;
+        const ctx = canvas.getContext('2d');
+
+        // Fundo branco
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Desenhar mapa
+        ctx.drawImage(img, 0, 50, 800, 600);
+
+        // Cabeçalho
+        ctx.fillStyle = '#1e40af';
+        ctx.fillRect(0, 0, 800, 50);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(titulo, 400, 32);
+
+        // Informações no rodapé
+        ctx.fillStyle = '#000000';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Origem: ${origem}`, 20, 670);
+        ctx.fillText(`Destino: ${destino}`, 20, 690);
+
+        // Download
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `mapa-rota-${new Date().getTime()}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          toast.success("Mapa baixado com sucesso!");
+        });
+      };
+
+      img.onerror = () => {
+        toast.error("Erro ao gerar mapa. Tente novamente.");
+      };
+    } catch (error) {
+      console.error("Erro ao gerar mapa:", error);
+      toast.error("Erro ao gerar mapa");
     }
   };
 
@@ -2039,18 +2126,30 @@ export default function SolicitacaoColeta() {
                                   Distâncias Calculadas via Google Maps
                                 </p>
                               </div>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setKmManual(null);
-                                  calcularDistancias();
-                                }}
-                                className="h-7 text-xs"
-                              >
-                                Recalcular
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleDownloadMapa}
+                                  className="h-7 text-xs"
+                                >
+                                  <Download className="w-3 h-3 mr-1" />
+                                  Mapa
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setKmManual(null);
+                                    calcularDistancias();
+                                  }}
+                                  className="h-7 text-xs"
+                                >
+                                  Recalcular
+                                </Button>
+                              </div>
                             </div>
                             
                             <div className="grid grid-cols-1 gap-3 mb-3">
