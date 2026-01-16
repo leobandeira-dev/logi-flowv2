@@ -381,7 +381,7 @@ export default function TabelaPrecoForm({ tabela, onClose, onSuccess, parceiros 
             Voltar
           </Button>
           <h1 className="text-3xl font-bold" style={{ color: theme.text }}>
-            {tabela ? "Editar Tabela" : "Nova Tabela de Preços"}
+            {tabela ? "Editar Tabela de Frete" : "Nova Tabela de Frete"}
           </h1>
         </div>
 
