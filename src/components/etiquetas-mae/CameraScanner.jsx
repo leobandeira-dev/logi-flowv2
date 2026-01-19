@@ -234,22 +234,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     }
   }, [open]);
 
-  // Listener para Enter (Zebra scanner envia Enter após o código)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!open || !inputRef.current) return;
-      
-      if (e.key === 'Enter' && manualInput.trim()) {
-        e.preventDefault();
-        handleManualSubmit();
-      }
-    };
 
-    if (open) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [open, manualInput]);
 
   // Limpar debounce ao desmontar
   useEffect(() => {
