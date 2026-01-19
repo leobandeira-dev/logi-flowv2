@@ -446,6 +446,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
             <div className="absolute top-4 right-4 z-10 flex gap-2">
               <Button
+                onClick={() => setUseManualMode(!useManualMode)}
+                variant="outline"
+                size="sm"
+                className={useManualMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white/90 hover:bg-white"}
+                title="Modo manual"
+              >
+                <Keyboard className="w-4 h-4" />
+              </Button>
+              <Button
                 onClick={toggleCamera}
                 variant="outline"
                 size="sm"
@@ -453,6 +462,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 title="Alternar câmera"
               >
                 <SwitchCamera className="w-4 h-4" />
+              </Button>
+              <Button
+                onClick={onClose}
+                variant="outline"
+                size="sm"
+                className="bg-white/90 hover:bg-white"
+                title="Fechar"
+              >
+                <X className="w-4 h-4" />
               </Button>
             </div>
             </div>
