@@ -78,7 +78,13 @@ export default function Cubagem() {
   const iniciarCamera = async () => {
     // Ativar estado primeiro para mostrar o vídeo
     setCameraAtiva(true);
-    setEtapa("calibracao");
+    
+    // Se já tem referência, ir para medindo; senão, calibracao
+    if (referenciaPixels) {
+      setEtapa("medindo");
+    } else {
+      setEtapa("calibracao");
+    }
     
     // Aguardar um momento para o DOM renderizar
     setTimeout(async () => {
@@ -494,22 +500,32 @@ export default function Cubagem() {
 
                 {/* Câmera Ativa */}
                 {cameraAtiva && (
-                 <div className="space-y-4">
-                   <div className="relative rounded-lg overflow-hidden bg-black">
-                     <video
-                       ref={videoRef}
-                       autoPlay
-                       playsInline
-                       muted
-                       className="w-full h-auto"
-                       style={{ maxHeight: '400px' }}
-                     />
-                      {scanningQR && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="border-4 border-blue-500 w-64 h-64 rounded-lg animate-pulse" />
-                        </div>
-                      )}
-                    </div>
+                <div className="space-y-4">
+                  <div className="relative rounded-lg overflow-hidden bg-black">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-auto"
+                      style={{ maxHeight: '400px' }}
+                    />
+                     {scanningQR && (
+                       <div className="absolute inset-0 flex items-center justify-center">
+                         <div className="border-4 border-blue-500 w-64 h-64 rounded-lg animate-pulse" />
+                       </div>
+                     )}
+                     {detectando && (
+                       <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                         <div className="text-center">
+                           <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                           <p className="text-white font-semibold text-lg">
+                             {etapa === 'calibracao' ? 'Detectando cartão...' : 'Medindo objeto...'}
+                           </p>
+                         </div>
+                       </div>
+                     )}
+                   </div>
                     <canvas ref={canvasRef} className="hidden" />
                     
                     {!scanningQR && (etapa === 'inicial' || etapa === 'calibracao') && (
@@ -542,7 +558,7 @@ export default function Cubagem() {
                       </div>
                     )}
                     
-                    {!scanningQR && etapa === 'medindo' && (
+                    {!scanningQR && etapa === 'medindo' && cameraAtiva && (
                       <div className="space-y-3">
                         <p className="text-center text-sm font-medium" style={{ color: theme.text }}>
                           Posicione o objeto a ser medido no centro da imagem
