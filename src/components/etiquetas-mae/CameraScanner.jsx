@@ -227,35 +227,33 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     }
   };
 
-  const handleInputPaste = async () => {
-    // Interromper qualquer debounce anterior
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
+  const handleInputPaste = async (e) => {
+    // Capturar o valor colado direto do evento, antes do React atualizar o state
+    const pastedValue = (e.clipboardData || window.clipboardData)?.getData('text')?.trim();
     
-    // Aguardar o React atualizar o state com o valor colado
-    debounceTimerRef.current = setTimeout(async () => {
-      const value = inputRef.current?.value?.trim();
+    if (pastedValue) {
+      console.log('📋 Valor colado detectado:', pastedValue);
       
-      if (value) {
-        console.log('📋 Valor colado detectado:', value);
-        
-        try {
-          // Chamar onScan diretamente com o valor do input
-          const result = await Promise.resolve(onScan(value));
-          console.log('✅ onScan retornou:', result);
-          
-          applyFeedback(result);
-          setManualInput("");
-          
-          // Manter foco no input para próxima leitura
-          setTimeout(() => inputRef.current?.focus(), 100);
-        } catch (error) {
-          console.error('❌ Erro ao processar scan:', error);
-          applyFeedback('error');
-        }
+      // Limpar debounce anterior
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
-    }, 50);
+      
+      try {
+        // Chamar onScan direto com o valor colado (não esperar pelo state)
+        const result = await Promise.resolve(onScan(pastedValue));
+        console.log('✅ onScan retornou:', result);
+        
+        applyFeedback(result);
+        setManualInput("");
+        
+        // Manter foco no input para próxima leitura
+        setTimeout(() => inputRef.current?.focus(), 100);
+      } catch (error) {
+        console.error('❌ Erro ao processar scan:', error);
+        applyFeedback('error');
+      }
+    }
   };
 
   // Manter foco no input enquanto modal estiver aberto
