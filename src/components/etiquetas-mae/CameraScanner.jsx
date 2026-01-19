@@ -12,6 +12,7 @@ import QrScanner from "qr-scanner";
 import { useScanFeedback } from "./useScanFeedback";
 import { useZebraScanner } from "./useZebraScanner";
 import { ZEBRA_DETECTION, FEEDBACK_CONFIG, SCANNER_CONFIG } from "./scannerConstants";
+import { findRearCameraIndex, findFrontCameraIndex, logCameraInfo, getCameraConfig, isIOS, isAndroid, detectCameraType } from "./cameraDetection";
 
 export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual, progressoAtual, externalFeedback }) {
   const videoRef = useRef(null);
@@ -38,21 +39,18 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       try {
         const cameras = await QrScanner.listCameras(true);
         setAvailableCameras(cameras);
-        console.log('📷 Câmeras detectadas:', cameras);
-        console.log('📷 Detalhes:', cameras.map(c => ({ label: c.label, id: c.id })));
-
-        // Procurar câmera traseira (environment/back)
-        const backCameraIndex = cameras.findIndex(cam => 
-          cam.label.toLowerCase().includes('back') || 
-          cam.label.toLowerCase().includes('traseira') ||
-          cam.label.toLowerCase().includes('environment')
-        );
-
-        const selectedIndex = backCameraIndex !== -1 ? backCameraIndex : 0;
-        setCurrentCameraIndex(selectedIndex);
-        console.log('📷 Câmera selecionada (index):', selectedIndex, 'Label:', cameras[selectedIndex]?.label);
+        
+        // Log detalhado para debug
+        logCameraInfo(cameras);
+        
+        // Priorizar câmera traseira por padrão
+        const rearCameraIndex = findRearCameraIndex(cameras);
+        setCurrentCameraIndex(rearCameraIndex);
+        
+        console.log(`Câmera selecionada: [${rearCameraIndex}] ${cameras[rearCameraIndex]?.label}`);
+        console.log(`Plataforma: ${isIOS() ? 'iOS' : isAndroid() ? 'Android' : 'Outro'}`);
       } catch (error) {
-        console.log('Não foi possível detectar câmeras:', error);
+        console.error('Erro ao detectar câmeras:', error);
       }
     };
     
@@ -90,16 +88,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
 
     try {
-      // Preferir câmera traseira (environment) se disponível, senão usar a primeira
-      let cameraConfig = "environment"; // Padrão: câmera traseira
-
-      if (availableCameras.length > 0) {
-        const selectedCamera = availableCameras[currentCameraIndex];
-        console.log('📷 Usando câmera:', selectedCamera.label);
-        cameraConfig = selectedCamera;
-      } else {
-        console.log('📷 Nenhuma câmera detectada, usando preferência "environment"');
-      }
+      const cameraConfig = getCameraConfig(availableCameras, currentCameraIndex);
+      console.log('Iniciando scanner com câmera:', cameraConfig.label || 'padrão');
 
       const qrScanner = new QrScanner(
         videoRef.current,
@@ -195,7 +185,6 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   };
 
   const toggleCamera = async () => {
-    // Se estiver usando Zebra scanner, alternar para câmera web
     if (isUsingZebraScanner) {
       cleanupZebraScanner();
       setIsUsingZebraScanner(false);
@@ -207,18 +196,28 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       return;
     }
 
-    // Se estiver usando câmera web, alternar entre câmeras ou voltar para Zebra
-    if (availableCameras.length > 1) {
-      stopScanner();
-      const nextIndex = (currentCameraIndex + 1) % availableCameras.length;
-      setCurrentCameraIndex(nextIndex);
-    } else {
-      // Se só tem uma câmera e é Zebra, voltar para scanner Zebra
+    if (availableCameras.length < 2) {
       if (ZEBRA_DETECTION.isZebraDevice(navigator.userAgent)) {
         stopScanner();
         setIsUsingZebraScanner(true);
       }
+      return;
     }
+
+    // Alternar entre câmeras disponíveis
+    stopScanner();
+    const currentType = detectCameraType(availableCameras[currentCameraIndex]?.label);
+    
+    // Se está na traseira, ir para frontal; se está na frontal, ir para traseira
+    let nextIndex;
+    if (currentType === 'rear') {
+      nextIndex = findFrontCameraIndex(availableCameras);
+    } else {
+      nextIndex = findRearCameraIndex(availableCameras);
+    }
+    
+    setCurrentCameraIndex(nextIndex);
+    console.log(`Alternando para câmera [${nextIndex}]: ${availableCameras[nextIndex]?.label}`);
   };
 
   const stopScanner = () => {
