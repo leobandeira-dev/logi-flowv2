@@ -225,29 +225,43 @@ export default function Cubagem() {
   };
 
   const capturarObjeto = async () => {
+    console.log("🎯 Capturar Objeto clicado");
+    console.log("🔢 referenciaPixels:", referenciaPixels);
+    
     if (!referenciaPixels) {
       toast.error("Calibre a referência primeiro!");
       return;
     }
 
-    if (videoRef.current && canvasRef.current && modelo) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
+    if (!videoRef.current || !canvasRef.current || !modelo) {
+      toast.error("Sistema não está pronto. Tente novamente.");
+      return;
+    }
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    if (!video.videoWidth || !video.videoHeight) {
+      toast.error("Vídeo ainda não carregou. Aguarde alguns segundos.");
+      return;
+    }
+    
+    setDetectando(true);
+    toast.loading("Detectando e medindo objeto...", { id: "measure" });
+    
+    try {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0);
       
-      setDetectando(true);
-      setEtapa("processando");
-      
       // Detectar objetos na imagem
       const predictions = await modelo.detect(canvas);
+      console.log("🔍 Objetos detectados:", predictions.length);
       
       if (predictions.length === 0) {
-        toast.error("Nenhum objeto detectado. Posicione melhor o objeto.");
+        toast.error("Nenhum objeto detectado. Posicione melhor o objeto.", { id: "measure" });
         setDetectando(false);
-        setEtapa("medindo");
         return;
       }
 
@@ -259,12 +273,18 @@ export default function Cubagem() {
       });
 
       const [x, y, larguraPixels, alturaPixels] = objeto.bbox;
+      console.log("📏 Pixels detectados:", larguraPixels, "x", alturaPixels);
       
       // Calcular medidas em cm
       const larguraCm = larguraPixels / referenciaPixels;
       const alturaCm = alturaPixels / referenciaPixels;
-      // Estimar profundidade (assumindo que é aproximadamente 70% da largura para objetos comuns)
       const comprimentoCm = larguraCm * 0.7;
+      
+      console.log("📐 Medidas calculadas:", {
+        altura: alturaCm,
+        largura: larguraCm,
+        comprimento: comprimentoCm
+      });
       
       // Desenhar retângulo e linhas de medição
       ctx.strokeStyle = '#00ff00';
@@ -297,23 +317,31 @@ export default function Cubagem() {
       ctx.fillText(objeto.class.toUpperCase(), x, y - 10);
       
       const foto = canvas.toDataURL('image/jpeg', 0.9);
-      setFotoCapturada(foto);
+      console.log("📸 Foto gerada, tamanho:", foto.length);
       
+      const cubagemCalculada = (alturaCm / 100) * (larguraCm / 100) * (comprimentoCm / 100);
+      console.log("📦 Cubagem calculada:", cubagemCalculada, "m³");
+      
+      // Atualizar todos os estados
+      setFotoCapturada(foto);
       setMedidas({
         altura: alturaCm,
         largura: larguraCm,
         comprimento: comprimentoCm
       });
-      
-      const cubagemCalculada = (alturaCm / 100) * (larguraCm / 100) * (comprimentoCm / 100);
       setCubagem(cubagemCalculada);
-      
       setObjetoDetectado(objeto);
-      setDetectando(false);
+      
+      // Parar câmera e mudar etapa
       pararCamera();
+      setDetectando(false);
       setEtapa("processando");
       
-      toast.success(`Objeto medido com sucesso!`);
+      toast.success(`Objeto medido: ${larguraCm.toFixed(1)}x${alturaCm.toFixed(1)}x${comprimentoCm.toFixed(1)} cm`, { id: "measure" });
+    } catch (error) {
+      console.error("❌ Erro ao medir objeto:", error);
+      toast.error("Erro ao medir objeto: " + error.message, { id: "measure" });
+      setDetectando(false);
     }
   };
 
