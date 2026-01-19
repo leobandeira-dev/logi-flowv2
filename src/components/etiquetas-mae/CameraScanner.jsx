@@ -21,12 +21,12 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const qrScannerRef = useRef(null);
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
   const [availableCameras, setAvailableCameras] = useState([]);
-  const [useZebraScanner, setUseZebraScanner] = useState(false);
+  const [isUsingZebraScanner, setIsUsingZebraScanner] = useState(false);
   
   // Usar hooks customizados
   const { scanFeedback, applyFeedback } = useScanFeedback();
   const { setupZebraScanner: setupZebra, cleanupZebraScanner } = useZebraScanner(
-    useZebraScanner && open,
+    isUsingZebraScanner && open,
     onScan,
     applyFeedback
   );
@@ -58,33 +58,33 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     
     if (open) {
       const isZebra = ZEBRA_DETECTION.isZebraDevice(navigator.userAgent);
-      setUseZebraScanner(isZebra);
+      setIsUsingZebraScanner(isZebra);
       detectCameras();
     }
   }, [open]);
 
   // Reiniciar scanner quando trocar de câmera
   useEffect(() => {
-    if (open && !useManualMode && !useZebraScanner && availableCameras.length > 0) {
+    if (open && !useManualMode && !isUsingZebraScanner && availableCameras.length > 0) {
       setTimeout(() => {
         startScanner();
       }, 100);
     }
 
     return () => {
-      if (!useZebraScanner) {
+      if (!isUsingZebraScanner) {
         stopScanner();
       }
     };
-  }, [open, useManualMode, currentCameraIndex, useZebraScanner]);
+  }, [open, useManualMode, currentCameraIndex, isUsingZebraScanner]);
 
   // Ativar/desativar Zebra quando needed
   useEffect(() => {
-    if (useZebraScanner && open) {
+    if (isUsingZebraScanner && open) {
       setupZebra();
     }
     return cleanupZebraScanner;
-  }, [useZebraScanner, open, setupZebra, cleanupZebraScanner]);
+  }, [isUsingZebraScanner, open, setupZebra, cleanupZebraScanner]);
 
   const startScanner = async () => {
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
@@ -195,13 +195,10 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   };
 
   const toggleCamera = async () => {
-    console.log('🔄 toggleCamera chamado. useZebraScanner:', useZebraScanner, 'availableCameras:', availableCameras.length);
     // Se estiver usando Zebra scanner, alternar para câmera web
-    if (useZebraScanner) {
+    if (isUsingZebraScanner) {
       cleanupZebraScanner();
-      setUseZebraScanner(false);
-      console.log('🔄 Alternando de scanner Zebra para câmera web...');
-      // Aguardar um pouco antes de iniciar o scanner de câmera
+      setIsUsingZebraScanner(false);
       setTimeout(() => {
         if (availableCameras.length > 0) {
           startScanner();
@@ -215,20 +212,11 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       stopScanner();
       const nextIndex = (currentCameraIndex + 1) % availableCameras.length;
       setCurrentCameraIndex(nextIndex);
-      console.log('🔄 Alternando para câmera:', availableCameras[nextIndex]?.label);
     } else {
       // Se só tem uma câmera e é Zebra, voltar para scanner Zebra
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isZebraDevice = userAgent.includes('zebra') || 
-                           userAgent.includes('tc21') || 
-                           userAgent.includes('tc26') ||
-                           userAgent.includes('mc');
-      
-      if (isZebraDevice) {
+      if (ZEBRA_DETECTION.isZebraDevice(navigator.userAgent)) {
         stopScanner();
-        setUseZebraScanner(true);
-        setupZebraScanner();
-        console.log('🔄 Voltando para scanner Zebra nativo...');
+        setIsUsingZebraScanner(true);
       }
     }
   };
@@ -308,10 +296,10 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
               {/* Legenda de Modo */}
               <div className="absolute top-2 left-2 z-20 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                {useZebraScanner ? '🦓 Modo Leitor' : '📷 Modo Câmera'}
+                {isUsingZebraScanner ? '🦓 Modo Leitor' : '📷 Modo Câmera'}
               </div>
 
-              {useZebraScanner ? (
+              {isUsingZebraScanner ? (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 to-blue-950 text-white p-8 relative">
                   <div className="animate-pulse mb-6">
                     <Camera className="w-24 h-24" />
@@ -349,7 +337,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 />
               )}
 
-              {useZebraScanner ? null : (
+              {isUsingZebraScanner ? null : (
                 <div 
                   className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
                   style={{ zIndex: 5 }}
@@ -470,15 +458,14 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   variant="outline"
                   size="sm"
                   className="bg-white/90 hover:bg-white"
-                  title={useZebraScanner ? "Usar câmera web" : "Alternar câmera / Leitor"}
+                  title={isUsingZebraScanner ? "Usar câmera web" : "Alternar câmera / Leitor"}
                 >
                   <SwitchCamera className="w-4 h-4" />
                 </Button>
-                {!useZebraScanner && availableCameras.length === 0 && (
+                {!isUsingZebraScanner && availableCameras.length === 0 && (
                   <Button
                     onClick={() => {
-                      setUseZebraScanner(true);
-                      setupZebraScanner();
+                      setIsUsingZebraScanner(true);
                     }}
                     variant="outline"
                     size="sm"
@@ -489,8 +476,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   </Button>
                 )}
                 <Button
-                  onClick={() => {
-                    if (!useZebraScanner) stopScanner();
+                   onClick={() => {
+                    if (!isUsingZebraScanner) stopScanner();
                     setUseManualMode(true);
                   }}
                   variant="outline"
