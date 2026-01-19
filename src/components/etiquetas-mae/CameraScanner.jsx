@@ -227,22 +227,27 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       }
     };
     
-    window.addEventListener('zebra-scan', (e) => {
-      console.log('🦓 Evento zebra-scan capturado');
-      handleZebraScan(e.detail?.code);
-    });
-
-    // Listener para Intent do DataWedge (padrão Zebra)
-    const zebraListener = (event) => {
-      console.log('🦓 Evento datawedge-scan capturado:', event);
-      if (event.detail?.data) {
-        handleZebraScan(event.detail.data);
-      }
+    // Listener para todos os tipos de eventos Zebra
+    const handleZebraEvent = (e) => {
+     console.log('🦓 Evento capturado:', e.type, e.detail);
+     const code = e.detail?.code || e.detail?.data;
+     if (code) handleZebraScan(code);
     };
-    window.addEventListener('datawedge-scan', zebraListener);
-    
+
+    window.addEventListener('zebra-scan', handleZebraEvent);
+    window.addEventListener('datawedge-scan', handleZebraEvent);
+    window.addEventListener('scan-event', handleZebraEvent);
+
     if (zebraInputRef.current) {
-      zebraInputRef.current.addEventListener('keydown', inputZebraListener);
+     zebraInputRef.current.addEventListener('keydown', inputZebraListener);
+     zebraInputRef.current.addEventListener('keyup', inputZebraListener);
+     zebraInputRef.current.addEventListener('change', (e) => {
+       console.log('🦓 Change event:', e.target.value);
+       if (e.target.value.trim()) {
+         handleZebraScan(e.target.value);
+         e.target.value = '';
+       }
+     });
     }
 
     setZebraListening(true);
