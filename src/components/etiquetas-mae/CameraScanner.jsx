@@ -84,7 +84,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     return cleanupZebraScanner;
   }, [isUsingZebraScanner, open, setupZebra, cleanupZebraScanner]);
 
-  const startScanner = async () => {
+  const startScanner = React.useCallback(async () => {
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
 
     try {
@@ -182,7 +182,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       console.error("Erro ao iniciar scanner:", error);
       setUseManualMode(true);
     }
-  };
+  }, [availableCameras, currentCameraIndex, useManualMode, onScan, scanFeedback, applyFeedback]);
 
   const toggleCamera = async () => {
     if (isUsingZebraScanner) {
