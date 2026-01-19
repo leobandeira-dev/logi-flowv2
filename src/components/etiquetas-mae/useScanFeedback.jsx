@@ -3,57 +3,55 @@ import { FEEDBACK_CONFIG, SCANNER_CONFIG } from './scannerConstants';
 import { playSuccessBeep, playDuplicateBeep, playLongErrorBeep } from '../utils/audioFeedback';
 
 /**
- * Hook para gerenciar feedback de scan com debounce
+ * Hook para gerenciar feedback de scan com anti-tremulação
  */
 export const useScanFeedback = () => {
   const [scanFeedback, setScanFeedback] = useState(null);
   const feedbackTimeoutRef = useRef(null);
-  const lastFeedbackTimeRef = useRef(0);
+  const lastFeedbackRef = useRef(null);
+  const feedbackQueueRef = useRef([]);
 
   const applyFeedback = useCallback((feedbackType) => {
     const config = FEEDBACK_CONFIG[feedbackType];
     if (!config) return;
 
-    // Debounce: evitar múltiplos feedbacks em rápida sucessão
-    const now = Date.now();
-    if (now - lastFeedbackTimeRef.current < SCANNER_CONFIG.debounceMs) {
+    // Ignorar se mesmo feedback ativo
+    if (lastFeedbackRef.current === feedbackType && scanFeedback === feedbackType) {
       return;
     }
-    lastFeedbackTimeRef.current = now;
 
-    // Limpar timeout anterior
+    // Limpar timeout anterior para evitar piscadas
     if (feedbackTimeoutRef.current) {
       clearTimeout(feedbackTimeoutRef.current);
     }
 
-    // Aplicar feedback visual
+    lastFeedbackRef.current = feedbackType;
     setScanFeedback(feedbackType);
 
-    // Aplicar efeitos sonoros
+    // Efeitos multisensoriais otimizados
     if (feedbackType === 'success') {
       playSuccessBeep();
+      window.navigator.vibrate?.([100, 50, 100]);
     } else if (feedbackType === 'duplicate') {
       playDuplicateBeep();
+      window.navigator.vibrate?.([80, 30, 80]);
     } else if (feedbackType === 'error') {
       playLongErrorBeep();
+      window.navigator.vibrate?.([150, 80, 150]);
     }
 
-    // Aplicar vibração
-    if (config.vibration && window.navigator.vibrate) {
-      window.navigator.vibrate(config.vibration);
-    }
-
-    // Limpar feedback após duração
+    // Limpar feedback com duração otimizada
     feedbackTimeoutRef.current = setTimeout(() => {
       setScanFeedback(null);
     }, config.duration);
-  }, []);
+  }, [scanFeedback]);
 
   const clearFeedback = useCallback(() => {
     if (feedbackTimeoutRef.current) {
       clearTimeout(feedbackTimeoutRef.current);
     }
     setScanFeedback(null);
+    lastFeedbackRef.current = null;
   }, []);
 
   return {
