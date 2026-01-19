@@ -42,17 +42,18 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         const cameras = await QrScanner.listCameras(true);
         setAvailableCameras(cameras);
         console.log('📷 Câmeras detectadas:', cameras);
-        
+        console.log('📷 Detalhes:', cameras.map(c => ({ label: c.label, id: c.id })));
+
+        // Procurar câmera traseira (environment/back)
         const backCameraIndex = cameras.findIndex(cam => 
           cam.label.toLowerCase().includes('back') || 
           cam.label.toLowerCase().includes('traseira') ||
-          cam.label.toLowerCase().includes('environment') ||
-          cam.id.toLowerCase().includes('back')
+          cam.label.toLowerCase().includes('environment')
         );
-        
-        if (backCameraIndex !== -1) {
-          setCurrentCameraIndex(backCameraIndex);
-        }
+
+        const selectedIndex = backCameraIndex !== -1 ? backCameraIndex : 0;
+        setCurrentCameraIndex(selectedIndex);
+        console.log('📷 Câmera selecionada (index):', selectedIndex, 'Label:', cameras[selectedIndex]?.label);
       } catch (error) {
         console.log('Não foi possível detectar câmeras:', error);
       }
@@ -167,10 +168,16 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
 
     try {
-      // Usar câmera específica se disponível
-      const cameraConfig = availableCameras.length > 0 
-        ? availableCameras[currentCameraIndex]
-        : "environment";
+      // Preferir câmera traseira (environment) se disponível, senão usar a primeira
+      let cameraConfig = "environment"; // Padrão: câmera traseira
+
+      if (availableCameras.length > 0) {
+        const selectedCamera = availableCameras[currentCameraIndex];
+        console.log('📷 Usando câmera:', selectedCamera.label);
+        cameraConfig = selectedCamera;
+      } else {
+        console.log('📷 Nenhuma câmera detectada, usando preferência "environment"');
+      }
 
       const qrScanner = new QrScanner(
         videoRef.current,
