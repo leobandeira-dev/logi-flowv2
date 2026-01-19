@@ -492,7 +492,6 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                        color: isDark ? '#f1f5f9' : '#0f172a'
                      }}
                      autoFocus
-                     inputMode="none"
                    />
                   <Button
                     onClick={handleManualSubmit}
