@@ -739,69 +739,70 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                     autoComplete="off"
                   />
               )}
+              </div>
               ) : (
               <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div className="w-full">
-                  <Keyboard className="w-12 h-12 mx-auto mb-3 text-blue-600" />
-                  <p className="text-sm mb-2" style={{ color: theme.text }}>Modo Manual</p>
-                  <Button
-                    onClick={() => {
-                      setUseManualMode(false);
+              <div className="w-full">
+                <Keyboard className="w-12 h-12 mx-auto mb-3 text-blue-600" />
+                <p className="text-sm mb-2" style={{ color: theme.text }}>Modo Manual</p>
+                <Button
+                  onClick={() => {
+                    setUseManualMode(false);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  style={{ borderColor: theme.border, color: theme.text }}
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  Voltar para Câmera
+                </Button>
+              </div>
+              </div>
+              )}
+
+              <div className="mt-3 space-y-2">
+              {useManualMode && (
+              <div className="bg-white dark:bg-gray-900 border-2 rounded-lg p-3" style={{ borderColor: isDark ? '#3b82f6' : '#2563eb' }}>
+                <div className="flex gap-2">
+                  <Input
+                    ref={inputRef}
+                    placeholder="Digite ou cole o código..."
+                    value={manualInput}
+                    onChange={(e) => setManualInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && manualInput.trim()) {
+                        e.preventDefault();
+                        handleManualSubmit();
+                      }
                     }}
-                    variant="outline"
-                    size="sm"
-                    style={{ borderColor: theme.border, color: theme.text }}
+                    className="text-center font-mono text-lg h-12"
+                    style={{ 
+                      backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                      borderColor: isDark ? '#475569' : '#cbd5e1',
+                      color: isDark ? '#f1f5f9' : '#0f172a'
+                    }}
+                    autoFocus
+                  />
+                  <Button
+                    onClick={handleManualSubmit}
+                    disabled={!manualInput.trim() || processandoRef.current}
+                    className="bg-blue-600 hover:bg-blue-700 px-8 h-12 text-base"
                   >
-                    <Camera className="w-4 h-4 mr-2" />
-                    Voltar para Câmera
+                    OK
                   </Button>
                 </div>
               </div>
-              <div className="mt-3 space-y-2">
-              {useManualMode && (
-            <div className="bg-white dark:bg-gray-900 border-2 rounded-lg p-3" style={{ borderColor: isDark ? '#3b82f6' : '#2563eb' }}>
-              <div className="flex gap-2">
-                <Input
-                  ref={inputRef}
-                  placeholder="Digite ou cole o código..."
-                  value={manualInput}
-                  onChange={(e) => setManualInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && manualInput.trim()) {
-                      e.preventDefault();
-                      handleManualSubmit();
-                    }
-                  }}
-                  className="text-center font-mono text-lg h-12"
-                  style={{ 
-                    backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                    borderColor: isDark ? '#475569' : '#cbd5e1',
-                    color: isDark ? '#f1f5f9' : '#0f172a'
-                  }}
-                  autoFocus
-                />
-                <Button
-                  onClick={handleManualSubmit}
-                  disabled={!manualInput.trim() || processandoRef.current}
-                  className="bg-blue-600 hover:bg-blue-700 px-8 h-12 text-base"
-                >
-                  OK
-                </Button>
-              </div>
-            </div>
-          )}
-
-            <Button
+              )}
+              <Button
               variant="outline"
               onClick={onClose}
               className="w-full h-11"
               style={{ borderColor: theme.border, color: theme.text }}
-            >
+              >
               <X className="w-4 h-4 mr-2" />
               Fechar Scanner
               </Button>
               </div>
-              )}
               </div>
       </DialogContent>
     </Dialog>
