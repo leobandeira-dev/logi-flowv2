@@ -338,22 +338,23 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             <div className="bg-white dark:bg-gray-900 border rounded-lg p-3" style={{ borderColor: isDark ? '#475569' : '#d1d5db' }}>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Código..."
-                  value={manualInput}
-                  onChange={handleManualInputChange}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && manualInput.trim()) {
-                      handleManualSubmit();
-                    }
-                  }}
-                  className="text-center font-mono h-11"
-                  style={{ 
-                    backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                    borderColor: isDark ? '#334155' : '#e5e7eb',
-                    color: isDark ? '#f1f5f9' : '#0f172a'
-                  }}
-                  autoFocus
-                />
+                   ref={inputRef}
+                   placeholder="Código..."
+                   value={manualInput}
+                   onChange={handleManualInputChange}
+                   onKeyDown={(e) => {
+                     if (e.key === 'Enter' && manualInput.trim()) {
+                       handleManualSubmit();
+                     }
+                   }}
+                   className="text-center font-mono h-11"
+                   style={{ 
+                     backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                     borderColor: isDark ? '#334155' : '#e5e7eb',
+                     color: isDark ? '#f1f5f9' : '#0f172a'
+                   }}
+                   autoFocus
+                 />
                 <Button
                   onClick={handleManualSubmit}
                   disabled={!manualInput.trim()}
