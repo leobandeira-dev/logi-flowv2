@@ -157,7 +157,7 @@ export default function EtiquetasMae() {
         notaIdsNecessarias.size > 0
           ? base44.entities.NotaFiscal.list()
           : Promise.resolve([]),
-        cache.get(STORES.USUARIOS, 'all') || base44.entities.User.list().catch(() => [])
+        (await cache.get(STORES.USUARIOS, 'all')) || base44.entities.User.list().catch(() => [])
       ]);
 
       // Salvar em cache (TTL: 2 minutos para dados do armazém)
@@ -167,10 +167,10 @@ export default function EtiquetasMae() {
         cache.set(STORES.NOTAS_FISCAIS, 'all', notasData, 2 * 60 * 1000),
       ]);
 
-      setEtiquetas(etiquetasData);
-      setVolumes(volumesData);
-      setNotas(notasData);
-      setUsuarios(usuariosData);
+      setEtiquetas(etiquetasData || []);
+      setVolumes(volumesData || []);
+      setNotas(notasData || []);
+      setUsuarios(usuariosData || []);
 
       console.log('✅ Dados carregados e em cache');
     } catch (error) {
@@ -1306,7 +1306,7 @@ export default function EtiquetasMae() {
         <div className="block sm:hidden space-y-3 mb-4">
           {filteredEtiquetas.map((etiqueta) => {
             const statusInfo = statusConfig[etiqueta.status] || statusConfig.criada;
-            const criador = usuarios.find(u => u.id === etiqueta.criado_por);
+            const criador = usuarios?.find(u => u.id === etiqueta.criado_por);
             
             return (
               <Card key={etiqueta.id} style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
@@ -1442,6 +1442,7 @@ export default function EtiquetasMae() {
                     const statusInfo = statusConfig[etiqueta.status] || statusConfig.criada;
                     const criador = usuarios.find(u => u.id === etiqueta.criado_por);
                     
+                    const criador = usuarios?.find(u => u.id === etiqueta.criado_por);
                     return (
                       <tr key={etiqueta.id} className="border-b hover:bg-opacity-50" style={{ borderColor: theme.cardBorder }}>
                         <td className="px-3 py-2">
@@ -1478,7 +1479,7 @@ export default function EtiquetasMae() {
                           <div className="text-xs" style={{ color: theme.text }}>
                             {etiqueta.created_date ? new Date(etiqueta.created_date).toLocaleDateString('pt-BR') : '-'}
                             <p className="text-xs mt-0.5" style={{ color: theme.textMuted }}>
-                              {criador?.full_name?.split(' ')[0] || '-'}
+                              {(usuarios && criador?.full_name?.split(' ')[0]) || '-'}
                             </p>
                           </div>
                         </td>
