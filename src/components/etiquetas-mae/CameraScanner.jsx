@@ -740,12 +740,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   />
               )}
 
+              {!useZebraScanner && (
+              <>
               {/* Overlay com Feedback por Cor - APENAS para câmera */}
-               {!useZebraScanner && (
-               <div 
-                 className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
-                 style={{ zIndex: 5 }}
-               >
+              <div 
+                className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
+                style={{ zIndex: 5 }}
+              >
                 <div 
                   className="shadow-lg transition-all duration-300"
                   style={{
