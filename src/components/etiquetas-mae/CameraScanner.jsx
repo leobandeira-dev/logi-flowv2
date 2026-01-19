@@ -321,12 +321,27 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const cleanupZebraScanner = () => {
     if (zebraListening) {
       console.log('🦓 Limpando listeners Zebra...');
-      // Remover todos os listeners registrados
+
+      // Remover listeners do input
+      if (zebraInputRef.current && zebraListenersRef.current) {
+        Object.entries(zebraListenersRef.current).forEach(([event, listener]) => {
+          zebraInputRef.current?.removeEventListener(event, listener);
+        });
+        zebraListenersRef.current = {};
+      }
+
+      // Limpar timeout
+      if (zebraTimeoutRef.current) {
+        clearTimeout(zebraTimeoutRef.current);
+      }
+
+      // Remover listeners globais
+      window.removeEventListener('zebra-scan', () => {});
       window.removeEventListener('datawedge-scan', () => {});
-      window.removeEventListener('keypress', () => {});
       window.removeEventListener('scan-event', () => {});
-      window.removeEventListener('message', () => {});
+
       setZebraListening(false);
+      console.log('🦓 ✅ Listeners removidos');
     }
   };
 
