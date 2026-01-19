@@ -292,72 +292,68 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         </DialogHeader>
 
         <div className="p-4 pt-0">
-          {!useManualMode ? (
-            <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
-              <video
-                ref={videoRef}
-                className="w-full h-full object-cover"
-                style={{ transform: 'scaleX(-1)' }}
-              />
+          <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
+            <video
+              ref={videoRef}
+              className="w-full h-full object-cover"
+              style={{ transform: 'scaleX(-1)' }}
+            />
 
+            <div 
+              className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
+              style={{ zIndex: 5 }}
+            >
               <div 
-                className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
-                style={{ zIndex: 5 }}
-              >
-                <div 
-                  className="transition-all duration-300"
-                  style={{
-                    width: '80%',
-                    height: '80%',
-                    border: scanFeedback === 'success' 
-                      ? '2px solid #10b981' 
-                      : scanFeedback === 'duplicate'
-                      ? '2px solid #f59e0b'
-                      : scanFeedback === 'error'
-                      ? '2px solid #ef4444'
-                      : scanFeedback === 'processing' 
-                      ? '2px solid #3b82f6' 
-                      : '2px solid rgba(255, 255, 255, 0.3)',
-                    borderRadius: '8px'
-                  }}
-                />
-              </div>
-
-              {/* Feedback Textual Central */}
-              {scanFeedback && scanFeedback !== 'processing' && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div 
-                    className={`px-6 py-3 rounded-lg font-semibold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
-                      scanFeedback === 'success' 
-                        ? 'bg-green-600' 
-                        : scanFeedback === 'duplicate'
-                        ? 'bg-yellow-600'
-                        : 'bg-red-600'
-                    }`}
-                    style={{ fontSize: '16px' }}
-                  >
-                    {scanFeedback === 'success' && 'Volume adicionado'}
-                    {scanFeedback === 'duplicate' && 'Código já bipado'}
-                    {scanFeedback === 'error' && 'Volume não encontrado'}
-                  </div>
-                </div>
-              )}
-
-
-
-              <div className="absolute top-2 right-2 z-10 flex gap-2">
-                <Button
-                  onClick={toggleCamera}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/90 hover:bg-white"
-                  title="Alternar câmera"
-                >
-                  <SwitchCamera className="w-4 h-4" />
-                </Button>
-              </div>
+                className="transition-all duration-300"
+                style={{
+                  width: '80%',
+                  height: '80%',
+                  border: scanFeedback === 'success' 
+                    ? '2px solid #10b981' 
+                    : scanFeedback === 'duplicate'
+                    ? '2px solid #f59e0b'
+                    : scanFeedback === 'error'
+                    ? '2px solid #ef4444'
+                    : scanFeedback === 'processing' 
+                    ? '2px solid #3b82f6' 
+                    : '2px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '8px'
+                }}
+              />
             </div>
-          )}
+
+            {/* Feedback Textual Central */}
+            {scanFeedback && scanFeedback !== 'processing' && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div 
+                  className={`px-6 py-3 rounded-lg font-semibold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
+                    scanFeedback === 'success' 
+                      ? 'bg-green-600' 
+                      : scanFeedback === 'duplicate'
+                      ? 'bg-yellow-600'
+                      : 'bg-red-600'
+                  }`}
+                  style={{ fontSize: '16px' }}
+                >
+                  {scanFeedback === 'success' && 'Volume adicionado'}
+                  {scanFeedback === 'duplicate' && 'Código já bipado'}
+                  {scanFeedback === 'error' && 'Volume não encontrado'}
+                </div>
+              </div>
+            )}
+
+            <div className="absolute top-2 right-2 z-10 flex gap-2">
+              <Button
+                onClick={toggleCamera}
+                variant="outline"
+                size="sm"
+                className="bg-white/90 hover:bg-white"
+                title="Alternar câmera"
+              >
+                <SwitchCamera className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
 
           <div className="mt-4 space-y-2">
             <div className="bg-white dark:bg-gray-900 border rounded-lg p-3" style={{ borderColor: isDark ? '#475569' : '#d1d5db' }}>
