@@ -399,45 +399,47 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   };
 
   const toggleCamera = async () => {
-    // Se estiver usando Zebra scanner, alternar para câmera traseira
-    if (useZebraScanner) {
-      cleanupZebraScanner();
-      setUseZebraScanner(false);
-      
-      // Buscar câmera traseira
-      const backCameraIndex = availableCameras.findIndex(cam => 
-        cam.label.toLowerCase().includes('back') || 
-        cam.label.toLowerCase().includes('traseira') ||
-        cam.label.toLowerCase().includes('environment') ||
-        cam.id.toLowerCase().includes('back')
-      );
-      
-      if (backCameraIndex !== -1) {
-        setCurrentCameraIndex(backCameraIndex);
-      }
-      
-      console.log('🔄 Alternando de scanner Zebra para câmera traseira...');
-      setTimeout(() => {
-        if (availableCameras.length > 0) {
-          startScanner();
-        }
-      }, 300);
-      return;
-    }
+   console.log('🔄 toggleCamera chamado - useZebraScanner:', useZebraScanner);
 
-    // Se estiver usando câmera traseira, voltar para scanner Zebra
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isZebraDevice = userAgent.includes('zebra') || 
-                         userAgent.includes('tc21') || 
-                         userAgent.includes('tc26') ||
-                         userAgent.includes('mc');
-    
-    if (isZebraDevice) {
-      stopScanner();
-      setUseZebraScanner(true);
-      setupZebraScanner();
-      console.log('🔄 Voltando para scanner Zebra nativo...');
-    }
+   // Se estiver usando Zebra scanner, alternar para câmera
+   if (useZebraScanner) {
+     cleanupZebraScanner();
+     setUseZebraScanner(false);
+     setUseManualMode(false);
+
+     console.log('🔄 Alternando de scanner Zebra para câmera...');
+     setTimeout(() => {
+       startScanner();
+     }, 500);
+     return;
+   }
+
+   // Se estiver usando câmera, alternar para próxima câmera disponível
+   if (availableCameras.length > 1) {
+     const nextIndex = (currentCameraIndex + 1) % availableCameras.length;
+     console.log(`🔄 Alternando câmera: ${currentCameraIndex} → ${nextIndex}`);
+     setCurrentCameraIndex(nextIndex);
+
+     stopScanner();
+     setTimeout(() => {
+       startScanner();
+     }, 300);
+     return;
+   }
+
+   // Se for dispositivo Zebra e não conseguiu alternar câmera, voltar para Zebra scanner
+   const userAgent = navigator.userAgent.toLowerCase();
+   const isZebraDevice = userAgent.includes('zebra') || 
+                        userAgent.includes('tc21') || 
+                        userAgent.includes('tc26') ||
+                        userAgent.includes('mc');
+
+   if (isZebraDevice && !useZebraScanner) {
+     stopScanner();
+     setUseZebraScanner(true);
+     setupZebraScanner();
+     console.log('🔄 Voltando para scanner Zebra nativo...');
+   }
   };
 
   const stopScanner = () => {
