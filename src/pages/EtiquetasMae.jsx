@@ -331,13 +331,7 @@ export default function EtiquetasMae() {
   };
 
   const handleVolumeCameraScan = async (codigo) => {
-    if (!codigo || !codigo.trim()) return;
-    
-    setCodigoScanner(codigo.trim());
-    
-    // Processar o scan e retornar resultado para feedback visual
-    const resultado = await handleScanComFeedback(codigo.trim());
-    return resultado;
+    return await handleScanComFeedback(codigo.trim());
   };
 
   const handleScanComFeedback = async (codigo) => {
