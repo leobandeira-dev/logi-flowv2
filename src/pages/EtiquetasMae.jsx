@@ -167,10 +167,10 @@ export default function EtiquetasMae() {
         cache.set(STORES.NOTAS_FISCAIS, 'all', notasData, 2 * 60 * 1000),
       ]);
 
-      setEtiquetas(etiquetasData);
-      setVolumes(volumesData);
-      setNotas(notasData);
-      setUsuarios(usuariosData);
+      setEtiquetas(etiquetasData || []);
+      setVolumes(volumesData || []);
+      setNotas(notasData || []);
+      setUsuarios(usuariosData || []);
 
       console.log('✅ Dados carregados e em cache');
     } catch (error) {
