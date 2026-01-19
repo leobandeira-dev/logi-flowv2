@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera, X, Loader2, Keyboard, SwitchCamera } from "lucide-react";
+import { Camera, X, Loader2, Keyboard, SwitchCamera, Scan } from "lucide-react";
 import { playSuccessBeep, playDuplicateBeep, playLongErrorBeep } from "../utils/audioFeedback";
 import {
   Dialog,
