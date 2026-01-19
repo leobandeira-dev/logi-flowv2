@@ -746,9 +746,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 <Keyboard className="w-12 h-12 mx-auto mb-3 text-blue-600" />
                 <p className="text-sm mb-2" style={{ color: theme.text }}>Modo Manual</p>
                 <Button
-                  onClick={() => {
-                    setUseManualMode(false);
-                  }}
+                  onClick={() => setUseManualMode(false)}
                   variant="outline"
                   size="sm"
                   style={{ borderColor: theme.border, color: theme.text }}
