@@ -83,7 +83,7 @@ export const useZebraScanner = (enabled, onScan, onFeedback) => {
     };
 
     // Message listener para fallback
-    const messageHandler = (e) => {
+    const messageHandlerFunc = (e) => {
       if (e.data && typeof e.data === 'string' && e.data.length > 5) {
         handleZebraScan(e.data);
       }
