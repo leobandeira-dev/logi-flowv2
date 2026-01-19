@@ -13,26 +13,29 @@ import "@tensorflow/tfjs";
 
 export default function Cubagem() {
   const [isDark, setIsDark] = useState(false);
-  const [etapa, setEtapa] = useState("inicial"); // inicial, calibracao, medindo, processando, associando, concluido
+  const [etapa, setEtapa] = useState("inicial"); // inicial, medindo, processando, associando, concluido
   const [cameraAtiva, setCameraAtiva] = useState(false);
   const [fotoCapturada, setFotoCapturada] = useState(null);
-  const [fotoReferencia, setFotoReferencia] = useState(null);
-  const [medidas, setMedidas] = useState({ altura: 0, largura: 0, comprimento: 0 });
+  const [medidasTempoReal, setMedidasTempoReal] = useState(null);
   const [volumeId, setVolumeId] = useState(null);
   const [volume, setVolume] = useState(null);
   const [cubagem, setCubagem] = useState(0);
   const [historico, setHistorico] = useState([]);
   const [scanningQR, setScanningQR] = useState(false);
-  const [detectando, setDetectando] = useState(false);
+  const [processandoCaptura, setProcessandoCaptura] = useState(false);
   const [objetoDetectado, setObjetoDetectado] = useState(null);
-  const [referenciaPixels, setReferenciaPixels] = useState(null);
+  const [referenciaPixels, setReferenciaPixels] = useState(() => {
+    const saved = localStorage.getItem('cubagem_referencia');
+    return saved ? parseFloat(saved) : null;
+  });
   const [modelo, setModelo] = useState(null);
+  const [modoCalibracao, setModoCalibracao] = useState(false);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const canvasOverlayRef = useRef(null);
   const streamRef = useRef(null);
   const qrScannerRef = useRef(null);
+  const deteccaoIntervalRef = useRef(null);
 
   // Tamanho real de um cartão de crédito (padrão internacional)
   const CARTAO_LARGURA_CM = 8.56;
@@ -76,21 +79,11 @@ export default function Cubagem() {
   };
 
   const iniciarCamera = async () => {
-    // Ativar estado primeiro para mostrar o vídeo
     setCameraAtiva(true);
+    setEtapa("medindo");
     
-    // Se já tem referência, ir para medindo; senão, calibracao
-    if (referenciaPixels) {
-      setEtapa("medindo");
-    } else {
-      setEtapa("calibracao");
-    }
-    
-    // Aguardar um momento para o DOM renderizar
     setTimeout(async () => {
       try {
-        console.log("🎥 Solicitando acesso à câmera...");
-        
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: { 
             facingMode: "environment",
@@ -99,25 +92,22 @@ export default function Cubagem() {
           } 
         });
         
-        console.log("✅ Stream obtido:", stream);
-        
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           streamRef.current = stream;
           
-          // Aguardar carregamento e reproduzir
           videoRef.current.onloadedmetadata = async () => {
             try {
               await videoRef.current.play();
-              console.log("✅ Vídeo reproduzindo");
               toast.success("Câmera ativada");
+              iniciarDeteccaoTempoReal();
             } catch (err) {
-              console.error("❌ Erro ao reproduzir:", err);
+              console.error("Erro ao reproduzir:", err);
             }
           };
         }
       } catch (error) {
-        console.error("❌ Erro ao acessar câmera:", error);
+        console.error("Erro ao acessar câmera:", error);
         toast.error("Erro ao acessar câmera: " + error.message);
         setCameraAtiva(false);
         setEtapa("inicial");
@@ -126,6 +116,10 @@ export default function Cubagem() {
   };
 
   const pararCamera = () => {
+    if (deteccaoIntervalRef.current) {
+      clearInterval(deteccaoIntervalRef.current);
+      deteccaoIntervalRef.current = null;
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
@@ -136,162 +130,160 @@ export default function Cubagem() {
     }
     setCameraAtiva(false);
     setScanningQR(false);
+    setMedidasTempoReal(null);
   };
 
-  const capturarReferencia = async () => {
-    console.log("🎯 Calibrar Referência clicado");
-    console.log("📹 videoRef:", videoRef.current);
-    console.log("🎨 canvasRef:", canvasRef.current);
-    console.log("🤖 modelo:", modelo);
-    
-    if (!modelo) {
-      toast.error("Modelo de IA ainda não carregado. Aguarde...");
-      return;
+  const iniciarDeteccaoTempoReal = () => {
+    if (deteccaoIntervalRef.current) {
+      clearInterval(deteccaoIntervalRef.current);
     }
     
-    if (!videoRef.current) {
-      toast.error("Vídeo não está pronto. Tente novamente.");
-      return;
-    }
-    
-    if (!canvasRef.current) {
-      toast.error("Canvas não encontrado");
-      return;
-    }
-    
-    const video = videoRef.current;
-    
-    // Verificar se o vídeo está pronto
-    if (!video.videoWidth || !video.videoHeight) {
-      toast.error("Vídeo ainda não carregou. Aguarde alguns segundos.");
-      return;
-    }
-    
-    console.log("✅ Iniciando detecção...");
-    
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
-    
-    setDetectando(true);
-    toast.loading("Detectando cartão...", { id: "detect" });
-    
-    try {
-      // Detectar objetos na imagem
-      const predictions = await modelo.detect(canvas);
-      console.log("🔍 Detecções:", predictions);
+    deteccaoIntervalRef.current = setInterval(async () => {
+      if (!videoRef.current || !canvasRef.current || !modelo || processandoCaptura) return;
       
-      if (predictions.length === 0) {
-        toast.error("Nenhum objeto detectado. Posicione o cartão de crédito melhor.", { id: "detect" });
-        setDetectando(false);
-        return;
-      }
-
-      // Usar o primeiro objeto detectado como referência
-      const referencia = predictions[0];
-      const larguraPixels = referencia.bbox[2];
-      const alturaPixels = referencia.bbox[3];
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
       
-      console.log("✅ Objeto detectado:", referencia.class, "Tamanho:", larguraPixels, "x", alturaPixels);
+      if (!video.videoWidth || !video.videoHeight) return;
       
-      // Desenhar retângulo na referência
-      ctx.strokeStyle = '#00ff00';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(referencia.bbox[0], referencia.bbox[1], larguraPixels, alturaPixels);
-      
-      // Adicionar texto
-      ctx.fillStyle = '#00ff00';
-      ctx.font = '16px Arial';
-      ctx.fillText('Cartão de Referência', referencia.bbox[0], referencia.bbox[1] - 10);
-      
-      const foto = canvas.toDataURL('image/jpeg', 0.9);
-      setFotoReferencia(foto);
-      
-      // Calcular pixels por cm (usando a largura do cartão)
-      const pixelsPorCm = larguraPixels / CARTAO_LARGURA_CM;
-      setReferenciaPixels(pixelsPorCm);
-      
-      setDetectando(false);
-      pararCamera();
-      setEtapa("medindo");
-      toast.success(`Referência calibrada! ${pixelsPorCm.toFixed(2)} pixels/cm`, { id: "detect" });
-    } catch (error) {
-      console.error("❌ Erro na detecção:", error);
-      toast.error("Erro ao detectar objeto: " + error.message, { id: "detect" });
-      setDetectando(false);
-    }
-  };
-
-  const capturarObjeto = async () => {
-    console.log("🎯 Capturar Objeto clicado");
-    console.log("🔢 referenciaPixels:", referenciaPixels);
-    
-    if (!referenciaPixels) {
-      toast.error("Calibre a referência primeiro!");
-      return;
-    }
-
-    if (!videoRef.current || !canvasRef.current || !modelo) {
-      toast.error("Sistema não está pronto. Tente novamente.");
-      return;
-    }
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    
-    if (!video.videoWidth || !video.videoHeight) {
-      toast.error("Vídeo ainda não carregou. Aguarde alguns segundos.");
-      return;
-    }
-    
-    setDetectando(true);
-    toast.loading("Detectando e medindo objeto...", { id: "measure" });
-    
-    try {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0);
       
-      // Detectar objetos na imagem
+      try {
+        const predictions = await modelo.detect(canvas);
+        
+        if (predictions.length > 0) {
+          const objeto = predictions.reduce((prev, current) => {
+            const prevArea = prev.bbox[2] * prev.bbox[3];
+            const currentArea = current.bbox[2] * current.bbox[3];
+            return currentArea > prevArea ? current : prev;
+          });
+          
+          const larguraPixels = objeto.bbox[2];
+          const alturaPixels = objeto.bbox[3];
+          
+          let medidas;
+          if (modoCalibracao) {
+            // Mostrar medidas reais do cartão
+            medidas = {
+              largura: CARTAO_LARGURA_CM,
+              altura: CARTAO_ALTURA_CM,
+              comprimento: 0.1,
+              objeto: objeto.class
+            };
+          } else if (referenciaPixels) {
+            // Calcular medidas do objeto
+            const larguraCm = larguraPixels / referenciaPixels;
+            const alturaCm = alturaPixels / referenciaPixels;
+            const comprimentoCm = larguraCm * 0.7;
+            
+            medidas = {
+              largura: larguraCm,
+              altura: alturaCm,
+              comprimento: comprimentoCm,
+              objeto: objeto.class
+            };
+          } else {
+            // Sem calibração - mostrar em pixels
+            medidas = {
+              largura: larguraPixels,
+              altura: alturaPixels,
+              comprimento: 0,
+              objeto: objeto.class,
+              semCalibracao: true
+            };
+          }
+          
+          setMedidasTempoReal(medidas);
+        } else {
+          setMedidasTempoReal(null);
+        }
+      } catch (error) {
+        console.error("Erro na detecção:", error);
+      }
+    }, 500);
+  };
+
+  const calibrarReferencia = async () => {
+    if (!medidasTempoReal) {
+      toast.error("Nenhum objeto detectado. Posicione o cartão de crédito na câmera.");
+      return;
+    }
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    
+    try {
       const predictions = await modelo.detect(canvas);
-      console.log("🔍 Objetos detectados:", predictions.length);
+      if (predictions.length === 0) {
+        toast.error("Nenhum objeto detectado no momento da calibração.");
+        return;
+      }
+      
+      const referencia = predictions[0];
+      const larguraPixels = referencia.bbox[2];
+      const pixelsPorCm = larguraPixels / CARTAO_LARGURA_CM;
+      
+      setReferenciaPixels(pixelsPorCm);
+      localStorage.setItem('cubagem_referencia', pixelsPorCm.toString());
+      setModoCalibracao(false);
+      
+      toast.success(`Calibrado! ${pixelsPorCm.toFixed(2)} pixels/cm`);
+    } catch (error) {
+      toast.error("Erro ao calibrar: " + error.message);
+    }
+  };
+
+  const capturarObjeto = async () => {
+    if (!referenciaPixels) {
+      toast.error("Sistema não calibrado. Use um cartão de crédito para calibrar.");
+      setModoCalibracao(true);
+      return;
+    }
+
+    if (!medidasTempoReal) {
+      toast.error("Nenhum objeto detectado. Posicione o objeto na câmera.");
+      return;
+    }
+
+    setProcessandoCaptura(true);
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    
+    try {
+      const predictions = await modelo.detect(canvas);
       
       if (predictions.length === 0) {
-        toast.error("Nenhum objeto detectado. Posicione melhor o objeto.", { id: "measure" });
-        setDetectando(false);
+        toast.error("Nenhum objeto detectado no momento da captura.");
+        setProcessandoCaptura(false);
         return;
       }
 
-      // Usar o maior objeto detectado
-      const objeto = predictions.reduce((prev, current) => {
-        const prevArea = prev.bbox[2] * prev.bbox[3];
-        const currentArea = current.bbox[2] * current.bbox[3];
-        return currentArea > prevArea ? current : prev;
-      });
-
+      const objeto = predictions[0];
       const [x, y, larguraPixels, alturaPixels] = objeto.bbox;
-      console.log("📏 Pixels detectados:", larguraPixels, "x", alturaPixels);
       
-      // Calcular medidas em cm
-      const larguraCm = larguraPixels / referenciaPixels;
-      const alturaCm = alturaPixels / referenciaPixels;
-      const comprimentoCm = larguraCm * 0.7;
+      const larguraCm = medidasTempoReal.largura;
+      const alturaCm = medidasTempoReal.altura;
+      const comprimentoCm = medidasTempoReal.comprimento;
       
-      console.log("📐 Medidas calculadas:", {
-        altura: alturaCm,
-        largura: larguraCm,
-        comprimento: comprimentoCm
-      });
-      
-      // Desenhar retângulo e linhas de medição
+      // Desenhar anotações na foto
       ctx.strokeStyle = '#00ff00';
       ctx.lineWidth = 3;
       ctx.strokeRect(x, y, larguraPixels, alturaPixels);
       
-      // Linha de largura
       ctx.strokeStyle = '#ff0000';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -299,49 +291,35 @@ export default function Cubagem() {
       ctx.lineTo(x + larguraPixels, y + alturaPixels + 20);
       ctx.stroke();
       
-      // Linha de altura
       ctx.beginPath();
       ctx.moveTo(x + larguraPixels + 20, y);
       ctx.lineTo(x + larguraPixels + 20, y + alturaPixels);
       ctx.stroke();
       
-      // Textos com medidas
       ctx.fillStyle = '#ff0000';
       ctx.font = 'bold 18px Arial';
       ctx.fillText(`L: ${larguraCm.toFixed(1)}cm`, x + larguraPixels/2 - 40, y + alturaPixels + 45);
       ctx.fillText(`A: ${alturaCm.toFixed(1)}cm`, x + larguraPixels + 30, y + alturaPixels/2);
       
-      // Nome do objeto detectado
       ctx.fillStyle = '#00ff00';
       ctx.font = 'bold 20px Arial';
       ctx.fillText(objeto.class.toUpperCase(), x, y - 10);
       
       const foto = canvas.toDataURL('image/jpeg', 0.9);
-      console.log("📸 Foto gerada, tamanho:", foto.length);
-      
       const cubagemCalculada = (alturaCm / 100) * (larguraCm / 100) * (comprimentoCm / 100);
-      console.log("📦 Cubagem calculada:", cubagemCalculada, "m³");
       
-      // Atualizar todos os estados
       setFotoCapturada(foto);
-      setMedidas({
-        altura: alturaCm,
-        largura: larguraCm,
-        comprimento: comprimentoCm
-      });
       setCubagem(cubagemCalculada);
       setObjetoDetectado(objeto);
       
-      // Parar câmera e mudar etapa
       pararCamera();
-      setDetectando(false);
       setEtapa("processando");
       
-      toast.success(`Objeto medido: ${larguraCm.toFixed(1)}x${alturaCm.toFixed(1)}x${comprimentoCm.toFixed(1)} cm`, { id: "measure" });
+      toast.success(`Medido: ${larguraCm.toFixed(1)}×${alturaCm.toFixed(1)}×${comprimentoCm.toFixed(1)} cm`);
     } catch (error) {
-      console.error("❌ Erro ao medir objeto:", error);
-      toast.error("Erro ao medir objeto: " + error.message, { id: "measure" });
-      setDetectando(false);
+      toast.error("Erro ao capturar: " + error.message);
+    } finally {
+      setProcessandoCaptura(false);
     }
   };
 
@@ -435,13 +413,11 @@ export default function Cubagem() {
   const reiniciar = () => {
     setEtapa("inicial");
     setFotoCapturada(null);
-    setFotoReferencia(null);
-    setMedidas({ altura: 0, largura: 0, comprimento: 0 });
     setCubagem(0);
     setVolume(null);
     setVolumeId(null);
-    setReferenciaPixels(null);
     setObjetoDetectado(null);
+    setModoCalibracao(false);
     pararCamera();
   };
 
@@ -496,37 +472,52 @@ export default function Cubagem() {
                   </Badge>
                 </div>
 
-                {/* Etapa Inicial - Calibração */}
-                {(etapa === 'inicial' || etapa === 'calibracao') && !cameraAtiva && (
+                {/* Etapa Inicial */}
+                {etapa === 'inicial' && !cameraAtiva && (
                   <div className="text-center py-8">
-                    <CreditCard className="w-16 h-16 mx-auto mb-4" style={{ color: theme.textMuted }} />
+                    <Ruler className="w-16 h-16 mx-auto mb-4" style={{ color: theme.textMuted }} />
                     <h3 className="font-semibold mb-2" style={{ color: theme.text }}>
-                      Calibrar Sistema
+                      Cubagem de Volumes
                     </h3>
-                    <p className="text-sm mb-2" style={{ color: theme.textMuted }}>
-                      Posicione um cartão de crédito na câmera para calibração
+                    <p className="text-sm mb-6" style={{ color: theme.textMuted }}>
+                      Meça volumes automaticamente usando IA
                     </p>
-                    <p className="text-xs mb-6" style={{ color: theme.textMuted }}>
-                      O cartão será usado como referência para medir outros objetos
-                    </p>
+                    
+                    {referenciaPixels && (
+                      <div className="mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-950 border border-green-500">
+                        <p className="text-xs text-green-800 dark:text-green-200">
+                          ✓ Sistema calibrado ({referenciaPixels.toFixed(2)} px/cm)
+                        </p>
+                      </div>
+                    )}
+                    
+                    {!referenciaPixels && (
+                      <div className="mb-4 p-3 rounded-lg bg-orange-50 dark:bg-orange-950 border border-orange-500">
+                        <p className="text-xs text-orange-800 dark:text-orange-200">
+                          ⚠️ Sistema não calibrado. Calibre usando um cartão de crédito para maior precisão.
+                        </p>
+                      </div>
+                    )}
+                    
                     {!modelo && (
                       <p className="text-sm text-orange-600 mb-4">
                         ⏳ Carregando modelo de IA...
                       </p>
                     )}
+                    
                     <Button 
                       onClick={iniciarCamera} 
-                      className="bg-blue-600 hover:bg-blue-700"
+                      className="bg-blue-600 hover:bg-blue-700 w-full"
                       disabled={!modelo}
                     >
                       <Camera className="w-4 h-4 mr-2" />
-                      Iniciar Calibração
+                      Iniciar Medição
                     </Button>
                   </div>
                 )}
 
                 {/* Câmera Ativa */}
-                {cameraAtiva && (
+                {cameraAtiva && !scanningQR && (
                 <div className="space-y-4">
                   <div className="relative rounded-lg overflow-hidden bg-black">
                     <video
@@ -537,122 +528,159 @@ export default function Cubagem() {
                       className="w-full h-auto"
                       style={{ maxHeight: '400px' }}
                     />
-                     {scanningQR && (
-                       <div className="absolute inset-0 flex items-center justify-center">
-                         <div className="border-4 border-blue-500 w-64 h-64 rounded-lg animate-pulse" />
-                       </div>
-                     )}
-                     {detectando && (
-                       <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                         <div className="text-center">
-                           <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                           <p className="text-white font-semibold text-lg">
-                             {etapa === 'calibracao' ? 'Detectando cartão...' : 'Medindo objeto...'}
-                           </p>
-                         </div>
-                       </div>
-                     )}
-                   </div>
-                    <canvas ref={canvasRef} className="hidden" />
                     
-                    {!scanningQR && (etapa === 'inicial' || etapa === 'calibracao') && (
-                      <div className="space-y-3">
-                        <p className="text-center text-sm font-medium" style={{ color: theme.text }}>
-                          Posicione o cartão de crédito no centro da imagem
-                        </p>
-                        <div className="flex gap-2">
-                          <Button 
-                            onClick={capturarReferencia} 
-                            className="flex-1 bg-green-600 hover:bg-green-700"
-                            disabled={detectando}
-                          >
-                            {detectando ? (
-                              <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                                Detectando...
-                              </>
-                            ) : (
-                              <>
-                                <CreditCard className="w-4 h-4 mr-2" />
-                                Calibrar Referência
-                              </>
-                            )}
-                          </Button>
-                          <Button onClick={pararCamera} variant="outline">
-                            <X className="w-4 h-4" />
-                          </Button>
+                    {/* Overlay com medidas em tempo real */}
+                    {medidasTempoReal && (
+                      <div className="absolute top-4 left-4 right-4">
+                        <div className="bg-black/70 backdrop-blur-sm rounded-lg p-3 border-2 border-green-500">
+                          <div className="grid grid-cols-3 gap-2 text-white text-center">
+                            <div>
+                              <p className="text-[10px] text-gray-300">Altura</p>
+                              <p className="text-sm font-bold text-green-400">
+                                {medidasTempoReal.semCalibracao 
+                                  ? `${medidasTempoReal.altura.toFixed(0)}px`
+                                  : `${medidasTempoReal.altura.toFixed(1)}cm`
+                                }
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-gray-300">Largura</p>
+                              <p className="text-sm font-bold text-green-400">
+                                {medidasTempoReal.semCalibracao 
+                                  ? `${medidasTempoReal.largura.toFixed(0)}px`
+                                  : `${medidasTempoReal.largura.toFixed(1)}cm`
+                                }
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-gray-300">Profund.</p>
+                              <p className="text-sm font-bold text-green-400">
+                                {medidasTempoReal.semCalibracao 
+                                  ? "N/A"
+                                  : `${medidasTempoReal.comprimento.toFixed(1)}cm`
+                                }
+                              </p>
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-center text-gray-400 mt-2">
+                            {medidasTempoReal.objeto}
+                            {medidasTempoReal.semCalibracao && " - Sem calibração"}
+                          </p>
                         </div>
                       </div>
                     )}
                     
-                    {!scanningQR && etapa === 'medindo' && cameraAtiva && (
-                      <div className="space-y-3">
-                        <p className="text-center text-sm font-medium" style={{ color: theme.text }}>
-                          Posicione o objeto a ser medido no centro da imagem
+                    {processandoCaptura && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                        <div className="text-center">
+                          <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                          <p className="text-white font-semibold text-lg">Capturando...</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <canvas ref={canvasRef} className="hidden" />
+                    
+                  <div className="space-y-2">
+                    {modoCalibracao ? (
+                      <>
+                        <p className="text-center text-xs font-medium text-orange-600 dark:text-orange-400">
+                          🎯 Modo Calibração - Posicione um cartão de crédito
                         </p>
                         <div className="flex gap-2">
+                          <Button 
+                            onClick={calibrarReferencia} 
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            disabled={!medidasTempoReal}
+                          >
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Confirmar Calibração
+                          </Button>
+                          <Button onClick={() => setModoCalibracao(false)} variant="outline" size="sm">
+                            Cancelar
+                          </Button>
+                          <Button onClick={pararCamera} variant="outline" size="icon">
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-center text-xs font-medium" style={{ color: theme.text }}>
+                          {!referenciaPixels 
+                            ? "⚠️ Sem calibração - Medidas aproximadas"
+                            : "Posicione o objeto e capture quando pronto"
+                          }
+                        </p>
+                        <div className="flex gap-2">
+                          {!referenciaPixels && (
+                            <Button 
+                              onClick={() => setModoCalibracao(true)} 
+                              variant="outline"
+                              size="sm"
+                              className="border-orange-500 text-orange-600"
+                            >
+                              <CreditCard className="w-4 h-4 mr-2" />
+                              Calibrar
+                            </Button>
+                          )}
                           <Button 
                             onClick={capturarObjeto} 
                             className="flex-1 bg-blue-600 hover:bg-blue-700"
-                            disabled={detectando}
+                            disabled={processandoCaptura || !medidasTempoReal}
                           >
-                            {detectando ? (
-                              <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                                Medindo...
-                              </>
-                            ) : (
-                              <>
-                                <Ruler className="w-4 h-4 mr-2" />
-                                Medir Objeto
-                              </>
-                            )}
+                            <Camera className="w-4 h-4 mr-2" />
+                            Capturar Medidas
                           </Button>
-                          <Button onClick={pararCamera} variant="outline">
+                          {referenciaPixels && (
+                            <Button 
+                              onClick={() => setModoCalibracao(true)} 
+                              variant="outline"
+                              size="icon"
+                              title="Recalibrar"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </Button>
+                          )}
+                          <Button onClick={pararCamera} variant="outline" size="icon">
                             <X className="w-4 h-4" />
                           </Button>
                         </div>
-                      </div>
-                    )}
-                    
-                    {scanningQR && (
-                      <div className="text-center">
-                        <p className="text-sm font-medium mb-2" style={{ color: theme.text }}>
-                          Aponte para o QR Code do volume
-                        </p>
-                        <Button onClick={pararCamera} variant="outline" size="sm">
-                          Cancelar
-                        </Button>
-                      </div>
+                      </>
                     )}
                   </div>
-                )}
-
-                {/* Etapa de Calibração Concluída */}
-                {etapa === 'medindo' && fotoReferencia && !cameraAtiva && (
-                  <div className="space-y-4">
-                    <div className="rounded-lg overflow-hidden border-2 border-green-500" style={{ borderColor: theme.cardBorder }}>
-                      <img src={fotoReferencia} alt="Referência" className="w-full h-auto" />
-                    </div>
                     
-                    <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950 border-2 border-green-500">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                        <span className="font-semibold text-green-900 dark:text-green-100">
-                          Calibração Concluída
-                        </span>
-                      </div>
-                      <p className="text-sm text-green-800 dark:text-green-200">
-                        {referenciaPixels?.toFixed(2)} pixels por centímetro
-                      </p>
+                </div>
+              )}
+              
+              {/* Scanner QR */}
+              {scanningQR && (
+                <div className="space-y-4">
+                  <div className="relative rounded-lg overflow-hidden bg-black">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-auto"
+                      style={{ maxHeight: '400px' }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="border-4 border-blue-500 w-64 h-64 rounded-lg animate-pulse" />
                     </div>
-
-                    <Button onClick={iniciarCamera} className="w-full bg-blue-600 hover:bg-blue-700">
-                      <Ruler className="w-4 h-4 mr-2" />
-                      Medir Objeto
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium mb-2" style={{ color: theme.text }}>
+                      Aponte para o QR Code do volume
+                    </p>
+                    <Button onClick={pararCamera} variant="outline" size="sm">
+                      Cancelar
                     </Button>
                   </div>
-                )}
+                </div>
+              )}
+
+
 
                 {/* Etapa de Processamento */}
                 {etapa === 'processando' && fotoCapturada && (
@@ -664,15 +692,15 @@ export default function Cubagem() {
                     <div className="grid grid-cols-3 gap-3">
                       <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950">
                         <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Altura</p>
-                        <p className="text-lg font-bold text-blue-600">{medidas.altura.toFixed(1)} cm</p>
+                        <p className="text-lg font-bold text-blue-600">{medidasTempoReal?.altura.toFixed(1) || 0} cm</p>
                       </div>
                       <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950">
                         <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Largura</p>
-                        <p className="text-lg font-bold text-blue-600">{medidas.largura.toFixed(1)} cm</p>
+                        <p className="text-lg font-bold text-blue-600">{medidasTempoReal?.largura.toFixed(1) || 0} cm</p>
                       </div>
                       <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950">
                         <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Profundidade</p>
-                        <p className="text-lg font-bold text-blue-600">{medidas.comprimento.toFixed(1)} cm</p>
+                        <p className="text-lg font-bold text-blue-600">{medidasTempoReal?.comprimento.toFixed(1) || 0} cm</p>
                       </div>
                     </div>
 
