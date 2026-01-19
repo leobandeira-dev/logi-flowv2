@@ -19,26 +19,17 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const [scanFeedback, setScanFeedback] = useState(null); // 'success' | 'duplicate' | 'error' | 'processing' | null
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
   const [availableCameras, setAvailableCameras] = useState([]);
-  const [isZebraDevice, setIsZebraDevice] = useState(false);
+  const [useZebraScanner, setUseZebraScanner] = useState(false);
   const [zebraListening, setZebraListening] = useState(false);
 
-  // Detectar dispositivo Zebra e configurar scanner nativo
+  // Detectar dispositivo Zebra e câmeras ao abrir
   useEffect(() => {
     const detectZebra = () => {
       const userAgent = navigator.userAgent.toLowerCase();
-      const isZebra = userAgent.includes('zebra') || 
-                      userAgent.includes('tc21') || 
-                      userAgent.includes('tc26') ||
-                      userAgent.includes('mc') ||
-                      window.location.href.includes('zebra');
-      
-      setIsZebraDevice(isZebra);
-      
-      if (isZebra) {
-        console.log('🦓 Zebra TC210K detectado - usando scanner nativo');
-      }
-      
-      return isZebra;
+      return userAgent.includes('zebra') || 
+             userAgent.includes('tc21') || 
+             userAgent.includes('tc26') ||
+             userAgent.includes('mc');
     };
 
     const detectCameras = async () => {
@@ -56,7 +47,6 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         
         if (backCameraIndex !== -1) {
           setCurrentCameraIndex(backCameraIndex);
-          console.log('📷 Câmera traseira selecionada:', cameras[backCameraIndex].label);
         }
       } catch (error) {
         console.log('Não foi possível detectar câmeras:', error);
@@ -64,12 +54,16 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     };
     
     if (open) {
-      const zebra = detectZebra();
-      if (zebra) {
+      const isZebra = detectZebra();
+      setUseZebraScanner(isZebra);
+      
+      if (isZebra) {
+        console.log('🦓 Zebra TC210K detectado - iniciando com scanner nativo');
         setupZebraScanner();
-      } else {
-        detectCameras();
       }
+      
+      // Sempre detectar câmeras para permitir alternância
+      detectCameras();
     }
 
     return () => {
@@ -77,20 +71,20 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     };
   }, [open]);
 
-  // Reiniciar scanner quando trocar de câmera (apenas se não for Zebra)
+  // Reiniciar scanner quando trocar de câmera
   useEffect(() => {
-    if (open && !useManualMode && !isZebraDevice && availableCameras.length > 0) {
+    if (open && !useManualMode && !useZebraScanner && availableCameras.length > 0) {
       setTimeout(() => {
         startScanner();
       }, 100);
     }
 
     return () => {
-      if (!isZebraDevice) {
+      if (!useZebraScanner) {
         stopScanner();
       }
     };
-  }, [open, useManualMode, currentCameraIndex, isZebraDevice]);
+  }, [open, useManualMode, currentCameraIndex, useZebraScanner]);
 
   // Setup do scanner Zebra (DataWedge Intent)
   const setupZebraScanner = () => {
@@ -277,33 +271,41 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   };
 
   const toggleCamera = async () => {
-    // Se for Zebra, desativar modo Zebra e usar câmera web
-    if (isZebraDevice) {
+    // Se estiver usando Zebra scanner, alternar para câmera web
+    if (useZebraScanner) {
       cleanupZebraScanner();
-      setIsZebraDevice(false);
-      console.log('🔄 Alternando de Zebra para câmera web...');
+      setUseZebraScanner(false);
+      console.log('🔄 Alternando de scanner Zebra para câmera web...');
+      // Aguardar um pouco antes de iniciar o scanner de câmera
+      setTimeout(() => {
+        if (availableCameras.length > 0) {
+          startScanner();
+        }
+      }, 300);
       return;
     }
 
-    // Se não houver múltiplas câmeras, tentar detectar novamente
-    if (availableCameras.length <= 1) {
-      try {
-        const cameras = await QrScanner.listCameras(true);
-        setAvailableCameras(cameras);
-        if (cameras.length > 1) {
-          stopScanner();
-          setCurrentCameraIndex(1);
-          console.log('🔄 Alternando câmera...');
-        }
-      } catch (error) {
-        console.log('Não foi possível detectar outras câmeras');
+    // Se estiver usando câmera web, alternar entre câmeras ou voltar para Zebra
+    if (availableCameras.length > 1) {
+      stopScanner();
+      const nextIndex = (currentCameraIndex + 1) % availableCameras.length;
+      setCurrentCameraIndex(nextIndex);
+      console.log('🔄 Alternando para câmera:', availableCameras[nextIndex]?.label);
+    } else {
+      // Se só tem uma câmera e é Zebra, voltar para scanner Zebra
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isZebraDevice = userAgent.includes('zebra') || 
+                           userAgent.includes('tc21') || 
+                           userAgent.includes('tc26') ||
+                           userAgent.includes('mc');
+      
+      if (isZebraDevice) {
+        stopScanner();
+        setUseZebraScanner(true);
+        setupZebraScanner();
+        console.log('🔄 Voltando para scanner Zebra nativo...');
       }
-      return;
     }
-    
-    stopScanner();
-    setCurrentCameraIndex(prev => (prev + 1) % availableCameras.length);
-    console.log('🔄 Alternando câmera...');
   };
 
   const stopScanner = () => {
@@ -397,8 +399,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         <div className="p-4 pt-0">
           {!useManualMode ? (
             <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
-              {isZebraDevice ? (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 to-blue-950 text-white p-8">
+              {useZebraScanner ? (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 to-blue-950 text-white p-8 relative">
                   <div className="animate-pulse mb-6">
                     <Camera className="w-24 h-24" />
                   </div>
@@ -412,6 +414,26 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                       Aponte para o código e pressione o gatilho.
                     </p>
                   </div>
+                  
+                  {/* Feedback visual para modo Zebra */}
+                  {scanFeedback && scanFeedback !== 'processing' && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
+                      <div 
+                        className={`px-8 py-4 rounded-xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
+                          scanFeedback === 'success' 
+                            ? 'bg-green-600' 
+                            : scanFeedback === 'duplicate'
+                            ? 'bg-yellow-600'
+                            : 'bg-red-600'
+                        }`}
+                        style={{ fontSize: '24px' }}
+                      >
+                        {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
+                        {scanFeedback === 'duplicate' && '⚠ JÁ BIPADO'}
+                        {scanFeedback === 'error' && '✗ VOLUME NÃO ENCONTRADO'}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <video
@@ -526,7 +548,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                       >
                         {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
                         {scanFeedback === 'duplicate' && '⚠ JÁ BIPADO'}
-                        {scanFeedback === 'error' && '✗ ERRO'}
+                        {scanFeedback === 'error' && '✗ VOLUME NÃO ENCONTRADO'}
                       </div>
                     </div>
                   )}
@@ -541,13 +563,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   variant="outline"
                   size="sm"
                   className="bg-white/90 hover:bg-white"
-                  title={isZebraDevice ? "Usar câmera web" : "Alternar câmera"}
+                  title={useZebraScanner ? "Usar câmera web" : "Alternar câmera"}
                 >
                   <SwitchCamera className="w-4 h-4" />
                 </Button>
                 <Button
                   onClick={() => {
-                    if (!isZebraDevice) stopScanner();
+                    if (!useZebraScanner) stopScanner();
                     setUseManualMode(true);
                   }}
                   variant="outline"
