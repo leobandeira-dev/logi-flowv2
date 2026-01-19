@@ -133,21 +133,52 @@ export default function Cubagem() {
   };
 
   const capturarReferencia = async () => {
-    if (videoRef.current && canvasRef.current && modelo) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0);
-      
-      setDetectando(true);
-      
+    console.log("🎯 Calibrar Referência clicado");
+    console.log("📹 videoRef:", videoRef.current);
+    console.log("🎨 canvasRef:", canvasRef.current);
+    console.log("🤖 modelo:", modelo);
+    
+    if (!modelo) {
+      toast.error("Modelo de IA ainda não carregado. Aguarde...");
+      return;
+    }
+    
+    if (!videoRef.current) {
+      toast.error("Vídeo não está pronto. Tente novamente.");
+      return;
+    }
+    
+    if (!canvasRef.current) {
+      toast.error("Canvas não encontrado");
+      return;
+    }
+    
+    const video = videoRef.current;
+    
+    // Verificar se o vídeo está pronto
+    if (!video.videoWidth || !video.videoHeight) {
+      toast.error("Vídeo ainda não carregou. Aguarde alguns segundos.");
+      return;
+    }
+    
+    console.log("✅ Iniciando detecção...");
+    
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    
+    setDetectando(true);
+    toast.loading("Detectando cartão...", { id: "detect" });
+    
+    try {
       // Detectar objetos na imagem
       const predictions = await modelo.detect(canvas);
+      console.log("🔍 Detecções:", predictions);
       
       if (predictions.length === 0) {
-        toast.error("Nenhum objeto detectado. Posicione o cartão de crédito melhor.");
+        toast.error("Nenhum objeto detectado. Posicione o cartão de crédito melhor.", { id: "detect" });
         setDetectando(false);
         return;
       }
@@ -156,6 +187,8 @@ export default function Cubagem() {
       const referencia = predictions[0];
       const larguraPixels = referencia.bbox[2];
       const alturaPixels = referencia.bbox[3];
+      
+      console.log("✅ Objeto detectado:", referencia.class, "Tamanho:", larguraPixels, "x", alturaPixels);
       
       // Desenhar retângulo na referência
       ctx.strokeStyle = '#00ff00';
@@ -177,7 +210,11 @@ export default function Cubagem() {
       setDetectando(false);
       pararCamera();
       setEtapa("medindo");
-      toast.success(`Referência calibrada! ${pixelsPorCm.toFixed(2)} pixels/cm`);
+      toast.success(`Referência calibrada! ${pixelsPorCm.toFixed(2)} pixels/cm`, { id: "detect" });
+    } catch (error) {
+      console.error("❌ Erro na detecção:", error);
+      toast.error("Erro ao detectar objeto: " + error.message, { id: "detect" });
+      setDetectando(false);
     }
   };
 
