@@ -567,10 +567,24 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   variant="outline"
                   size="sm"
                   className="bg-white/90 hover:bg-white"
-                  title={useZebraScanner ? "Usar câmera web" : "Alternar câmera"}
+                  title={useZebraScanner ? "Usar câmera web" : "Alternar câmera / Leitor"}
                 >
                   <SwitchCamera className="w-4 h-4" />
                 </Button>
+                {!useZebraScanner && availableCameras.length === 0 && (
+                  <Button
+                    onClick={() => {
+                      setUseZebraScanner(true);
+                      setupZebraScanner();
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="bg-blue-100 hover:bg-blue-200 text-blue-900 font-bold"
+                    title="Ativar leitor Zebra"
+                  >
+                    🦓 Leitor
+                  </Button>
+                )}
                 <Button
                   onClick={() => {
                     if (!useZebraScanner) stopScanner();
