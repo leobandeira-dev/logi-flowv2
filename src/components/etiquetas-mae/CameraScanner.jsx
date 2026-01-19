@@ -757,10 +757,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   </Button>
                 </div>
               </div>
-              )}
-
-          <div className="mt-3 space-y-2">
-          {useManualMode && (
+              <div className="mt-3 space-y-2">
+              {useManualMode && (
             <div className="bg-white dark:bg-gray-900 border-2 rounded-lg p-3" style={{ borderColor: isDark ? '#3b82f6' : '#2563eb' }}>
               <div className="flex gap-2">
                 <Input
