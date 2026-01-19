@@ -167,10 +167,10 @@ export default function EtiquetasMae() {
         cache.set(STORES.NOTAS_FISCAIS, 'all', notasData, 2 * 60 * 1000),
       ]);
 
-      setEtiquetas(etiquetasData || []);
-      setVolumes(volumesData || []);
-      setNotas(notasData || []);
-      setUsuarios(usuariosData || []);
+      setEtiquetas(etiquetasData);
+      setVolumes(volumesData);
+      setNotas(notasData);
+      setUsuarios(usuariosData);
 
       console.log('✅ Dados carregados e em cache');
     } catch (error) {
@@ -331,58 +331,24 @@ export default function EtiquetasMae() {
   };
 
   const handleVolumeCameraScan = async (codigo) => {
-   console.log('🔍 handleVolumeCameraScan chamado com:', codigo);
-
-   if (!codigo || !codigo.trim()) {
-     console.log('❌ Código vazio');
-     return 'error';
-   }
-
-   if (!etiquetaSelecionada) {
-     console.log('❌ Nenhuma etiqueta selecionada');
-     toast.error('Nenhuma etiqueta selecionada');
-     return 'error';
-   }
-
-   if (processando) {
-     console.log('⏳ Já está processando');
-     return 'processing';
-   }
-
-   console.log('📝 Código recebido:', codigo.trim());
-
-   // Processar o scan direto e retornar resultado para feedback visual
-   const resultado = await handleScanComFeedback(codigo.trim());
-   console.log('✓ Resultado do scan retornado:', resultado);
-   return resultado;
+    if (!codigo || !codigo.trim()) return;
+    
+    setCodigoScanner(codigo.trim());
+    
+    // Processar o scan e retornar resultado para feedback visual
+    const resultado = await handleScanComFeedback(codigo.trim());
+    return resultado;
   };
 
   const handleScanComFeedback = async (codigo) => {
-   if (!codigo || !codigo.trim()) {
-     console.log('❌ handleScanComFeedback: Código vazio');
-     return 'error';
-   }
+    if (!codigo || !codigo.trim() || !etiquetaSelecionada) return 'error';
 
-   if (!etiquetaSelecionada) {
-     console.log('❌ handleScanComFeedback: Etiqueta não selecionada');
-     return 'error';
-   }
-
-   if (processando) {
-     console.log('⏳ handleScanComFeedback: Já está processando');
-     return 'processing';
-   }
-
-   setProcessando(true);
-   console.log('🔄 handleScanComFeedback iniciado com:', codigo);
-
-   try {
-     const codigoLimpo = codigo.trim();
-     console.log('📦 Código limpo:', codigoLimpo);
+    setProcessando(true);
+    try {
+      const codigoLimpo = codigo.trim();
       
       // Se for chave NF-e (44 dígitos), processar nota fiscal
       if (codigoLimpo.length === 44 && /^\d+$/.test(codigoLimpo)) {
-        console.log('💳 Chave NF-e detectada:', codigoLimpo);
         await handleScanChaveNFe(codigoLimpo);
         setCodigoScanner("");
         setProcessando(false);
@@ -391,34 +357,10 @@ export default function EtiquetasMae() {
         return 'success';
       }
 
-      // Buscar volume - verificar tanto volumes carregados quanto buscar do servidor se necessário
-      console.log('🔍 Procurando volume com ID:', codigoLimpo);
-      console.log('📊 Total de volumes em memória:', volumes.length);
-      
-      let volumeEncontrado = volumes.find(v => v.identificador_unico === codigoLimpo);
-      
-      // Se não encontrou em memória, buscar do servidor como fallback
-      if (!volumeEncontrado) {
-        console.log('⚠️ Volume não encontrado em memória, buscando do servidor...');
-        try {
-          const todoVolumes = await base44.entities.Volume.list();
-          volumeEncontrado = todoVolumes.find(v => v.identificador_unico === codigoLimpo);
-          
-          if (volumeEncontrado) {
-            console.log('✅ Volume encontrado no servidor:', volumeEncontrado.id);
-            // Atualizar cache local
-            setVolumes(todoVolumes);
-          } else {
-            console.log('❌ Volume NÃO encontrado em nenhuma fonte');
-          }
-        } catch (searchError) {
-          console.error('❌ Erro ao buscar volumes do servidor:', searchError);
-        }
-      }
+      const volumeEncontrado = volumes.find(v => v.identificador_unico === codigoLimpo);
 
       if (!volumeEncontrado) {
-        console.log('❌ Volume não encontrado - retornando erro');
-        playLongErrorBeep();
+        playLongErrorBeep(); // 1 bipe longo
         toast.error("Volume não encontrado");
         setCodigoScanner("");
         setProcessando(false);
@@ -426,8 +368,6 @@ export default function EtiquetasMae() {
         setTimeout(() => setCameraScanFeedback(null), 800);
         return 'error';
       }
-
-      console.log('✅ Volume encontrado:', volumeEncontrado.identificador_unico);
 
       if (volumeEncontrado.etiqueta_mae_id && volumeEncontrado.etiqueta_mae_id !== etiquetaSelecionada.id) {
         const etiquetaAnterior = await base44.entities.EtiquetaMae.get(volumeEncontrado.etiqueta_mae_id);
