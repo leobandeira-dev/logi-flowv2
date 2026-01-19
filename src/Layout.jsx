@@ -7,6 +7,7 @@ import PerfilFotoModal from "./components/usuario/PerfilFotoModal";
 import MeuPerfilModal from "./components/usuario/MeuPerfilModal";
 import NotificacaoOcorrencia from "./components/notificacoes/NotificacaoOcorrencia";
 import TratarOcorrenciaModal from "./components/fluxo/TratarOcorrenciaModal";
+import PWAInstaller from "./components/utils/PWAInstaller";
 
 import {
   Truck,
@@ -1241,6 +1242,9 @@ export default function Layout({ children, currentPageName }) {
           onSuccess={handleTratarSuccess}
         />
       )}
+
+      {/* PWA Installer */}
+      <PWAInstaller />
 
       {/* Modal de Perfil Incompleto */}
       {showPerfilIncompleto && user && (
