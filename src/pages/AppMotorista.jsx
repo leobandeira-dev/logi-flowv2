@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -310,15 +311,14 @@ export default function AppMotorista() {
         base44.entities.Veiculo.list()
       ]);
       
-      setVeiculos(veiculosData || []);
+      setVeiculos(veiculosData);
       
       let motoristaEncontrado;
-      const motoristas = motoristasData || [];
       
       if (isAdmin) {
-        motoristaEncontrado = motoristas[0];
+        motoristaEncontrado = motoristasData[0];
       } else {
-        motoristaEncontrado = motoristas.find(m => 
+        motoristaEncontrado = motoristasData.find(m => 
           m.email === currentUser.email || m.cpf === currentUser.cpf
         );
       }

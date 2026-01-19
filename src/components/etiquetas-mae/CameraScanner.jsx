@@ -404,38 +404,24 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
           {!useManualMode ? (
             <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
               {useZebraScanner ? (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 to-blue-950 text-white p-6 relative">
-                  <div className="animate-pulse mb-4">
-                    <Camera className="w-16 h-16" />
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 to-blue-950 text-white p-8 relative">
+                  <div className="animate-pulse mb-6">
+                    <Camera className="w-24 h-24" />
                   </div>
-                  <h3 className="text-xl font-bold mb-2">🦓 Scanner Zebra Ativo</h3>
-                  <p className="text-blue-200 text-center text-sm mb-4">
-                    Aponte e pressione o gatilho amarelo
+                  <h3 className="text-2xl font-bold mb-2">🦓 Scanner Zebra Ativo</h3>
+                  <p className="text-blue-200 text-center mb-6">
+                    Pressione os botões amarelos do coletor para ler
                   </p>
-                  
-                  {/* Input visível no modo Zebra */}
-                  <div className="w-full max-w-sm bg-white rounded-lg p-3 border-2 border-blue-400 shadow-xl">
-                    <Input
-                      placeholder="Aguardando leitura..."
-                      value={manualInput}
-                      onChange={(e) => setManualInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && manualInput.trim()) {
-                          handleManualSubmit();
-                        }
-                      }}
-                      className="text-center font-mono text-base h-11 bg-gray-50 border-gray-300 text-gray-900"
-                      autoFocus
-                      readOnly={false}
-                    />
-                    <p className="text-xs text-center mt-2 text-blue-200">
-                      Modo nativo ativo - leitura automática
+                  <div className="bg-blue-800/50 rounded-lg p-4 border-2 border-blue-500">
+                    <p className="text-sm text-center">
+                      O scanner nativo está aguardando leitura.<br/>
+                      Aponte para o código e pressione o gatilho.
                     </p>
                   </div>
                   
                   {/* Feedback visual para modo Zebra */}
                   {scanFeedback && scanFeedback !== 'processing' && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-20">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
                       <div 
                         className={`px-8 py-4 rounded-xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
                           scanFeedback === 'success' 

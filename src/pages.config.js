@@ -1,3 +1,4 @@
+import AppMotorista from './pages/AppMotorista';
 import Apresentacao from './pages/Apresentacao';
 import AprovacaoColeta from './pages/AprovacaoColeta';
 import CRM from './pages/CRM';
@@ -11,6 +12,7 @@ import Configuracoes from './pages/Configuracoes';
 import Cubagem from './pages/Cubagem';
 import Dashboard from './pages/Dashboard';
 import DashboardTV from './pages/DashboardTV';
+import EtiquetasMae from './pages/EtiquetasMae';
 import FilaMotorista from './pages/FilaMotorista';
 import FilaX from './pages/FilaX';
 import Fluxo from './pages/Fluxo';
@@ -46,12 +48,11 @@ import TrackingTV from './pages/TrackingTV';
 import Unitizacao from './pages/Unitizacao';
 import Usuarios from './pages/Usuarios';
 import Veiculos from './pages/Veiculos';
-import EtiquetasMae from './pages/EtiquetasMae';
-import AppMotorista from './pages/AppMotorista';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AppMotorista": AppMotorista,
     "Apresentacao": Apresentacao,
     "AprovacaoColeta": AprovacaoColeta,
     "CRM": CRM,
@@ -65,6 +66,7 @@ export const PAGES = {
     "Cubagem": Cubagem,
     "Dashboard": Dashboard,
     "DashboardTV": DashboardTV,
+    "EtiquetasMae": EtiquetasMae,
     "FilaMotorista": FilaMotorista,
     "FilaX": FilaX,
     "Fluxo": Fluxo,
@@ -100,8 +102,6 @@ export const PAGES = {
     "Unitizacao": Unitizacao,
     "Usuarios": Usuarios,
     "Veiculos": Veiculos,
-    "EtiquetasMae": EtiquetasMae,
-    "AppMotorista": AppMotorista,
 }
 
 export const pagesConfig = {
