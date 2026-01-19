@@ -337,16 +337,18 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <style>{`
-        .scan-region-highlight-svg,
-        .code-outline-highlight {
-          display: none !important;
-        }
-      `}</style>
-      <DialogContent 
-        className="max-w-md w-[95vw] p-0" 
-        style={{ backgroundColor: theme.bg, borderColor: theme.border }}
-      >
+        <style>{`
+          .scan-region-highlight-svg,
+          .code-outline-highlight {
+            display: none !important;
+          }
+          input { -webkit-user-select: none; user-select: none; }
+          input:focus { outline: none; }
+        `}</style>
+        <DialogContent 
+          className="fixed inset-0 w-screen h-screen max-w-none max-h-none p-0 m-0 rounded-none border-0" 
+          style={{ backgroundColor: theme.bg, borderColor: theme.border }}
+        >
         <DialogHeader className="p-4 pb-3">
           <DialogTitle style={{ color: theme.text }}>
             Leitura de Código
