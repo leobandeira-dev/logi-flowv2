@@ -397,8 +397,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
               <div 
                 className="transition-all duration-200"
                 style={{
-                  width: '80%',
-                  height: '80%',
+                  width: '92%',
+                  height: '92%',
                   border: scanFeedback === 'success' 
                     ? '4px solid #10b981' 
                     : scanFeedback === 'duplicate'
@@ -407,17 +407,17 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                     ? '4px solid #ef4444'
                     : scanFeedback === 'processing' 
                     ? '4px solid #3b82f6' 
-                    : '4px solid rgba(255, 255, 255, 0.4)',
+                    : '4px solid rgba(255, 255, 255, 0.5)',
                   borderRadius: '12px',
                   boxShadow: scanFeedback === 'success' 
-                    ? '0 0 30px rgba(16, 185, 129, 0.6), inset 0 0 20px rgba(16, 185, 129, 0.2)' 
+                    ? '0 0 50px rgba(16, 185, 129, 0.8), 0 0 80px rgba(16, 185, 129, 0.5), inset 0 0 25px rgba(16, 185, 129, 0.3)' 
                     : scanFeedback === 'duplicate'
-                    ? '0 0 30px rgba(245, 158, 11, 0.6), inset 0 0 20px rgba(245, 158, 11, 0.2)'
+                    ? '0 0 50px rgba(245, 158, 11, 0.8), 0 0 80px rgba(245, 158, 11, 0.5), inset 0 0 25px rgba(245, 158, 11, 0.3)'
                     : scanFeedback === 'error'
-                    ? '0 0 30px rgba(239, 68, 68, 0.6), inset 0 0 20px rgba(239, 68, 68, 0.2)'
+                    ? '0 0 50px rgba(239, 68, 68, 0.8), 0 0 80px rgba(239, 68, 68, 0.5), inset 0 0 25px rgba(239, 68, 68, 0.3)'
                     : scanFeedback === 'processing' 
-                    ? '0 0 30px rgba(59, 130, 246, 0.6), inset 0 0 20px rgba(59, 130, 246, 0.2)' 
-                    : '0 0 20px rgba(255, 255, 255, 0.2), inset 0 0 15px rgba(255, 255, 255, 0.1)'
+                    ? '0 0 50px rgba(59, 130, 246, 0.8), 0 0 80px rgba(59, 130, 246, 0.5), inset 0 0 25px rgba(59, 130, 246, 0.3)' 
+                    : '0 0 40px rgba(255, 255, 255, 0.4), 0 0 60px rgba(255, 255, 255, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.15)'
                 }}
               />
             </div>
