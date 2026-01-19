@@ -17,6 +17,7 @@ import { findRearCameraIndex, findFrontCameraIndex, logCameraInfo, getCameraConf
 export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual, progressoAtual, externalFeedback }) {
   const videoRef = useRef(null);
   const inputRef = useRef(null);
+  const debounceTimerRef = useRef(null);
   const [scanning, setScanning] = useState(false);
   const [manualInput, setManualInput] = useState("");
   const [useManualMode, setUseManualMode] = useState(false);
@@ -199,14 +200,18 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     const value = e.target.value;
     setManualInput(value);
 
-    // Auto-submit quando atingir 44 dígitos ou pressionar Enter
-    if (value.length >= 44) {
-      setTimeout(() => {
-        const cleaned = value.trim().replace(/\D/g, '');
-        if (cleaned.length >= 44) {
+    // Limpar timer anterior
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Auto-submit após 800ms de inatividade se houver conteúdo
+    if (value.trim()) {
+      debounceTimerRef.current = setTimeout(() => {
+        if (value.trim()) {
           handleManualSubmit();
         }
-      }, 50);
+      }, 800);
     }
   };
 
@@ -216,6 +221,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       setTimeout(() => inputRef.current?.focus(), 300);
     }
   }, [open]);
+
+  // Limpar debounce ao desmontar
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   const theme = {
     bg: isDark ? '#0f172a' : '#ffffff',
