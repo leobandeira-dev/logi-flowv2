@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Camera, X, Loader2, Keyboard, SwitchCamera } from "lucide-react";
+import { playSuccessBeep, playDuplicateBeep, playLongErrorBeep } from "../utils/audioFeedback";
 import {
   Dialog,
   DialogContent,
@@ -105,12 +106,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
         if (scanResult === 'success') {
           setScanFeedback('success');
+          playSuccessBeep(); // 1 bipe curto
           if (window.navigator.vibrate) window.navigator.vibrate(200);
         } else if (scanResult === 'duplicate') {
           setScanFeedback('duplicate');
+          playDuplicateBeep(); // 2 bipes curtos
           if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 100]);
         } else if (scanResult === 'error') {
           setScanFeedback('error');
+          playLongErrorBeep(); // 1 bipe longo
           if (window.navigator.vibrate) window.navigator.vibrate([200, 100, 200]);
         }
 
