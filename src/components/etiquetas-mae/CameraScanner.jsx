@@ -27,10 +27,14 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   useEffect(() => {
     const detectZebra = () => {
       const userAgent = navigator.userAgent.toLowerCase();
-      return userAgent.includes('zebra') || 
+      const isZebra = userAgent.includes('zebra') || 
              userAgent.includes('tc21') || 
              userAgent.includes('tc26') ||
              userAgent.includes('mc');
+      console.log('🔍 Detectando dispositivo Zebra...');
+      console.log('📱 User Agent:', navigator.userAgent);
+      console.log('✅ É dispositivo Zebra?', isZebra);
+      return isZebra;
     };
 
     const detectCameras = async () => {
@@ -55,16 +59,21 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     };
     
     if (open) {
+      console.log('🔓 Modal aberto, iniciando detecção...');
       const isZebra = detectZebra();
       setUseZebraScanner(isZebra);
       
       if (isZebra) {
         console.log('🦓 Zebra TC210K detectado - iniciando com scanner nativo');
         setupZebraScanner();
+      } else {
+        console.log('📷 Nenhum Zebra detectado, usando câmera');
       }
       
       // Sempre detectar câmeras para permitir alternância
       detectCameras();
+    } else {
+      console.log('🔒 Modal fechado');
     }
 
     return () => {
@@ -89,9 +98,14 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
   // Setup do scanner Zebra (DataWedge Intent)
   const setupZebraScanner = () => {
-    if (zebraListening) return;
+    console.log('⚙️ setupZebraScanner chamado. zebraListening:', zebraListening);
+    if (zebraListening) {
+      console.log('⚠️ Scanner Zebra já está listening, retornando');
+      return;
+    }
 
     const handleZebraScan = async (event) => {
+      console.log('📡 handleZebraScan disparado com evento:', event);
       const data = event.detail;
       
       if (data && data.data && !scanFeedback) {
@@ -124,17 +138,21 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
     // Listener para Intent do DataWedge
     window.addEventListener('datawedge-scan', handleZebraScan);
+    console.log('✅ Listener "datawedge-scan" registrado');
     
     // Listener alternativo via broadcast
     const handleBroadcast = (e) => {
+      console.log('📡 Broadcast recebido:', e.data);
       if (e.data && typeof e.data === 'string') {
         handleZebraScan({ detail: { data: e.data } });
       }
     };
     window.addEventListener('message', handleBroadcast);
+    console.log('✅ Listener "message" registrado');
 
     setZebraListening(true);
     console.log('🦓 Scanner Zebra ativado - aguardando leitura...');
+    console.log('⚠️ Aguardando: datawedge-scan ou message events...');
   };
 
   const cleanupZebraScanner = () => {
@@ -275,6 +293,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   };
 
   const toggleCamera = async () => {
+    console.log('🔄 toggleCamera chamado. useZebraScanner:', useZebraScanner, 'availableCameras:', availableCameras.length);
     // Se estiver usando Zebra scanner, alternar para câmera web
     if (useZebraScanner) {
       cleanupZebraScanner();
