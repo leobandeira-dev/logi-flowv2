@@ -164,13 +164,54 @@ export default function Cubagem() {
       ctx.drawImage(video, 0, 0);
       
       try {
-        const predictions = await modelo.detect(canvas, undefined, 0.3);
+        const predictions = await modelo.detect(canvas, undefined, 0.4);
         
         if (predictions.length > 0 && overlay) {
-          const objeto = predictions.reduce((prev, current) => {
-            const prevArea = prev.bbox[2] * prev.bbox[3];
-            const currentArea = current.bbox[2] * current.bbox[3];
-            return currentArea > prevArea ? current : prev;
+          // Filtrar objetos indesejados (superfícies grandes, fundo)
+          const objetosValidos = predictions.filter(pred => {
+            const area = pred.bbox[2] * pred.bbox[3];
+            const areaTotal = canvas.width * canvas.height;
+            const porcentagemArea = (area / areaTotal) * 100;
+            
+            // Filtrar objetos que ocupam mais de 70% da tela (provavelmente superfície/fundo)
+            if (porcentagemArea > 70) return false;
+            
+            // Filtrar objetos que ocupam menos de 2% da tela (muito pequenos/ruído)
+            if (porcentagemArea < 2) return false;
+            
+            // Filtrar classes que são superfícies/fundo
+            const classesIgnoradas = ['dining table', 'table', 'floor', 'desk', 'bench', 'bed', 'couch', 'chair'];
+            if (classesIgnoradas.includes(pred.class.toLowerCase())) return false;
+            
+            return true;
+          });
+          
+          if (objetosValidos.length === 0) {
+            // Se não há objetos válidos, limpar overlay
+            const overlayCtx = overlay.getContext('2d');
+            overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+            setMedidasTempoReal(null);
+            return;
+          }
+          
+          // Escolher o objeto válido mais centralizado e com maior confiança
+          const objeto = objetosValidos.reduce((prev, current) => {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            const prevCenterX = prev.bbox[0] + prev.bbox[2] / 2;
+            const prevCenterY = prev.bbox[1] + prev.bbox[3] / 2;
+            const prevDistCenter = Math.sqrt(Math.pow(prevCenterX - centerX, 2) + Math.pow(prevCenterY - centerY, 2));
+            
+            const currCenterX = current.bbox[0] + current.bbox[2] / 2;
+            const currCenterY = current.bbox[1] + current.bbox[3] / 2;
+            const currDistCenter = Math.sqrt(Math.pow(currCenterX - centerX, 2) + Math.pow(currCenterY - centerY, 2));
+            
+            // Priorizar objetos mais centralizados com boa confiança
+            const prevScore = (prev.score * 0.6) - (prevDistCenter / canvas.width * 0.4);
+            const currScore = (current.score * 0.6) - (currDistCenter / canvas.width * 0.4);
+            
+            return currScore > prevScore ? current : prev;
           });
           
           const [x, y, larguraPixels, alturaPixels] = objeto.bbox;
