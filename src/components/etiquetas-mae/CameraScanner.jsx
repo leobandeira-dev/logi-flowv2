@@ -180,86 +180,91 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
 
     try {
-       // Forçar câmera traseira
-       let cameraConfig = "environment";
+       // Forçar câmera traseira - usar object com facingMode
+       let cameraConfig = { facingMode: { exact: "environment" } };
 
-       if (availableCameras.length > 0) {
+       if (availableCameras.length > 0 && availableCameras[currentCameraIndex]) {
          const camera = availableCameras[currentCameraIndex];
-         console.log('📷 QrScanner iniciando com câmera:', camera?.label, camera?.id);
+         console.log('📷 QrScanner usando câmera detectada:', camera?.label, camera?.id);
          cameraConfig = camera;
        } else {
-         console.log('📷 Nenhuma câmera detectada, usando "environment"');
+         console.log('📷 Nenhuma câmera específica, forçando environment');
        }
 
-      const qrScanner = new QrScanner(
-        videoRef.current,
-        async (result) => {
-          if (result?.data && !scanFeedback) {
-            const decodedText = result.data;
-            console.log('🔍 QR Code detectado:', decodedText);
+       const qrScanner = new QrScanner(
+         videoRef.current,
+         async (result) => {
+           if (result?.data && !scanFeedback) {
+             const decodedText = result.data;
+             console.log('🔍 QR Code detectado:', decodedText);
 
-            const cleaned = decodedText.replace(/\D/g, '');
-            const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
+             const cleaned = decodedText.replace(/\D/g, '');
+             const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
 
-            console.log('📦 Código processado:', finalCode);
+             console.log('📦 Código processado:', finalCode);
 
-            // Bloquear novos scans
-            setScanFeedback('processing');
+             // Bloquear novos scans
+             setScanFeedback('processing');
 
-            const scanResult = await Promise.resolve(onScan(finalCode));
+             const scanResult = await Promise.resolve(onScan(finalCode));
 
-            console.log('✅ Resultado do scan:', scanResult);
+             console.log('✅ Resultado do scan:', scanResult);
 
-            // Aplicar feedback baseado no resultado
-            if (scanResult === 'success') {
-              setScanFeedback('success');
-              // Vibração de sucesso no coletor Zebra
-              if (window.navigator.vibrate) {
-                window.navigator.vibrate(200);
-              }
-            } else if (scanResult === 'duplicate') {
-              setScanFeedback('duplicate');
-              // Vibração de alerta (padrão diferente)
-              if (window.navigator.vibrate) {
-                window.navigator.vibrate([100, 50, 100]);
-              }
-            } else if (scanResult === 'error') {
-              setScanFeedback('error');
-              // Vibração de erro
-              if (window.navigator.vibrate) {
-                window.navigator.vibrate([200, 100, 200]);
-              }
-            }
+             // Aplicar feedback baseado no resultado
+             if (scanResult === 'success') {
+               setScanFeedback('success');
+               if (window.navigator.vibrate) {
+                 window.navigator.vibrate(200);
+               }
+             } else if (scanResult === 'duplicate') {
+               setScanFeedback('duplicate');
+               if (window.navigator.vibrate) {
+                 window.navigator.vibrate([100, 50, 100]);
+               }
+             } else if (scanResult === 'error') {
+               setScanFeedback('error');
+               if (window.navigator.vibrate) {
+                 window.navigator.vibrate([200, 100, 200]);
+               }
+             }
 
-            // Liberar para próximo scan
-            setTimeout(() => setScanFeedback(null), 800);
-          }
-        },
-        {
-          returnDetailedScanResult: true,
-          highlightScanRegion: false,
-          highlightCodeOutline: false,
-          preferredCamera: cameraConfig,
-          maxScansPerSecond: 8,
-          calculateScanRegion: (video) => {
-            const smallestDimension = Math.min(video.videoWidth, video.videoHeight);
-            const scanRegionSize = Math.round(0.9 * smallestDimension);
+             // Liberar para próximo scan
+             setTimeout(() => setScanFeedback(null), 800);
+           }
+         },
+         {
+           returnDetailedScanResult: true,
+           highlightScanRegion: false,
+           highlightCodeOutline: false,
+           preferredCamera: cameraConfig,
+           maxScansPerSecond: 8,
+           calculateScanRegion: (video) => {
+             const smallestDimension = Math.min(video.videoWidth, video.videoHeight);
+             const scanRegionSize = Math.round(0.9 * smallestDimension);
+             return {
+               x: Math.round((video.videoWidth - scanRegionSize) / 2),
+               y: Math.round((video.videoHeight - scanRegionSize) / 2),
+               width: scanRegionSize,
+               height: scanRegionSize,
+             };
+           }
+         }
+       );
 
-            return {
-              x: Math.round((video.videoWidth - scanRegionSize) / 2),
-              y: Math.round((video.videoHeight - scanRegionSize) / 2),
-              width: scanRegionSize,
-              height: scanRegionSize,
-            };
-          }
-        }
-      );
+       qrScanner.setInversionMode('both');
 
-      qrScanner.setInversionMode('both');
+       qrScannerRef.current = qrScanner;
+       await qrScanner.start();
 
-      qrScannerRef.current = qrScanner;
-      await qrScanner.start();
-      setScanning(true);
+       // Verificar qual câmera foi ativada
+       const videoTrack = videoRef.current?.srcObject?.getVideoTracks()[0];
+       if (videoTrack) {
+         const settings = videoTrack.getSettings();
+         console.log('📷 Câmera ativa após start:', settings);
+         console.log('📷 Facing mode:', settings.facingMode);
+       }
+
+       setScanning(true);
 
       // Otimizações específicas para Zebra TC210K
       try {
