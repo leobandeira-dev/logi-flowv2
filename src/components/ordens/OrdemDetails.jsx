@@ -61,6 +61,7 @@ const statusTrackingOptions = [
   { value: "em_carregamento", label: "Em Carregamento" },
   { value: "carregado", label: "Carregado" },
   { value: "em_viagem", label: "Em Viagem" },
+  { value: "filial_destino", label: "Filial Destino" },
   { value: "chegada_destino", label: "Chegada no Destino" },
   { value: "descarga_agendada", label: "Descarga Agendada" },
   { value: "em_descarga", label: "Em Descarga" },
@@ -249,10 +250,10 @@ export default function OrdemDetails({
         inicio_carregamento: convertISOToLocal(ordemAtualizada.inicio_carregamento),
         fim_carregamento: convertISOToLocal(ordemAtualizada.fim_carregamento),
         saida_unidade: convertISOToLocal(ordemAtualizada.saida_unidade),
+        chegada_filial_destino: convertISOToLocal(ordemAtualizada.chegada_filial_destino),
         chegada_destino: convertISOToLocal(ordemAtualizada.chegada_destino),
         descarga_realizada_data: convertISOToLocal(ordemAtualizada.descarga_realizada_data),
         descarga_agendamento_data: convertISOToLocal(ordemAtualizada.descarga_agendamento_data),
-        agendamento_checklist_data: convertISOToLocal(ordemAtualizada.agendamento_checklist_data),
         prazo_entrega: convertISOToLocal(ordemAtualizada.prazo_entrega),
         asn: ordemAtualizada.asn || "",
         numero_cte: ordemAtualizada.numero_cte || "",
@@ -280,10 +281,10 @@ export default function OrdemDetails({
         inicio_carregamento: convertISOToLocal(ordem.inicio_carregamento),
         fim_carregamento: convertISOToLocal(ordem.fim_carregamento),
         saida_unidade: convertISOToLocal(ordem.saida_unidade),
+        chegada_filial_destino: convertISOToLocal(ordem.chegada_filial_destino),
         chegada_destino: convertISOToLocal(ordem.chegada_destino),
         descarga_realizada_data: convertISOToLocal(ordem.descarga_realizada_data),
         descarga_agendamento_data: convertISOToLocal(ordem.descarga_agendamento_data),
-        agendamento_checklist_data: convertISOToLocal(ordem.agendamento_checklist_data),
         prazo_entrega: convertISOToLocal(ordem.prazo_entrega),
         asn: ordem.asn || "",
         numero_cte: ordem.numero_cte || "",
@@ -628,10 +629,10 @@ export default function OrdemDetails({
         inicio_carregamento: convertLocalToISO(trackingData.inicio_carregamento),
         fim_carregamento: convertLocalToISO(trackingData.fim_carregamento),
         saida_unidade: convertLocalToISO(trackingData.saida_unidade),
+        chegada_filial_destino: convertLocalToISO(trackingData.chegada_filial_destino),
         chegada_destino: convertLocalToISO(trackingData.chegada_destino),
         descarga_agendamento_data: convertLocalToISO(trackingData.descarga_agendamento_data),
         descarga_realizada_data: convertLocalToISO(trackingData.descarga_realizada_data),
-        agendamento_checklist_data: convertLocalToISO(trackingData.agendamento_checklist_data),
         prazo_entrega: prazoEntregaCalculado,
         asn: trackingData.asn || null,
         numero_cte: trackingData.numero_cte || null,
@@ -1104,6 +1105,26 @@ export default function OrdemDetails({
                         />
                       </div>
                       <div>
+                        <Label htmlFor="chegada_filial_destino">Chegada Filial Destino</Label>
+                        <Input
+                          id="chegada_filial_destino"
+                          type="text"
+                          value={trackingData.chegada_filial_destino}
+                          onChange={(e) => {
+                            let value = e.target.value;
+                            value = value.replace(/\D/g, '');
+                            if (value.length >= 2) value = value.substring(0, 2) + '/' + value.substring(2);
+                            if (value.length >= 5) value = value.substring(0, 5) + '/' + value.substring(5);
+                            if (value.length >= 10) value = value.substring(0, 10) + ' ' + value.substring(10);
+                            if (value.length >= 13) value = value.substring(0, 13) + ':' + value.substring(13, 15);
+                            setTrackingData({ ...trackingData, chegada_filial_destino: value });
+                          }}
+                          onKeyDown={(e) => handleKeyDown(e, "chegada_filial_destino")}
+                          placeholder="dd/mm/aaaa hh:mm"
+                          maxLength={16}
+                        />
+                      </div>
+                      <div>
                         <Label htmlFor="chegada_destino">Chegada no Destino</Label>
                         <Input
                           id="chegada_destino"
@@ -1160,26 +1181,6 @@ export default function OrdemDetails({
                         />
                       </div>
                       <div>
-                        <Label htmlFor="agendamento_checklist_data">Checklist de Agendamento</Label>
-                        <Input
-                          id="agendamento_checklist_data"
-                          type="text"
-                          value={trackingData.agendamento_checklist_data}
-                          onChange={(e) => {
-                            let value = e.target.value;
-                            value = value.replace(/\D/g, '');
-                            if (value.length >= 2) value = value.substring(0, 2) + '/' + value.substring(2);
-                            if (value.length >= 5) value = value.substring(0, 5) + '/' + value.substring(5);
-                            if (value.length >= 10) value = value.substring(0, 10) + ' ' + value.substring(10);
-                            if (value.length >= 13) value = value.substring(0, 13) + ':' + value.substring(13, 15);
-                            setTrackingData({ ...trackingData, agendamento_checklist_data: value });
-                          }}
-                          onKeyDown={(e) => handleKeyDown(e, "agendamento_checklist_data")}
-                          placeholder="dd/mm/aaaa hh:mm"
-                          maxLength={16}
-                        />
-                      </div>
-                      <div className="col-span-2">
                         <Label htmlFor="descarga_realizada_data">Descarga Realizada (Data/Hora)</Label>
                         <Input
                           id="descarga_realizada_data"
