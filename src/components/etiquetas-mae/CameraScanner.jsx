@@ -23,6 +23,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const [useZebraScanner, setUseZebraScanner] = useState(false);
   const [zebraListening, setZebraListening] = useState(false);
   const inputRef = useRef(null);
+  const zebraInputRef = useRef(null);
   const processandoRef = useRef(false);
 
   // Detectar dispositivo Zebra e câmeras ao abrir
@@ -114,6 +115,20 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     };
   }, [open, useManualMode, currentCameraIndex, useZebraScanner]);
 
+  // Manter input Zebra oculto focado
+  useEffect(() => {
+    if (useZebraScanner && zebraInputRef.current) {
+      const refocusInterval = setInterval(() => {
+        if (zebraInputRef.current && document.activeElement !== zebraInputRef.current) {
+          console.log('🦓 Re-focando input oculto');
+          zebraInputRef.current.focus();
+        }
+      }, 500);
+
+      return () => clearInterval(refocusInterval);
+    }
+  }, [useZebraScanner]);
+
   // Setup do scanner Zebra (DataWedge Intent)
   const setupZebraScanner = () => {
     if (zebraListening) return;
@@ -177,14 +192,19 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     };
     window.addEventListener('datawedge-scan', zebraListener);
     
-    // Listener para keypress (se configurado como teclado virtual)
-    const keyListener = (e) => {
-      if (e.key === 'Enter' && !processandoRef.current) {
-        console.log('🦓 Enter pressionado');
-        // Não fazer nada - deixar o evento passar
+    // Listener para Enter no input oculto (scanner como teclado virtual)
+    const inputZebraListener = (e) => {
+      if (e.key === 'Enter' && zebraInputRef.current && zebraInputRef.current.value) {
+        const scannedValue = zebraInputRef.current.value;
+        console.log('🦓 Scan do input oculto:', scannedValue);
+        zebraInputRef.current.value = '';
+        handleZebraScan({ detail: { data: scannedValue } });
       }
     };
-    window.addEventListener('keypress', keyListener);
+    
+    if (zebraInputRef.current) {
+      zebraInputRef.current.addEventListener('keydown', inputZebraListener);
+    }
 
     // Listener para eventos customizados
     const customListener = (e) => {
@@ -195,9 +215,14 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     };
     window.addEventListener('scan-event', customListener);
 
+    // Manter input oculto focado
+    if (zebraInputRef.current) {
+      zebraInputRef.current.focus();
+    }
+
     setZebraListening(true);
     console.log('🦓✅ Scanner Zebra ATIVADO - aguardando leitura...');
-    console.log('🦓 Listeners: datawedge-scan, keypress, scan-event');
+    console.log('🦓 Listeners: datawedge-scan, input oculto, scan-event');
   };
 
   const cleanupZebraScanner = () => {
