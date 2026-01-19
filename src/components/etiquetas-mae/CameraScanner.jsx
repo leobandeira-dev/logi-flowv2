@@ -504,6 +504,33 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
          const settings = videoTrack.getSettings();
          console.log('📷 Câmera ativa após start:', settings);
          console.log('📷 Facing mode:', settings.facingMode);
+
+         // PROTEÇÃO: Se câmera frontal foi aberta acidentalmente, parar e tentar novamente
+         if (settings.facingMode === 'user') {
+           console.log('⚠️ ALERTA: Câmera frontal foi ativada! Encerrando e tentando traseira...');
+           qrScanner.stop();
+           qrScanner.destroy();
+           qrScannerRef.current = null;
+
+           // Tentar com a próxima câmera
+           const proximaCamera = availableCameras.find((cam, idx) => 
+             idx !== currentCameraIndex && 
+             !cam.label.toLowerCase().includes('front') &&
+             !cam.label.toLowerCase().includes('frontal')
+           );
+
+           if (proximaCamera) {
+             setCurrentCameraIndex(availableCameras.indexOf(proximaCamera));
+             console.log('📷 Tentando próxima câmera:', proximaCamera.label);
+             setTimeout(() => {
+               stopScanner();
+               startScanner();
+             }, 500);
+           }
+
+           setScanning(false);
+           return;
+         }
        }
 
        setScanning(true);
