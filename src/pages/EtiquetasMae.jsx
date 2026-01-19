@@ -39,7 +39,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User } from "lucide-react";
 import ImpressaoEtiquetaMae from "../components/etiquetas-mae/ImpressaoEtiquetaMae";
 import CameraScanner from "../components/etiquetas-mae/CameraScanner";
-import { playSuccessBeep, playErrorBeep } from "../components/utils/audioFeedback";
+import { playSuccessBeep, playErrorBeep, playDuplicateBeep, playLongErrorBeep } from "../components/utils/audioFeedback";
 
 export default function EtiquetasMae() {
   const [etiquetas, setEtiquetas] = useState([]);
@@ -360,7 +360,7 @@ export default function EtiquetasMae() {
       const volumeEncontrado = volumes.find(v => v.identificador_unico === codigoLimpo);
 
       if (!volumeEncontrado) {
-        playErrorBeep();
+        playLongErrorBeep(); // 1 bipe longo
         toast.error("Volume não encontrado");
         setCodigoScanner("");
         setProcessando(false);
@@ -373,7 +373,7 @@ export default function EtiquetasMae() {
         const etiquetaAnterior = await base44.entities.EtiquetaMae.get(volumeEncontrado.etiqueta_mae_id);
         
         if (etiquetaAnterior.status !== "cancelada") {
-          playErrorBeep();
+          playLongErrorBeep(); // 1 bipe longo
           toast.error(`Volume já vinculado à etiqueta ${etiquetaAnterior.codigo}`);
           setCodigoScanner("");
           setProcessando(false);
@@ -384,7 +384,7 @@ export default function EtiquetasMae() {
       }
 
       if (volumesVinculados.some(v => v.id === volumeEncontrado.id)) {
-        playErrorBeep();
+        playDuplicateBeep(); // 2 bipes curtos
         toast.warning("⚠️ Volume já bipado nesta etiqueta");
         setCodigoScanner("");
         setProcessando(false);
