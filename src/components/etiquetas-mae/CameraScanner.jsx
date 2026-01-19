@@ -98,37 +98,52 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
       let lastScannedCode = null;
       let lastScanTime = 0;
+      let processingRef = false;
 
       const qrScanner = new QrScanner(
         videoRef.current,
         async (result) => {
-          if (!result?.data || scanFeedback) return;
+          if (!result?.data || processingRef) return;
 
           const now = Date.now();
           const decodedText = result.data.trim();
 
-          // Evitar duplicate scans da mesma código em menos de 800ms
-          if (decodedText === lastScannedCode && now - lastScanTime < 800) {
+          // Debounce por tipo de scanner
+          const minInterval = useManualMode ? SCANNER_CONFIG.cameraDebounceMs : SCANNER_CONFIG.cameraDebounceMs;
+
+          // Anti-duplicate: mesmo código em intervalo curto
+          if (decodedText === lastScannedCode && now - lastScanTime < minInterval) {
+            return;
+          }
+
+          // Prevenir múltiplas requisições simultâneas
+          if (processingRef) {
             return;
           }
 
           lastScannedCode = decodedText;
           lastScanTime = now;
+          processingRef = true;
 
-          console.log('🔍 QR Code detectado:', decodedText);
+          try {
+            const cleaned = decodedText.replace(/\D/g, '');
+            const finalCode = cleaned.length === 44 ? cleaned : decodedText;
 
-          const cleaned = decodedText.replace(/\D/g, '');
-          const finalCode = cleaned.length === 44 ? cleaned : decodedText;
-
-          const scanResult = await Promise.resolve(handleScanResult(finalCode));
-          applyFeedback(scanResult);
+            const scanResult = await Promise.resolve(handleScanResult(finalCode));
+            applyFeedback(scanResult);
+          } catch (error) {
+            console.error('❌ Erro ao processar QR:', error);
+            applyFeedback('error');
+          } finally {
+            processingRef = false;
+          }
         },
         {
           returnDetailedScanResult: true,
           highlightScanRegion: false,
           highlightCodeOutline: false,
           preferredCamera: scannerConfig,
-          maxScansPerSecond: 5
+          maxScansPerSecond: SCANNER_CONFIG.maxScansPerSecond
         }
       );
 
