@@ -150,108 +150,126 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
    }
   }, [useZebraScanner, open]);
 
-  // Setup do scanner Zebra (DataWedge Intent)
+  // Setup do scanner Zebra com buffer acumulativo
   const setupZebraScanner = React.useCallback(() => {
     if (zebraListening) return;
 
-    console.log('🦓 Iniciando setupZebraScanner');
+    console.log('🦓 Iniciando setupZebraScanner com buffer acumulativo');
 
     const handleZebraScan = async (scannedCode) => {
-      if (scannedCode && !processandoRef.current) {
-        processandoRef.current = true;
-        console.log('🦓 ZEBRA SCAN RECEBIDO:', scannedCode);
+      if (!scannedCode || processandoRef.current) return;
 
-        const cleaned = scannedCode.toString().replace(/\D/g, '');
-        const finalCode = cleaned.length === 44 ? cleaned : scannedCode.toString().trim();
-        console.log('🦓 ZEBRA SCAN PROCESSADO:', finalCode);
+      processandoRef.current = true;
+      const code = scannedCode.toString().trim();
 
-        setScanFeedback('processing');
-        
-        try {
-          const scanResult = await Promise.resolve(onScan(finalCode));
-          console.log('🦓 ZEBRA SCAN RESULTADO:', scanResult);
+      console.log('🦓 SCAN RECEBIDO:', code);
 
-          if (scanResult === 'success') {
-            setScanFeedback('success');
-            playSuccessBeep();
-            if (window.navigator.vibrate) window.navigator.vibrate(200);
-          } else if (scanResult === 'duplicate') {
-            setScanFeedback('duplicate');
-            playDuplicateBeep();
-            if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 100]);
-          } else if (scanResult === 'error') {
-            setScanFeedback('error');
-            playLongErrorBeep();
-            if (window.navigator.vibrate) window.navigator.vibrate([200, 100, 200]);
-          }
-        } catch (error) {
-          console.error('🦓 ERRO NO SCAN ZEBRA:', error);
+      setScanFeedback('processing');
+
+      try {
+        const scanResult = await Promise.resolve(onScan(code));
+        console.log('🦓 RESULTADO:', scanResult);
+
+        if (scanResult === 'success') {
+          setScanFeedback('success');
+          playSuccessBeep();
+          if (window.navigator.vibrate) window.navigator.vibrate(200);
+        } else if (scanResult === 'duplicate') {
+          setScanFeedback('duplicate');
+          playDuplicateBeep();
+          if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 100]);
+        } else if (scanResult === 'error') {
           setScanFeedback('error');
           playLongErrorBeep();
+          if (window.navigator.vibrate) window.navigator.vibrate([200, 100, 200]);
         }
-
-        setTimeout(() => {
-          setScanFeedback(null);
-          processandoRef.current = false;
-          // Re-focar input
-          if (zebraInputRef.current) {
-            zebraInputRef.current.focus();
-          }
-        }, 600);
+      } catch (error) {
+        console.error('🦓 ERRO:', error);
+        setScanFeedback('error');
+        playLongErrorBeep();
       }
-    };
 
-    // Tentar focar input oculto
-    console.log('🦓 zebraInputRef.current:', zebraInputRef.current);
-    if (zebraInputRef.current) {
-      zebraInputRef.current.focus();
-      console.log('🦓✅ Input oculto focado');
-    } else {
-      console.log('🦓❌ Input oculto NÃO ENCONTRADO - setando timeout para tentar novamente');
       setTimeout(() => {
+        setScanFeedback(null);
+        processandoRef.current = false;
+        zebraBufferRef.current = '';
         if (zebraInputRef.current) {
           zebraInputRef.current.focus();
-          console.log('🦓✅ Input oculto focado (retry)');
+          zebraInputRef.current.value = '';
         }
-      }, 500);
+      }, 600);
+    };
+
+    // Focar input imediatamente
+    if (zebraInputRef.current) {
+      zebraInputRef.current.focus();
+      console.log('🦓✅ Input focado');
     }
 
-    // Listener para Enter no input oculto (scanner como teclado virtual)
-    const inputZebraListener = (e) => {
-      console.log('🦓 keydown no input:', e.key, e.target.value);
-      if (e.key === 'Enter' && zebraInputRef.current && zebraInputRef.current.value) {
-        const scannedValue = zebraInputRef.current.value;
-        console.log('🦓 Enter pressionado com valor:', scannedValue);
-        zebraInputRef.current.value = '';
-        handleZebraScan(scannedValue);
+    // Listener para keypress - captura caracteres sendo digitados
+    const handleKeyPress = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const buffer = zebraBufferRef.current.trim();
+        console.log('🦓 Enter detectado. Buffer:', buffer);
+        if (buffer) {
+          handleZebraScan(buffer);
+          zebraBufferRef.current = '';
+        }
+      } else {
+        zebraBufferRef.current += e.key;
+
+        // Limpar timeout anterior
+        if (zebraTimeoutRef.current) clearTimeout(zebraTimeoutRef.current);
+
+        // Se 50ms sem mais caracteres, considerar scan completo (fallback)
+        zebraTimeoutRef.current = setTimeout(() => {
+          const buffer = zebraBufferRef.current.trim();
+          if (buffer && buffer.length > 10) { // Apenas se tiver tamanho razoável
+            console.log('🦓 Timeout de buffer. Buffer:', buffer);
+            handleZebraScan(buffer);
+            zebraBufferRef.current = '';
+          }
+        }, 50);
       }
     };
-    
-    // Listener para todos os tipos de eventos Zebra
-    const handleZebraEvent = (e) => {
-     console.log('🦓 Evento capturado:', e.type, e.detail);
-     const code = e.detail?.code || e.detail?.data;
-     if (code) handleZebraScan(code);
+
+    // Listener para input element value changes
+    const handleInputChange = (e) => {
+      const value = e.target.value.trim();
+      console.log('🦓 Input change:', value);
+      if (value && value.length > 10) {
+        handleZebraScan(value);
+        e.target.value = '';
+        zebraBufferRef.current = '';
+      }
     };
 
-    window.addEventListener('zebra-scan', handleZebraEvent);
-    window.addEventListener('datawedge-scan', handleZebraEvent);
-    window.addEventListener('scan-event', handleZebraEvent);
+    // Listeners customizados Zebra
+    const handleCustomScan = (e) => {
+      console.log('🦓 Custom event:', e.type);
+      const code = e.detail?.code || e.detail?.data;
+      if (code) handleZebraScan(code);
+    };
 
+    // Registrar listeners
     if (zebraInputRef.current) {
-     zebraInputRef.current.addEventListener('keydown', inputZebraListener);
-     zebraInputRef.current.addEventListener('keyup', inputZebraListener);
-     zebraInputRef.current.addEventListener('change', (e) => {
-       console.log('🦓 Change event:', e.target.value);
-       if (e.target.value.trim()) {
-         handleZebraScan(e.target.value);
-         e.target.value = '';
-       }
-     });
+      zebraInputRef.current.addEventListener('keypress', handleKeyPress);
+      zebraInputRef.current.addEventListener('change', handleInputChange);
     }
 
+    window.addEventListener('datawedge-scan', handleCustomScan);
+    window.addEventListener('zebra-scan', handleCustomScan);
+
+    zebraListenersRef.current = {
+      keypress: handleKeyPress,
+      change: handleInputChange,
+      datawedge: handleCustomScan,
+      zebra: handleCustomScan
+    };
+
     setZebraListening(true);
-    console.log('🦓✅ Scanner Zebra ATIVADO - aguardando leitura');
+    console.log('🦓✅ Scanner PRONTO - aguardando leitura');
   }, [onScan]);
 
   const cleanupZebraScanner = () => {
