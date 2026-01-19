@@ -741,145 +741,145 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
               )}
 
               {!useZebraScanner && (
-              <>
-              {/* Overlay com Feedback por Cor - APENAS para câmera */}
-              <div 
-                className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
-                style={{ zIndex: 5 }}
-              >
-                <div 
-                  className="shadow-lg transition-all duration-300"
-                  style={{
-                    width: '85%',
-                    height: '85%',
-                    aspectRatio: '1/1',
-                    maxWidth: '85%',
-                    maxHeight: '85%',
-                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
-                    borderRadius: '12px',
-                    position: 'relative',
-                    border: scanFeedback === 'success' 
-                      ? '8px solid #10b981' 
-                      : scanFeedback === 'duplicate'
-                      ? '8px solid #f59e0b'
-                      : scanFeedback === 'error'
-                      ? '8px solid #ef4444'
-                      : scanFeedback === 'processing' 
-                      ? '8px solid #3b82f6' 
-                      : '6px solid #60a5fa',
-                    backgroundColor: scanFeedback === 'success' 
-                      ? 'rgba(16, 185, 129, 0.15)' 
-                      : scanFeedback === 'duplicate'
-                      ? 'rgba(245, 158, 11, 0.15)'
-                      : scanFeedback === 'error'
-                      ? 'rgba(239, 68, 68, 0.15)'
-                      : scanFeedback === 'processing' 
-                      ? 'rgba(59, 130, 246, 0.1)' 
-                      : 'transparent'
-                  }}
-                >
-                  {/* Cantos com Feedback Visual */}
-                  <div className="absolute top-0 left-0 w-16 h-16 border-t-8 border-l-8 transition-all duration-300" style={{ 
-                    borderRadius: '12px 0 0 0', 
-                    borderColor: scanFeedback === 'success' 
-                      ? '#10b981' 
-                      : scanFeedback === 'duplicate'
-                      ? '#f59e0b'
-                      : scanFeedback === 'error'
-                      ? '#ef4444'
-                      : scanFeedback === 'processing' 
-                      ? '#3b82f6' 
-                      : '#60a5fa',
-                    borderWidth: scanFeedback ? '10px' : '8px'
-                  }}></div>
-                  <div className="absolute top-0 right-0 w-16 h-16 border-t-8 border-r-8 transition-all duration-300" style={{ 
-                    borderRadius: '0 12px 0 0', 
-                    borderColor: scanFeedback === 'success' 
-                      ? '#10b981' 
-                      : scanFeedback === 'duplicate'
-                      ? '#f59e0b'
-                      : scanFeedback === 'error'
-                      ? '#ef4444'
-                      : scanFeedback === 'processing' 
-                      ? '#3b82f6' 
-                      : '#60a5fa',
-                    borderWidth: scanFeedback ? '10px' : '8px'
-                  }}></div>
-                  <div className="absolute bottom-0 left-0 w-16 h-16 border-b-8 border-l-8 transition-all duration-300" style={{ 
-                    borderRadius: '0 0 0 12px', 
-                    borderColor: scanFeedback === 'success' 
-                      ? '#10b981' 
-                      : scanFeedback === 'duplicate'
-                      ? '#f59e0b'
-                      : scanFeedback === 'error'
-                      ? '#ef4444'
-                      : scanFeedback === 'processing' 
-                      ? '#3b82f6' 
-                      : '#60a5fa',
-                    borderWidth: scanFeedback ? '10px' : '8px'
-                  }}></div>
-                  <div className="absolute bottom-0 right-0 w-16 h-16 border-b-8 border-r-8 transition-all duration-300" style={{ 
-                    borderRadius: '0 0 12px 0', 
-                    borderColor: scanFeedback === 'success' 
-                      ? '#10b981' 
-                      : scanFeedback === 'duplicate'
-                      ? '#f59e0b'
-                      : scanFeedback === 'error'
-                      ? '#ef4444'
-                      : scanFeedback === 'processing' 
-                      ? '#3b82f6' 
-                      : '#60a5fa',
-                    borderWidth: scanFeedback ? '10px' : '8px'
-                  }}></div>
+               <>
+                 {/* Overlay com Feedback por Cor - APENAS para câmera */}
+                 <div 
+                   className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
+                   style={{ zIndex: 5 }}
+                 >
+                   <div 
+                     className="shadow-lg transition-all duration-300"
+                     style={{
+                       width: '85%',
+                       height: '85%',
+                       aspectRatio: '1/1',
+                       maxWidth: '85%',
+                       maxHeight: '85%',
+                       boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+                       borderRadius: '12px',
+                       position: 'relative',
+                       border: scanFeedback === 'success' 
+                         ? '8px solid #10b981' 
+                         : scanFeedback === 'duplicate'
+                         ? '8px solid #f59e0b'
+                         : scanFeedback === 'error'
+                         ? '8px solid #ef4444'
+                         : scanFeedback === 'processing' 
+                         ? '8px solid #3b82f6' 
+                         : '6px solid #60a5fa',
+                       backgroundColor: scanFeedback === 'success' 
+                         ? 'rgba(16, 185, 129, 0.15)' 
+                         : scanFeedback === 'duplicate'
+                         ? 'rgba(245, 158, 11, 0.15)'
+                         : scanFeedback === 'error'
+                         ? 'rgba(239, 68, 68, 0.15)'
+                         : scanFeedback === 'processing' 
+                         ? 'rgba(59, 130, 246, 0.1)' 
+                         : 'transparent'
+                     }}
+                   >
+                     {/* Cantos com Feedback Visual */}
+                     <div className="absolute top-0 left-0 w-16 h-16 border-t-8 border-l-8 transition-all duration-300" style={{ 
+                       borderRadius: '12px 0 0 0', 
+                       borderColor: scanFeedback === 'success' 
+                         ? '#10b981' 
+                         : scanFeedback === 'duplicate'
+                         ? '#f59e0b'
+                         : scanFeedback === 'error'
+                         ? '#ef4444'
+                         : scanFeedback === 'processing' 
+                         ? '#3b82f6' 
+                         : '#60a5fa',
+                       borderWidth: scanFeedback ? '10px' : '8px'
+                     }}></div>
+                     <div className="absolute top-0 right-0 w-16 h-16 border-t-8 border-r-8 transition-all duration-300" style={{ 
+                       borderRadius: '0 12px 0 0', 
+                       borderColor: scanFeedback === 'success' 
+                         ? '#10b981' 
+                         : scanFeedback === 'duplicate'
+                         ? '#f59e0b'
+                         : scanFeedback === 'error'
+                         ? '#ef4444'
+                         : scanFeedback === 'processing' 
+                         ? '#3b82f6' 
+                         : '#60a5fa',
+                       borderWidth: scanFeedback ? '10px' : '8px'
+                     }}></div>
+                     <div className="absolute bottom-0 left-0 w-16 h-16 border-b-8 border-l-8 transition-all duration-300" style={{ 
+                       borderRadius: '0 0 0 12px', 
+                       borderColor: scanFeedback === 'success' 
+                         ? '#10b981' 
+                         : scanFeedback === 'duplicate'
+                         ? '#f59e0b'
+                         : scanFeedback === 'error'
+                         ? '#ef4444'
+                         : scanFeedback === 'processing' 
+                         ? '#3b82f6' 
+                         : '#60a5fa',
+                       borderWidth: scanFeedback ? '10px' : '8px'
+                     }}></div>
+                     <div className="absolute bottom-0 right-0 w-16 h-16 border-b-8 border-r-8 transition-all duration-300" style={{ 
+                       borderRadius: '0 0 12px 0', 
+                       borderColor: scanFeedback === 'success' 
+                         ? '#10b981' 
+                         : scanFeedback === 'duplicate'
+                         ? '#f59e0b'
+                         : scanFeedback === 'error'
+                         ? '#ef4444'
+                         : scanFeedback === 'processing' 
+                         ? '#3b82f6' 
+                         : '#60a5fa',
+                       borderWidth: scanFeedback ? '10px' : '8px'
+                     }}></div>
 
-                  {/* Feedback Textual Central */}
-                  {scanFeedback && scanFeedback !== 'processing' && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div 
-                        className={`px-6 py-3 rounded-xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
-                          scanFeedback === 'success' 
-                            ? 'bg-green-600' 
-                            : scanFeedback === 'duplicate'
-                            ? 'bg-yellow-600'
-                            : 'bg-red-600'
-                        }`}
-                        style={{ fontSize: '18px' }}
-                      >
-                        {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
-                        {scanFeedback === 'duplicate' && '⚠ JÁ BIPADO'}
-                        {scanFeedback === 'error' && '✗ VOLUME NÃO ENCONTRADO'}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                </div>
+                     {/* Feedback Textual Central */}
+                     {scanFeedback && scanFeedback !== 'processing' && (
+                       <div className="absolute inset-0 flex items-center justify-center">
+                         <div 
+                           className={`px-6 py-3 rounded-xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
+                             scanFeedback === 'success' 
+                               ? 'bg-green-600' 
+                               : scanFeedback === 'duplicate'
+                               ? 'bg-yellow-600'
+                               : 'bg-red-600'
+                           }`}
+                           style={{ fontSize: '18px' }}
+                         >
+                           {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
+                           {scanFeedback === 'duplicate' && '⚠ JÁ BIPADO'}
+                           {scanFeedback === 'error' && '✗ VOLUME NÃO ENCONTRADO'}
+                         </div>
+                       </div>
+                     )}
+                   </div>
+                 </div>
 
-                <div className="absolute top-2 right-2 z-10 flex gap-2">
-                <Button
-                  onClick={toggleCamera}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/90 hover:bg-white"
-                  title="Alternar câmera"
-                >
-                  <SwitchCamera className="w-4 h-4" />
-                </Button>
-                <Button
-                  onClick={() => {
-                    if (!useZebraScanner) stopScanner();
-                    setUseManualMode(true);
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/90 hover:bg-white"
-                >
-                  <Keyboard className="w-4 h-4 mr-1" />
-                  Digitar
-                </Button>
-                </div>
-                </>
-                )}
-                </div>
+                 <div className="absolute top-2 right-2 z-10 flex gap-2">
+                   <Button
+                     onClick={toggleCamera}
+                     variant="outline"
+                     size="sm"
+                     className="bg-white/90 hover:bg-white"
+                     title="Alternar câmera"
+                   >
+                     <SwitchCamera className="w-4 h-4" />
+                   </Button>
+                   <Button
+                     onClick={() => {
+                       if (!useZebraScanner) stopScanner();
+                       setUseManualMode(true);
+                     }}
+                     variant="outline"
+                     size="sm"
+                     className="bg-white/90 hover:bg-white"
+                   >
+                     <Keyboard className="w-4 h-4 mr-1" />
+                     Digitar
+                   </Button>
+                 </div>
+               </>
+              )}
+              </div>
           ) : (
             <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div className="w-full">
