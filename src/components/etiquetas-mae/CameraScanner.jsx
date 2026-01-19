@@ -96,7 +96,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     const handleZebraScan = async (event) => {
       const data = event.detail;
       
-      if (data && data.data && !scanFeedback) {
+      if (data && data.data && !processandoRef.current) {
+        processandoRef.current = true;
         const scannedCode = data.data;
         console.log('🦓 ZEBRA SCAN:', scannedCode);
 
@@ -120,7 +121,16 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
           if (window.navigator.vibrate) window.navigator.vibrate([200, 100, 200]);
         }
 
-        setTimeout(() => setScanFeedback(null), 800);
+        setTimeout(() => {
+          setScanFeedback(null);
+          setManualInput("");
+          processandoRef.current = false;
+          
+          // Re-focar para próxima leitura
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+        }, 800);
       }
     };
 
@@ -365,19 +375,19 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       if (inputRef.current) {
         inputRef.current.focus();
       }
-    }, 800);
+    }, 600);
   };
 
-  // Auto-focar input quando modo Zebra estiver ativo
+  // Manter foco sempre ativo no input
   useEffect(() => {
-    if (useZebraScanner && inputRef.current && !processandoRef.current) {
+    if (!processandoRef.current && inputRef.current) {
       const timer = setTimeout(() => {
         inputRef.current?.focus();
-      }, 300);
+      }, 100);
       
       return () => clearTimeout(timer);
     }
-  }, [useZebraScanner, scanFeedback]);
+  }, [scanFeedback, manualInput]);
 
   const theme = {
     bg: isDark ? '#0f172a' : '#ffffff',
