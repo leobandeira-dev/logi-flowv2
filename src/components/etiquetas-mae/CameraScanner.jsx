@@ -385,11 +385,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                    placeholder="Código..."
                    value={manualInput}
                    onChange={handleManualInputChange}
-                   onKeyDown={(e) => {
-                     if (e.key === 'Enter' && manualInput.trim()) {
-                       handleManualSubmit();
-                     }
-                   }}
+                   onKeyDown={handleInputKeyDown}
                    className="text-center font-mono h-11"
                    style={{ 
                      backgroundColor: isDark ? '#1e293b' : '#ffffff',
