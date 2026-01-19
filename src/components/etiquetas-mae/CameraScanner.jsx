@@ -851,13 +851,14 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                )}
               </div>
 
+              {!useZebraScanner && (
               <div className="absolute top-2 right-2 z-10 flex gap-2">
                 <Button
                   onClick={toggleCamera}
                   variant="outline"
                   size="sm"
                   className="bg-white/90 hover:bg-white"
-                  title={useZebraScanner ? "Usar câmera web" : "Alternar câmera"}
+                  title="Alternar câmera"
                 >
                   <SwitchCamera className="w-4 h-4" />
                 </Button>
