@@ -17,6 +17,7 @@ export default function Cubagem() {
   const [cameraAtiva, setCameraAtiva] = useState(false);
   const [fotoCapturada, setFotoCapturada] = useState(null);
   const [medidasTempoReal, setMedidasTempoReal] = useState(null);
+  const [medidasCapturadas, setMedidasCapturadas] = useState(null);
   const [volumeId, setVolumeId] = useState(null);
   const [volume, setVolume] = useState(null);
   const [cubagem, setCubagem] = useState(0);
@@ -367,6 +368,15 @@ export default function Cubagem() {
       const alturaCm = medidasTempoReal.altura;
       const comprimentoCm = medidasTempoReal.comprimento;
       
+      // Salvar medidas capturadas
+      const medidas = {
+        largura: larguraCm,
+        altura: alturaCm,
+        comprimento: comprimentoCm,
+        objeto: objeto.class
+      };
+      setMedidasCapturadas(medidas);
+      
       // Desenhar anotações na foto
       ctx.strokeStyle = '#00ff00';
       ctx.lineWidth = 3;
@@ -415,9 +425,9 @@ export default function Cubagem() {
     const novaMedida = {
       id: Date.now().toString(),
       foto: fotoCapturada,
-      altura: medidasTempoReal.altura,
-      largura: medidasTempoReal.largura,
-      comprimento: medidasTempoReal.comprimento,
+      altura: medidasCapturadas.altura,
+      largura: medidasCapturadas.largura,
+      comprimento: medidasCapturadas.comprimento,
       cubagem: cubagem,
       objeto: objetoDetectado?.class || "objeto",
       timestamp: new Date().toISOString()
@@ -443,13 +453,12 @@ export default function Cubagem() {
     setCubagem(medida.cubagem);
     setObjetoDetectado({ class: medida.objeto });
     
-    const medidasTemp = {
+    setMedidasCapturadas({
       altura: medida.altura,
       largura: medida.largura,
       comprimento: medida.comprimento,
       objeto: medida.objeto
-    };
-    setMedidasTempoReal(medidasTemp);
+    });
     
     setEtapa("associando");
     await iniciarScanQR();
@@ -524,9 +533,9 @@ export default function Cubagem() {
 
       // Atualizar volume com cubagem e foto
       await base44.entities.Volume.update(volId, {
-        altura_cm: medidasTempoReal.altura,
-        largura_cm: medidasTempoReal.largura,
-        comprimento_cm: medidasTempoReal.comprimento,
+        altura_cm: medidasCapturadas.altura,
+        largura_cm: medidasCapturadas.largura,
+        comprimento_cm: medidasCapturadas.comprimento,
         cubagem_m3: cubagem,
         foto_cubagem_url: file_url,
         data_cubagem: new Date().toISOString(),
@@ -550,6 +559,7 @@ export default function Cubagem() {
   const reiniciar = () => {
     setEtapa("inicial");
     setFotoCapturada(null);
+    setMedidasCapturadas(null);
     setCubagem(0);
     setVolume(null);
     setVolumeId(null);
@@ -827,15 +837,15 @@ export default function Cubagem() {
                     <div className="grid grid-cols-3 gap-3">
                       <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950">
                         <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Altura</p>
-                        <p className="text-lg font-bold text-blue-600">{medidasTempoReal?.altura.toFixed(1) || 0} cm</p>
+                        <p className="text-lg font-bold text-blue-600">{medidasCapturadas?.altura.toFixed(1) || 0} cm</p>
                       </div>
                       <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950">
                         <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Largura</p>
-                        <p className="text-lg font-bold text-blue-600">{medidasTempoReal?.largura.toFixed(1) || 0} cm</p>
+                        <p className="text-lg font-bold text-blue-600">{medidasCapturadas?.largura.toFixed(1) || 0} cm</p>
                       </div>
                       <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950">
                         <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Profundidade</p>
-                        <p className="text-lg font-bold text-blue-600">{medidasTempoReal?.comprimento.toFixed(1) || 0} cm</p>
+                        <p className="text-lg font-bold text-blue-600">{medidasCapturadas?.comprimento.toFixed(1) || 0} cm</p>
                       </div>
                     </div>
 
