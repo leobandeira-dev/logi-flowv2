@@ -94,9 +94,9 @@ export const useZebraScanner = (enabled, onScan, onFeedback) => {
     window.addEventListener('message', messageHandler);
 
     // Registrar handlers para cleanup
-    handlersRef.current = { datawedgeHandler, messageHandler };
+    handlersRef.current = { datawedgeHandler, messageHandler, keyboardHandler };
     
-    console.log('✓ Scanner Zebra TC 210 ativado');
+    console.log('✓ Scanner Zebra TC 210 ativado - aguardando entrada de dados');
   }, [onScan, onFeedback]);
 
   const cleanupZebraScanner = useCallback(() => {
