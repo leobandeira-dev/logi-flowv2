@@ -136,17 +136,19 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
   // Manter input Zebra oculto focado
   useEffect(() => {
-    if (useZebraScanner && zebraInputRef.current) {
-      const refocusInterval = setInterval(() => {
-        if (zebraInputRef.current && document.activeElement !== zebraInputRef.current) {
-          console.log('🦓 Re-focando input oculto');
-          zebraInputRef.current.focus();
-        }
-      }, 500);
+   if (useZebraScanner && zebraInputRef.current) {
+     zebraInputRef.current.focus();
+     console.log('🦓 Input Zebra focado na inicialização');
 
-      return () => clearInterval(refocusInterval);
-    }
-  }, [useZebraScanner]);
+     const refocusInterval = setInterval(() => {
+       if (zebraInputRef.current) {
+         zebraInputRef.current.focus();
+       }
+     }, 300);
+
+     return () => clearInterval(refocusInterval);
+   }
+  }, [useZebraScanner, open]);
 
   // Setup do scanner Zebra (DataWedge Intent)
   const setupZebraScanner = React.useCallback(() => {
