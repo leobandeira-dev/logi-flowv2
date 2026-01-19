@@ -29,10 +29,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   useEffect(() => {
     const detectZebra = () => {
       const userAgent = navigator.userAgent.toLowerCase();
-      return userAgent.includes('zebra') || 
-             userAgent.includes('tc21') || 
-             userAgent.includes('tc26') ||
-             userAgent.includes('mc');
+      const isZebra = userAgent.includes('zebra') || 
+                      userAgent.includes('tc21') || 
+                      userAgent.includes('tc26') ||
+                      userAgent.includes('tc2') ||
+                      userAgent.includes('mc') ||
+                      userAgent.includes('motorola');
+      console.log('🦓 User Agent:', userAgent);
+      console.log('🦓 Is Zebra?', isZebra);
+      return isZebra;
     };
 
     const detectCameras = async () => {
@@ -40,33 +45,53 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         const cameras = await QrScanner.listCameras(true);
         setAvailableCameras(cameras);
         console.log('📷 Câmeras detectadas:', cameras);
+        console.log('📷 Detalhes das câmeras:');
+        cameras.forEach((cam, idx) => {
+          console.log(`  [${idx}] Label: ${cam.label}, ID: ${cam.id}`);
+        });
         
-        const backCameraIndex = cameras.findIndex(cam => 
-          cam.label.toLowerCase().includes('back') || 
-          cam.label.toLowerCase().includes('traseira') ||
-          cam.label.toLowerCase().includes('environment') ||
-          cam.id.toLowerCase().includes('back')
-        );
+        // Buscar câmera traseira com prioridade
+        let backCameraIndex = cameras.findIndex(cam => {
+          const label = cam.label.toLowerCase();
+          const id = cam.id.toLowerCase();
+          return label.includes('back') || 
+                 label.includes('traseira') ||
+                 id.includes('back') ||
+                 id.includes('environment');
+        });
+        
+        // Se não encontrar, buscar environment
+        if (backCameraIndex === -1) {
+          backCameraIndex = cameras.findIndex(cam => 
+            cam.label.toLowerCase().includes('environment')
+          );
+        }
         
         if (backCameraIndex !== -1) {
           setCurrentCameraIndex(backCameraIndex);
+          console.log('📷 Câmera traseira selecionada:', cameras[backCameraIndex]?.label);
+        } else {
+          console.log('📷 Nenhuma câmera traseira encontrada');
         }
       } catch (error) {
-        console.log('Não foi possível detectar câmeras:', error);
+        console.log('❌ Não foi possível detectar câmeras:', error);
       }
     };
     
     if (open) {
       const isZebra = detectZebra();
-      setUseZebraScanner(isZebra);
+      console.log('🦓 Abrindo scanner - isZebra:', isZebra);
       
       if (isZebra) {
-        console.log('🦓 Zebra TC210K detectado - iniciando com scanner nativo');
+        console.log('🦓 FORÇANDO scanner Zebra nativo');
+        setUseZebraScanner(true);
+        setUseManualMode(false);
         setupZebraScanner();
+      } else {
+        console.log('📷 Detectando câmeras para QR Scanner');
+        detectCameras();
+        setUseZebraScanner(false);
       }
-      
-      // Sempre detectar câmeras para permitir alternância
-      detectCameras();
     }
 
     return () => {
@@ -155,10 +180,16 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
 
     try {
-      // Usar câmera específica se disponível
-      const cameraConfig = availableCameras.length > 0 
-        ? availableCameras[currentCameraIndex]
-        : "environment";
+       // Forçar câmera traseira
+       let cameraConfig = "environment";
+
+       if (availableCameras.length > 0) {
+         const camera = availableCameras[currentCameraIndex];
+         console.log('📷 QrScanner iniciando com câmera:', camera?.label, camera?.id);
+         cameraConfig = camera;
+       } else {
+         console.log('📷 Nenhuma câmera detectada, usando "environment"');
+       }
 
       const qrScanner = new QrScanner(
         videoRef.current,
@@ -489,7 +520,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 <video
                   ref={videoRef}
                   className="w-full h-full object-cover"
-                  style={{ transform: 'scaleX(-1)' }}
+                  style={{ transform: 'scaleX(1)' }}
                 />
               )}
 
