@@ -311,10 +311,9 @@ export default function Cubagem() {
       setObjetoDetectado(objeto);
       setDetectando(false);
       pararCamera();
+      setEtapa("processando");
       
-      toast.success(`Objeto detectado: ${objeto.class}`);
-      setEtapa("associando");
-      await iniciarScanQR();
+      toast.success(`Objeto medido com sucesso!`);
     }
   };
 
@@ -650,7 +649,7 @@ export default function Cubagem() {
                     </div>
 
                     <div className="p-4 rounded-lg border-2 border-green-500 bg-green-50 dark:bg-green-950">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-3">
                         <span className="font-semibold text-green-900 dark:text-green-100">
                           Cubagem Calculada:
                         </span>
@@ -659,6 +658,17 @@ export default function Cubagem() {
                         </span>
                       </div>
                     </div>
+
+                    <Button 
+                      onClick={() => {
+                        setEtapa("associando");
+                        iniciarScanQR();
+                      }} 
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      <QrCode className="w-4 h-4 mr-2" />
+                      Ler QR Code do Volume
+                    </Button>
                   </div>
                 )}
 
