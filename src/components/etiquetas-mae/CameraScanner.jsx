@@ -200,20 +200,19 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     const value = e.target.value;
     setManualInput(value);
 
-    // Não aplicar debounce se foi cola (paste) - já será tratado pelo onPaste
-    // Só fazer debounce para digitação manual
+    // Limpar debounce anterior
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
-    // Se tem conteúdo, ativar debounce para auto-submit (apenas digitação)
+    // Se tem conteúdo, disparar busca com debounce curto (100ms)
+    // Permite qualquer entrada sem esperar 44 dígitos
     if (value.trim()) {
       debounceTimerRef.current = setTimeout(() => {
-        // Verificar se o valor ainda é o mesmo (não foi colado)
         if (inputRef.current?.value?.trim() === value.trim()) {
           handleManualSubmit();
         }
-      }, 500);
+      }, 100);
     }
   };
 
