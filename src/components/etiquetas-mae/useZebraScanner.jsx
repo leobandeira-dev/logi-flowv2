@@ -16,8 +16,8 @@ export const useZebraScanner = (enabled, onScan, onFeedback) => {
     }
 
     abortControllerRef.current = new AbortController();
-    let messageHandler = null;
     let datawedgeHandler = null;
+    let keyboardHandler = null;
 
     // Handler único com anti-duplicate e fila
     const handleZebraScan = async (scannedData) => {
