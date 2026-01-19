@@ -358,30 +358,76 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
    try {
       console.log('📷 Iniciando scanner - currentCameraIndex:', currentCameraIndex, 'cameras:', availableCameras.length);
 
-      // Priorizar câmera traseira (environment)
+      // ESTRATÉGIA: Priorizar câmera traseira por deviceId
       let cameraConfig = { facingMode: "environment" };
+      let selectedCamera = null;
 
       if (availableCameras.length > 0) {
-        // Usar a câmera especificada pelo índice
+        // 1. Tentar usar índice se válido
         if (currentCameraIndex < availableCameras.length) {
-          cameraConfig = availableCameras[currentCameraIndex];
-          console.log('📷✅ Usando câmera selecionada:', cameraConfig?.label, `(índice: ${currentCameraIndex})`);
-        } else {
-          // Fallback: buscar câmera traseira
-          const backCameraIndex = availableCameras.findIndex(cam => {
+          selectedCamera = availableCameras[currentCameraIndex];
+          console.log('📷 Tentativa 1 - Usar câmera por índice:', selectedCamera?.label);
+        }
+
+        // 2. Se não temos seleção, buscar explicitamente traseira
+        if (!selectedCamera) {
+          selectedCamera = availableCameras.find(cam => {
             const label = cam.label.toLowerCase();
             return label.includes('back') || 
                    label.includes('traseira') ||
-                   label.includes('rear') ||
-                   label.includes('environment');
+                   label.includes('rear');
           });
-
-          if (backCameraIndex !== -1) {
-            cameraConfig = availableCameras[backCameraIndex];
-            setCurrentCameraIndex(backCameraIndex);
-            console.log('📷✅ Câmera traseira encontrada:', cameraConfig?.label);
+          if (selectedCamera) {
+            console.log('📷 Tentativa 2 - Câmera traseira encontrada:', selectedCamera?.label);
           }
         }
+
+        // 3. Buscar por environment
+        if (!selectedCamera) {
+          selectedCamera = availableCameras.find(cam => 
+            cam.label.toLowerCase().includes('environment')
+          );
+          if (selectedCamera) {
+            console.log('📷 Tentativa 3 - Câmera environment encontrada');
+          }
+        }
+
+        // 4. Usar última câmera (geralmente traseira em Zebra)
+        if (!selectedCamera && availableCameras.length > 1) {
+          selectedCamera = availableCameras[availableCameras.length - 1];
+          console.log('📷 Tentativa 4 - Usando última câmera:', selectedCamera?.label);
+        }
+
+        // 5. Excluir explicitamente câmeras frontais
+        if (!selectedCamera) {
+          selectedCamera = availableCameras.find(cam => {
+            const label = cam.label.toLowerCase();
+            return !label.includes('front') &&
+                   !label.includes('frontal') &&
+                   !label.includes('selfie') &&
+                   !label.includes('user');
+          });
+          if (selectedCamera) {
+            console.log('📷 Tentativa 5 - Câmera não-frontal encontrada:', selectedCamera?.label);
+          }
+        }
+
+        // 6. Fallback - usar primeira câmera
+        if (!selectedCamera) {
+          selectedCamera = availableCameras[0];
+          console.log('📷 Tentativa 6 - Fallback para primeira câmera:', selectedCamera?.label);
+        }
+
+        // Usar deviceId se disponível, senão usar facingMode
+        if (selectedCamera?.deviceId) {
+          cameraConfig = { deviceId: { exact: selectedCamera.deviceId } };
+          console.log('📷✅ Usando camera com deviceId:', selectedCamera.deviceId);
+        } else {
+          cameraConfig = selectedCamera || { facingMode: "environment" };
+          console.log('📷✅ Usando camera config:', cameraConfig);
+        }
+
+        setCurrentCameraIndex(availableCameras.indexOf(selectedCamera));
       } else {
         console.log('📷⚠️ Nenhuma câmera detectada, forçando environment');
       }
