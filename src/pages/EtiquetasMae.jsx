@@ -382,6 +382,7 @@ export default function EtiquetasMae() {
       
       // Se for chave NF-e (44 dígitos), processar nota fiscal
       if (codigoLimpo.length === 44 && /^\d+$/.test(codigoLimpo)) {
+        console.log('💳 Chave NF-e detectada:', codigoLimpo);
         await handleScanChaveNFe(codigoLimpo);
         setCodigoScanner("");
         setProcessando(false);
@@ -390,10 +391,34 @@ export default function EtiquetasMae() {
         return 'success';
       }
 
-      const volumeEncontrado = volumes.find(v => v.identificador_unico === codigoLimpo);
+      // Buscar volume - verificar tanto volumes carregados quanto buscar do servidor se necessário
+      console.log('🔍 Procurando volume com ID:', codigoLimpo);
+      console.log('📊 Total de volumes em memória:', volumes.length);
+      
+      let volumeEncontrado = volumes.find(v => v.identificador_unico === codigoLimpo);
+      
+      // Se não encontrou em memória, buscar do servidor como fallback
+      if (!volumeEncontrado) {
+        console.log('⚠️ Volume não encontrado em memória, buscando do servidor...');
+        try {
+          const todoVolumes = await base44.entities.Volume.list();
+          volumeEncontrado = todoVolumes.find(v => v.identificador_unico === codigoLimpo);
+          
+          if (volumeEncontrado) {
+            console.log('✅ Volume encontrado no servidor:', volumeEncontrado.id);
+            // Atualizar cache local
+            setVolumes(todoVolumes);
+          } else {
+            console.log('❌ Volume NÃO encontrado em nenhuma fonte');
+          }
+        } catch (searchError) {
+          console.error('❌ Erro ao buscar volumes do servidor:', searchError);
+        }
+      }
 
       if (!volumeEncontrado) {
-        playLongErrorBeep(); // 1 bipe longo
+        console.log('❌ Volume não encontrado - retornando erro');
+        playLongErrorBeep();
         toast.error("Volume não encontrado");
         setCodigoScanner("");
         setProcessando(false);
@@ -401,6 +426,8 @@ export default function EtiquetasMae() {
         setTimeout(() => setCameraScanFeedback(null), 800);
         return 'error';
       }
+
+      console.log('✅ Volume encontrado:', volumeEncontrado.identificador_unico);
 
       if (volumeEncontrado.etiqueta_mae_id && volumeEncontrado.etiqueta_mae_id !== etiquetaSelecionada.id) {
         const etiquetaAnterior = await base44.entities.EtiquetaMae.get(volumeEncontrado.etiqueta_mae_id);
