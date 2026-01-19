@@ -19,16 +19,34 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const [scanFeedback, setScanFeedback] = useState(null); // 'success' | 'duplicate' | 'error' | 'processing' | null
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
   const [availableCameras, setAvailableCameras] = useState([]);
+  const [isZebraDevice, setIsZebraDevice] = useState(false);
+  const [zebraListening, setZebraListening] = useState(false);
 
-  // Detectar câmeras disponíveis ao abrir
+  // Detectar dispositivo Zebra e configurar scanner nativo
   useEffect(() => {
+    const detectZebra = () => {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isZebra = userAgent.includes('zebra') || 
+                      userAgent.includes('tc21') || 
+                      userAgent.includes('tc26') ||
+                      userAgent.includes('mc') ||
+                      window.location.href.includes('zebra');
+      
+      setIsZebraDevice(isZebra);
+      
+      if (isZebra) {
+        console.log('🦓 Zebra TC210K detectado - usando scanner nativo');
+      }
+      
+      return isZebra;
+    };
+
     const detectCameras = async () => {
       try {
         const cameras = await QrScanner.listCameras(true);
         setAvailableCameras(cameras);
         console.log('📷 Câmeras detectadas:', cameras);
         
-        // Preferir câmera traseira (normalmente a primeira ou que contém "back"/"environment")
         const backCameraIndex = cameras.findIndex(cam => 
           cam.label.toLowerCase().includes('back') || 
           cam.label.toLowerCase().includes('traseira') ||
@@ -46,22 +64,88 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     };
     
     if (open) {
-      detectCameras();
+      const zebra = detectZebra();
+      if (zebra) {
+        setupZebraScanner();
+      } else {
+        detectCameras();
+      }
     }
+
+    return () => {
+      cleanupZebraScanner();
+    };
   }, [open]);
 
-  // Reiniciar scanner quando trocar de câmera
+  // Reiniciar scanner quando trocar de câmera (apenas se não for Zebra)
   useEffect(() => {
-    if (open && !useManualMode && availableCameras.length > 0) {
+    if (open && !useManualMode && !isZebraDevice && availableCameras.length > 0) {
       setTimeout(() => {
         startScanner();
       }, 100);
     }
 
     return () => {
-      stopScanner();
+      if (!isZebraDevice) {
+        stopScanner();
+      }
     };
-  }, [open, useManualMode, currentCameraIndex]);
+  }, [open, useManualMode, currentCameraIndex, isZebraDevice]);
+
+  // Setup do scanner Zebra (DataWedge Intent)
+  const setupZebraScanner = () => {
+    if (zebraListening) return;
+
+    const handleZebraScan = async (event) => {
+      const data = event.detail;
+      
+      if (data && data.data && !scanFeedback) {
+        const scannedCode = data.data;
+        console.log('🦓 ZEBRA SCAN:', scannedCode);
+
+        const cleaned = scannedCode.replace(/\D/g, '');
+        const finalCode = cleaned.length === 44 ? cleaned : scannedCode.trim();
+
+        setScanFeedback('processing');
+        const scanResult = await Promise.resolve(onScan(finalCode));
+
+        if (scanResult === 'success') {
+          setScanFeedback('success');
+          if (window.navigator.vibrate) window.navigator.vibrate(200);
+        } else if (scanResult === 'duplicate') {
+          setScanFeedback('duplicate');
+          if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 100]);
+        } else if (scanResult === 'error') {
+          setScanFeedback('error');
+          if (window.navigator.vibrate) window.navigator.vibrate([200, 100, 200]);
+        }
+
+        setTimeout(() => setScanFeedback(null), 800);
+      }
+    };
+
+    // Listener para Intent do DataWedge
+    window.addEventListener('datawedge-scan', handleZebraScan);
+    
+    // Listener alternativo via broadcast
+    const handleBroadcast = (e) => {
+      if (e.data && typeof e.data === 'string') {
+        handleZebraScan({ detail: { data: e.data } });
+      }
+    };
+    window.addEventListener('message', handleBroadcast);
+
+    setZebraListening(true);
+    console.log('🦓 Scanner Zebra ativado - aguardando leitura...');
+  };
+
+  const cleanupZebraScanner = () => {
+    if (zebraListening) {
+      window.removeEventListener('datawedge-scan', () => {});
+      window.removeEventListener('message', () => {});
+      setZebraListening(false);
+    }
+  };
 
   const startScanner = async () => {
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
@@ -291,11 +375,29 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         <div className="p-4 pt-0">
           {!useManualMode ? (
             <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
-              <video
-                ref={videoRef}
-                className="w-full h-full object-cover"
-                style={{ transform: 'scaleX(-1)' }}
-              />
+              {isZebraDevice ? (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 to-blue-950 text-white p-8">
+                  <div className="animate-pulse mb-6">
+                    <Camera className="w-24 h-24" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">🦓 Scanner Zebra Ativo</h3>
+                  <p className="text-blue-200 text-center mb-6">
+                    Pressione os botões amarelos do coletor para ler
+                  </p>
+                  <div className="bg-blue-800/50 rounded-lg p-4 border-2 border-blue-500">
+                    <p className="text-sm text-center">
+                      O scanner nativo está aguardando leitura.<br/>
+                      Aponte para o código e pressione o gatilho.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-cover"
+                  style={{ transform: 'scaleX(-1)' }}
+                />
+              )}
 
               {/* Overlay com Feedback por Cor */}
               <div 
@@ -411,29 +513,45 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
 
 
-              <div className="absolute top-2 right-2 z-10 flex gap-2">
-                <Button
-                  onClick={toggleCamera}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/90 hover:bg-white"
-                  title="Alternar câmera"
-                >
-                  <SwitchCamera className="w-4 h-4" />
-                </Button>
-                <Button
-                  onClick={() => {
-                    stopScanner();
-                    setUseManualMode(true);
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/90 hover:bg-white"
-                >
-                  <Keyboard className="w-4 h-4 mr-1" />
-                  Digitar
-                </Button>
-              </div>
+              {!isZebraDevice && (
+                <div className="absolute top-2 right-2 z-10 flex gap-2">
+                  <Button
+                    onClick={toggleCamera}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/90 hover:bg-white"
+                    title="Alternar câmera"
+                  >
+                    <SwitchCamera className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      stopScanner();
+                      setUseManualMode(true);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/90 hover:bg-white"
+                  >
+                    <Keyboard className="w-4 h-4 mr-1" />
+                    Digitar
+                  </Button>
+                </div>
+              )}
+              
+              {isZebraDevice && (
+                <div className="absolute top-2 right-2 z-10">
+                  <Button
+                    onClick={() => setUseManualMode(true)}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/90 hover:bg-white"
+                  >
+                    <Keyboard className="w-4 h-4 mr-1" />
+                    Digitar
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
