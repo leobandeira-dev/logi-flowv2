@@ -239,6 +239,7 @@ const getNavigationItems = (userProfile, userRole, ocorrenciasCount, etapasCount
           { title: "Gestão de Notas Fiscais", url: createPageUrl("GestaoDeNotasFiscais"), icon: FileText },
           { title: "Gestão de CT-e", url: createPageUrl("GestaoDeCTe"), icon: FileText },
           { title: "Etiquetas Mãe", url: createPageUrl("EtiquetasMae"), icon: Tag },
+          { title: "Cubagem", url: createPageUrl("Cubagem"), icon: Ruler },
           { title: "Carregamento", url: createPageUrl("Carregamento"), icon: Truck },
           { title: "Ordem de Entrega", url: createPageUrl("OrdemDeEntrega"), icon: Truck },
         ]
@@ -251,6 +252,7 @@ const getNavigationItems = (userProfile, userRole, ocorrenciasCount, etapasCount
           { title: "Motoristas", url: createPageUrl("Motoristas"), icon: Users },
           { title: "Veículos", url: createPageUrl("Veiculos"), icon: Truck },
           { title: "Operações", url: createPageUrl("Operacoes"), icon: Settings },
+          { title: "Tabelas de Preços", url: createPageUrl("Tabelas"), icon: FileText },
         ]
       },
       { 
