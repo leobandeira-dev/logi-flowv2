@@ -589,7 +589,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       };
 
   const toggleCamera = async () => {
-   console.log('🔄 toggleCamera chamado - useZebraScanner:', useZebraScanner);
+   console.log('🔄 toggleCamera chamado - useZebraScanner:', useZebraScanner, 'cameras:', availableCameras.length);
 
    // Se estiver usando Zebra scanner, alternar para câmera
    if (useZebraScanner) {
@@ -598,9 +598,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
      setUseManualMode(false);
 
      console.log('🔄 Alternando de scanner Zebra para câmera...');
-     setTimeout(() => {
-       startScanner();
-     }, 500);
+     setCurrentCameraIndex(0); // Reset para primeira câmera
+     // Estado vai disparar useEffect de reinício
      return;
    }
 
@@ -608,12 +607,11 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
    if (availableCameras.length > 1) {
      const nextIndex = (currentCameraIndex + 1) % availableCameras.length;
      console.log(`🔄 Alternando câmera: ${currentCameraIndex} → ${nextIndex}`);
-     setCurrentCameraIndex(nextIndex);
 
      stopScanner();
-     setTimeout(() => {
-       startScanner();
-     }, 300);
+
+     // Atualizar índice DEPOIS de parar - isto dispara useEffect
+     setCurrentCameraIndex(nextIndex);
      return;
    }
 
