@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Camera, X, Loader2, Keyboard, SwitchCamera } from "lucide-react";
@@ -67,6 +67,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     }
   }, [open]);
 
+  const stopScanner = useCallback(() => {
+    if (qrScannerRef.current) {
+      qrScannerRef.current.stop();
+      qrScannerRef.current.destroy();
+      qrScannerRef.current = null;
+    }
+    setScanning(false);
+  }, []);
+
   // Reiniciar scanner quando trocar de câmera
   useEffect(() => {
     if (open && !useManualMode && !isUsingZebraScanner && availableCameras.length > 0) {
@@ -75,12 +84,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       }, 100);
     }
 
-    return () => {
-      if (!isUsingZebraScanner) {
-        stopScanner();
-      }
-    };
-  }, [open, useManualMode, currentCameraIndex, isUsingZebraScanner]);
+    return () => stopScanner();
+  }, [open, useManualMode, currentCameraIndex, isUsingZebraScanner, startScanner, stopScanner]);
 
   // Ativar/desativar Zebra quando needed
   useEffect(() => {
@@ -195,9 +200,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       console.error("Erro ao iniciar scanner:", error);
       setUseManualMode(true);
     }
-  }, [availableCameras, currentCameraIndex, useManualMode, handleScanResult, scanFeedback, applyFeedback]);
+  }, [availableCameras, currentCameraIndex, useManualMode, handleScanResult, scanFeedback, applyFeedback, stopScanner]);
 
-  const toggleCamera = async () => {
+  const toggleCamera = useCallback(async () => {
     if (isUsingZebraScanner) {
       cleanupZebraScanner();
       setIsUsingZebraScanner(false);
@@ -231,16 +236,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     
     setCurrentCameraIndex(nextIndex);
     console.log(`Alternando para câmera [${nextIndex}]: ${availableCameras[nextIndex]?.label}`);
-  };
-
-  const stopScanner = () => {
-    if (qrScannerRef.current) {
-      qrScannerRef.current.stop();
-      qrScannerRef.current.destroy();
-      qrScannerRef.current = null;
-    }
-    setScanning(false);
-  };
+  }, [availableCameras, currentCameraIndex, stopScanner, startScanner]);
 
   const handleManualSubmit = async () => {
     if (manualInput.trim()) {
