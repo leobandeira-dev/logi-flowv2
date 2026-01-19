@@ -757,6 +757,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
               </div>
               </div>
               )}
+              </div>
 
               <div className="mt-3 space-y-2">
               {useManualMode && (
