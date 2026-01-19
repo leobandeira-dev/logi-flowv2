@@ -77,27 +77,32 @@ export default function Cubagem() {
 
   const iniciarCamera = async () => {
     try {
+      console.log("🎥 Solicitando acesso à câmera...");
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
+        video: { 
+          facingMode: "environment",
+          width: { ideal: 1920 }, 
+          height: { ideal: 1080 } 
+        } 
       });
+      
+      console.log("✅ Stream obtido:", stream);
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
-        
-        // Garantir que o vídeo comece a reproduzir
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current.play().catch(err => {
-            console.error("Erro ao iniciar reprodução:", err);
-          });
-        };
-        
         setCameraAtiva(true);
+        
+        // Aguardar o vídeo carregar e reproduzir
+        await videoRef.current.play();
+        
+        console.log("✅ Vídeo reproduzindo");
         toast.success("Câmera ativada");
       }
     } catch (error) {
-      console.error("Erro ao acessar câmera:", error);
-      toast.error("Não foi possível acessar a câmera: " + error.message);
+      console.error("❌ Erro ao acessar câmera:", error);
+      toast.error("Erro ao acessar câmera: " + error.message);
     }
   };
 
