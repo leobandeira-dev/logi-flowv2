@@ -63,7 +63,7 @@ export const useZebraScanner = (enabled, onScan, onFeedback) => {
     };
 
     // Keyboard listener para capturar entrada do Zebra (simula digitação)
-    const keyboardHandler = (e) => {
+    keyboardHandler = (e) => {
       // Zebra envia Enter após o código
       if (e.key === 'Enter' && zebraScanBuffer.trim()) {
         e.preventDefault();
