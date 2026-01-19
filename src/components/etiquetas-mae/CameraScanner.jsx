@@ -263,30 +263,34 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
    if (qrScannerRef.current || useManualMode || !videoRef.current) return;
 
    try {
+      console.log('📷 startScanner: currentCameraIndex:', currentCameraIndex, 'availableCameras:', availableCameras.length);
+
       // Priorizar câmera traseira (environment)
       let cameraConfig = { facingMode: "environment" };
 
       if (availableCameras.length > 0) {
-        // Buscar câmera traseira prioritariamente
-        const backCameraIndex = availableCameras.findIndex(cam => {
-          const label = cam.label.toLowerCase();
-          const id = cam.id.toLowerCase();
-          return label.includes('back') || 
-                 label.includes('traseira') ||
-                 label.includes('environment') ||
-                 id.includes('back') ||
-                 id.includes('environment');
-        });
-
-        if (backCameraIndex !== -1) {
-          cameraConfig = availableCameras[backCameraIndex];
-          console.log('📷 Câmera traseira encontrada:', cameraConfig?.label);
-        } else if (currentCameraIndex < availableCameras.length) {
+        // Usar a câmera especificada pelo índice
+        if (currentCameraIndex < availableCameras.length) {
           cameraConfig = availableCameras[currentCameraIndex];
-          console.log('📷 Usando câmera selecionada:', cameraConfig?.label);
+          console.log('📷✅ Usando câmera selecionada:', cameraConfig?.label, `(índice: ${currentCameraIndex})`);
+        } else {
+          // Fallback: buscar câmera traseira
+          const backCameraIndex = availableCameras.findIndex(cam => {
+            const label = cam.label.toLowerCase();
+            return label.includes('back') || 
+                   label.includes('traseira') ||
+                   label.includes('rear') ||
+                   label.includes('environment');
+          });
+
+          if (backCameraIndex !== -1) {
+            cameraConfig = availableCameras[backCameraIndex];
+            setCurrentCameraIndex(backCameraIndex);
+            console.log('📷✅ Câmera traseira encontrada:', cameraConfig?.label);
+          }
         }
       } else {
-        console.log('📷 Nenhuma câmera detectada, forçando environment');
+        console.log('📷⚠️ Nenhuma câmera detectada, forçando environment');
       }
 
        const qrScanner = new QrScanner(
