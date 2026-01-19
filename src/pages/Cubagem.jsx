@@ -84,11 +84,20 @@ export default function Cubagem() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
+        
+        // Garantir que o vídeo comece a reproduzir
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current.play().catch(err => {
+            console.error("Erro ao iniciar reprodução:", err);
+          });
+        };
+        
         setCameraAtiva(true);
+        toast.success("Câmera ativada");
       }
     } catch (error) {
       console.error("Erro ao acessar câmera:", error);
-      toast.error("Não foi possível acessar a câmera");
+      toast.error("Não foi possível acessar a câmera: " + error.message);
     }
   };
 
