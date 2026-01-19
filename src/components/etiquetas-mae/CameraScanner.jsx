@@ -541,32 +541,57 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
           {!useManualMode ? (
             <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
               {useZebraScanner ? (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 to-blue-950 text-white p-6 relative">
-                  <div className="animate-pulse mb-4">
-                    <Camera className="w-16 h-16" />
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 text-white p-6 relative">
+                  {/* Efeito de onda sutil ao fundo */}
+                  <div className="absolute inset-0 overflow-hidden opacity-20">
+                    <div className="absolute w-96 h-96 bg-blue-500 rounded-full blur-3xl -top-20 -right-20 animate-pulse" />
                   </div>
-                  <h3 className="text-xl font-bold mb-2">🦓 Scanner Zebra Ativo</h3>
-                  <p className="text-blue-200 text-center text-sm mb-4">
-                    Aponte e pressione o gatilho amarelo
-                  </p>
-                  
-                  {/* Indicador de status - SEM INPUT no modo nativo */}
-                  <div className="w-full max-w-sm bg-white rounded-lg p-4 border-2 border-blue-400 shadow-xl">
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-blue-900 mb-2">
-                        {scanFeedback === 'processing' ? '⏳ Processando...' : '✓ Pronto para leitura'}
-                      </p>
-                      <p className="text-xs text-blue-700">
-                        Aponte e pressione o gatilho
+
+                  <div className="relative z-10 flex flex-col items-center justify-center h-full gap-6">
+                    <div className="animate-pulse">
+                      <Camera className="w-20 h-20 text-blue-400" />
+                    </div>
+
+                    <div className="text-center space-y-2">
+                      <h3 className="text-2xl font-bold">🦓 Scanner Zebra Ativo</h3>
+                      <p className="text-slate-300 text-center text-sm">
+                        Aponte o coletor para o QR Code e pressione o gatilho
                       </p>
                     </div>
+
+                    {/* Indicador de status */}
+                    <div className="w-full max-w-xs bg-slate-800/80 backdrop-blur-sm rounded-xl p-6 border-2 border-blue-500/50 shadow-2xl">
+                      <div className="text-center space-y-2">
+                        <div className="h-8 flex items-center justify-center">
+                          {scanFeedback === 'processing' ? (
+                            <div className="flex items-center gap-2">
+                              <div className="animate-spin">
+                                <Loader2 className="w-5 h-5 text-blue-400" />
+                              </div>
+                              <span className="text-lg font-bold text-blue-400">Processando...</span>
+                            </div>
+                          ) : (
+                            <span className="text-lg font-bold text-green-400">✓ Pronto para leitura</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-400">
+                          Escaneie um QR Code para começar
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Animação de espaço dinâmico */}
+                    <div className="relative w-full max-w-xs h-20 mt-4">
+                      <div className="absolute inset-0 border-2 border-blue-500/30 rounded-lg" />
+                      <div className="absolute inset-0 border border-blue-400/20 rounded-lg m-2 animate-pulse" />
+                    </div>
                   </div>
-                  
+
                   {/* Feedback visual para modo Zebra */}
                   {scanFeedback && scanFeedback !== 'processing' && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-20">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-20 backdrop-blur-sm">
                       <div 
-                        className={`px-8 py-4 rounded-xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
+                        className={`px-8 py-4 rounded-2xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
                           scanFeedback === 'success' 
                             ? 'bg-green-600' 
                             : scanFeedback === 'duplicate'
