@@ -80,103 +80,49 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
 
     try {
-      const cameraConfig = getCameraConfig(availableCameras, currentCameraIndex);
-      console.log('Iniciando scanner com câmera:', cameraConfig.label || 'padrão');
+      // Simplificar: sempre usar facingMode para câmera traseira no iOS
+      let scannerConfig = {};
 
-      // No iOS, usar facingMode 'environment' para câmera traseira
-      let iosCameraConfig = cameraConfig;
       if (isIOS()) {
-        iosCameraConfig = { facingMode: 'environment' };
-        console.log('📱 iOS detectado: usando facingMode "environment"');
+        scannerConfig = { facingMode: 'environment' };
+        console.log('📱 iOS: usando facingMode "environment" para câmera traseira');
+      } else if (availableCameras.length > 0 && currentCameraIndex < availableCameras.length) {
+        // Android/Desktop: usar a câmera específica
+        scannerConfig = availableCameras[currentCameraIndex];
+        console.log('📷 Usando câmera:', scannerConfig.label || 'padrão');
+      } else {
+        scannerConfig = { facingMode: 'environment' };
       }
 
       const qrScanner = new QrScanner(
-         videoRef.current,
-         async (result) => {
-           if (result?.data && !scanFeedback) {
-             const decodedText = result.data;
-             console.log('🔍 QR Code detectado:', decodedText);
+        videoRef.current,
+        async (result) => {
+          if (result?.data && !scanFeedback) {
+            const decodedText = result.data;
+            console.log('🔍 QR Code detectado:', decodedText);
 
-             const cleaned = decodedText.replace(/\D/g, '');
-             const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
+            const cleaned = decodedText.replace(/\D/g, '');
+            const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
 
-             console.log('📦 Código processado:', finalCode);
-
-             // Usar hook de feedback centralizado - passa pelo handleScanResult
-             const scanResult = await Promise.resolve(handleScanResult(finalCode));
-             applyFeedback(scanResult);
-           }
-         },
-         {
-           returnDetailedScanResult: true,
-           highlightScanRegion: false,
-           highlightCodeOutline: false,
-           preferredCamera: iosCameraConfig,
-           maxScansPerSecond: SCANNER_CONFIG.maxScansPerSecond,
-          calculateScanRegion: (video) => {
-            const smallestDimension = Math.min(video.videoWidth, video.videoHeight);
-            const scanRegionSize = Math.round(0.9 * smallestDimension);
-
-            return {
-              x: Math.round((video.videoWidth - scanRegionSize) / 2),
-              y: Math.round((video.videoHeight - scanRegionSize) / 2),
-              width: scanRegionSize,
-              height: scanRegionSize,
-            };
+            const scanResult = await Promise.resolve(handleScanResult(finalCode));
+            applyFeedback(scanResult);
           }
+        },
+        {
+          returnDetailedScanResult: true,
+          highlightScanRegion: false,
+          highlightCodeOutline: false,
+          preferredCamera: scannerConfig,
+          maxScansPerSecond: SCANNER_CONFIG.maxScansPerSecond
         }
       );
 
       qrScanner.setInversionMode('both');
-
       qrScannerRef.current = qrScanner;
       await qrScanner.start();
       setScanning(true);
+      console.log('📸 Scanner iniciado com sucesso');
 
-      // Otimizações específicas para Zebra TC210K
-      try {
-        const videoTrack = videoRef.current?.srcObject?.getVideoTracks()[0];
-        if (videoTrack) {
-          const capabilities = videoTrack.getCapabilities();
-          const constraints = {};
-
-          // Foco contínuo otimizado
-          if (capabilities.focusMode) {
-            if (capabilities.focusMode.includes('continuous')) {
-              constraints.focusMode = 'continuous';
-            } else if (capabilities.focusMode.includes('single-shot')) {
-              constraints.focusMode = 'single-shot';
-            }
-          }
-
-          // Resolução alta
-          if (capabilities.width && capabilities.height) {
-            constraints.width = { ideal: 1920 };
-            constraints.height = { ideal: 1080 };
-          }
-
-          // Exposição otimizada
-          if (capabilities.exposureMode && capabilities.exposureMode.includes('continuous')) {
-            constraints.exposureMode = 'continuous';
-          }
-
-          // Ativar torch/flash se disponível (câmera traseira)
-          if (capabilities.torch) {
-            constraints.torch = false; // Desligado por padrão, pode ser controlado depois
-          }
-
-          await videoTrack.applyConstraints({
-            advanced: [{ ...constraints }]
-          });
-
-          console.log('📸 Scanner otimizado para Zebra TC210K');
-          console.log('📸 Câmera ativa:', availableCameras[currentCameraIndex]?.label || 'Padrão');
-        }
-      } catch (error) {
-        console.log('Otimizações de câmera não aplicadas:', error.message);
-      }
-
-      console.log('📸 Scanner QR iniciado');
     } catch (error) {
       console.error("Erro ao iniciar scanner:", error);
       setUseManualMode(true);
