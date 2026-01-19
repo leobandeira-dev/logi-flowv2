@@ -25,6 +25,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const inputRef = useRef(null);
   const zebraInputRef = useRef(null);
   const processandoRef = useRef(false);
+  const zebraBufferRef = useRef('');
+  const zebraTimeoutRef = useRef(null);
+  const zebraListenersRef = useRef({});
 
   // Detectar dispositivo Zebra e câmeras ao abrir
   useEffect(() => {
