@@ -852,11 +852,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                     </div>
                   )}
                 </div>
-               )}
-              </div>
+                </div>
 
-              {!useZebraScanner && (
-              <div className="absolute top-2 right-2 z-10 flex gap-2">
+                <div className="absolute top-2 right-2 z-10 flex gap-2">
                 <Button
                   onClick={toggleCamera}
                   variant="outline"
