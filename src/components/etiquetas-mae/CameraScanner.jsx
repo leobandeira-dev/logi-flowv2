@@ -403,6 +403,11 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         <div className="p-4 pt-0">
           {!useManualMode ? (
             <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
+              {/* Legenda de Modo */}
+              <div className="absolute top-2 left-2 z-20 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                {useZebraScanner ? '🦓 Modo Leitor' : '📷 Modo Câmera'}
+              </div>
+
               {useZebraScanner ? (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 to-blue-950 text-white p-8 relative">
                   <div className="animate-pulse mb-6">
@@ -441,7 +446,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 />
               )}
 
-              {!useZebraScanner && (
+              {useZebraScanner ? null : (
                 <div 
                   className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
                   style={{ zIndex: 5 }}
