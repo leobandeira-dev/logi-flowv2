@@ -92,13 +92,19 @@ export default function Cubagem() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
-        setCameraAtiva(true);
         
-        // Aguardar o vídeo carregar e reproduzir
-        await videoRef.current.play();
-        
-        console.log("✅ Vídeo reproduzindo");
-        toast.success("Câmera ativada");
+        // Esperar o vídeo carregar antes de definir estado
+        videoRef.current.onloadedmetadata = async () => {
+          try {
+            await videoRef.current.play();
+            console.log("✅ Vídeo reproduzindo");
+            setCameraAtiva(true);
+            toast.success("Câmera ativada");
+          } catch (err) {
+            console.error("❌ Erro ao reproduzir:", err);
+            toast.error("Erro ao iniciar vídeo");
+          }
+        };
       }
     } catch (error) {
       console.error("❌ Erro ao acessar câmera:", error);
@@ -444,16 +450,16 @@ export default function Cubagem() {
 
                 {/* Câmera Ativa */}
                 {cameraAtiva && (
-                  <div className="space-y-4">
-                    <div className="relative rounded-lg overflow-hidden bg-black">
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted
-                        className="w-full h-auto"
-                        style={{ maxHeight: '400px' }}
-                      />
+                 <div className="space-y-4">
+                   <div className="relative rounded-lg overflow-hidden bg-black">
+                     <video
+                       ref={videoRef}
+                       autoPlay
+                       playsInline
+                       muted
+                       className="w-full h-auto"
+                       style={{ maxHeight: '400px', transform: 'scaleX(-1)' }}
+                     />
                       {scanningQR && (
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="border-4 border-blue-500 w-64 h-64 rounded-lg animate-pulse" />
