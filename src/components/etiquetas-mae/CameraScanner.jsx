@@ -738,31 +738,47 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                     aria-label="Zebra Scanner Input"
                     autoComplete="off"
                   />
-              )}
-              </div>
-              ) : (
-              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div className="w-full">
-                <Keyboard className="w-12 h-12 mx-auto mb-3 text-blue-600" />
-                <p className="text-sm mb-2" style={{ color: theme.text }}>Modo Manual</p>
-                <Button
+                  )}
+                  ) : (
+                  <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="w-full">
+                    <Keyboard className="w-12 h-12 mx-auto mb-3 text-blue-600" />
+                    <p className="text-sm mb-2" style={{ color: theme.text }}>Modo Manual</p>
+                    <Button
+                      onClick={() => setUseManualMode(false)}
+                      variant="outline"
+                      size="sm"
+                      style={{ borderColor: theme.border, color: theme.text }}
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      Voltar para Câmera
+                    </Button>
+                  </div>
+                  </div>
+                  )}
+                  </div>
+                  ) : (
+                  <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="w-full">
+                  <Keyboard className="w-12 h-12 mx-auto mb-3 text-blue-600" />
+                  <p className="text-sm mb-2" style={{ color: theme.text }}>Modo Manual</p>
+                  <Button
                   onClick={() => setUseManualMode(false)}
                   variant="outline"
                   size="sm"
                   style={{ borderColor: theme.border, color: theme.text }}
-                >
+                  >
                   <Camera className="w-4 h-4 mr-2" />
                   Voltar para Câmera
-                </Button>
-              </div>
-              </div>
-              )}
-              </div>
+                  </Button>
+                  </div>
+                  </div>
+                  )}
 
-              <div className="mt-3 space-y-2">
-              {useManualMode && (
-              <div className="bg-white dark:bg-gray-900 border-2 rounded-lg p-3" style={{ borderColor: isDark ? '#3b82f6' : '#2563eb' }}>
-                <div className="flex gap-2">
+                  <div className="mt-3 space-y-2">
+                  {useManualMode && (
+                  <div className="bg-white dark:bg-gray-900 border-2 rounded-lg p-3" style={{ borderColor: isDark ? '#3b82f6' : '#2563eb' }}>
+                  <div className="flex gap-2">
                   <Input
                     ref={inputRef}
                     placeholder="Digite ou cole o código..."
@@ -789,20 +805,20 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   >
                     OK
                   </Button>
-                </div>
-              </div>
-              )}
-              <Button
-              variant="outline"
-              onClick={onClose}
-              className="w-full h-11"
-              style={{ borderColor: theme.border, color: theme.text }}
-              >
-              <X className="w-4 h-4 mr-2" />
-              Fechar Scanner
-              </Button>
-              </div>
-              </div>
+                  </div>
+                  </div>
+                  )}
+                  <Button
+                  variant="outline"
+                  onClick={onClose}
+                  className="w-full h-11"
+                  style={{ borderColor: theme.border, color: theme.text }}
+                  >
+                  <X className="w-4 h-4 mr-2" />
+                  Fechar Scanner
+                  </Button>
+                  </div>
+                  </div>
       </DialogContent>
     </Dialog>
   );
