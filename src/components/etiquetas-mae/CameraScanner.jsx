@@ -313,10 +313,10 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
   // Manter foco no input enquanto modal estiver aberto
   useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 300);
+    if (open && useManualMode) {
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [open]);
+  }, [open, useManualMode]);
 
 
 
