@@ -45,37 +45,53 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       try {
         const cameras = await QrScanner.listCameras(true);
         setAvailableCameras(cameras);
-        console.log('📷 Câmeras detectadas:', cameras);
+        console.log('📷 Câmeras detectadas:', cameras.length);
         console.log('📷 Detalhes das câmeras:');
         cameras.forEach((cam, idx) => {
           console.log(`  [${idx}] Label: ${cam.label}, ID: ${cam.id}`);
         });
         
-        // Buscar câmera traseira com prioridade
-        let backCameraIndex = cameras.findIndex(cam => {
+        // Estratégia de busca por câmera traseira (ordem de prioridade)
+        let backCameraIndex = -1;
+        
+        // 1. Buscar por "back" ou "traseira"
+        backCameraIndex = cameras.findIndex(cam => {
           const label = cam.label.toLowerCase();
           const id = cam.id.toLowerCase();
-          return label.includes('back') || 
-                 label.includes('traseira') ||
-                 id.includes('back') ||
-                 id.includes('environment');
+          return label.includes('back') || label.includes('traseira') || label.includes('rear');
         });
         
-        // Se não encontrar, buscar environment
+        // 2. Se não encontrar, buscar por "environment"
         if (backCameraIndex === -1) {
           backCameraIndex = cameras.findIndex(cam => 
             cam.label.toLowerCase().includes('environment')
           );
         }
         
+        // 3. Se ainda não encontrar e houver múltiplas câmeras, usar a última (geralmente traseira em Zebra)
+        if (backCameraIndex === -1 && cameras.length > 1) {
+          backCameraIndex = cameras.length - 1;
+          console.log('📷 Usando última câmera disponível como traseira');
+        }
+        
+        // 4. Se ainda não encontrar, usar a primeira que não seja frontal
+        if (backCameraIndex === -1) {
+          backCameraIndex = cameras.findIndex(cam => 
+            !cam.label.toLowerCase().includes('front') &&
+            !cam.label.toLowerCase().includes('frontal') &&
+            !cam.label.toLowerCase().includes('selfie')
+          );
+        }
+        
         if (backCameraIndex !== -1) {
           setCurrentCameraIndex(backCameraIndex);
-          console.log('📷 Câmera traseira selecionada:', cameras[backCameraIndex]?.label);
+          console.log('📷✅ Câmera traseira selecionada:', cameras[backCameraIndex]?.label, `(índice: ${backCameraIndex})`);
         } else {
-          console.log('📷 Nenhuma câmera traseira encontrada');
+          console.log('📷⚠️ Nenhuma câmera traseira encontrada, usando padrão');
+          setCurrentCameraIndex(0);
         }
       } catch (error) {
-        console.log('❌ Não foi possível detectar câmeras:', error);
+        console.log('❌ Erro ao detectar câmeras:', error.message);
       }
     };
     
