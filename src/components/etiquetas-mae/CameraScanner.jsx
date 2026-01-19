@@ -349,8 +349,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
           className="fixed inset-0 w-screen h-screen max-w-none max-h-none p-0 m-0 rounded-none border-0" 
           style={{ backgroundColor: theme.bg, borderColor: theme.border }}
         >
-        <DialogHeader className="p-4 pb-3">
-          <DialogTitle style={{ color: theme.text }}>
+        <DialogHeader className="absolute top-0 left-0 right-0 p-4 z-20 bg-gradient-to-b from-black/50 to-black/0">
+          <DialogTitle style={{ color: 'white' }}>
             Leitura de Código
           </DialogTitle>
           {notaAtual && progressoAtual && (
