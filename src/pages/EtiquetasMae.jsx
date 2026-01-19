@@ -331,12 +331,19 @@ export default function EtiquetasMae() {
   };
 
   const handleVolumeCameraScan = async (codigo) => {
-    if (!codigo || !codigo.trim()) return;
+    console.log('🔍 handleVolumeCameraScan chamado com:', codigo);
+    
+    if (!codigo || !codigo.trim()) {
+      console.log('❌ Código vazio');
+      return 'error';
+    }
     
     setCodigoScanner(codigo.trim());
+    console.log('📝 Código limpo e setado:', codigo.trim());
     
     // Processar o scan e retornar resultado para feedback visual
     const resultado = await handleScanComFeedback(codigo.trim());
+    console.log('✓ Resultado do scan:', resultado);
     return resultado;
   };
 
