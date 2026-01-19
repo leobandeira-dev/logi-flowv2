@@ -444,7 +444,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
               </div>
             )}
 
-            <div className="absolute top-2 right-2 z-10 flex gap-2">
+            <div className="absolute top-4 right-4 z-10 flex gap-2">
               <Button
                 onClick={toggleCamera}
                 variant="outline"
@@ -455,9 +455,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 <SwitchCamera className="w-4 h-4" />
               </Button>
             </div>
-          </div>
+            </div>
 
-          <div className="mt-4 space-y-2">
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-black/0 space-y-2">
             <div className="bg-white dark:bg-gray-900 border rounded-lg p-3" style={{ borderColor: isDark ? '#475569' : '#d1d5db' }}>
               <div className="flex gap-2">
                 <Input
@@ -474,6 +474,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                      color: isDark ? '#f1f5f9' : '#0f172a'
                    }}
                    autoFocus
+                   inputMode="none"
                  />
                 <Button
                   onClick={handleManualSubmit}
@@ -493,8 +494,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             >
               Fechar
             </Button>
-          </div>
-        </div>
+            </div>
+            </div>
       </DialogContent>
     </Dialog>
   );
