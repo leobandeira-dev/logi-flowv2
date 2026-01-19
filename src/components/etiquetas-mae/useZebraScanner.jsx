@@ -51,6 +51,9 @@ export const useZebraScanner = (enabled, onScan, onFeedback) => {
       }
     };
 
+    let zebraScanBuffer = '';
+    let zebraScanTimeout = null;
+
     // Event listener para DataWedge (evento nativo Zebra)
     datawedgeHandler = (event) => {
       const data = event.detail?.data || event.data;
@@ -59,15 +62,35 @@ export const useZebraScanner = (enabled, onScan, onFeedback) => {
       }
     };
 
+    // Keyboard listener para capturar entrada do Zebra (simula digitação)
+    const keyboardHandler = (e) => {
+      // Zebra envia Enter após o código
+      if (e.key === 'Enter' && zebraScanBuffer.trim()) {
+        e.preventDefault();
+        handleZebraScan(zebraScanBuffer.trim());
+        zebraScanBuffer = '';
+        clearTimeout(zebraScanTimeout);
+      } else if (e.key !== 'Shift' && e.key !== 'Control' && e.key !== 'Alt') {
+        // Acumular caracteres digitados pelo Zebra
+        zebraScanBuffer += e.key;
+        
+        // Reset timeout se não receber mais caracteres
+        clearTimeout(zebraScanTimeout);
+        zebraScanTimeout = setTimeout(() => {
+          zebraScanBuffer = '';
+        }, 100);
+      }
+    };
+
     // Message listener para fallback
-    messageHandler = (e) => {
+    const messageHandler = (e) => {
       if (e.data && typeof e.data === 'string' && e.data.length > 5) {
-        // Evitar processar mensagens muito curtas
         handleZebraScan(e.data);
       }
     };
 
     window.addEventListener('datawedge-scan', datawedgeHandler);
+    window.addEventListener('keydown', keyboardHandler);
     window.addEventListener('message', messageHandler);
 
     // Registrar handlers para cleanup
