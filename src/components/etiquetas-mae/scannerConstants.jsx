@@ -51,10 +51,13 @@ export const ZEBRA_DETECTION = {
 };
 
 export const SCANNER_CONFIG = {
-  maxScansPerSecond: 8,
+  maxScansPerSecond: 20,
   scanRegionRatio: 0.9,
   focusMode: 'continuous',
   resolution: { ideal: 1920, height: 1080 },
-  feedbackDuration: 800,
-  debounceMs: 500
+  feedbackDuration: 600,
+  debounceMs: 0,
+  zebraDebouncMs: 700,
+  cameraDebounceMs: 600,
+  maxConcurrentRequests: 1
 };
