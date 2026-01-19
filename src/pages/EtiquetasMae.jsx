@@ -1440,8 +1440,6 @@ export default function EtiquetasMae() {
                 <tbody>
                   {filteredEtiquetas.map((etiqueta) => {
                     const statusInfo = statusConfig[etiqueta.status] || statusConfig.criada;
-                    const criador = usuarios.find(u => u.id === etiqueta.criado_por);
-                    
                     const criador = usuarios?.find(u => u.id === etiqueta.criado_por);
                     return (
                       <tr key={etiqueta.id} className="border-b hover:bg-opacity-50" style={{ borderColor: theme.cardBorder }}>
