@@ -13,7 +13,7 @@ import "@tensorflow/tfjs";
 
 export default function Cubagem() {
   const [isDark, setIsDark] = useState(false);
-  const [etapa, setEtapa] = useState("inicial"); // inicial, medindo, processando, associando, concluido
+  const [etapa, setEtapa] = useState("inicial");
   const [cameraAtiva, setCameraAtiva] = useState(false);
   const [fotoCapturada, setFotoCapturada] = useState(null);
   const [medidasTempoReal, setMedidasTempoReal] = useState(null);
@@ -43,7 +43,6 @@ export default function Cubagem() {
   const qrScannerRef = useRef(null);
   const deteccaoIntervalRef = useRef(null);
 
-  // Tamanho real de um cartão de crédito (padrão internacional)
   const CARTAO_LARGURA_CM = 8.56;
   const CARTAO_ALTURA_CM = 5.398;
 
@@ -189,7 +188,6 @@ export default function Cubagem() {
             alturaCm = alturaPixels / referenciaPixels;
             comprimentoCm = larguraCm * 0.7;
           } else {
-            // Estimativa sem calibração: assumir 100px = 10cm aproximadamente
             const estimativaPixelsPorCm = 10;
             larguraCm = larguraPixels / estimativaPixelsPorCm;
             alturaCm = alturaPixels / estimativaPixelsPorCm;
@@ -197,90 +195,151 @@ export default function Cubagem() {
             semCalibracao = true;
           }
           
-          // Desenhar no overlay
+          // Calcular tamanho da fonte e espessuras dinamicamente
+          const fontSize = Math.max(22, video.videoWidth / 35);
+          const lineWidth = Math.max(5, video.videoWidth / 250);
+          
+          // Calcular offset para profundidade (efeito 3D isométrico)
+          const profundOffset = larguraPixels * 0.4;
+          
+          // Desenhar cubo 3D em perspectiva isométrica
           const overlayCtx = overlay.getContext('2d');
           overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
           
-          // Calcular tamanho da fonte dinamicamente baseado na resolução
-          const fontSize = Math.max(20, video.videoWidth / 40);
-          const lineWidth = Math.max(4, video.videoWidth / 300);
-          
-          // Retângulo do objeto
+          // Face frontal (verde - sólida)
           overlayCtx.strokeStyle = '#00ff00';
           overlayCtx.lineWidth = lineWidth;
           overlayCtx.strokeRect(x, y, larguraPixels, alturaPixels);
           
-          // Linha de largura (horizontal)
-          overlayCtx.strokeStyle = '#ff0000';
-          overlayCtx.lineWidth = lineWidth;
-          overlayCtx.beginPath();
-          overlayCtx.moveTo(x, y + alturaPixels + 30);
-          overlayCtx.lineTo(x + larguraPixels, y + alturaPixels + 30);
-          overlayCtx.stroke();
-          
-          // Setas nas extremidades da linha de largura
-          const arrowSize = fontSize / 2;
-          overlayCtx.beginPath();
-          overlayCtx.moveTo(x, y + alturaPixels + 30);
-          overlayCtx.lineTo(x + arrowSize, y + alturaPixels + 25);
-          overlayCtx.moveTo(x, y + alturaPixels + 30);
-          overlayCtx.lineTo(x + arrowSize, y + alturaPixels + 35);
-          overlayCtx.stroke();
-          
-          overlayCtx.beginPath();
-          overlayCtx.moveTo(x + larguraPixels, y + alturaPixels + 30);
-          overlayCtx.lineTo(x + larguraPixels - arrowSize, y + alturaPixels + 25);
-          overlayCtx.moveTo(x + larguraPixels, y + alturaPixis + 30);
-          overlayCtx.lineTo(x + larguraPixels - arrowSize, y + alturaPixels + 35);
-          overlayCtx.stroke();
-          
-          // Linha de altura (vertical)
-          overlayCtx.beginPath();
-          overlayCtx.moveTo(x + larguraPixels + 30, y);
-          overlayCtx.lineTo(x + larguraPixels + 30, y + alturaPixels);
-          overlayCtx.stroke();
-          
-          // Setas nas extremidades da linha de altura
-          overlayCtx.beginPath();
-          overlayCtx.moveTo(x + larguraPixels + 30, y);
-          overlayCtx.lineTo(x + larguraPixels + 25, y + arrowSize);
-          overlayCtx.moveTo(x + larguraPixels + 30, y);
-          overlayCtx.lineTo(x + larguraPixels + 35, y + arrowSize);
-          overlayCtx.stroke();
-          
-          overlayCtx.beginPath();
-          overlayCtx.moveTo(x + larguraPixels + 30, y + alturaPixels);
-          overlayCtx.lineTo(x + larguraPixels + 25, y + alturaPixels - arrowSize);
-          overlayCtx.moveTo(x + larguraPixels + 30, y + alturaPixels);
-          overlayCtx.lineTo(x + larguraPixels + 35, y + alturaPixels - arrowSize);
-          overlayCtx.stroke();
-          
-          // Linha de profundidade (diagonal 3D)
+          // Linhas de profundidade (laranja)
           overlayCtx.strokeStyle = '#ffaa00';
-          overlayCtx.setLineDash([8, 8]);
-          overlayCtx.lineWidth = lineWidth;
+          overlayCtx.lineWidth = lineWidth - 1;
+          overlayCtx.setLineDash([12, 6]);
+          
+          // Conectar cantos frontal -> traseira
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(x, y);
+          overlayCtx.lineTo(x + profundOffset, y - profundOffset);
+          overlayCtx.stroke();
+          
           overlayCtx.beginPath();
           overlayCtx.moveTo(x + larguraPixels, y);
-          const profundOffset = larguraPixels * 0.3;
           overlayCtx.lineTo(x + larguraPixels + profundOffset, y - profundOffset);
           overlayCtx.stroke();
+          
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(x, y + alturaPixels);
+          overlayCtx.lineTo(x + profundOffset, y + alturaPixels - profundOffset);
+          overlayCtx.stroke();
+          
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(x + larguraPixels, y + alturaPixels);
+          overlayCtx.lineTo(x + larguraPixels + profundOffset, y + alturaPixels - profundOffset);
+          overlayCtx.stroke();
+          
+          // Face traseira (laranja pontilhada - mais clara)
+          overlayCtx.strokeStyle = '#ffcc66';
+          overlayCtx.strokeRect(x + profundOffset, y - profundOffset, larguraPixels, alturaPixels);
           overlayCtx.setLineDash([]);
           
-          // Textos com medidas - fontes maiores
+          // Linha de medição - LARGURA (vermelho sólido)
+          overlayCtx.strokeStyle = '#ff0000';
+          overlayCtx.lineWidth = lineWidth;
+          const larguraY = y + alturaPixels + 50;
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(x, larguraY);
+          overlayCtx.lineTo(x + larguraPixels, larguraY);
+          overlayCtx.stroke();
+          
+          // Setas largura (triângulos preenchidos)
+          const arrowSize = fontSize / 1.5;
+          overlayCtx.fillStyle = '#ff0000';
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(x, larguraY);
+          overlayCtx.lineTo(x + arrowSize, larguraY - arrowSize/2);
+          overlayCtx.lineTo(x + arrowSize, larguraY + arrowSize/2);
+          overlayCtx.closePath();
+          overlayCtx.fill();
+          
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(x + larguraPixels, larguraY);
+          overlayCtx.lineTo(x + larguraPixels - arrowSize, larguraY - arrowSize/2);
+          overlayCtx.lineTo(x + larguraPixels - arrowSize, larguraY + arrowSize/2);
+          overlayCtx.closePath();
+          overlayCtx.fill();
+          
+          // Linha de medição - ALTURA (vermelho sólido)
+          const alturaX = x + larguraPixels + 50;
+          overlayCtx.strokeStyle = '#ff0000';
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(alturaX, y);
+          overlayCtx.lineTo(alturaX, y + alturaPixels);
+          overlayCtx.stroke();
+          
+          // Setas altura
+          overlayCtx.fillStyle = '#ff0000';
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(alturaX, y);
+          overlayCtx.lineTo(alturaX - arrowSize/2, y + arrowSize);
+          overlayCtx.lineTo(alturaX + arrowSize/2, y + arrowSize);
+          overlayCtx.closePath();
+          overlayCtx.fill();
+          
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(alturaX, y + alturaPixels);
+          overlayCtx.lineTo(alturaX - arrowSize/2, y + alturaPixels - arrowSize);
+          overlayCtx.lineTo(alturaX + arrowSize/2, y + alturaPixels - arrowSize);
+          overlayCtx.closePath();
+          overlayCtx.fill();
+          
+          // Linha de medição - PROFUNDIDADE (laranja sólido)
+          overlayCtx.strokeStyle = '#ffaa00';
+          overlayCtx.lineWidth = lineWidth;
+          overlayCtx.beginPath();
+          const profX = x + larguraPixels + profundOffset;
+          const profY = y - profundOffset;
+          overlayCtx.moveTo(x + larguraPixels, y);
+          overlayCtx.lineTo(profX, profY);
+          overlayCtx.stroke();
+          
+          // Setas profundidade
+          const profAngulo = Math.atan2(profY - y, profX - (x + larguraPixels));
+          overlayCtx.save();
+          overlayCtx.translate(profX, profY);
+          overlayCtx.rotate(profAngulo);
+          overlayCtx.fillStyle = '#ffaa00';
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(0, 0);
+          overlayCtx.lineTo(-arrowSize, -arrowSize/2);
+          overlayCtx.lineTo(-arrowSize, arrowSize/2);
+          overlayCtx.closePath();
+          overlayCtx.fill();
+          overlayCtx.restore();
+          
+          // Textos com medidas - fontes maiores com sombra forte
+          overlayCtx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+          overlayCtx.shadowBlur = 12;
+          overlayCtx.shadowOffsetX = 3;
+          overlayCtx.shadowOffsetY = 3;
+          
           overlayCtx.fillStyle = '#ff0000';
           overlayCtx.font = `bold ${fontSize}px Arial`;
-          overlayCtx.shadowColor = 'black';
-          overlayCtx.shadowBlur = 8;
-          overlayCtx.fillText(`${larguraCm.toFixed(1)} cm`, x + larguraPixels/2 - fontSize * 1.5, y + alturaPixels + 60);
-          overlayCtx.fillText(`${alturaCm.toFixed(1)} cm`, x + larguraPixels + 40, y + alturaPixels/2);
+          overlayCtx.fillText(`${larguraCm.toFixed(1)} cm`, x + larguraPixels/2 - fontSize * 1.8, larguraY + fontSize + 15);
+          overlayCtx.fillText(`${alturaCm.toFixed(1)} cm`, alturaX + 15, y + alturaPixels/2 + fontSize/3);
           
           overlayCtx.fillStyle = '#ffaa00';
-          overlayCtx.fillText(`${comprimentoCm.toFixed(1)} cm`, x + larguraPixels + profundOffset/2 - fontSize, y - profundOffset/2 - 15);
+          overlayCtx.fillText(`${comprimentoCm.toFixed(1)} cm`, profX - fontSize * 2.5, profY - 20);
           
-          // Nome do objeto
+          // Nome do objeto com fundo semi-transparente
+          overlayCtx.shadowBlur = 0;
+          overlayCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+          overlayCtx.fillRect(x - 5, y - fontSize * 1.8, objeto.class.length * fontSize * 0.7, fontSize * 1.5);
+          
           overlayCtx.fillStyle = '#00ff00';
-          overlayCtx.font = `bold ${fontSize * 1.2}px Arial`;
-          overlayCtx.fillText(objeto.class.toUpperCase(), x, y - 15);
+          overlayCtx.font = `bold ${fontSize * 1.3}px Arial`;
+          overlayCtx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+          overlayCtx.shadowBlur = 8;
+          overlayCtx.fillText(objeto.class.toUpperCase(), x, y - fontSize * 0.5);
           overlayCtx.shadowBlur = 0;
           
           setMedidasTempoReal({
@@ -470,8 +529,6 @@ export default function Cubagem() {
     await iniciarScanQR();
   };
 
-
-
   const iniciarScanQR = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -484,7 +541,6 @@ export default function Cubagem() {
         setCameraAtiva(true);
         setScanningQR(true);
 
-        // Iniciar scanner QR
         qrScannerRef.current = new QrScanner(
           videoRef.current,
           result => {
@@ -510,7 +566,6 @@ export default function Cubagem() {
     pararCamera();
     
     try {
-      // QR Code deve conter o ID do volume
       const volumes = await base44.entities.Volume.list();
       const volumeEncontrado = volumes.find(v => v.id === qrData || v.codigo_volume === qrData);
       
@@ -532,12 +587,10 @@ export default function Cubagem() {
 
   const associarCubagem = async (volId, medidaId = null) => {
     try {
-      // Upload da foto
       const blob = await fetch(fotoCapturada).then(r => r.blob());
       const file = new File([blob], `cubagem_${Date.now()}.jpg`, { type: 'image/jpeg' });
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      // Atualizar volume com cubagem e foto
       await base44.entities.Volume.update(volId, {
         altura_cm: medidasCapturadas.altura,
         largura_cm: medidasCapturadas.largura,
@@ -548,7 +601,6 @@ export default function Cubagem() {
         objeto_detectado: objetoDetectado?.class || "unknown"
       });
 
-      // Se associou medida pendente, remover da lista
       if (medidaId) {
         removerMedidaPendente(medidaId);
       }
@@ -679,14 +731,14 @@ export default function Cubagem() {
                       playsInline
                       muted
                       className="w-full h-auto"
-                      style={{ maxHeight: '400px' }}
+                      style={{ maxHeight: '500px' }}
                     />
                     
-                    {/* Canvas overlay para desenhar medições */}
+                    {/* Canvas overlay para desenhar medições 3D */}
                     <canvas
                       ref={canvasOverlayRef}
                       className="absolute top-0 left-0 w-full h-auto pointer-events-none"
-                      style={{ maxHeight: '400px' }}
+                      style={{ maxHeight: '500px' }}
                     />
                     
                     {/* Overlay com medidas em tempo real */}
@@ -833,8 +885,6 @@ export default function Cubagem() {
                   </div>
                 </div>
               )}
-
-
 
                 {/* Etapa de Processamento */}
                 {etapa === 'processando' && fotoCapturada && (
