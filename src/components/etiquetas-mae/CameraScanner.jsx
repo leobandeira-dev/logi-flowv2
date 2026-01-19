@@ -634,76 +634,87 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
         <div className="p-4 pt-0">
           {!useManualMode ? (
-            <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
+            <>
               {useZebraScanner ? (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 text-white p-6 relative">
-                  {/* Efeito de onda sutil ao fundo */}
-                  <div className="absolute inset-0 overflow-hidden opacity-20">
-                    <div className="absolute w-96 h-96 bg-blue-500 rounded-full blur-3xl -top-20 -right-20 animate-pulse" />
-                  </div>
-
-                  <div className="relative z-10 flex flex-col items-center justify-center h-full gap-6">
-                    <div className="animate-pulse">
-                      <Camera className="w-20 h-20 text-blue-400" />
+                // ========== TELA DO LEITOR ZEBRA NATIVO ==========
+                <div className="w-full rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 text-white p-6 relative">
+                    {/* Efeito de onda sutil ao fundo */}
+                    <div className="absolute inset-0 overflow-hidden opacity-20">
+                      <div className="absolute w-96 h-96 bg-green-500 rounded-full blur-3xl -bottom-20 -left-20 animate-pulse" />
                     </div>
 
-                    <div className="text-center space-y-2">
-                      <h3 className="text-2xl font-bold">🦓 Scanner Zebra Ativo</h3>
-                      <p className="text-slate-300 text-center text-sm">
-                        Aponte o coletor para o QR Code e pressione o gatilho
-                      </p>
-                    </div>
+                    <div className="relative z-10 flex flex-col items-center justify-center h-full gap-4">
+                      {/* Ícone do Scanner */}
+                      <div className="animate-pulse">
+                        <Scan className="w-24 h-24 text-green-400" />
+                      </div>
 
-                    {/* Indicador de status */}
-                    <div className="w-full max-w-xs bg-slate-800/80 backdrop-blur-sm rounded-xl p-6 border-2 border-blue-500/50 shadow-2xl">
-                      <div className="text-center space-y-2">
-                        <div className="h-8 flex items-center justify-center">
-                          {scanFeedback === 'processing' ? (
-                            <div className="flex items-center gap-2">
-                              <div className="animate-spin">
-                                <Loader2 className="w-5 h-5 text-blue-400" />
-                              </div>
-                              <span className="text-lg font-bold text-blue-400">Processando...</span>
+                      {/* Status Principal */}
+                      <div className="text-center space-y-3">
+                        <h3 className="text-3xl font-bold text-green-400">🦓 LEITOR ATIVO</h3>
+                        <p className="text-slate-200 text-base font-semibold">
+                          Aponte para o código de barras
+                        </p>
+                        <p className="text-slate-400 text-sm">
+                          Pressione o gatilho ou passe o item
+                        </p>
+                      </div>
+
+                      {/* Indicador Visual Grande */}
+                      <div className="w-full max-w-sm">
+                        {scanFeedback === 'processing' ? (
+                          <div className="bg-blue-900/50 border-2 border-blue-500 rounded-xl p-6 backdrop-blur-sm">
+                            <div className="flex items-center justify-center gap-3 mb-2">
+                              <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
+                              <span className="text-xl font-bold text-blue-300">PROCESSANDO</span>
                             </div>
-                          ) : (
-                            <span className="text-lg font-bold text-green-400">✓ Pronto para leitura</span>
-                          )}
-                        </div>
+                            <p className="text-xs text-blue-200 text-center">Aguarde...</p>
+                          </div>
+                        ) : scanFeedback === 'success' ? (
+                          <div className="bg-green-900/50 border-2 border-green-500 rounded-xl p-6 backdrop-blur-sm animate-in zoom-in-95">
+                            <div className="text-center">
+                              <p className="text-2xl font-bold text-green-300 mb-1">✓ OK!</p>
+                              <p className="text-sm text-green-200">Volume adicionado com sucesso</p>
+                            </div>
+                          </div>
+                        ) : scanFeedback === 'duplicate' ? (
+                          <div className="bg-yellow-900/50 border-2 border-yellow-500 rounded-xl p-6 backdrop-blur-sm animate-in zoom-in-95">
+                            <div className="text-center">
+                              <p className="text-2xl font-bold text-yellow-300 mb-1">⚠ DUPLICADO</p>
+                              <p className="text-sm text-yellow-200">Este código já foi bipado</p>
+                            </div>
+                          </div>
+                        ) : scanFeedback === 'error' ? (
+                          <div className="bg-red-900/50 border-2 border-red-500 rounded-xl p-6 backdrop-blur-sm animate-in zoom-in-95">
+                            <div className="text-center">
+                              <p className="text-2xl font-bold text-red-300 mb-1">✗ ERRO</p>
+                              <p className="text-sm text-red-200">Código não encontrado</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-slate-800/80 border-2 border-green-500/50 rounded-xl p-6 backdrop-blur-sm">
+                            <div className="text-center space-y-2">
+                              <div className="w-12 h-12 rounded-full border-4 border-green-500 border-t-green-300 animate-spin mx-auto" />
+                              <p className="text-lg font-bold text-green-400">AGUARDANDO</p>
+                              <p className="text-xs text-slate-400">Pressione para ler</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info Extra */}
+                      <div className="text-center mt-2">
                         <p className="text-xs text-slate-400">
-                          Escaneie um QR Code para começar
+                          {notaAtual ? `NF ${notaAtual.numero_nota}` : 'Pronto para leitura'}
                         </p>
                       </div>
                     </div>
-
-                    {/* Animação de espaço dinâmico */}
-                    <div className="relative w-full max-w-xs h-20 mt-4">
-                      <div className="absolute inset-0 border-2 border-blue-500/30 rounded-lg" />
-                      <div className="absolute inset-0 border border-blue-400/20 rounded-lg m-2 animate-pulse" />
-                    </div>
                   </div>
-
-                  {/* Feedback visual para modo Zebra */}
-                  {scanFeedback && scanFeedback !== 'processing' && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-20 backdrop-blur-sm">
-                      <div 
-                        className={`px-8 py-4 rounded-2xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
-                          scanFeedback === 'success' 
-                            ? 'bg-green-600' 
-                            : scanFeedback === 'duplicate'
-                            ? 'bg-yellow-600'
-                            : 'bg-red-600'
-                        }`}
-                        style={{ fontSize: '24px' }}
-                      >
-                        {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
-                        {scanFeedback === 'duplicate' && '⚠ JÁ BIPADO'}
-                        {scanFeedback === 'error' && '✗ VOLUME NÃO ENCONTRADO'}
-                      </div>
-                    </div>
-                  )}
                 </div>
               ) : (
-                <>
+                // ========== TELA DA CÂMERA DO CELULAR ==========
+                <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
                   <video
                     ref={videoRef}
                     className="w-full h-full object-cover"
@@ -724,7 +735,6 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                     aria-label="Zebra Scanner Input"
                     autoComplete="off"
                   />
-                </>
               )}
 
               {/* Overlay com Feedback por Cor */}
