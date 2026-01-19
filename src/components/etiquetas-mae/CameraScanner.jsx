@@ -119,31 +119,48 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     if (zebraListening) return;
 
     const handleZebraScan = async (event) => {
-      const data = event.detail;
+      let scannedCode = null;
       
-      if (data && data.data && !processandoRef.current) {
+      // Extrair código do evento (suporta diferentes formatos)
+      if (event.detail && event.detail.data) {
+        scannedCode = event.detail.data;
+      } else if (typeof event === 'string') {
+        scannedCode = event;
+      } else if (event.data) {
+        scannedCode = event.data;
+      }
+      
+      if (scannedCode && !processandoRef.current) {
         processandoRef.current = true;
-        const scannedCode = data.data;
-        console.log('🦓 ZEBRA SCAN:', scannedCode);
+        console.log('🦓 ZEBRA SCAN RECEBIDO:', scannedCode);
 
         const cleaned = scannedCode.replace(/\D/g, '');
         const finalCode = cleaned.length === 44 ? cleaned : scannedCode.trim();
+        console.log('🦓 ZEBRA SCAN PROCESSADO:', finalCode);
 
         setScanFeedback('processing');
-        const scanResult = await Promise.resolve(onScan(finalCode));
+        
+        try {
+          const scanResult = await Promise.resolve(onScan(finalCode));
+          console.log('🦓 ZEBRA SCAN RESULTADO:', scanResult);
 
-        if (scanResult === 'success') {
-          setScanFeedback('success');
-          playSuccessBeep(); // 1 bipe curto
-          if (window.navigator.vibrate) window.navigator.vibrate(200);
-        } else if (scanResult === 'duplicate') {
-          setScanFeedback('duplicate');
-          playDuplicateBeep(); // 2 bipes curtos
-          if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 100]);
-        } else if (scanResult === 'error') {
+          if (scanResult === 'success') {
+            setScanFeedback('success');
+            playSuccessBeep();
+            if (window.navigator.vibrate) window.navigator.vibrate(200);
+          } else if (scanResult === 'duplicate') {
+            setScanFeedback('duplicate');
+            playDuplicateBeep();
+            if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 100]);
+          } else if (scanResult === 'error') {
+            setScanFeedback('error');
+            playLongErrorBeep();
+            if (window.navigator.vibrate) window.navigator.vibrate([200, 100, 200]);
+          }
+        } catch (error) {
+          console.error('🦓 ERRO NO SCAN ZEBRA:', error);
           setScanFeedback('error');
-          playLongErrorBeep(); // 1 bipe longo
-          if (window.navigator.vibrate) window.navigator.vibrate([200, 100, 200]);
+          playLongErrorBeep();
         }
 
         setTimeout(() => {
@@ -153,24 +170,43 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       }
     };
 
-    // Listener para Intent do DataWedge
-    window.addEventListener('datawedge-scan', handleZebraScan);
+    // Listener para Intent do DataWedge (padrão Zebra)
+    const zebraListener = (event) => {
+      console.log('🦓 Evento datawedge-scan capturado');
+      handleZebraScan(event);
+    };
+    window.addEventListener('datawedge-scan', zebraListener);
     
-    // Listener alternativo via broadcast
-    const handleBroadcast = (e) => {
-      if (e.data && typeof e.data === 'string') {
-        handleZebraScan({ detail: { data: e.data } });
+    // Listener para keypress (se configurado como teclado virtual)
+    const keyListener = (e) => {
+      if (e.key === 'Enter' && !processandoRef.current) {
+        console.log('🦓 Enter pressionado');
+        // Não fazer nada - deixar o evento passar
       }
     };
-    window.addEventListener('message', handleBroadcast);
+    window.addEventListener('keypress', keyListener);
+
+    // Listener para eventos customizados
+    const customListener = (e) => {
+      if (e.detail && e.detail.code) {
+        console.log('🦓 Evento customizado capturado');
+        handleZebraScan({ detail: { data: e.detail.code } });
+      }
+    };
+    window.addEventListener('scan-event', customListener);
 
     setZebraListening(true);
-    console.log('🦓 Scanner Zebra ativado - aguardando leitura...');
+    console.log('🦓✅ Scanner Zebra ATIVADO - aguardando leitura...');
+    console.log('🦓 Listeners: datawedge-scan, keypress, scan-event');
   };
 
   const cleanupZebraScanner = () => {
     if (zebraListening) {
+      console.log('🦓 Limpando listeners Zebra...');
+      // Remover todos os listeners registrados
       window.removeEventListener('datawedge-scan', () => {});
+      window.removeEventListener('keypress', () => {});
+      window.removeEventListener('scan-event', () => {});
       window.removeEventListener('message', () => {});
       setZebraListening(false);
     }
