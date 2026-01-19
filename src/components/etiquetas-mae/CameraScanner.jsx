@@ -119,9 +119,10 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     };
   }, [open]);
 
-  // Reiniciar scanner quando trocar de câmera
+  // Inicializar scanner de câmera APENAS quando não é Zebra
   useEffect(() => {
     if (open && !useManualMode && !useZebraScanner && availableCameras.length > 0) {
+      console.log('📷 Iniciando câmera scanner...');
       setTimeout(() => {
         startScanner();
       }, 100);
@@ -129,10 +130,11 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
     return () => {
       if (!useZebraScanner) {
+        console.log('📷 Parando câmera scanner...');
         stopScanner();
       }
     };
-  }, [open, useManualMode, currentCameraIndex, useZebraScanner]);
+  }, [open, useManualMode, currentCameraIndex, useZebraScanner, availableCameras.length]);
 
   // Manter input Zebra oculto focado
   useEffect(() => {
