@@ -311,17 +311,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     }
   };
 
-  // Manter foco no input - sem mostrar teclado por padrão
-  useEffect(() => {
-    if (open) {
-      if (useManualMode) {
-        setTimeout(() => inputRef.current?.focus(), 100);
-      } else {
-        // Blur para esconder teclado ao desativar modo manual
-        inputRef.current?.blur();
-      }
-    }
-  }, [open, useManualMode]);
+
 
 
 
