@@ -346,7 +346,7 @@ export default function EtiquetasMae() {
       
       // Se for chave NF-e (44 dígitos), processar nota fiscal
       if (apenasDígitos.length === 44) {
-        await handleScanChaveNFe(codigoLimpo);
+        await handleScanChaveNFe(apenasDígitos);
         setCodigoScanner("");
         setProcessando(false);
         setCameraScanFeedback('success');
