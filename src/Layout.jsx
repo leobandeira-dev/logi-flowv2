@@ -8,6 +8,7 @@ import MeuPerfilModal from "./components/usuario/MeuPerfilModal";
 import NotificacaoOcorrencia from "./components/notificacoes/NotificacaoOcorrencia";
 import TratarOcorrenciaModal from "./components/fluxo/TratarOcorrenciaModal";
 import PWAInstaller from "./components/utils/PWAInstaller";
+import { usePrefetchArmazem } from "./components/utils/useCache";
 
 import {
   Truck,
@@ -752,6 +753,9 @@ export default function Layout({ children, currentPageName }) {
 
   const isAdmin = user?.role === "admin";
   const navigationItems = user ? getNavigationItems(user?.tipo_perfil, user?.role, ocorrenciasAbertas, etapasPendentes, aprovacoesPendentes) : [];
+
+  // Pré-carregar cache do armazém para PWA
+  usePrefetchArmazem();
 
 
   const themeStyles = {
