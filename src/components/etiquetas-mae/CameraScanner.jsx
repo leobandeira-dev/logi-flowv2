@@ -281,12 +281,24 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   };
 
   const toggleCamera = async () => {
-    // Se estiver usando Zebra scanner, alternar para câmera web
+    // Se estiver usando Zebra scanner, alternar para câmera traseira
     if (useZebraScanner) {
       cleanupZebraScanner();
       setUseZebraScanner(false);
-      console.log('🔄 Alternando de scanner Zebra para câmera web...');
-      // Aguardar um pouco antes de iniciar o scanner de câmera
+      
+      // Buscar câmera traseira
+      const backCameraIndex = availableCameras.findIndex(cam => 
+        cam.label.toLowerCase().includes('back') || 
+        cam.label.toLowerCase().includes('traseira') ||
+        cam.label.toLowerCase().includes('environment') ||
+        cam.id.toLowerCase().includes('back')
+      );
+      
+      if (backCameraIndex !== -1) {
+        setCurrentCameraIndex(backCameraIndex);
+      }
+      
+      console.log('🔄 Alternando de scanner Zebra para câmera traseira...');
       setTimeout(() => {
         if (availableCameras.length > 0) {
           startScanner();
@@ -295,26 +307,18 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       return;
     }
 
-    // Se estiver usando câmera web, alternar entre câmeras ou voltar para Zebra
-    if (availableCameras.length > 1) {
+    // Se estiver usando câmera traseira, voltar para scanner Zebra
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isZebraDevice = userAgent.includes('zebra') || 
+                         userAgent.includes('tc21') || 
+                         userAgent.includes('tc26') ||
+                         userAgent.includes('mc');
+    
+    if (isZebraDevice) {
       stopScanner();
-      const nextIndex = (currentCameraIndex + 1) % availableCameras.length;
-      setCurrentCameraIndex(nextIndex);
-      console.log('🔄 Alternando para câmera:', availableCameras[nextIndex]?.label);
-    } else {
-      // Se só tem uma câmera e é Zebra, voltar para scanner Zebra
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isZebraDevice = userAgent.includes('zebra') || 
-                           userAgent.includes('tc21') || 
-                           userAgent.includes('tc26') ||
-                           userAgent.includes('mc');
-      
-      if (isZebraDevice) {
-        stopScanner();
-        setUseZebraScanner(true);
-        setupZebraScanner();
-        console.log('🔄 Voltando para scanner Zebra nativo...');
-      }
+      setUseZebraScanner(true);
+      setupZebraScanner();
+      console.log('🔄 Voltando para scanner Zebra nativo...');
     }
   };
 
