@@ -205,13 +205,25 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       clearTimeout(debounceTimerRef.current);
     }
 
-    // Auto-submit após 800ms de inatividade se houver conteúdo
+    // Se tem conteúdo, ativar debounce para auto-submit
     if (value.trim()) {
       debounceTimerRef.current = setTimeout(() => {
         if (value.trim()) {
           handleManualSubmit();
         }
-      }, 800);
+      }, 500); // Reduzido para 500ms para resposta mais rápida
+    }
+  };
+
+  const handleInputKeyDown = (e) => {
+    // Capturar Enter - Zebra scanner envia Enter após o código
+    if (e.key === 'Enter' && manualInput.trim()) {
+      e.preventDefault();
+      // Limpar debounce pendente e submeter imediatamente
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      handleManualSubmit();
     }
   };
 
