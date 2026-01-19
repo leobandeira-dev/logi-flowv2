@@ -324,13 +324,17 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   };
 
   const handleManualSubmit = async () => {
-    if (manualInput.trim() && !processandoRef.current) {
-      processandoRef.current = true;
-      console.log('⌨️ Código lido:', manualInput.trim());
-      
-      setScanFeedback('processing');
-      
-      const result = await Promise.resolve(onScan(manualInput.trim()));
+    const codigo = manualInput.trim();
+    
+    if (!codigo || processandoRef.current) return;
+    
+    processandoRef.current = true;
+    console.log('⌨️ Código lido:', codigo);
+    
+    setScanFeedback('processing');
+    
+    try {
+      const result = await Promise.resolve(onScan(codigo));
       
       console.log('✅ Resultado:', result);
       
@@ -345,34 +349,35 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         setScanFeedback('error');
         playLongErrorBeep();
       }
-      
-      // Limpar e re-focar após feedback
-      setTimeout(() => {
-        setScanFeedback(null);
-        setManualInput("");
-        processandoRef.current = false;
-        
-        // Re-focar input para próxima leitura
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 800);
+    } catch (error) {
+      console.error('Erro ao processar:', error);
+      setScanFeedback('error');
+      playLongErrorBeep();
     }
+    
+    // Limpar e re-focar após feedback
+    setTimeout(() => {
+      setScanFeedback(null);
+      setManualInput("");
+      processandoRef.current = false;
+      
+      // Re-focar input para próxima leitura
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 800);
   };
 
-  // Auto-processar quando input tiver código completo (modo Zebra)
+  // Auto-focar input quando modo Zebra estiver ativo
   useEffect(() => {
-    if (useZebraScanner && manualInput.trim() && !processandoRef.current) {
-      // Aguardar um pouco para garantir que o scanner terminou de digitar
+    if (useZebraScanner && inputRef.current && !processandoRef.current) {
       const timer = setTimeout(() => {
-        if (manualInput.trim().length >= 5) { // Mínimo 5 caracteres
-          handleManualSubmit();
-        }
-      }, 150);
+        inputRef.current?.focus();
+      }, 300);
       
       return () => clearTimeout(timer);
     }
-  }, [manualInput, useZebraScanner]);
+  }, [useZebraScanner, scanFeedback]);
 
   const theme = {
     bg: isDark ? '#0f172a' : '#ffffff',
@@ -447,9 +452,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                       placeholder="Aguardando leitura..."
                       value={manualInput}
                       onChange={(e) => setManualInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && manualInput.trim()) {
+                          e.preventDefault();
+                          handleManualSubmit();
+                        }
+                      }}
                       className="text-center font-mono text-base h-11 bg-gray-50 border-gray-300 text-gray-900"
                       autoFocus
-                      readOnly={false}
+                      disabled={processandoRef.current}
                     />
                     <p className="text-xs text-center mt-2 text-blue-200">
                       {scanFeedback === 'processing' ? 'Processando...' : 'Pronto para leitura automática'}
