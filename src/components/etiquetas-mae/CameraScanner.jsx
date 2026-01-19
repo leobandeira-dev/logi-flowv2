@@ -740,25 +740,25 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   />
               )}
               </div>
-                   ) : (
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div className="w-full">
-                <Keyboard className="w-12 h-12 mx-auto mb-3 text-blue-600" />
-                <p className="text-sm mb-2" style={{ color: theme.text }}>Modo Manual</p>
-                <Button
-                  onClick={() => {
-                    setUseManualMode(false);
-                  }}
-                  variant="outline"
-                  size="sm"
-                  style={{ borderColor: theme.border, color: theme.text }}
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Voltar para Câmera
-                </Button>
+              ) : (
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="w-full">
+                  <Keyboard className="w-12 h-12 mx-auto mb-3 text-blue-600" />
+                  <p className="text-sm mb-2" style={{ color: theme.text }}>Modo Manual</p>
+                  <Button
+                    onClick={() => {
+                      setUseManualMode(false);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    style={{ borderColor: theme.border, color: theme.text }}
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    Voltar para Câmera
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
+              )}
 
           <div className="mt-3 space-y-2">
           {useManualMode && (
