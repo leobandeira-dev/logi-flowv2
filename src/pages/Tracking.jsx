@@ -63,6 +63,7 @@ const statusTrackingConfig = {
   em_carregamento: { label: "Em Carregamento", color: "bg-yellow-500", icon: TrendingUp },
   carregado: { label: "Carregado", color: "bg-green-500", icon: CheckCircle2 },
   em_viagem: { label: "Em Viagem", color: "bg-purple-500", icon: Truck },
+  filial_destino: { label: "Filial Destino", color: "bg-cyan-500", icon: MapPin },
   chegada_destino: { label: "Chegada no Destino", color: "bg-indigo-500", icon: MapPin },
   descarga_agendada: { label: "Descarga Agendada", color: "bg-blue-600", icon: Calendar },
   em_descarga: { label: "Em Descarga", color: "bg-orange-500", icon: TrendingUp },
@@ -329,13 +330,13 @@ export default function Tracking() {
       "bg-yellow-500": "#F59E0B",
       "bg-green-500": "#10B981",
       "bg-purple-500": "#8B5CF6",
+      "bg-cyan-500": "#06B6D4",
       "bg-indigo-500": "#6366F1",
       "bg-blue-600": "#2563EB",
       "bg-orange-500": "#F97316",
       "bg-green-600": "#059669",
       "bg-gray-600": "#4B5563",
       "bg-red-500": "#EF4444",
-      "bg-cyan-500": "#06B6D4",
     };
     return colorMap[tailwindClass] || "#6B7280";
   };
@@ -1874,7 +1875,7 @@ export default function Tracking() {
                 </TabsList>
               </div>
 
-              {["all", "em_andamento", "aguardando_agendamento", "carregamento_agendado", "em_carregamento", "carregado", "em_viagem", "chegada_destino", "descarga_agendada", "em_descarga", "descarga_realizada", "finalizado"].map(status => (
+              {["all", "em_andamento", "aguardando_agendamento", "carregamento_agendado", "em_carregamento", "carregado", "em_viagem", "filial_destino", "chegada_destino", "descarga_agendada", "em_descarga", "descarga_realizada", "finalizado"].map(status => (
                 <TabsContent key={status} value={status} className="mt-0">
                   <PlanilhaView
                     ordens={status === "all" ? ordensLimitadas : status === "em_andamento" ? ordensLimitadas.filter(o => o.status_tracking !== 'finalizado') : ordensLimitadas.filter(o => o.status_tracking === status)}
@@ -1930,7 +1931,7 @@ export default function Tracking() {
                 </TabsList>
               </div>
 
-              {["all", "em_andamento", "aguardando_agendamento", "carregamento_agendado", "em_carregamento", "carregado", "em_viagem", "chegada_destino", "descarga_agendada", "em_descarga", "descarga_realizada", "finalizado"].map(status => (
+              {["all", "em_andamento", "aguardando_agendamento", "carregamento_agendado", "em_carregamento", "carregado", "em_viagem", "filial_destino", "chegada_destino", "descarga_agendada", "em_descarga", "descarga_realizada", "finalizado"].map(status => (
                 <TabsContent key={status} value={status} className="mt-0">
                   <TrackingTable
                     ordens={status === "all" ? ordensLimitadas : status === "em_andamento" ? ordensLimitadas.filter(o => o.status_tracking !== 'finalizado') : ordensLimitadas.filter(o => o.status_tracking === status)}
