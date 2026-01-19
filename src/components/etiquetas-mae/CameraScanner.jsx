@@ -200,19 +200,34 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     const value = e.target.value;
     setManualInput(value);
 
-    // Limpar debounce anterior
+    // Limpar debounce anterior para evitar múltiplas chamadas
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
-    // Se tem conteúdo, disparar busca com debounce curto (100ms)
-    // Permite qualquer entrada sem esperar 44 dígitos
+    // Se tem conteúdo e está completo (ou digitou espaço/Enter), buscar imediatamente
     if (value.trim()) {
-      debounceTimerRef.current = setTimeout(() => {
-        if (inputRef.current?.value?.trim() === value.trim()) {
-          handleManualSubmit();
+      // Se detectar espaço ou caractere especial final, submit imediato
+      if (value.includes(' ') || value.includes('\n') || value.endsWith('\t')) {
+        const cleanValue = value.trim();
+        if (cleanValue.length > 0) {
+          // Atualizar state e chamar onScan
+          setManualInput("");
+          setTimeout(() => inputRef.current?.focus(), 50);
+          onScan(cleanValue);
         }
-      }, 100);
+      } else {
+        // Debounce mais conservador para evitar múltiplas requisições
+        debounceTimerRef.current = setTimeout(async () => {
+          const finalValue = inputRef.current?.value?.trim();
+          if (finalValue && finalValue.length > 0) {
+            const result = await Promise.resolve(onScan(finalValue));
+            applyFeedback(result);
+            setManualInput("");
+            setTimeout(() => inputRef.current?.focus(), 50);
+          }
+        }, 300);
+      }
     }
   };
 
