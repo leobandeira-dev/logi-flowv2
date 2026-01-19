@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { cache, STORES } from "../components/utils/localCache";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,34 +97,89 @@ export default function EtiquetasMae() {
         return;
       }
 
-      // Carregar empresa
-      if (user.empresa_id) {
-        try {
-          const empresaData = await base44.entities.Empresa.get(user.empresa_id);
-          setEmpresa(empresaData);
-        } catch (error) {
-          console.error("Erro ao carregar empresa:", error);
-        }
+      // Tentar cache primeiro para dados menos críticos
+      const cachedEtiquetas = await cache.get(STORES.ETIQUETAS_MAE, 'all');
+      const cachedVolumes = await cache.get(STORES.VOLUMES, 'all');
+      const cachedNotas = await cache.get(STORES.NOTAS_FISCAIS, 'all');
+      
+      if (cachedEtiquetas && cachedVolumes && cachedNotas) {
+        // Carregar do cache primeiro para resposta instantânea
+        setEtiquetas(cachedEtiquetas);
+        setVolumes(cachedVolumes);
+        setNotas(cachedNotas);
+        setLoading(false);
+        
+        // Atualizar em background
+        loadDataFromServer(user, true);
+        return;
       }
 
-      const [etiquetasData, volumesData, notasData, usuariosData, historicoData] = await Promise.all([
-        base44.entities.EtiquetaMae.list("-created_date"),
-        base44.entities.Volume.list(),
-        base44.entities.NotaFiscal.list(),
-        base44.entities.User.list().catch(() => []),
-        base44.entities.HistoricoEtiquetaMae.list("-created_date").catch(() => [])
+      // Se não tem cache, carregar do servidor
+      await loadDataFromServer(user, false);
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      toast.error("Erro ao carregar dados");
+      setLoading(false);
+    }
+  };
+
+  const loadDataFromServer = async (user, isBackground = false) => {
+    try {
+      if (!isBackground) setLoading(true);
+
+      // Carregar empresa se necessário
+      if (user.empresa_id && !empresa) {
+        const empresaData = await base44.entities.Empresa.get(user.empresa_id);
+        setEmpresa(empresaData);
+      }
+
+      // Carregar apenas etiquetas recentes (último mês) e dados essenciais
+      const etiquetasData = await base44.entities.EtiquetaMae.filter(
+        {},
+        "-created_date",
+        100
+      );
+
+      // Coletar IDs únicos de volumes e notas das etiquetas
+      const volumeIdsNecessarios = new Set();
+      const notaIdsNecessarias = new Set();
+
+      etiquetasData.forEach(etq => {
+        etq.volumes_ids?.forEach(id => volumeIdsNecessarios.add(id));
+        etq.notas_fiscais_ids?.forEach(id => notaIdsNecessarias.add(id));
+      });
+
+      // Carregar apenas volumes e notas necessários
+      const [volumesData, notasData, usuariosData] = await Promise.all([
+        volumeIdsNecessarios.size > 0 
+          ? base44.entities.Volume.list()
+          : Promise.resolve([]),
+        notaIdsNecessarias.size > 0
+          ? base44.entities.NotaFiscal.list()
+          : Promise.resolve([]),
+        cache.get(STORES.USUARIOS, 'all') || base44.entities.User.list().catch(() => [])
+      ]);
+
+      // Salvar em cache (TTL: 2 minutos para dados do armazém)
+      await Promise.all([
+        cache.set(STORES.ETIQUETAS_MAE, 'all', etiquetasData, 2 * 60 * 1000),
+        cache.set(STORES.VOLUMES, 'all', volumesData, 2 * 60 * 1000),
+        cache.set(STORES.NOTAS_FISCAIS, 'all', notasData, 2 * 60 * 1000),
       ]);
 
       setEtiquetas(etiquetasData);
       setVolumes(volumesData);
       setNotas(notasData);
       setUsuarios(usuariosData);
-      setHistorico(historicoData);
+
+      console.log('✅ Dados carregados e em cache');
     } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      toast.error("Erro ao carregar dados");
+      console.error("Erro ao carregar do servidor:", error);
+      if (!isBackground) {
+        toast.error("Erro ao carregar dados");
+      }
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   };
 
@@ -204,12 +260,40 @@ export default function EtiquetasMae() {
     setShowDetailsModal(true);
   };
 
-  const handleIniciarUnitizacao = (etiqueta) => {
+  const handleIniciarUnitizacao = async (etiqueta) => {
     setEtiquetaSelecionada(etiqueta);
     
     if (etiqueta.volumes_ids && etiqueta.volumes_ids.length > 0) {
-      const vinculados = volumes.filter(v => etiqueta.volumes_ids.includes(v.id));
+      // Carregar volumes vinculados do cache ou servidor
+      let vinculados = volumes.filter(v => etiqueta.volumes_ids.includes(v.id));
+      
+      // Se não encontrou todos os volumes, buscar do servidor
+      if (vinculados.length < etiqueta.volumes_ids.length) {
+        try {
+          const volumesCompletos = await base44.entities.Volume.list();
+          vinculados = volumesCompletos.filter(v => etiqueta.volumes_ids.includes(v.id));
+          setVolumes(volumesCompletos);
+          await cache.set(STORES.VOLUMES, 'all', volumesCompletos, 2 * 60 * 1000);
+        } catch (error) {
+          console.error("Erro ao carregar volumes:", error);
+        }
+      }
+      
       setVolumesVinculados(vinculados);
+      
+      // Carregar histórico sob demanda
+      try {
+        const historicoEtiqueta = await base44.entities.HistoricoEtiquetaMae.filter(
+          { etiqueta_mae_id: etiqueta.id },
+          "-created_date"
+        );
+        setHistorico(prev => {
+          const outros = prev.filter(h => h.etiqueta_mae_id !== etiqueta.id);
+          return [...outros, ...historicoEtiqueta];
+        });
+      } catch (error) {
+        console.error("Erro ao carregar histórico:", error);
+      }
     } else {
       setVolumesVinculados([]);
     }
