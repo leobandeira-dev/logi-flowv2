@@ -436,6 +436,7 @@ export default function Cubagem() {
                         ref={videoRef}
                         autoPlay
                         playsInline
+                        muted
                         className="w-full h-auto"
                         style={{ maxHeight: '400px' }}
                       />
