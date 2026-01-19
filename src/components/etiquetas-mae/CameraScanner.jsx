@@ -123,14 +123,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
         setTimeout(() => {
           setScanFeedback(null);
-          setManualInput("");
           processandoRef.current = false;
-          
-          // Re-focar para próxima leitura
-          if (inputRef.current) {
-            inputRef.current.focus();
-          }
-        }, 800);
+        }, 600);
       }
     };
 
@@ -378,16 +372,16 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     }, 600);
   };
 
-  // Manter foco sempre ativo no input
+  // Manter foco sempre ativo no input APENAS no modo manual
   useEffect(() => {
-    if (!processandoRef.current && inputRef.current) {
+    if (useManualMode && !processandoRef.current && inputRef.current) {
       const timer = setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
       
       return () => clearTimeout(timer);
     }
-  }, [scanFeedback, manualInput]);
+  }, [useManualMode, scanFeedback, manualInput]);
 
   const theme = {
     bg: isDark ? '#0f172a' : '#ffffff',
@@ -455,26 +449,16 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                     Aponte e pressione o gatilho amarelo
                   </p>
                   
-                  {/* Input visível no modo Zebra */}
-                  <div className="w-full max-w-sm bg-white rounded-lg p-3 border-2 border-blue-400 shadow-xl">
-                    <Input
-                      ref={inputRef}
-                      placeholder="Aguardando leitura..."
-                      value={manualInput}
-                      onChange={(e) => setManualInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && manualInput.trim()) {
-                          e.preventDefault();
-                          handleManualSubmit();
-                        }
-                      }}
-                      className="text-center font-mono text-base h-11 bg-gray-50 border-gray-300 text-gray-900"
-                      autoFocus
-                      disabled={processandoRef.current}
-                    />
-                    <p className="text-xs text-center mt-2 text-blue-200">
-                      {scanFeedback === 'processing' ? 'Processando...' : 'Pronto para leitura automática'}
-                    </p>
+                  {/* Indicador de status - SEM INPUT no modo nativo */}
+                  <div className="w-full max-w-sm bg-white rounded-lg p-4 border-2 border-blue-400 shadow-xl">
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-blue-900 mb-2">
+                        {scanFeedback === 'processing' ? '⏳ Processando...' : '✓ Pronto para leitura'}
+                      </p>
+                      <p className="text-xs text-blue-700">
+                        Aponte e pressione o gatilho
+                      </p>
+                    </div>
                   </div>
                   
                   {/* Feedback visual para modo Zebra */}
@@ -664,7 +648,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
           )}
 
           <div className="mt-3 space-y-2">
-          {!useZebraScanner && (
+          {useManualMode && (
             <div className="bg-white dark:bg-gray-900 border-2 rounded-lg p-3" style={{ borderColor: isDark ? '#3b82f6' : '#2563eb' }}>
               <div className="flex gap-2">
                 <Input
@@ -674,6 +658,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   onChange={(e) => setManualInput(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && manualInput.trim()) {
+                      e.preventDefault();
                       handleManualSubmit();
                     }
                   }}
@@ -687,7 +672,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 />
                 <Button
                   onClick={handleManualSubmit}
-                  disabled={!manualInput.trim()}
+                  disabled={!manualInput.trim() || processandoRef.current}
                   className="bg-blue-600 hover:bg-blue-700 px-8 h-12 text-base"
                 >
                   OK
