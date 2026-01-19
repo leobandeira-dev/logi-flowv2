@@ -384,8 +384,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
           )}
         </DialogHeader>
 
-        <div className="p-4 pt-0">
-          <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh', boxShadow: '0 0 20px rgba(0,0,0,0.8)' }}>
+        <div className="absolute inset-0 w-full h-full flex flex-col">
+          <div className="flex-1 bg-black overflow-hidden relative">
             <video
               ref={videoRef}
               className="w-full h-full object-cover"
