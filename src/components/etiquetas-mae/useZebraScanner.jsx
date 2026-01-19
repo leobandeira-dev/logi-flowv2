@@ -91,10 +91,10 @@ export const useZebraScanner = (enabled, onScan, onFeedback) => {
 
     window.addEventListener('datawedge-scan', datawedgeHandler);
     window.addEventListener('keydown', keyboardHandler);
-    window.addEventListener('message', messageHandler);
+    window.addEventListener('message', messageHandlerFunc);
 
     // Registrar handlers para cleanup
-    handlersRef.current = { datawedgeHandler, messageHandler, keyboardHandler };
+    handlersRef.current = { datawedgeHandler, messageHandler: messageHandlerFunc, keyboardHandler };
     
     console.log('✓ Scanner Zebra TC 210 ativado - aguardando entrada de dados');
   }, [onScan, onFeedback]);
