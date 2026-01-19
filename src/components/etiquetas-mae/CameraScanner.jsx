@@ -678,75 +678,124 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
         <div className="p-4 pt-0">
           {!useManualMode ? (
-            <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
-              {useZebraScanner ? (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-slate-700 via-slate-800 to-slate-900 text-white p-6 relative">
-                  {/* Efeito de onda sutil ao fundo */}
-                  <div className="absolute inset-0 overflow-hidden opacity-20">
-                    <div className="absolute w-96 h-96 bg-blue-500 rounded-full blur-3xl -top-20 -right-20 animate-pulse" />
-                  </div>
+            <div className="relative rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
+                  {useZebraScanner ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-amber-500 via-orange-500 to-red-600 text-white p-8 relative overflow-hidden">
+                      {/* Background pattern */}
+                      <div className="absolute inset-0 opacity-10">
+                        <div className="absolute top-0 left-0 w-40 h-40 bg-white rounded-full blur-3xl" />
+                        <div className="absolute bottom-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl" />
+                      </div>
 
-                  <div className="relative z-10 flex flex-col items-center justify-center h-full gap-6">
-                    <div className="animate-pulse">
-                      <Camera className="w-20 h-20 text-blue-400" />
-                    </div>
-
-                    <div className="text-center space-y-2">
-                      <h3 className="text-2xl font-bold">🦓 Scanner Zebra Ativo</h3>
-                      <p className="text-slate-300 text-center text-sm">
-                        Aponte o coletor para o QR Code e pressione o gatilho
-                      </p>
-                    </div>
-
-                    {/* Indicador de status */}
-                    <div className="w-full max-w-xs bg-slate-800/80 backdrop-blur-sm rounded-xl p-6 border-2 border-blue-500/50 shadow-2xl">
-                      <div className="text-center space-y-2">
-                        <div className="h-8 flex items-center justify-center">
-                          {scanFeedback === 'processing' ? (
-                            <div className="flex items-center gap-2">
-                              <div className="animate-spin">
-                                <Loader2 className="w-5 h-5 text-blue-400" />
-                              </div>
-                              <span className="text-lg font-bold text-blue-400">Processando...</span>
-                            </div>
-                          ) : (
-                            <span className="text-lg font-bold text-green-400">✓ Pronto para leitura</span>
-                          )}
+                      <div className="relative z-10 flex flex-col items-center justify-center h-full gap-8 w-full">
+                        {/* Ícone grande e animado */}
+                        <div className="text-center">
+                          <div className="inline-block p-6 bg-white/20 rounded-full mb-4 animate-pulse">
+                            <Zap className="w-16 h-16 text-white" strokeWidth={1.5} />
+                          </div>
+                          <h2 className="text-4xl font-black tracking-tight">LEITOR ATIVO</h2>
+                          <p className="text-white/80 text-lg mt-2 font-semibold">🦓 Zebra DataWedge</p>
                         </div>
-                        <p className="text-xs text-slate-400">
-                          Escaneie um QR Code para começar
-                        </p>
-                      </div>
-                    </div>
 
-                    {/* Animação de espaço dinâmico */}
-                    <div className="relative w-full max-w-xs h-20 mt-4">
-                      <div className="absolute inset-0 border-2 border-blue-500/30 rounded-lg" />
-                      <div className="absolute inset-0 border border-blue-400/20 rounded-lg m-2 animate-pulse" />
-                    </div>
-                  </div>
+                        {/* Status principal */}
+                        <div className="w-full max-w-sm bg-black/30 backdrop-blur-md rounded-2xl p-8 border-3 border-white/40 shadow-2xl">
+                          <div className="text-center space-y-4">
+                            {/* Status animado */}
+                            <div className="h-12 flex items-center justify-center">
+                              {scanFeedback === 'processing' ? (
+                                <div className="flex items-center gap-3">
+                                  <div className="animate-spin">
+                                    <Loader2 className="w-6 h-6 text-white" />
+                                  </div>
+                                  <span className="text-xl font-bold text-white">PROCESSANDO...</span>
+                                </div>
+                              ) : scanFeedback === 'success' ? (
+                                <div className="flex items-center gap-3 text-green-300">
+                                  <CheckCircle2 className="w-6 h-6" />
+                                  <span className="text-xl font-bold">✓ SUCESSO</span>
+                                </div>
+                              ) : scanFeedback === 'duplicate' ? (
+                                <div className="flex items-center gap-3 text-yellow-300">
+                                  <AlertCircle className="w-6 h-6" />
+                                  <span className="text-xl font-bold">⚠ DUPLICADO</span>
+                                </div>
+                              ) : scanFeedback === 'error' ? (
+                                <div className="flex items-center gap-3 text-red-300">
+                                  <AlertCircle className="w-6 h-6" />
+                                  <span className="text-xl font-bold">✗ ERRO</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-3 text-green-300">
+                                  <CheckCircle2 className="w-6 h-6" />
+                                  <span className="text-xl font-bold">AGUARDANDO LEITURA</span>
+                                </div>
+                              )}
+                            </div>
 
-                  {/* Feedback visual para modo Zebra */}
-                  {scanFeedback && scanFeedback !== 'processing' && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-20 backdrop-blur-sm">
-                      <div 
-                        className={`px-8 py-4 rounded-2xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
-                          scanFeedback === 'success' 
-                            ? 'bg-green-600' 
-                            : scanFeedback === 'duplicate'
-                            ? 'bg-yellow-600'
-                            : 'bg-red-600'
-                        }`}
-                        style={{ fontSize: '24px' }}
-                      >
-                        {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
-                        {scanFeedback === 'duplicate' && '⚠ JÁ BIPADO'}
-                        {scanFeedback === 'error' && '✗ VOLUME NÃO ENCONTRADO'}
+                            {/* Instruções */}
+                            <div className="pt-4 border-t border-white/20">
+                              <p className="text-white/90 text-base font-medium leading-relaxed">
+                                Aponte o gatilho para o código e pressione
+                              </p>
+                              <p className="text-white/70 text-sm mt-2">
+                                O aplicativo processar automaticamente
+                              </p>
+                            </div>
+
+                            {/* Indicador visual de atividade */}
+                            {!scanFeedback && (
+                              <div className="flex items-center justify-center gap-2 pt-2">
+                                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                                <span className="text-sm text-green-400 font-semibold">Leitor conectado</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Animação visual representando escaneamento */}
+                        <div className="relative w-full max-w-xs h-24">
+                          <div className="absolute inset-0 border-4 border-white/30 rounded-xl" />
+                          <div 
+                            className="absolute inset-0 border-2 border-white/50 rounded-xl"
+                            style={{
+                              animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                            }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="text-center">
+                              <Zap className="w-8 h-8 text-white/60 mx-auto mb-1" />
+                              <p className="text-xs text-white/60 font-semibold">Pronto para ler</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Info de debug */}
+                        <div className="text-xs text-white/50 text-center mt-2">
+                          <p>Aguardando entrada do scanner...</p>
+                        </div>
                       </div>
+
+                      {/* Feedback de resultado - overlay full */}
+                      {scanFeedback && scanFeedback !== 'processing' && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-20 backdrop-blur-sm">
+                          <div 
+                            className={`px-10 py-6 rounded-3xl font-black text-white shadow-2xl animate-in zoom-in-95 duration-200 text-center ${
+                              scanFeedback === 'success' 
+                                ? 'bg-green-600 ring-4 ring-green-400' 
+                                : scanFeedback === 'duplicate'
+                                ? 'bg-yellow-600 ring-4 ring-yellow-400'
+                                : 'bg-red-600 ring-4 ring-red-400'
+                            }`}
+                            style={{ fontSize: '32px', minWidth: '280px' }}
+                          >
+                            {scanFeedback === 'success' && '✓\nADICIONADO'}
+                            {scanFeedback === 'duplicate' && '⚠\nDUPLICADO'}
+                            {scanFeedback === 'error' && '✗\nERRO'}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ) : (
+                  ) : (
                 <>
                   <video
                     ref={videoRef}
