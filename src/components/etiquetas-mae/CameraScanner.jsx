@@ -96,26 +96,39 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         scannerConfig = { facingMode: 'environment' };
       }
 
+      let lastScannedCode = null;
+      let lastScanTime = 0;
+
       const qrScanner = new QrScanner(
         videoRef.current,
         async (result) => {
-          if (result?.data && !scanFeedback) {
-            const decodedText = result.data;
-            console.log('🔍 QR Code detectado:', decodedText);
+          if (!result?.data || scanFeedback) return;
 
-            const cleaned = decodedText.replace(/\D/g, '');
-            const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
+          const now = Date.now();
+          const decodedText = result.data.trim();
 
-            const scanResult = await Promise.resolve(handleScanResult(finalCode));
-            applyFeedback(scanResult);
+          // Evitar duplicate scans da mesma código em menos de 800ms
+          if (decodedText === lastScannedCode && now - lastScanTime < 800) {
+            return;
           }
+
+          lastScannedCode = decodedText;
+          lastScanTime = now;
+
+          console.log('🔍 QR Code detectado:', decodedText);
+
+          const cleaned = decodedText.replace(/\D/g, '');
+          const finalCode = cleaned.length === 44 ? cleaned : decodedText;
+
+          const scanResult = await Promise.resolve(handleScanResult(finalCode));
+          applyFeedback(scanResult);
         },
         {
           returnDetailedScanResult: true,
           highlightScanRegion: false,
           highlightCodeOutline: false,
           preferredCamera: scannerConfig,
-          maxScansPerSecond: SCANNER_CONFIG.maxScansPerSecond
+          maxScansPerSecond: 5
         }
       );
 
