@@ -277,7 +277,29 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   };
 
   const toggleCamera = async () => {
-    if (availableCameras.length <= 1) return;
+    // Se for Zebra, desativar modo Zebra e usar câmera web
+    if (isZebraDevice) {
+      cleanupZebraScanner();
+      setIsZebraDevice(false);
+      console.log('🔄 Alternando de Zebra para câmera web...');
+      return;
+    }
+
+    // Se não houver múltiplas câmeras, tentar detectar novamente
+    if (availableCameras.length <= 1) {
+      try {
+        const cameras = await QrScanner.listCameras(true);
+        setAvailableCameras(cameras);
+        if (cameras.length > 1) {
+          stopScanner();
+          setCurrentCameraIndex(1);
+          console.log('🔄 Alternando câmera...');
+        }
+      } catch (error) {
+        console.log('Não foi possível detectar outras câmeras');
+      }
+      return;
+    }
     
     stopScanner();
     setCurrentCameraIndex(prev => (prev + 1) % availableCameras.length);
@@ -513,45 +535,29 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
 
 
-              {!isZebraDevice && (
-                <div className="absolute top-2 right-2 z-10 flex gap-2">
-                  <Button
-                    onClick={toggleCamera}
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/90 hover:bg-white"
-                    title="Alternar câmera"
-                  >
-                    <SwitchCamera className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      stopScanner();
-                      setUseManualMode(true);
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/90 hover:bg-white"
-                  >
-                    <Keyboard className="w-4 h-4 mr-1" />
-                    Digitar
-                  </Button>
-                </div>
-              )}
-              
-              {isZebraDevice && (
-                <div className="absolute top-2 right-2 z-10">
-                  <Button
-                    onClick={() => setUseManualMode(true)}
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/90 hover:bg-white"
-                  >
-                    <Keyboard className="w-4 h-4 mr-1" />
-                    Digitar
-                  </Button>
-                </div>
-              )}
+              <div className="absolute top-2 right-2 z-10 flex gap-2">
+                <Button
+                  onClick={toggleCamera}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/90 hover:bg-white"
+                  title={isZebraDevice ? "Usar câmera web" : "Alternar câmera"}
+                >
+                  <SwitchCamera className="w-4 h-4" />
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (!isZebraDevice) stopScanner();
+                    setUseManualMode(true);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/90 hover:bg-white"
+                >
+                  <Keyboard className="w-4 h-4 mr-1" />
+                  Digitar
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
