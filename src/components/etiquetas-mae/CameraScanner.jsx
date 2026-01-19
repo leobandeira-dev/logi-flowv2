@@ -355,7 +355,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         </DialogHeader>
 
         <div className="p-4 pt-0">
-          <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
+          <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh', boxShadow: '0 0 20px rgba(0,0,0,0.8)' }}>
             <video
               ref={videoRef}
               className="w-full h-full object-cover"
@@ -363,24 +363,33 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             />
 
             <div 
-              className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
+              className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-200"
               style={{ zIndex: 5 }}
             >
               <div 
-                className="transition-all duration-300"
+                className="transition-all duration-200"
                 style={{
                   width: '80%',
                   height: '80%',
                   border: scanFeedback === 'success' 
-                    ? '2px solid #10b981' 
+                    ? '4px solid #10b981' 
                     : scanFeedback === 'duplicate'
-                    ? '2px solid #f59e0b'
+                    ? '4px solid #f59e0b'
                     : scanFeedback === 'error'
-                    ? '2px solid #ef4444'
+                    ? '4px solid #ef4444'
                     : scanFeedback === 'processing' 
-                    ? '2px solid #3b82f6' 
-                    : '2px solid rgba(255, 255, 255, 0.3)',
-                  borderRadius: '8px'
+                    ? '4px solid #3b82f6' 
+                    : '4px solid rgba(255, 255, 255, 0.4)',
+                  borderRadius: '12px',
+                  boxShadow: scanFeedback === 'success' 
+                    ? '0 0 30px rgba(16, 185, 129, 0.6), inset 0 0 20px rgba(16, 185, 129, 0.2)' 
+                    : scanFeedback === 'duplicate'
+                    ? '0 0 30px rgba(245, 158, 11, 0.6), inset 0 0 20px rgba(245, 158, 11, 0.2)'
+                    : scanFeedback === 'error'
+                    ? '0 0 30px rgba(239, 68, 68, 0.6), inset 0 0 20px rgba(239, 68, 68, 0.2)'
+                    : scanFeedback === 'processing' 
+                    ? '0 0 30px rgba(59, 130, 246, 0.6), inset 0 0 20px rgba(59, 130, 246, 0.2)' 
+                    : '0 0 20px rgba(255, 255, 255, 0.2), inset 0 0 15px rgba(255, 255, 255, 0.1)'
                 }}
               />
             </div>
