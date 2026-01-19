@@ -799,9 +799,10 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             >
               <X className="w-4 h-4 mr-2" />
               Fechar Scanner
-            </Button>
-          </div>
-        </div>
+              </Button>
+              </div>
+              )}
+              </div>
       </DialogContent>
     </Dialog>
   );
