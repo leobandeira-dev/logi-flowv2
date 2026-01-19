@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera, X, Loader2, Keyboard } from "lucide-react";
+import { Camera, X, Loader2, Keyboard, SwitchCamera } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const [useManualMode, setUseManualMode] = useState(false);
   const qrScannerRef = useRef(null);
   const [scanFeedback, setScanFeedback] = useState(null); // 'success' | 'duplicate' | 'error' | 'processing' | null
+  const [facingMode, setFacingMode] = useState("environment"); // 'environment' (traseira) ou 'user' (frontal)
+  const [availableCameras, setAvailableCameras] = useState([]);
 
   useEffect(() => {
     if (open && !useManualMode) {
@@ -28,7 +30,24 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     return () => {
       stopScanner();
     };
-  }, [open, useManualMode]);
+  }, [open, useManualMode, facingMode]);
+
+  // Detectar câmeras disponíveis
+  useEffect(() => {
+    const detectCameras = async () => {
+      try {
+        const cameras = await QrScanner.listCameras(true);
+        setAvailableCameras(cameras);
+        console.log('📷 Câmeras detectadas:', cameras);
+      } catch (error) {
+        console.log('Não foi possível detectar câmeras:', error);
+      }
+    };
+    
+    if (open) {
+      detectCameras();
+    }
+  }, [open]);
 
   const startScanner = async () => {
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
@@ -56,10 +75,22 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             // Aplicar feedback baseado no resultado
             if (scanResult === 'success') {
               setScanFeedback('success');
+              // Vibração de sucesso no coletor Zebra
+              if (window.navigator.vibrate) {
+                window.navigator.vibrate(200);
+              }
             } else if (scanResult === 'duplicate') {
               setScanFeedback('duplicate');
+              // Vibração de alerta (padrão diferente)
+              if (window.navigator.vibrate) {
+                window.navigator.vibrate([100, 50, 100]);
+              }
             } else if (scanResult === 'error') {
               setScanFeedback('error');
+              // Vibração de erro
+              if (window.navigator.vibrate) {
+                window.navigator.vibrate([200, 100, 200]);
+              }
             }
 
             // Liberar para próximo scan
@@ -70,12 +101,12 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
           returnDetailedScanResult: true,
           highlightScanRegion: false,
           highlightCodeOutline: false,
-          preferredCamera: "environment",
-          maxScansPerSecond: 5,
+          preferredCamera: facingMode,
+          maxScansPerSecond: 8, // Aumentado para coletores industriais
           calculateScanRegion: (video) => {
-            // Área de scan maior para capturar códigos de diferentes distâncias
+            // Área de scan otimizada para coletores Zebra
             const smallestDimension = Math.min(video.videoWidth, video.videoHeight);
-            const scanRegionSize = Math.round(0.85 * smallestDimension);
+            const scanRegionSize = Math.round(0.9 * smallestDimension);
 
             return {
               x: Math.round((video.videoWidth - scanRegionSize) / 2),
@@ -87,45 +118,61 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         }
       );
 
-      // Configurar vídeo para melhor qualidade e foco automático
-      qrScanner.setInversionMode('both'); // Detectar QR codes claros e escuros
+      // Configurar para coletores Zebra
+      qrScanner.setInversionMode('both');
 
       qrScannerRef.current = qrScanner;
       await qrScanner.start();
       setScanning(true);
 
-      // Otimizar configurações da câmera para diferentes distâncias
+      // Otimizações específicas para Zebra TC210K
       try {
         const videoTrack = videoRef.current?.srcObject?.getVideoTracks()[0];
         if (videoTrack) {
           const capabilities = videoTrack.getCapabilities();
           const constraints = {};
 
-          // Ativar foco contínuo se disponível
-          if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-            constraints.focusMode = 'continuous';
+          // Foco contínuo otimizado para leitura rápida
+          if (capabilities.focusMode) {
+            if (capabilities.focusMode.includes('continuous')) {
+              constraints.focusMode = 'continuous';
+            } else if (capabilities.focusMode.includes('single-shot')) {
+              constraints.focusMode = 'single-shot';
+            }
           }
 
-          // Zoom ideal se disponível
-          if (capabilities.zoom) {
-            constraints.zoom = Math.max(capabilities.zoom.min, 1);
+          // Resolução alta para melhor leitura
+          if (capabilities.width && capabilities.height) {
+            constraints.width = { ideal: 1920 };
+            constraints.height = { ideal: 1080 };
           }
 
+          // Exposição otimizada
+          if (capabilities.exposureMode && capabilities.exposureMode.includes('continuous')) {
+            constraints.exposureMode = 'continuous';
+          }
+
+          // Aplicar constraints
           await videoTrack.applyConstraints({
             advanced: [{ ...constraints }]
           });
 
-          console.log('📸 Scanner otimizado para diferentes distâncias');
+          console.log('📸 Scanner otimizado para Zebra TC210K');
         }
       } catch (error) {
         console.log('Otimizações de câmera não aplicadas:', error.message);
       }
 
-      console.log('📸 Scanner QR iniciado');
+      console.log('📸 Scanner QR iniciado - Modo:', facingMode);
     } catch (error) {
       console.error("Erro ao iniciar scanner:", error);
       setUseManualMode(true);
     }
+  };
+
+  const toggleCamera = async () => {
+    stopScanner();
+    setFacingMode(prev => prev === "environment" ? "user" : "environment");
   };
 
   const stopScanner = () => {
@@ -339,7 +386,18 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
 
 
-              <div className="absolute top-2 right-2 z-10">
+              <div className="absolute top-2 right-2 z-10 flex gap-2">
+                {availableCameras.length > 1 && (
+                  <Button
+                    onClick={toggleCamera}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/90 hover:bg-white"
+                    title="Alternar câmera"
+                  >
+                    <SwitchCamera className="w-4 h-4" />
+                  </Button>
+                )}
                 <Button
                   onClick={() => {
                     stopScanner();
