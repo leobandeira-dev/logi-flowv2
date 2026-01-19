@@ -22,6 +22,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const [availableCameras, setAvailableCameras] = useState([]);
   const [useZebraScanner, setUseZebraScanner] = useState(false);
   const [zebraListening, setZebraListening] = useState(false);
+  const inputRef = useRef(null);
+  const processandoRef = useRef(false);
 
   // Detectar dispositivo Zebra e câmeras ao abrir
   useEffect(() => {
@@ -322,30 +324,55 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   };
 
   const handleManualSubmit = async () => {
-    if (manualInput.trim()) {
-      console.log('⌨️ MODO MANUAL - Código digitado:', manualInput.trim());
+    if (manualInput.trim() && !processandoRef.current) {
+      processandoRef.current = true;
+      console.log('⌨️ Código lido:', manualInput.trim());
       
       setScanFeedback('processing');
       
       const result = await Promise.resolve(onScan(manualInput.trim()));
       
-      console.log('⌨️ MODO MANUAL - Resultado:', result);
-      
-      setManualInput("");
+      console.log('✅ Resultado:', result);
       
       // Aplicar feedback baseado no resultado
       if (result === 'success') {
         setScanFeedback('success');
+        playSuccessBeep();
       } else if (result === 'duplicate') {
         setScanFeedback('duplicate');
+        playDuplicateBeep();
       } else if (result === 'error') {
         setScanFeedback('error');
+        playLongErrorBeep();
       }
       
-      // Liberar para próximo scan
-      setTimeout(() => setScanFeedback(null), 800);
+      // Limpar e re-focar após feedback
+      setTimeout(() => {
+        setScanFeedback(null);
+        setManualInput("");
+        processandoRef.current = false;
+        
+        // Re-focar input para próxima leitura
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 800);
     }
   };
+
+  // Auto-processar quando input tiver código completo (modo Zebra)
+  useEffect(() => {
+    if (useZebraScanner && manualInput.trim() && !processandoRef.current) {
+      // Aguardar um pouco para garantir que o scanner terminou de digitar
+      const timer = setTimeout(() => {
+        if (manualInput.trim().length >= 5) { // Mínimo 5 caracteres
+          handleManualSubmit();
+        }
+      }, 150);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [manualInput, useZebraScanner]);
 
   const theme = {
     bg: isDark ? '#0f172a' : '#ffffff',
@@ -416,20 +443,16 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   {/* Input visível no modo Zebra */}
                   <div className="w-full max-w-sm bg-white rounded-lg p-3 border-2 border-blue-400 shadow-xl">
                     <Input
+                      ref={inputRef}
                       placeholder="Aguardando leitura..."
                       value={manualInput}
                       onChange={(e) => setManualInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && manualInput.trim()) {
-                          handleManualSubmit();
-                        }
-                      }}
                       className="text-center font-mono text-base h-11 bg-gray-50 border-gray-300 text-gray-900"
                       autoFocus
                       readOnly={false}
                     />
                     <p className="text-xs text-center mt-2 text-blue-200">
-                      Modo nativo ativo - leitura automática
+                      {scanFeedback === 'processing' ? 'Processando...' : 'Pronto para leitura automática'}
                     </p>
                   </div>
                   
@@ -620,9 +643,11 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
           )}
 
           <div className="mt-3 space-y-2">
+          {!useZebraScanner && (
             <div className="bg-white dark:bg-gray-900 border-2 rounded-lg p-3" style={{ borderColor: isDark ? '#3b82f6' : '#2563eb' }}>
               <div className="flex gap-2">
                 <Input
+                  ref={inputRef}
                   placeholder="Digite ou cole o código..."
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
@@ -648,6 +673,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 </Button>
               </div>
             </div>
+          )}
 
             <Button
               variant="outline"
