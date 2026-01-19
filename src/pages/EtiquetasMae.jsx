@@ -341,8 +341,11 @@ export default function EtiquetasMae() {
     try {
       const codigoLimpo = codigo.trim();
       
+      // Extrair apenas dígitos para validação de chave NF-e
+      const apenasDígitos = codigoLimpo.replace(/\D/g, '');
+      
       // Se for chave NF-e (44 dígitos), processar nota fiscal
-      if (codigoLimpo.length === 44 && /^\d+$/.test(codigoLimpo)) {
+      if (apenasDígitos.length === 44) {
         await handleScanChaveNFe(codigoLimpo);
         setCodigoScanner("");
         setProcessando(false);
