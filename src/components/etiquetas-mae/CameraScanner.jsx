@@ -583,11 +583,28 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   )}
                 </div>
               ) : (
-                <video
-                  ref={videoRef}
-                  className="w-full h-full object-cover"
-                  style={{ transform: 'scaleX(1)' }}
-                />
+                <>
+                  <video
+                    ref={videoRef}
+                    className="w-full h-full object-cover"
+                    style={{ transform: 'scaleX(1)' }}
+                  />
+                  {/* Input oculto para capturar dados do scanner Zebra (configurado como teclado virtual) */}
+                  <input
+                    ref={zebraInputRef}
+                    type="text"
+                    style={{
+                      position: 'absolute',
+                      left: '-9999px',
+                      width: '1px',
+                      height: '1px',
+                      opacity: 0,
+                      pointerEvents: 'none'
+                    }}
+                    aria-label="Zebra Scanner Input"
+                    autoComplete="off"
+                  />
+                </>
               )}
 
               {/* Overlay com Feedback por Cor */}
