@@ -875,6 +875,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   Digitar
                 </Button>
               </div>
+              )}
             </div>
           ) : (
             <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
