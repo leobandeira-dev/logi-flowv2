@@ -465,7 +465,7 @@ export default function Cubagem() {
                        playsInline
                        muted
                        className="w-full h-auto"
-                       style={{ maxHeight: '400px', transform: 'scaleX(-1)' }}
+                       style={{ maxHeight: '400px' }}
                      />
                       {scanningQR && (
                         <div className="absolute inset-0 flex items-center justify-center">
