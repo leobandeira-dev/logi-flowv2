@@ -741,7 +741,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
               )}
 
               {!useZebraScanner && (
-               <>
+               <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
                  {/* Overlay com Feedback por Cor - APENAS para câmera */}
                  <div 
                    className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
