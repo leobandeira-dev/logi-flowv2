@@ -412,13 +412,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   <p className="text-blue-200 text-center mb-6">
                     Pressione os botões amarelos do coletor para ler
                   </p>
-                  <div className="bg-blue-800/50 rounded-lg p-4 border-2 border-blue-500">
-                    <p className="text-sm text-center">
-                      O scanner nativo está aguardando leitura.<br/>
-                      Aponte para o código e pressione o gatilho.
-                    </p>
-                  </div>
-                  
+
                   {/* Feedback visual para modo Zebra */}
                   {scanFeedback && scanFeedback !== 'processing' && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
@@ -447,117 +441,118 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 />
               )}
 
-              {/* Overlay com Feedback por Cor */}
-              <div 
-                className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
-                style={{ zIndex: 5 }}
-              >
+              {!useZebraScanner && (
                 <div 
-                  className="shadow-lg transition-all duration-300"
-                  style={{
-                    width: '85%',
-                    height: '85%',
-                    aspectRatio: '1/1',
-                    maxWidth: '85%',
-                    maxHeight: '85%',
-                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
-                    borderRadius: '12px',
-                    position: 'relative',
-                    border: scanFeedback === 'success' 
-                      ? '8px solid #10b981' 
-                      : scanFeedback === 'duplicate'
-                      ? '8px solid #f59e0b'
-                      : scanFeedback === 'error'
-                      ? '8px solid #ef4444'
-                      : scanFeedback === 'processing' 
-                      ? '8px solid #3b82f6' 
-                      : '6px solid #60a5fa',
-                    backgroundColor: scanFeedback === 'success' 
-                      ? 'rgba(16, 185, 129, 0.15)' 
-                      : scanFeedback === 'duplicate'
-                      ? 'rgba(245, 158, 11, 0.15)'
-                      : scanFeedback === 'error'
-                      ? 'rgba(239, 68, 68, 0.15)'
-                      : scanFeedback === 'processing' 
-                      ? 'rgba(59, 130, 246, 0.1)' 
-                      : 'transparent'
-                  }}
+                  className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
+                  style={{ zIndex: 5 }}
                 >
-                  {/* Cantos com Feedback Visual */}
-                  <div className="absolute top-0 left-0 w-16 h-16 border-t-8 border-l-8 transition-all duration-300" style={{ 
-                    borderRadius: '12px 0 0 0', 
-                    borderColor: scanFeedback === 'success' 
-                      ? '#10b981' 
-                      : scanFeedback === 'duplicate'
-                      ? '#f59e0b'
-                      : scanFeedback === 'error'
-                      ? '#ef4444'
-                      : scanFeedback === 'processing' 
-                      ? '#3b82f6' 
-                      : '#60a5fa',
-                    borderWidth: scanFeedback ? '10px' : '8px'
-                  }}></div>
-                  <div className="absolute top-0 right-0 w-16 h-16 border-t-8 border-r-8 transition-all duration-300" style={{ 
-                    borderRadius: '0 12px 0 0', 
-                    borderColor: scanFeedback === 'success' 
-                      ? '#10b981' 
-                      : scanFeedback === 'duplicate'
-                      ? '#f59e0b'
-                      : scanFeedback === 'error'
-                      ? '#ef4444'
-                      : scanFeedback === 'processing' 
-                      ? '#3b82f6' 
-                      : '#60a5fa',
-                    borderWidth: scanFeedback ? '10px' : '8px'
-                  }}></div>
-                  <div className="absolute bottom-0 left-0 w-16 h-16 border-b-8 border-l-8 transition-all duration-300" style={{ 
-                    borderRadius: '0 0 0 12px', 
-                    borderColor: scanFeedback === 'success' 
-                      ? '#10b981' 
-                      : scanFeedback === 'duplicate'
-                      ? '#f59e0b'
-                      : scanFeedback === 'error'
-                      ? '#ef4444'
-                      : scanFeedback === 'processing' 
-                      ? '#3b82f6' 
-                      : '#60a5fa',
-                    borderWidth: scanFeedback ? '10px' : '8px'
-                  }}></div>
-                  <div className="absolute bottom-0 right-0 w-16 h-16 border-b-8 border-r-8 transition-all duration-300" style={{ 
-                    borderRadius: '0 0 12px 0', 
-                    borderColor: scanFeedback === 'success' 
-                      ? '#10b981' 
-                      : scanFeedback === 'duplicate'
-                      ? '#f59e0b'
-                      : scanFeedback === 'error'
-                      ? '#ef4444'
-                      : scanFeedback === 'processing' 
-                      ? '#3b82f6' 
-                      : '#60a5fa',
-                    borderWidth: scanFeedback ? '10px' : '8px'
-                  }}></div>
+                  <div 
+                    className="shadow-lg transition-all duration-300"
+                    style={{
+                      width: '85%',
+                      height: '85%',
+                      aspectRatio: '1/1',
+                      maxWidth: '85%',
+                      maxHeight: '85%',
+                      boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+                      borderRadius: '12px',
+                      position: 'relative',
+                      border: scanFeedback === 'success' 
+                        ? '8px solid #10b981' 
+                        : scanFeedback === 'duplicate'
+                        ? '8px solid #f59e0b'
+                        : scanFeedback === 'error'
+                        ? '8px solid #ef4444'
+                        : scanFeedback === 'processing' 
+                        ? '8px solid #3b82f6' 
+                        : '6px solid #60a5fa',
+                      backgroundColor: scanFeedback === 'success' 
+                        ? 'rgba(16, 185, 129, 0.15)' 
+                        : scanFeedback === 'duplicate'
+                        ? 'rgba(245, 158, 11, 0.15)'
+                        : scanFeedback === 'error'
+                        ? 'rgba(239, 68, 68, 0.15)'
+                        : scanFeedback === 'processing' 
+                        ? 'rgba(59, 130, 246, 0.1)' 
+                        : 'transparent'
+                    }}
+                  >
+                    {/* Cantos com Feedback Visual */}
+                    <div className="absolute top-0 left-0 w-16 h-16 border-t-8 border-l-8 transition-all duration-300" style={{ 
+                      borderRadius: '12px 0 0 0', 
+                      borderColor: scanFeedback === 'success' 
+                        ? '#10b981' 
+                        : scanFeedback === 'duplicate'
+                        ? '#f59e0b'
+                        : scanFeedback === 'error'
+                        ? '#ef4444'
+                        : scanFeedback === 'processing' 
+                        ? '#3b82f6' 
+                        : '#60a5fa',
+                      borderWidth: scanFeedback ? '10px' : '8px'
+                    }}></div>
+                    <div className="absolute top-0 right-0 w-16 h-16 border-t-8 border-r-8 transition-all duration-300" style={{ 
+                      borderRadius: '0 12px 0 0', 
+                      borderColor: scanFeedback === 'success' 
+                        ? '#10b981' 
+                        : scanFeedback === 'duplicate'
+                        ? '#f59e0b'
+                        : scanFeedback === 'error'
+                        ? '#ef4444'
+                        : scanFeedback === 'processing' 
+                        ? '#3b82f6' 
+                        : '#60a5fa',
+                      borderWidth: scanFeedback ? '10px' : '8px'
+                    }}></div>
+                    <div className="absolute bottom-0 left-0 w-16 h-16 border-b-8 border-l-8 transition-all duration-300" style={{ 
+                      borderRadius: '0 0 0 12px', 
+                      borderColor: scanFeedback === 'success' 
+                        ? '#10b981' 
+                        : scanFeedback === 'duplicate'
+                        ? '#f59e0b'
+                        : scanFeedback === 'error'
+                        ? '#ef4444'
+                        : scanFeedback === 'processing' 
+                        ? '#3b82f6' 
+                        : '#60a5fa',
+                      borderWidth: scanFeedback ? '10px' : '8px'
+                    }}></div>
+                    <div className="absolute bottom-0 right-0 w-16 h-16 border-b-8 border-r-8 transition-all duration-300" style={{ 
+                      borderRadius: '0 0 12px 0', 
+                      borderColor: scanFeedback === 'success' 
+                        ? '#10b981' 
+                        : scanFeedback === 'duplicate'
+                        ? '#f59e0b'
+                        : scanFeedback === 'error'
+                        ? '#ef4444'
+                        : scanFeedback === 'processing' 
+                        ? '#3b82f6' 
+                        : '#60a5fa',
+                      borderWidth: scanFeedback ? '10px' : '8px'
+                    }}></div>
 
-                  {/* Feedback Textual Central */}
-                  {scanFeedback && scanFeedback !== 'processing' && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div 
-                        className={`px-6 py-3 rounded-xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
-                          scanFeedback === 'success' 
-                            ? 'bg-green-600' 
-                            : scanFeedback === 'duplicate'
-                            ? 'bg-yellow-600'
-                            : 'bg-red-600'
-                        }`}
-                        style={{ fontSize: '18px' }}
-                      >
-                        {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
-                        {scanFeedback === 'duplicate' && '⚠ JÁ BIPADO'}
-                        {scanFeedback === 'error' && '✗ VOLUME NÃO ENCONTRADO'}
+                    {/* Feedback Textual Central */}
+                    {scanFeedback && scanFeedback !== 'processing' && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div 
+                          className={`px-6 py-3 rounded-xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
+                            scanFeedback === 'success' 
+                              ? 'bg-green-600' 
+                              : scanFeedback === 'duplicate'
+                              ? 'bg-yellow-600'
+                              : 'bg-red-600'
+                          }`}
+                          style={{ fontSize: '18px' }}
+                        >
+                          {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
+                          {scanFeedback === 'duplicate' && '⚠ JÁ BIPADO'}
+                          {scanFeedback === 'error' && '✗ VOLUME NÃO ENCONTRADO'}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
 
 
