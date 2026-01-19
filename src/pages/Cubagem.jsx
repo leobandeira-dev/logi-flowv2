@@ -165,7 +165,7 @@ export default function Cubagem() {
       ctx.drawImage(video, 0, 0);
       
       try {
-        const predictions = await modelo.detect(canvas);
+        const predictions = await modelo.detect(canvas, undefined, 0.4);
         
         if (predictions.length > 0 && overlay) {
           const objeto = predictions.reduce((prev, current) => {
@@ -201,58 +201,64 @@ export default function Cubagem() {
           const overlayCtx = overlay.getContext('2d');
           overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
           
+          // Calcular tamanho da fonte dinamicamente baseado na resolução
+          const fontSize = Math.max(20, video.videoWidth / 40);
+          const lineWidth = Math.max(4, video.videoWidth / 300);
+          
           // Retângulo do objeto
           overlayCtx.strokeStyle = '#00ff00';
-          overlayCtx.lineWidth = 3;
+          overlayCtx.lineWidth = lineWidth;
           overlayCtx.strokeRect(x, y, larguraPixels, alturaPixels);
           
           // Linha de largura (horizontal)
           overlayCtx.strokeStyle = '#ff0000';
-          overlayCtx.lineWidth = 2;
+          overlayCtx.lineWidth = lineWidth;
           overlayCtx.beginPath();
-          overlayCtx.moveTo(x, y + alturaPixels + 20);
-          overlayCtx.lineTo(x + larguraPixels, y + alturaPixels + 20);
+          overlayCtx.moveTo(x, y + alturaPixels + 30);
+          overlayCtx.lineTo(x + larguraPixels, y + alturaPixels + 30);
           overlayCtx.stroke();
           
           // Setas nas extremidades da linha de largura
+          const arrowSize = fontSize / 2;
           overlayCtx.beginPath();
-          overlayCtx.moveTo(x, y + alturaPixels + 20);
-          overlayCtx.lineTo(x + 10, y + alturaPixels + 15);
-          overlayCtx.moveTo(x, y + alturaPixels + 20);
-          overlayCtx.lineTo(x + 10, y + alturaPixels + 25);
+          overlayCtx.moveTo(x, y + alturaPixels + 30);
+          overlayCtx.lineTo(x + arrowSize, y + alturaPixels + 25);
+          overlayCtx.moveTo(x, y + alturaPixels + 30);
+          overlayCtx.lineTo(x + arrowSize, y + alturaPixels + 35);
           overlayCtx.stroke();
           
           overlayCtx.beginPath();
-          overlayCtx.moveTo(x + larguraPixels, y + alturaPixels + 20);
-          overlayCtx.lineTo(x + larguraPixels - 10, y + alturaPixels + 15);
-          overlayCtx.moveTo(x + larguraPixels, y + alturaPixels + 20);
-          overlayCtx.lineTo(x + larguraPixels - 10, y + alturaPixels + 25);
+          overlayCtx.moveTo(x + larguraPixels, y + alturaPixels + 30);
+          overlayCtx.lineTo(x + larguraPixels - arrowSize, y + alturaPixels + 25);
+          overlayCtx.moveTo(x + larguraPixels, y + alturaPixis + 30);
+          overlayCtx.lineTo(x + larguraPixels - arrowSize, y + alturaPixels + 35);
           overlayCtx.stroke();
           
           // Linha de altura (vertical)
           overlayCtx.beginPath();
-          overlayCtx.moveTo(x + larguraPixels + 20, y);
-          overlayCtx.lineTo(x + larguraPixels + 20, y + alturaPixels);
+          overlayCtx.moveTo(x + larguraPixels + 30, y);
+          overlayCtx.lineTo(x + larguraPixels + 30, y + alturaPixels);
           overlayCtx.stroke();
           
           // Setas nas extremidades da linha de altura
           overlayCtx.beginPath();
-          overlayCtx.moveTo(x + larguraPixels + 20, y);
-          overlayCtx.lineTo(x + larguraPixels + 15, y + 10);
-          overlayCtx.moveTo(x + larguraPixels + 20, y);
-          overlayCtx.lineTo(x + larguraPixels + 25, y + 10);
+          overlayCtx.moveTo(x + larguraPixels + 30, y);
+          overlayCtx.lineTo(x + larguraPixels + 25, y + arrowSize);
+          overlayCtx.moveTo(x + larguraPixels + 30, y);
+          overlayCtx.lineTo(x + larguraPixels + 35, y + arrowSize);
           overlayCtx.stroke();
           
           overlayCtx.beginPath();
-          overlayCtx.moveTo(x + larguraPixels + 20, y + alturaPixels);
-          overlayCtx.lineTo(x + larguraPixels + 15, y + alturaPixels - 10);
-          overlayCtx.moveTo(x + larguraPixels + 20, y + alturaPixels);
-          overlayCtx.lineTo(x + larguraPixels + 25, y + alturaPixels - 10);
+          overlayCtx.moveTo(x + larguraPixels + 30, y + alturaPixels);
+          overlayCtx.lineTo(x + larguraPixels + 25, y + alturaPixels - arrowSize);
+          overlayCtx.moveTo(x + larguraPixels + 30, y + alturaPixels);
+          overlayCtx.lineTo(x + larguraPixels + 35, y + alturaPixels - arrowSize);
           overlayCtx.stroke();
           
           // Linha de profundidade (diagonal 3D)
           overlayCtx.strokeStyle = '#ffaa00';
-          overlayCtx.setLineDash([5, 5]);
+          overlayCtx.setLineDash([8, 8]);
+          overlayCtx.lineWidth = lineWidth;
           overlayCtx.beginPath();
           overlayCtx.moveTo(x + larguraPixels, y);
           const profundOffset = larguraPixels * 0.3;
@@ -260,21 +266,21 @@ export default function Cubagem() {
           overlayCtx.stroke();
           overlayCtx.setLineDash([]);
           
-          // Textos com medidas
+          // Textos com medidas - fontes maiores
           overlayCtx.fillStyle = '#ff0000';
-          overlayCtx.font = 'bold 16px Arial';
+          overlayCtx.font = `bold ${fontSize}px Arial`;
           overlayCtx.shadowColor = 'black';
-          overlayCtx.shadowBlur = 4;
-          overlayCtx.fillText(`${larguraCm.toFixed(1)} cm`, x + larguraPixels/2 - 30, y + alturaPixels + 45);
-          overlayCtx.fillText(`${alturaCm.toFixed(1)} cm`, x + larguraPixels + 30, y + alturaPixels/2);
+          overlayCtx.shadowBlur = 8;
+          overlayCtx.fillText(`${larguraCm.toFixed(1)} cm`, x + larguraPixels/2 - fontSize * 1.5, y + alturaPixels + 60);
+          overlayCtx.fillText(`${alturaCm.toFixed(1)} cm`, x + larguraPixels + 40, y + alturaPixels/2);
           
           overlayCtx.fillStyle = '#ffaa00';
-          overlayCtx.fillText(`${comprimentoCm.toFixed(1)} cm`, x + larguraPixels + profundOffset/2, y - profundOffset/2 - 10);
+          overlayCtx.fillText(`${comprimentoCm.toFixed(1)} cm`, x + larguraPixels + profundOffset/2 - fontSize, y - profundOffset/2 - 15);
           
           // Nome do objeto
           overlayCtx.fillStyle = '#00ff00';
-          overlayCtx.font = 'bold 18px Arial';
-          overlayCtx.fillText(objeto.class.toUpperCase(), x, y - 10);
+          overlayCtx.font = `bold ${fontSize * 1.2}px Arial`;
+          overlayCtx.fillText(objeto.class.toUpperCase(), x, y - 15);
           overlayCtx.shadowBlur = 0;
           
           setMedidasTempoReal({
@@ -292,7 +298,7 @@ export default function Cubagem() {
       } catch (error) {
         console.error("Erro na detecção:", error);
       }
-    }, 200);
+    }, 150);
   };
 
   const calibrarReferencia = async () => {
@@ -686,30 +692,33 @@ export default function Cubagem() {
                     {/* Overlay com medidas em tempo real */}
                     {medidasTempoReal && (
                       <div className="absolute top-4 left-4 right-4">
-                        <div className="bg-black/70 backdrop-blur-sm rounded-lg p-3 border-2 border-green-500">
-                          <div className="grid grid-cols-3 gap-2 text-white text-center">
+                        <div className="bg-black/80 backdrop-blur-sm rounded-lg p-4 border-2 border-green-500">
+                          <div className="grid grid-cols-3 gap-3 text-white text-center">
                             <div>
-                              <p className="text-[10px] text-gray-300">Altura</p>
-                              <p className="text-sm font-bold text-red-400">
-                                {medidasTempoReal.altura.toFixed(1)} cm
+                              <p className="text-xs text-gray-300 mb-1">Altura</p>
+                              <p className="text-xl font-bold text-red-400">
+                                {medidasTempoReal.altura.toFixed(1)}
                               </p>
+                              <p className="text-xs text-gray-400">cm</p>
                             </div>
                             <div>
-                              <p className="text-[10px] text-gray-300">Largura</p>
-                              <p className="text-sm font-bold text-red-400">
-                                {medidasTempoReal.largura.toFixed(1)} cm
+                              <p className="text-xs text-gray-300 mb-1">Largura</p>
+                              <p className="text-xl font-bold text-red-400">
+                                {medidasTempoReal.largura.toFixed(1)}
                               </p>
+                              <p className="text-xs text-gray-400">cm</p>
                             </div>
                             <div>
-                              <p className="text-[10px] text-gray-300">Profund.</p>
-                              <p className="text-sm font-bold text-orange-400">
-                                {medidasTempoReal.comprimento.toFixed(1)} cm
+                              <p className="text-xs text-gray-300 mb-1">Profund.</p>
+                              <p className="text-xl font-bold text-orange-400">
+                                {medidasTempoReal.comprimento.toFixed(1)}
                               </p>
+                              <p className="text-xs text-gray-400">cm</p>
                             </div>
                           </div>
-                          <p className="text-[10px] text-center text-gray-400 mt-2">
+                          <p className="text-xs text-center text-gray-300 mt-3 font-medium">
                             {medidasTempoReal.objeto}
-                            {medidasTempoReal.semCalibracao && " • ⚠️ Estimativa sem calibração"}
+                            {medidasTempoReal.semCalibracao && " • ⚠️ Estimativa"}
                           </p>
                         </div>
                       </div>
