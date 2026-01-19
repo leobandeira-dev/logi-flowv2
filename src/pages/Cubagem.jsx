@@ -92,17 +92,16 @@ export default function Cubagem() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
+        setCameraAtiva(true);
         
-        // Esperar o vídeo carregar antes de definir estado
+        // Aguardar carregamento e reproduzir
         videoRef.current.onloadedmetadata = async () => {
           try {
             await videoRef.current.play();
             console.log("✅ Vídeo reproduzindo");
-            setCameraAtiva(true);
             toast.success("Câmera ativada");
           } catch (err) {
             console.error("❌ Erro ao reproduzir:", err);
-            toast.error("Erro ao iniciar vídeo");
           }
         };
       }
