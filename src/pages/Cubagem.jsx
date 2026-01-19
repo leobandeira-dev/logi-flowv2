@@ -33,6 +33,7 @@ export default function Cubagem() {
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const canvasOverlayRef = useRef(null);
   const streamRef = useRef(null);
   const qrScannerRef = useRef(null);
   const deteccaoIntervalRef = useRef(null);
@@ -143,67 +144,150 @@ export default function Cubagem() {
       
       const video = videoRef.current;
       const canvas = canvasRef.current;
+      const overlay = canvasOverlayRef.current;
       
       if (!video.videoWidth || !video.videoHeight) return;
       
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
+      
+      if (overlay) {
+        overlay.width = video.videoWidth;
+        overlay.height = video.videoHeight;
+      }
+      
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0);
       
       try {
         const predictions = await modelo.detect(canvas);
         
-        if (predictions.length > 0) {
+        if (predictions.length > 0 && overlay) {
           const objeto = predictions.reduce((prev, current) => {
             const prevArea = prev.bbox[2] * prev.bbox[3];
             const currentArea = current.bbox[2] * current.bbox[3];
             return currentArea > prevArea ? current : prev;
           });
           
-          const larguraPixels = objeto.bbox[2];
-          const alturaPixels = objeto.bbox[3];
+          const [x, y, larguraPixels, alturaPixels] = objeto.bbox;
           
-          let medidas;
+          // Calcular medidas
+          let larguraCm, alturaCm, comprimentoCm;
+          let semCalibracao = false;
+          
           if (modoCalibracao) {
-            // Mostrar medidas reais do cartão
-            medidas = {
-              largura: CARTAO_LARGURA_CM,
-              altura: CARTAO_ALTURA_CM,
-              comprimento: 0.1,
-              objeto: objeto.class
-            };
+            larguraCm = CARTAO_LARGURA_CM;
+            alturaCm = CARTAO_ALTURA_CM;
+            comprimentoCm = 0.1;
           } else if (referenciaPixels) {
-            // Calcular medidas do objeto
-            const larguraCm = larguraPixels / referenciaPixels;
-            const alturaCm = alturaPixels / referenciaPixels;
-            const comprimentoCm = larguraCm * 0.7;
-            
-            medidas = {
-              largura: larguraCm,
-              altura: alturaCm,
-              comprimento: comprimentoCm,
-              objeto: objeto.class
-            };
+            larguraCm = larguraPixels / referenciaPixels;
+            alturaCm = alturaPixels / referenciaPixels;
+            comprimentoCm = larguraCm * 0.7;
           } else {
-            // Sem calibração - mostrar em pixels
-            medidas = {
-              largura: larguraPixels,
-              altura: alturaPixels,
-              comprimento: 0,
-              objeto: objeto.class,
-              semCalibracao: true
-            };
+            // Estimativa sem calibração: assumir 100px = 10cm aproximadamente
+            const estimativaPixelsPorCm = 10;
+            larguraCm = larguraPixels / estimativaPixelsPorCm;
+            alturaCm = alturaPixels / estimativaPixelsPorCm;
+            comprimentoCm = larguraCm * 0.7;
+            semCalibracao = true;
           }
           
-          setMedidasTempoReal(medidas);
-        } else {
+          // Desenhar no overlay
+          const overlayCtx = overlay.getContext('2d');
+          overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+          
+          // Retângulo do objeto
+          overlayCtx.strokeStyle = '#00ff00';
+          overlayCtx.lineWidth = 3;
+          overlayCtx.strokeRect(x, y, larguraPixels, alturaPixels);
+          
+          // Linha de largura (horizontal)
+          overlayCtx.strokeStyle = '#ff0000';
+          overlayCtx.lineWidth = 2;
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(x, y + alturaPixels + 20);
+          overlayCtx.lineTo(x + larguraPixels, y + alturaPixels + 20);
+          overlayCtx.stroke();
+          
+          // Setas nas extremidades da linha de largura
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(x, y + alturaPixels + 20);
+          overlayCtx.lineTo(x + 10, y + alturaPixels + 15);
+          overlayCtx.moveTo(x, y + alturaPixels + 20);
+          overlayCtx.lineTo(x + 10, y + alturaPixels + 25);
+          overlayCtx.stroke();
+          
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(x + larguraPixels, y + alturaPixels + 20);
+          overlayCtx.lineTo(x + larguraPixels - 10, y + alturaPixels + 15);
+          overlayCtx.moveTo(x + larguraPixels, y + alturaPixels + 20);
+          overlayCtx.lineTo(x + larguraPixels - 10, y + alturaPixels + 25);
+          overlayCtx.stroke();
+          
+          // Linha de altura (vertical)
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(x + larguraPixels + 20, y);
+          overlayCtx.lineTo(x + larguraPixels + 20, y + alturaPixels);
+          overlayCtx.stroke();
+          
+          // Setas nas extremidades da linha de altura
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(x + larguraPixels + 20, y);
+          overlayCtx.lineTo(x + larguraPixels + 15, y + 10);
+          overlayCtx.moveTo(x + larguraPixels + 20, y);
+          overlayCtx.lineTo(x + larguraPixels + 25, y + 10);
+          overlayCtx.stroke();
+          
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(x + larguraPixels + 20, y + alturaPixels);
+          overlayCtx.lineTo(x + larguraPixels + 15, y + alturaPixels - 10);
+          overlayCtx.moveTo(x + larguraPixels + 20, y + alturaPixels);
+          overlayCtx.lineTo(x + larguraPixels + 25, y + alturaPixels - 10);
+          overlayCtx.stroke();
+          
+          // Linha de profundidade (diagonal 3D)
+          overlayCtx.strokeStyle = '#ffaa00';
+          overlayCtx.setLineDash([5, 5]);
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(x + larguraPixels, y);
+          const profundOffset = larguraPixels * 0.3;
+          overlayCtx.lineTo(x + larguraPixels + profundOffset, y - profundOffset);
+          overlayCtx.stroke();
+          overlayCtx.setLineDash([]);
+          
+          // Textos com medidas
+          overlayCtx.fillStyle = '#ff0000';
+          overlayCtx.font = 'bold 16px Arial';
+          overlayCtx.shadowColor = 'black';
+          overlayCtx.shadowBlur = 4;
+          overlayCtx.fillText(`${larguraCm.toFixed(1)} cm`, x + larguraPixels/2 - 30, y + alturaPixels + 45);
+          overlayCtx.fillText(`${alturaCm.toFixed(1)} cm`, x + larguraPixels + 30, y + alturaPixels/2);
+          
+          overlayCtx.fillStyle = '#ffaa00';
+          overlayCtx.fillText(`${comprimentoCm.toFixed(1)} cm`, x + larguraPixels + profundOffset/2, y - profundOffset/2 - 10);
+          
+          // Nome do objeto
+          overlayCtx.fillStyle = '#00ff00';
+          overlayCtx.font = 'bold 18px Arial';
+          overlayCtx.fillText(objeto.class.toUpperCase(), x, y - 10);
+          overlayCtx.shadowBlur = 0;
+          
+          setMedidasTempoReal({
+            largura: larguraCm,
+            altura: alturaCm,
+            comprimento: comprimentoCm,
+            objeto: objeto.class,
+            semCalibracao
+          });
+        } else if (overlay) {
+          const overlayCtx = overlay.getContext('2d');
+          overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
           setMedidasTempoReal(null);
         }
       } catch (error) {
         console.error("Erro na detecção:", error);
       }
-    }, 500);
+    }, 200);
   };
 
   const calibrarReferencia = async () => {
@@ -529,6 +613,13 @@ export default function Cubagem() {
                       style={{ maxHeight: '400px' }}
                     />
                     
+                    {/* Canvas overlay para desenhar medições */}
+                    <canvas
+                      ref={canvasOverlayRef}
+                      className="absolute top-0 left-0 w-full h-auto pointer-events-none"
+                      style={{ maxHeight: '400px' }}
+                    />
+                    
                     {/* Overlay com medidas em tempo real */}
                     {medidasTempoReal && (
                       <div className="absolute top-4 left-4 right-4">
@@ -536,35 +627,26 @@ export default function Cubagem() {
                           <div className="grid grid-cols-3 gap-2 text-white text-center">
                             <div>
                               <p className="text-[10px] text-gray-300">Altura</p>
-                              <p className="text-sm font-bold text-green-400">
-                                {medidasTempoReal.semCalibracao 
-                                  ? `${medidasTempoReal.altura.toFixed(0)}px`
-                                  : `${medidasTempoReal.altura.toFixed(1)}cm`
-                                }
+                              <p className="text-sm font-bold text-red-400">
+                                {medidasTempoReal.altura.toFixed(1)} cm
                               </p>
                             </div>
                             <div>
                               <p className="text-[10px] text-gray-300">Largura</p>
-                              <p className="text-sm font-bold text-green-400">
-                                {medidasTempoReal.semCalibracao 
-                                  ? `${medidasTempoReal.largura.toFixed(0)}px`
-                                  : `${medidasTempoReal.largura.toFixed(1)}cm`
-                                }
+                              <p className="text-sm font-bold text-red-400">
+                                {medidasTempoReal.largura.toFixed(1)} cm
                               </p>
                             </div>
                             <div>
                               <p className="text-[10px] text-gray-300">Profund.</p>
-                              <p className="text-sm font-bold text-green-400">
-                                {medidasTempoReal.semCalibracao 
-                                  ? "N/A"
-                                  : `${medidasTempoReal.comprimento.toFixed(1)}cm`
-                                }
+                              <p className="text-sm font-bold text-orange-400">
+                                {medidasTempoReal.comprimento.toFixed(1)} cm
                               </p>
                             </div>
                           </div>
                           <p className="text-[10px] text-center text-gray-400 mt-2">
                             {medidasTempoReal.objeto}
-                            {medidasTempoReal.semCalibracao && " - Sem calibração"}
+                            {medidasTempoReal.semCalibracao && " • ⚠️ Estimativa sem calibração"}
                           </p>
                         </div>
                       </div>
