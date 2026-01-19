@@ -158,108 +158,164 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
    }
   }, [useZebraScanner, open]);
 
-  // Setup do scanner Zebra (DataWedge Intent)
+  // Setup do scanner Zebra - VERSÃO OTIMIZADA
   const setupZebraScanner = React.useCallback(() => {
     if (zebraListening) return;
 
-    console.log('🦓 Iniciando setupZebraScanner');
+    console.log('🦓 ===== SETUP ZEBRA SCANNER INICIADO =====');
 
     const handleZebraScan = async (scannedCode) => {
-      if (scannedCode && !processandoRef.current) {
-        processandoRef.current = true;
-        console.log('🦓 ZEBRA SCAN RECEBIDO:', scannedCode);
+      if (!scannedCode || scannedCode.length === 0 || processandoRef.current) {
+        console.log('🦓 ❌ Scan ignorado - vazio ou processando:', scannedCode);
+        return;
+      }
 
-        const cleaned = scannedCode.toString().replace(/\D/g, '');
-        const finalCode = cleaned.length === 44 ? cleaned : scannedCode.toString().trim();
-        console.log('🦓 ZEBRA SCAN PROCESSADO:', finalCode);
+      processandoRef.current = true;
+      const rawCode = scannedCode.toString().trim();
+      console.log('🦓 📦 SCAN RECEBIDO:', rawCode, `(${rawCode.length} chars)`);
 
-        setScanFeedback('processing');
-        
-        try {
-          const scanResult = await Promise.resolve(onScan(finalCode));
-          console.log('🦓 ZEBRA SCAN RESULTADO:', scanResult);
+      // Limpar buffer Zebra imediatamente
+      zebraBufferRef.current = '';
 
-          if (scanResult === 'success') {
-            setScanFeedback('success');
-            playSuccessBeep();
-            if (window.navigator.vibrate) window.navigator.vibrate(200);
-          } else if (scanResult === 'duplicate') {
-            setScanFeedback('duplicate');
-            playDuplicateBeep();
-            if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 100]);
-          } else if (scanResult === 'error') {
-            setScanFeedback('error');
-            playLongErrorBeep();
-            if (window.navigator.vibrate) window.navigator.vibrate([200, 100, 200]);
-          }
-        } catch (error) {
-          console.error('🦓 ERRO NO SCAN ZEBRA:', error);
+      setScanFeedback('processing');
+
+      try {
+        const scanResult = await Promise.resolve(onScan(rawCode));
+        console.log('🦓 ✅ RESULTADO:', scanResult);
+
+        if (scanResult === 'success') {
+          setScanFeedback('success');
+          playSuccessBeep();
+          if (window.navigator.vibrate) window.navigator.vibrate(200);
+        } else if (scanResult === 'duplicate') {
+          setScanFeedback('duplicate');
+          playDuplicateBeep();
+          if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 100]);
+        } else if (scanResult === 'error') {
           setScanFeedback('error');
           playLongErrorBeep();
+          if (window.navigator.vibrate) window.navigator.vibrate([200, 100, 200]);
         }
-
-        setTimeout(() => {
-          setScanFeedback(null);
-          processandoRef.current = false;
-          // Re-focar input
-          if (zebraInputRef.current) {
-            zebraInputRef.current.focus();
-          }
-        }, 600);
+      } catch (error) {
+        console.error('🦓 ❌ ERRO:', error);
+        setScanFeedback('error');
+        playLongErrorBeep();
       }
-    };
 
-    // Tentar focar input oculto
-    console.log('🦓 zebraInputRef.current:', zebraInputRef.current);
-    if (zebraInputRef.current) {
-      zebraInputRef.current.focus();
-      console.log('🦓✅ Input oculto focado');
-    } else {
-      console.log('🦓❌ Input oculto NÃO ENCONTRADO - setando timeout para tentar novamente');
       setTimeout(() => {
+        setScanFeedback(null);
+        processandoRef.current = false;
+
+        // Re-focar input para próxima leitura
         if (zebraInputRef.current) {
           zebraInputRef.current.focus();
-          console.log('🦓✅ Input oculto focado (retry)');
+          zebraInputRef.current.value = '';
+          console.log('🦓 🔄 Input reposicionado - aguardando próxima leitura');
         }
-      }, 500);
-    }
+      }, 600);
+    };
 
-    // Listener para Enter no input oculto (scanner como teclado virtual)
-    const inputZebraListener = (e) => {
-      console.log('🦓 keydown no input:', e.key, e.target.value);
-      if (e.key === 'Enter' && zebraInputRef.current && zebraInputRef.current.value) {
-        const scannedValue = zebraInputRef.current.value;
-        console.log('🦓 Enter pressionado com valor:', scannedValue);
-        zebraInputRef.current.value = '';
-        handleZebraScan(scannedValue);
+    // ========== LISTENERS ZEBRA ==========
+
+    // 1. Listener para teclas (scanner como teclado)
+    const handleKeyDown = (e) => {
+      // Aceitar qualquer tecla que chegue (scanner simula keyboard)
+      const char = e.key;
+      zebraBufferRef.current += char;
+      console.log('🦓 ⌨️  Caractere recebido:', char, 'Buffer:', zebraBufferRef.current);
+
+      // Se Enter, processar
+      if (e.key === 'Enter' && zebraBufferRef.current.length > 0) {
+        e.preventDefault();
+        const code = zebraBufferRef.current.replace('\n', '').trim();
+        zebraBufferRef.current = '';
+        console.log('🦓 📩 Enter detectado, processando:', code);
+        handleZebraScan(code);
+        return;
+      }
+
+      // Se acumular muitos caracteres sem Enter, processar mesmo assim (20 chars é tamanho mínimo esperado)
+      if (zebraBufferRef.current.length >= 40) {
+        const code = zebraBufferRef.current.trim();
+        zebraBufferRef.current = '';
+        console.log('🦓 📊 Buffer cheio, processando:', code);
+        handleZebraScan(code);
+        return;
+      }
+
+      // Resetar timeout anterior
+      if (zebraTimeoutRef.current) {
+        clearTimeout(zebraTimeoutRef.current);
+      }
+
+      // Timeout: se 1 segundo sem mais input, processar mesmo assim
+      zebraTimeoutRef.current = setTimeout(() => {
+        if (zebraBufferRef.current.length > 0) {
+          const code = zebraBufferRef.current.trim();
+          zebraBufferRef.current = '';
+          console.log('🦓 ⏱️  Timeout acionado, processando:', code);
+          handleZebraScan(code);
+        }
+      }, 1000);
+    };
+
+    const handleKeyUp = (e) => {
+      // Ao soltar qualquer tecla, pode indicar fim de scan
+      if (zebraBufferRef.current.length > 5 && zebraBufferRef.current.length < 60) {
+        console.log('🦓 📤 KeyUp - buffer atual:', zebraBufferRef.current);
       }
     };
-    
-    // Listener para todos os tipos de eventos Zebra
+
+    // 2. Listeners de eventos customizados (se DataWedge disparar eventos)
     const handleZebraEvent = (e) => {
-     console.log('🦓 Evento capturado:', e.type, e.detail);
-     const code = e.detail?.code || e.detail?.data;
-     if (code) handleZebraScan(code);
+      console.log('🦓 🎯 Evento capturado:', e.type, e.detail);
+      const code = e.detail?.code || e.detail?.data || e.detail;
+      if (code && code.length > 0) {
+        console.log('🦓 📨 Processando código do evento:', code);
+        handleZebraScan(code);
+      }
     };
 
+    // 3. Listener de mudança de valor (fallback para input direto)
+    const handleInputChange = (e) => {
+      if (e.target.value && e.target.value.length > 0) {
+        const code = e.target.value.trim();
+        e.target.value = '';
+        console.log('🦓 📝 Mudança de input detectada:', code);
+        handleZebraScan(code);
+      }
+    };
+
+    // Focar o input imediatamente
+    if (zebraInputRef.current) {
+      console.log('🦓 🎯 Focando input oculto');
+      zebraInputRef.current.focus();
+    }
+
+    // Registrar listeners
+    if (zebraInputRef.current) {
+      zebraInputRef.current.addEventListener('keydown', handleKeyDown);
+      zebraInputRef.current.addEventListener('keyup', handleKeyUp);
+      zebraInputRef.current.addEventListener('change', handleInputChange);
+      zebraInputRef.current.addEventListener('input', handleInputChange);
+
+      zebraListenersRef.current = {
+        keydown: handleKeyDown,
+        keyup: handleKeyUp,
+        change: handleInputChange,
+        input: handleInputChange
+      };
+
+      console.log('🦓 ✅ Listeners registrados no input');
+    }
+
+    // Listeners globais (eventos de broadcast do DataWedge)
     window.addEventListener('zebra-scan', handleZebraEvent);
     window.addEventListener('datawedge-scan', handleZebraEvent);
     window.addEventListener('scan-event', handleZebraEvent);
 
-    if (zebraInputRef.current) {
-     zebraInputRef.current.addEventListener('keydown', inputZebraListener);
-     zebraInputRef.current.addEventListener('keyup', inputZebraListener);
-     zebraInputRef.current.addEventListener('change', (e) => {
-       console.log('🦓 Change event:', e.target.value);
-       if (e.target.value.trim()) {
-         handleZebraScan(e.target.value);
-         e.target.value = '';
-       }
-     });
-    }
-
     setZebraListening(true);
-    console.log('🦓✅ Scanner Zebra ATIVADO - aguardando leitura');
+    console.log('🦓 ✅ SCANNER ZEBRA PRONTO - Aguardando leituras...');
   }, [onScan]);
 
   const cleanupZebraScanner = () => {
