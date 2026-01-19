@@ -35,6 +35,7 @@ const statusTrackingOptions = [
   { value: "em_carregamento", label: "Em Carregamento" },
   { value: "carregado", label: "Carregado" },
   { value: "em_viagem", label: "Em Viagem" },
+  { value: "filial_destino", label: "Filial Destino" },
   { value: "chegada_destino", label: "Chegada no Destino" },
   { value: "descarga_agendada", label: "Descarga Agendada" },
   { value: "em_descarga", label: "Em Descarga" },
@@ -77,6 +78,13 @@ const quickActionConfig = {
     label: "Data e Hora da Saída da Unidade",
     icon: Truck,
     status: "em_viagem"
+  },
+  chegou_filial: {
+    title: "Chegou na Filial Destino",
+    field: "chegada_filial_destino",
+    label: "Data e Hora da Chegada na Filial Destino",
+    icon: MapPin,
+    status: "filial_destino"
   },
   chegou_destino: {
     title: "Chegou no Destino",
@@ -150,6 +158,7 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
     inicio_carregamento: convertISOToLocal(ordem?.inicio_carregamento),
     fim_carregamento: convertISOToLocal(ordem?.fim_carregamento),
     saida_unidade: convertISOToLocal(ordem?.saida_unidade),
+    chegada_filial_destino: convertISOToLocal(ordem?.chegada_filial_destino),
     chegada_destino: convertISOToLocal(ordem?.chegada_destino),
     descarga_agendamento_data: convertISOToLocal(ordem?.descarga_agendamento_data),
     agendamento_checklist_data: convertISOToLocal(ordem?.agendamento_checklist_data),
@@ -436,6 +445,7 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
         inicio_carregamento: convertLocalToISO(formData.inicio_carregamento),
         fim_carregamento: convertLocalToISO(formData.fim_carregamento),
         saida_unidade: convertLocalToISO(formData.saida_unidade),
+        chegada_filial_destino: convertLocalToISO(formData.chegada_filial_destino),
         chegada_destino: convertLocalToISO(formData.chegada_destino),
         descarga_agendamento_data: convertLocalToISO(formData.descarga_agendamento_data),
         agendamento_checklist_data: convertLocalToISO(formData.agendamento_checklist_data),
@@ -722,6 +732,17 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
                       type="button"
                       variant="outline"
                       size="sm"
+                      onClick={() => handleQuickActionClick("chegou_filial")}
+                      disabled={saving}
+                      className="justify-start"
+                    >
+                      <MapPin className="w-4 h-4 mr-2" />
+                      Chegou na Filial
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleQuickActionClick("chegou_destino")}
                       disabled={saving}
                       className="justify-start"
@@ -855,7 +876,7 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
                   <div>
                     <Label className="flex items-center gap-2">
                       <Truck className="w-4 h-4" />
-                      Inicio Viagem
+                      Saída da Unidade
                     </Label>
                     <Input
                       type="text"
@@ -865,6 +886,23 @@ export default function TrackingUpdateModal({ open, onClose, ordem, onUpdate, on
                         saida_unidade: e.target.value
                       })}
                       onKeyDown={(e) => handleKeyDown(e, "saida_unidade")}
+                      placeholder="dd/mm/aaaa hh:mm"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      Chegada Filial Destino
+                    </Label>
+                    <Input
+                      type="text"
+                      value={formData.chegada_filial_destino}
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        chegada_filial_destino: e.target.value
+                      })}
+                      onKeyDown={(e) => handleKeyDown(e, "chegada_filial_destino")}
                       placeholder="dd/mm/aaaa hh:mm"
                     />
                   </div>
