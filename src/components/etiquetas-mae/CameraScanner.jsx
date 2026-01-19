@@ -23,12 +23,18 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
   const [availableCameras, setAvailableCameras] = useState([]);
   const [isUsingZebraScanner, setIsUsingZebraScanner] = useState(false);
+
+  // Wrapper para onScan que também atualiza o campo de input
+  const handleScanResult = useCallback(async (code) => {
+    setManualInput(code);
+    return onScan(code);
+  }, [onScan]);
   
   // Usar hooks customizados
   const { scanFeedback, applyFeedback } = useScanFeedback();
   const { setupZebraScanner: setupZebra, cleanupZebraScanner } = useZebraScanner(
     isUsingZebraScanner && open,
-    onScan,
+    handleScanResult,
     applyFeedback
   );
 
@@ -91,29 +97,36 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       const cameraConfig = getCameraConfig(availableCameras, currentCameraIndex);
       console.log('Iniciando scanner com câmera:', cameraConfig.label || 'padrão');
 
+      // No iOS, usar facingMode 'environment' para câmera traseira
+      let iosCameraConfig = cameraConfig;
+      if (isIOS()) {
+        iosCameraConfig = { facingMode: 'environment' };
+        console.log('📱 iOS detectado: usando facingMode "environment"');
+      }
+
       const qrScanner = new QrScanner(
-        videoRef.current,
-        async (result) => {
-          if (result?.data && !scanFeedback) {
-            const decodedText = result.data;
-            console.log('🔍 QR Code detectado:', decodedText);
+         videoRef.current,
+         async (result) => {
+           if (result?.data && !scanFeedback) {
+             const decodedText = result.data;
+             console.log('🔍 QR Code detectado:', decodedText);
 
-            const cleaned = decodedText.replace(/\D/g, '');
-            const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
+             const cleaned = decodedText.replace(/\D/g, '');
+             const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
 
-            console.log('📦 Código processado:', finalCode);
+             console.log('📦 Código processado:', finalCode);
 
-            // Usar hook de feedback centralizado
-            const scanResult = await Promise.resolve(onScan(finalCode));
-            applyFeedback(scanResult);
-          }
-        },
-        {
-          returnDetailedScanResult: true,
-          highlightScanRegion: false,
-          highlightCodeOutline: false,
-          preferredCamera: cameraConfig,
-          maxScansPerSecond: SCANNER_CONFIG.maxScansPerSecond,
+             // Usar hook de feedback centralizado - passa pelo handleScanResult
+             const scanResult = await Promise.resolve(handleScanResult(finalCode));
+             applyFeedback(scanResult);
+           }
+         },
+         {
+           returnDetailedScanResult: true,
+           highlightScanRegion: false,
+           highlightCodeOutline: false,
+           preferredCamera: iosCameraConfig,
+           maxScansPerSecond: SCANNER_CONFIG.maxScansPerSecond,
           calculateScanRegion: (video) => {
             const smallestDimension = Math.min(video.videoWidth, video.videoHeight);
             const scanRegionSize = Math.round(0.9 * smallestDimension);
@@ -182,7 +195,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       console.error("Erro ao iniciar scanner:", error);
       setUseManualMode(true);
     }
-  }, [availableCameras, currentCameraIndex, useManualMode, onScan, scanFeedback, applyFeedback]);
+  }, [availableCameras, currentCameraIndex, useManualMode, handleScanResult, scanFeedback, applyFeedback]);
 
   const toggleCamera = async () => {
     if (isUsingZebraScanner) {
