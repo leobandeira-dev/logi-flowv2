@@ -244,19 +244,34 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   };
 
   const startScanner = async () => {
-    if (qrScannerRef.current || useManualMode || !videoRef.current) return;
+   if (qrScannerRef.current || useManualMode || !videoRef.current) return;
 
-    try {
-       // Forçar câmera traseira - usar object com facingMode
-       let cameraConfig = { facingMode: { exact: "environment" } };
+   try {
+      // Priorizar câmera traseira (environment)
+      let cameraConfig = { facingMode: "environment" };
 
-       if (availableCameras.length > 0 && availableCameras[currentCameraIndex]) {
-         const camera = availableCameras[currentCameraIndex];
-         console.log('📷 QrScanner usando câmera detectada:', camera?.label, camera?.id);
-         cameraConfig = camera;
-       } else {
-         console.log('📷 Nenhuma câmera específica, forçando environment');
-       }
+      if (availableCameras.length > 0) {
+        // Buscar câmera traseira prioritariamente
+        const backCameraIndex = availableCameras.findIndex(cam => {
+          const label = cam.label.toLowerCase();
+          const id = cam.id.toLowerCase();
+          return label.includes('back') || 
+                 label.includes('traseira') ||
+                 label.includes('environment') ||
+                 id.includes('back') ||
+                 id.includes('environment');
+        });
+
+        if (backCameraIndex !== -1) {
+          cameraConfig = availableCameras[backCameraIndex];
+          console.log('📷 Câmera traseira encontrada:', cameraConfig?.label);
+        } else if (currentCameraIndex < availableCameras.length) {
+          cameraConfig = availableCameras[currentCameraIndex];
+          console.log('📷 Usando câmera selecionada:', cameraConfig?.label);
+        }
+      } else {
+        console.log('📷 Nenhuma câmera detectada, forçando environment');
+      }
 
        const qrScanner = new QrScanner(
          videoRef.current,
