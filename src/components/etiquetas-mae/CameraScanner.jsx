@@ -267,10 +267,17 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   };
 
   const startScanner = async () => {
-   if (qrScannerRef.current || useManualMode || !videoRef.current) return;
+   if (qrScannerRef.current || useManualMode || !videoRef.current) {
+     console.log('📷 startScanner bloqueado:', { 
+       hasScanner: !!qrScannerRef.current, 
+       manualMode: useManualMode, 
+       hasVideo: !!videoRef.current 
+     });
+     return;
+   }
 
    try {
-      console.log('📷 startScanner: currentCameraIndex:', currentCameraIndex, 'availableCameras:', availableCameras.length);
+      console.log('📷 Iniciando scanner - currentCameraIndex:', currentCameraIndex, 'cameras:', availableCameras.length);
 
       // Priorizar câmera traseira (environment)
       let cameraConfig = { facingMode: "environment" };
