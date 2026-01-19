@@ -384,6 +384,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                    value={manualInput}
                    onChange={handleManualInputChange}
                    onKeyDown={handleInputKeyDown}
+                   onPaste={handleInputPaste}
                    className="text-center font-mono h-11"
                    style={{ 
                      backgroundColor: isDark ? '#1e293b' : '#ffffff',
