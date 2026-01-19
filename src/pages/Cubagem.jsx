@@ -5,26 +5,38 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Camera, QrCode, Save, X, Ruler, Package, CheckCircle, RotateCcw } from "lucide-react";
+import { Camera, QrCode, Save, X, Ruler, Package, CheckCircle, RotateCcw, CreditCard, Scan } from "lucide-react";
 import { toast } from "react-hot-toast";
 import QrScanner from "qr-scanner";
+import * as cocoSsd from "@tensorflow-models/coco-ssd";
+import "@tensorflow/tfjs";
 
 export default function Cubagem() {
   const [isDark, setIsDark] = useState(false);
-  const [etapa, setEtapa] = useState("inicial"); // inicial, medindo, associando, concluido
+  const [etapa, setEtapa] = useState("inicial"); // inicial, calibracao, medindo, processando, associando, concluido
   const [cameraAtiva, setCameraAtiva] = useState(false);
   const [fotoCapturada, setFotoCapturada] = useState(null);
-  const [medidas, setMedidas] = useState({ altura: "", largura: "", comprimento: "" });
+  const [fotoReferencia, setFotoReferencia] = useState(null);
+  const [medidas, setMedidas] = useState({ altura: 0, largura: 0, comprimento: 0 });
   const [volumeId, setVolumeId] = useState(null);
   const [volume, setVolume] = useState(null);
   const [cubagem, setCubagem] = useState(0);
   const [historico, setHistorico] = useState([]);
   const [scanningQR, setScanningQR] = useState(false);
+  const [detectando, setDetectando] = useState(false);
+  const [objetoDetectado, setObjetoDetectado] = useState(null);
+  const [referenciaPixels, setReferenciaPixels] = useState(null);
+  const [modelo, setModelo] = useState(null);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const canvasOverlayRef = useRef(null);
   const streamRef = useRef(null);
   const qrScannerRef = useRef(null);
+
+  // Tamanho real de um cartão de crédito (padrão internacional)
+  const CARTAO_LARGURA_CM = 8.56;
+  const CARTAO_ALTURA_CM = 5.398;
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -38,7 +50,20 @@ export default function Cubagem() {
 
   useEffect(() => {
     loadHistorico();
+    carregarModelo();
   }, []);
+
+  const carregarModelo = async () => {
+    try {
+      toast.loading("Carregando modelo de IA...", { id: "modelo" });
+      const modeloCarregado = await cocoSsd.load();
+      setModelo(modeloCarregado);
+      toast.success("Modelo carregado!", { id: "modelo" });
+    } catch (error) {
+      console.error("Erro ao carregar modelo:", error);
+      toast.error("Erro ao carregar modelo de IA", { id: "modelo" });
+    }
+  };
 
   const loadHistorico = async () => {
     try {
@@ -80,51 +105,150 @@ export default function Cubagem() {
     setScanningQR(false);
   };
 
-  const capturarFoto = () => {
-    if (videoRef.current && canvasRef.current) {
+  const capturarReferencia = async () => {
+    if (videoRef.current && canvasRef.current && modelo) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0);
+      
+      setDetectando(true);
+      
+      // Detectar objetos na imagem
+      const predictions = await modelo.detect(canvas);
+      
+      if (predictions.length === 0) {
+        toast.error("Nenhum objeto detectado. Posicione o cartão de crédito melhor.");
+        setDetectando(false);
+        return;
+      }
+
+      // Usar o primeiro objeto detectado como referência
+      const referencia = predictions[0];
+      const larguraPixels = referencia.bbox[2];
+      const alturaPixels = referencia.bbox[3];
+      
+      // Desenhar retângulo na referência
+      ctx.strokeStyle = '#00ff00';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(referencia.bbox[0], referencia.bbox[1], larguraPixels, alturaPixels);
+      
+      // Adicionar texto
+      ctx.fillStyle = '#00ff00';
+      ctx.font = '16px Arial';
+      ctx.fillText('Cartão de Referência', referencia.bbox[0], referencia.bbox[1] - 10);
+      
       const foto = canvas.toDataURL('image/jpeg', 0.9);
-      setFotoCapturada(foto);
+      setFotoReferencia(foto);
+      
+      // Calcular pixels por cm (usando a largura do cartão)
+      const pixelsPorCm = larguraPixels / CARTAO_LARGURA_CM;
+      setReferenciaPixels(pixelsPorCm);
+      
+      setDetectando(false);
       pararCamera();
       setEtapa("medindo");
-      toast.success("Foto capturada! Agora informe as medidas.");
+      toast.success(`Referência calibrada! ${pixelsPorCm.toFixed(2)} pixels/cm`);
     }
   };
 
-  const calcularCubagem = () => {
-    const { altura, largura, comprimento } = medidas;
-    if (altura && largura && comprimento) {
-      const cubagemMetros = (parseFloat(altura) / 100) * (parseFloat(largura) / 100) * (parseFloat(comprimento) / 100);
-      setCubagem(cubagemMetros);
-      return cubagemMetros;
-    }
-    return 0;
-  };
-
-  const salvarMedidas = async () => {
-    const { altura, largura, comprimento } = medidas;
-    
-    if (!altura || !largura || !comprimento) {
-      toast.error("Preencha todas as medidas");
+  const capturarObjeto = async () => {
+    if (!referenciaPixels) {
+      toast.error("Calibre a referência primeiro!");
       return;
     }
 
-    const cubagemCalculada = calcularCubagem();
-    
-    if (cubagemCalculada <= 0) {
-      toast.error("Medidas inválidas");
-      return;
-    }
+    if (videoRef.current && canvasRef.current && modelo) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+      
+      setDetectando(true);
+      setEtapa("processando");
+      
+      // Detectar objetos na imagem
+      const predictions = await modelo.detect(canvas);
+      
+      if (predictions.length === 0) {
+        toast.error("Nenhum objeto detectado. Posicione melhor o objeto.");
+        setDetectando(false);
+        setEtapa("medindo");
+        return;
+      }
 
-    toast.success(`Cubagem calculada: ${cubagemCalculada.toFixed(4)} m³`);
-    setEtapa("associando");
-    await iniciarScanQR();
+      // Usar o maior objeto detectado
+      const objeto = predictions.reduce((prev, current) => {
+        const prevArea = prev.bbox[2] * prev.bbox[3];
+        const currentArea = current.bbox[2] * current.bbox[3];
+        return currentArea > prevArea ? current : prev;
+      });
+
+      const [x, y, larguraPixels, alturaPixels] = objeto.bbox;
+      
+      // Calcular medidas em cm
+      const larguraCm = larguraPixels / referenciaPixels;
+      const alturaCm = alturaPixels / referenciaPixels;
+      // Estimar profundidade (assumindo que é aproximadamente 70% da largura para objetos comuns)
+      const comprimentoCm = larguraCm * 0.7;
+      
+      // Desenhar retângulo e linhas de medição
+      ctx.strokeStyle = '#00ff00';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, larguraPixels, alturaPixels);
+      
+      // Linha de largura
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, y + alturaPixels + 20);
+      ctx.lineTo(x + larguraPixels, y + alturaPixels + 20);
+      ctx.stroke();
+      
+      // Linha de altura
+      ctx.beginPath();
+      ctx.moveTo(x + larguraPixels + 20, y);
+      ctx.lineTo(x + larguraPixels + 20, y + alturaPixels);
+      ctx.stroke();
+      
+      // Textos com medidas
+      ctx.fillStyle = '#ff0000';
+      ctx.font = 'bold 18px Arial';
+      ctx.fillText(`L: ${larguraCm.toFixed(1)}cm`, x + larguraPixels/2 - 40, y + alturaPixels + 45);
+      ctx.fillText(`A: ${alturaCm.toFixed(1)}cm`, x + larguraPixels + 30, y + alturaPixels/2);
+      
+      // Nome do objeto detectado
+      ctx.fillStyle = '#00ff00';
+      ctx.font = 'bold 20px Arial';
+      ctx.fillText(objeto.class.toUpperCase(), x, y - 10);
+      
+      const foto = canvas.toDataURL('image/jpeg', 0.9);
+      setFotoCapturada(foto);
+      
+      setMedidas({
+        altura: alturaCm,
+        largura: larguraCm,
+        comprimento: comprimentoCm
+      });
+      
+      const cubagemCalculada = (alturaCm / 100) * (larguraCm / 100) * (comprimentoCm / 100);
+      setCubagem(cubagemCalculada);
+      
+      setObjetoDetectado(objeto);
+      setDetectando(false);
+      pararCamera();
+      
+      toast.success(`Objeto detectado: ${objeto.class}`);
+      setEtapa("associando");
+      await iniciarScanQR();
+    }
   };
+
+
 
   const iniciarScanQR = async () => {
     try {
@@ -193,12 +317,13 @@ export default function Cubagem() {
 
       // Atualizar volume com cubagem e foto
       await base44.entities.Volume.update(volId, {
-        altura_cm: parseFloat(medidas.altura),
-        largura_cm: parseFloat(medidas.largura),
-        comprimento_cm: parseFloat(medidas.comprimento),
+        altura_cm: medidas.altura,
+        largura_cm: medidas.largura,
+        comprimento_cm: medidas.comprimento,
         cubagem_m3: cubagem,
         foto_cubagem_url: file_url,
-        data_cubagem: new Date().toISOString()
+        data_cubagem: new Date().toISOString(),
+        objeto_detectado: objetoDetectado?.class || "unknown"
       });
 
       toast.success("Cubagem associada ao volume com sucesso!");
@@ -213,10 +338,13 @@ export default function Cubagem() {
   const reiniciar = () => {
     setEtapa("inicial");
     setFotoCapturada(null);
-    setMedidas({ altura: "", largura: "", comprimento: "" });
+    setFotoReferencia(null);
+    setMedidas({ altura: 0, largura: 0, comprimento: 0 });
     setCubagem(0);
     setVolume(null);
     setVolumeId(null);
+    setReferenciaPixels(null);
+    setObjetoDetectado(null);
     pararCamera();
   };
 
@@ -249,40 +377,53 @@ export default function Cubagem() {
               <CardContent className="p-6">
                 {/* Indicador de Etapas */}
                 <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${etapa !== 'inicial' ? 'bg-green-600' : 'bg-blue-600'}`}>
-                      <Camera className="w-4 h-4 text-white" />
+                      <CreditCard className="w-4 h-4 text-white" />
                     </div>
-                    <div className="w-12 h-1 bg-gray-300" />
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${etapa === 'associando' || etapa === 'concluido' ? 'bg-green-600' : etapa === 'medindo' ? 'bg-blue-600' : 'bg-gray-300'}`}>
-                      <Ruler className="w-4 h-4 text-white" />
+                    <div className="w-8 h-1 bg-gray-300" />
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${etapa === 'processando' || etapa === 'associando' || etapa === 'concluido' ? 'bg-green-600' : etapa === 'medindo' ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                      <Scan className="w-4 h-4 text-white" />
                     </div>
-                    <div className="w-12 h-1 bg-gray-300" />
+                    <div className="w-8 h-1 bg-gray-300" />
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${etapa === 'concluido' ? 'bg-green-600' : etapa === 'associando' ? 'bg-blue-600' : 'bg-gray-300'}`}>
                       <QrCode className="w-4 h-4 text-white" />
                     </div>
                   </div>
                   <Badge className={etapa === 'concluido' ? 'bg-green-600' : 'bg-blue-600'}>
-                    {etapa === 'inicial' && 'Capturar Foto'}
+                    {etapa === 'inicial' && 'Calibração'}
                     {etapa === 'medindo' && 'Medir Objeto'}
+                    {etapa === 'processando' && 'Processando...'}
                     {etapa === 'associando' && 'Ler QR Code'}
                     {etapa === 'concluido' && 'Concluído'}
                   </Badge>
                 </div>
 
-                {/* Etapa Inicial - Captura de Foto */}
+                {/* Etapa Inicial - Calibração */}
                 {etapa === 'inicial' && !cameraAtiva && (
                   <div className="text-center py-8">
-                    <Camera className="w-16 h-16 mx-auto mb-4" style={{ color: theme.textMuted }} />
+                    <CreditCard className="w-16 h-16 mx-auto mb-4" style={{ color: theme.textMuted }} />
                     <h3 className="font-semibold mb-2" style={{ color: theme.text }}>
-                      Capture a foto do objeto
+                      Calibrar Sistema
                     </h3>
-                    <p className="text-sm mb-6" style={{ color: theme.textMuted }}>
-                      Posicione o objeto e tire uma foto para medição
+                    <p className="text-sm mb-2" style={{ color: theme.textMuted }}>
+                      Posicione um cartão de crédito na câmera para calibração
                     </p>
-                    <Button onClick={iniciarCamera} className="bg-blue-600 hover:bg-blue-700">
+                    <p className="text-xs mb-6" style={{ color: theme.textMuted }}>
+                      O cartão será usado como referência para medir outros objetos
+                    </p>
+                    {!modelo && (
+                      <p className="text-sm text-orange-600 mb-4">
+                        ⏳ Carregando modelo de IA...
+                      </p>
+                    )}
+                    <Button 
+                      onClick={iniciarCamera} 
+                      className="bg-blue-600 hover:bg-blue-700"
+                      disabled={!modelo}
+                    >
                       <Camera className="w-4 h-4 mr-2" />
-                      Abrir Câmera
+                      Iniciar Calibração
                     </Button>
                   </div>
                 )}
@@ -306,15 +447,63 @@ export default function Cubagem() {
                     </div>
                     <canvas ref={canvasRef} className="hidden" />
                     
-                    {!scanningQR && (
-                      <div className="flex gap-2">
-                        <Button onClick={capturarFoto} className="flex-1 bg-blue-600 hover:bg-blue-700">
-                          <Camera className="w-4 h-4 mr-2" />
-                          Capturar Foto
-                        </Button>
-                        <Button onClick={pararCamera} variant="outline">
-                          <X className="w-4 h-4" />
-                        </Button>
+                    {!scanningQR && etapa === 'inicial' && (
+                      <div className="space-y-3">
+                        <p className="text-center text-sm font-medium" style={{ color: theme.text }}>
+                          Posicione o cartão de crédito no centro da imagem
+                        </p>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={capturarReferencia} 
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            disabled={detectando}
+                          >
+                            {detectando ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                Detectando...
+                              </>
+                            ) : (
+                              <>
+                                <CreditCard className="w-4 h-4 mr-2" />
+                                Calibrar Referência
+                              </>
+                            )}
+                          </Button>
+                          <Button onClick={pararCamera} variant="outline">
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {!scanningQR && etapa === 'medindo' && (
+                      <div className="space-y-3">
+                        <p className="text-center text-sm font-medium" style={{ color: theme.text }}>
+                          Posicione o objeto a ser medido no centro da imagem
+                        </p>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={capturarObjeto} 
+                            className="flex-1 bg-blue-600 hover:bg-blue-700"
+                            disabled={detectando}
+                          >
+                            {detectando ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                Medindo...
+                              </>
+                            ) : (
+                              <>
+                                <Ruler className="w-4 h-4 mr-2" />
+                                Medir Objeto
+                              </>
+                            )}
+                          </Button>
+                          <Button onClick={pararCamera} variant="outline">
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     )}
                     
@@ -331,76 +520,63 @@ export default function Cubagem() {
                   </div>
                 )}
 
-                {/* Etapa de Medição */}
-                {etapa === 'medindo' && fotoCapturada && (
+                {/* Etapa de Calibração Concluída */}
+                {etapa === 'medindo' && fotoReferencia && !cameraAtiva && (
                   <div className="space-y-4">
-                    <div className="rounded-lg overflow-hidden border" style={{ borderColor: theme.cardBorder }}>
-                      <img src={fotoCapturada} alt="Objeto" className="w-full h-auto" />
+                    <div className="rounded-lg overflow-hidden border-2 border-green-500" style={{ borderColor: theme.cardBorder }}>
+                      <img src={fotoReferencia} alt="Referência" className="w-full h-auto" />
+                    </div>
+                    
+                    <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950 border-2 border-green-500">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <span className="font-semibold text-green-900 dark:text-green-100">
+                          Calibração Concluída
+                        </span>
+                      </div>
+                      <p className="text-sm text-green-800 dark:text-green-200">
+                        {referenciaPixels?.toFixed(2)} pixels por centímetro
+                      </p>
+                    </div>
+
+                    <Button onClick={iniciarCamera} className="w-full bg-blue-600 hover:bg-blue-700">
+                      <Ruler className="w-4 h-4 mr-2" />
+                      Medir Objeto
+                    </Button>
+                  </div>
+                )}
+
+                {/* Etapa de Processamento */}
+                {etapa === 'processando' && fotoCapturada && (
+                  <div className="space-y-4">
+                    <div className="rounded-lg overflow-hidden border-2 border-blue-500">
+                      <img src={fotoCapturada} alt="Objeto Medido" className="w-full h-auto" />
                     </div>
                     
                     <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>
-                          Altura (cm)
-                        </Label>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          value={medidas.altura}
-                          onChange={(e) => setMedidas({...medidas, altura: e.target.value})}
-                          placeholder="0.0"
-                          style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                        />
+                      <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950">
+                        <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Altura</p>
+                        <p className="text-lg font-bold text-blue-600">{medidas.altura.toFixed(1)} cm</p>
                       </div>
-                      <div>
-                        <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>
-                          Largura (cm)
-                        </Label>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          value={medidas.largura}
-                          onChange={(e) => setMedidas({...medidas, largura: e.target.value})}
-                          placeholder="0.0"
-                          style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                        />
+                      <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950">
+                        <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Largura</p>
+                        <p className="text-lg font-bold text-blue-600">{medidas.largura.toFixed(1)} cm</p>
                       </div>
-                      <div>
-                        <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>
-                          Comprimento (cm)
-                        </Label>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          value={medidas.comprimento}
-                          onChange={(e) => setMedidas({...medidas, comprimento: e.target.value})}
-                          placeholder="0.0"
-                          style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                        />
+                      <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950">
+                        <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Profundidade</p>
+                        <p className="text-lg font-bold text-blue-600">{medidas.comprimento.toFixed(1)} cm</p>
                       </div>
                     </div>
 
-                    {medidas.altura && medidas.largura && medidas.comprimento && (
-                      <div className="p-4 rounded-lg border-2 border-blue-500 bg-blue-50 dark:bg-blue-950">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-blue-900 dark:text-blue-100">
-                            Cubagem:
-                          </span>
-                          <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                            {calcularCubagem().toFixed(4)} m³
-                          </span>
-                        </div>
+                    <div className="p-4 rounded-lg border-2 border-green-500 bg-green-50 dark:bg-green-950">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-green-900 dark:text-green-100">
+                          Cubagem Calculada:
+                        </span>
+                        <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+                          {cubagem.toFixed(4)} m³
+                        </span>
                       </div>
-                    )}
-
-                    <div className="flex gap-2">
-                      <Button onClick={salvarMedidas} className="flex-1 bg-green-600 hover:bg-green-700">
-                        <Save className="w-4 h-4 mr-2" />
-                        Confirmar e Continuar
-                      </Button>
-                      <Button onClick={reiniciar} variant="outline">
-                        <X className="w-4 h-4" />
-                      </Button>
                     </div>
                   </div>
                 )}
