@@ -442,31 +442,146 @@ export default function Cubagem() {
       };
       setMedidasCapturadas(medidas);
       
-      // Desenhar anotações na foto
+      // Desenhar anotações 3D completas na foto
+      const fontSize = Math.max(22, video.videoWidth / 35);
+      const lineWidth = Math.max(5, video.videoWidth / 250);
+      const profundOffset = larguraPixels * 0.4;
+      
+      // Face frontal (verde - sólida)
       ctx.strokeStyle = '#00ff00';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = lineWidth;
       ctx.strokeRect(x, y, larguraPixels, alturaPixels);
       
-      ctx.strokeStyle = '#ff0000';
-      ctx.lineWidth = 2;
+      // Linhas de profundidade (laranja)
+      ctx.strokeStyle = '#ffaa00';
+      ctx.lineWidth = lineWidth - 1;
+      ctx.setLineDash([12, 6]);
+      
+      // Conectar cantos frontal -> traseira
       ctx.beginPath();
-      ctx.moveTo(x, y + alturaPixels + 20);
-      ctx.lineTo(x + larguraPixels, y + alturaPixels + 20);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + profundOffset, y - profundOffset);
       ctx.stroke();
       
       ctx.beginPath();
-      ctx.moveTo(x + larguraPixels + 20, y);
-      ctx.lineTo(x + larguraPixels + 20, y + alturaPixels);
+      ctx.moveTo(x + larguraPixels, y);
+      ctx.lineTo(x + larguraPixels + profundOffset, y - profundOffset);
       ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.moveTo(x, y + alturaPixels);
+      ctx.lineTo(x + profundOffset, y + alturaPixels - profundOffset);
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.moveTo(x + larguraPixels, y + alturaPixels);
+      ctx.lineTo(x + larguraPixels + profundOffset, y + alturaPixels - profundOffset);
+      ctx.stroke();
+      
+      // Face traseira (laranja pontilhada)
+      ctx.strokeStyle = '#ffcc66';
+      ctx.strokeRect(x + profundOffset, y - profundOffset, larguraPixels, alturaPixels);
+      ctx.setLineDash([]);
+      
+      // Linha de medição - LARGURA (vermelho sólido)
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = lineWidth;
+      const larguraY = y + alturaPixels + 50;
+      ctx.beginPath();
+      ctx.moveTo(x, larguraY);
+      ctx.lineTo(x + larguraPixels, larguraY);
+      ctx.stroke();
+      
+      // Setas largura (triângulos preenchidos)
+      const arrowSize = fontSize / 1.5;
+      ctx.fillStyle = '#ff0000';
+      ctx.beginPath();
+      ctx.moveTo(x, larguraY);
+      ctx.lineTo(x + arrowSize, larguraY - arrowSize/2);
+      ctx.lineTo(x + arrowSize, larguraY + arrowSize/2);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(x + larguraPixels, larguraY);
+      ctx.lineTo(x + larguraPixels - arrowSize, larguraY - arrowSize/2);
+      ctx.lineTo(x + larguraPixels - arrowSize, larguraY + arrowSize/2);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Linha de medição - ALTURA (vermelho sólido)
+      const alturaX = x + larguraPixels + 50;
+      ctx.strokeStyle = '#ff0000';
+      ctx.beginPath();
+      ctx.moveTo(alturaX, y);
+      ctx.lineTo(alturaX, y + alturaPixels);
+      ctx.stroke();
+      
+      // Setas altura
+      ctx.fillStyle = '#ff0000';
+      ctx.beginPath();
+      ctx.moveTo(alturaX, y);
+      ctx.lineTo(alturaX - arrowSize/2, y + arrowSize);
+      ctx.lineTo(alturaX + arrowSize/2, y + arrowSize);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(alturaX, y + alturaPixels);
+      ctx.lineTo(alturaX - arrowSize/2, y + alturaPixels - arrowSize);
+      ctx.lineTo(alturaX + arrowSize/2, y + alturaPixels - arrowSize);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Linha de medição - PROFUNDIDADE (laranja sólido)
+      ctx.strokeStyle = '#ffaa00';
+      ctx.lineWidth = lineWidth;
+      ctx.beginPath();
+      const profX = x + larguraPixels + profundOffset;
+      const profY = y - profundOffset;
+      ctx.moveTo(x + larguraPixels, y);
+      ctx.lineTo(profX, profY);
+      ctx.stroke();
+      
+      // Setas profundidade
+      const profAngulo = Math.atan2(profY - y, profX - (x + larguraPixels));
+      ctx.save();
+      ctx.translate(profX, profY);
+      ctx.rotate(profAngulo);
+      ctx.fillStyle = '#ffaa00';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-arrowSize, -arrowSize/2);
+      ctx.lineTo(-arrowSize, arrowSize/2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      
+      // Textos com medidas - fontes maiores com sombra forte
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetX = 3;
+      ctx.shadowOffsetY = 3;
       
       ctx.fillStyle = '#ff0000';
-      ctx.font = 'bold 18px Arial';
-      ctx.fillText(`L: ${larguraCm.toFixed(1)}cm`, x + larguraPixels/2 - 40, y + alturaPixels + 45);
-      ctx.fillText(`A: ${alturaCm.toFixed(1)}cm`, x + larguraPixels + 30, y + alturaPixels/2);
+      ctx.font = `bold ${fontSize}px Arial`;
+      ctx.fillText(`${larguraCm.toFixed(1)} cm`, x + larguraPixels/2 - fontSize * 1.8, larguraY + fontSize + 15);
+      ctx.fillText(`${alturaCm.toFixed(1)} cm`, alturaX + 15, y + alturaPixels/2 + fontSize/3);
+      
+      ctx.fillStyle = '#ffaa00';
+      ctx.fillText(`${comprimentoCm.toFixed(1)} cm`, profX - fontSize * 2.5, profY - 20);
+      
+      // Nome do objeto com fundo semi-transparente
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(x - 5, y - fontSize * 1.8, objeto.class.length * fontSize * 0.7, fontSize * 1.5);
       
       ctx.fillStyle = '#00ff00';
-      ctx.font = 'bold 20px Arial';
-      ctx.fillText(objeto.class.toUpperCase(), x, y - 10);
+      ctx.font = `bold ${fontSize * 1.3}px Arial`;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+      ctx.shadowBlur = 8;
+      ctx.fillText(objeto.class.toUpperCase(), x, y - fontSize * 0.5);
+      ctx.shadowBlur = 0;
       
       const foto = canvas.toDataURL('image/jpeg', 0.9);
       const cubagemCalculada = (alturaCm / 100) * (larguraCm / 100) * (comprimentoCm / 100);
