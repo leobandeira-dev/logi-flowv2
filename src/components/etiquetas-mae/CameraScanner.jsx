@@ -480,34 +480,36 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             </div>
             </div>
 
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-black/0 space-y-2">
-              <div className="bg-white dark:bg-gray-900 border rounded-lg p-3" style={{ borderColor: isDark ? '#475569' : '#d1d5db' }}>
-                <div className="flex gap-2">
-                  <Input
-                     ref={inputRef}
-                     placeholder="Código..."
-                     value={manualInput}
-                     onChange={handleManualInputChange}
-                     onKeyDown={handleInputKeyDown}
-                     onPaste={handleInputPaste}
-                     className="text-center font-mono h-11"
-                     style={{ 
-                       backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                       borderColor: isDark ? '#334155' : '#e5e7eb',
-                       color: isDark ? '#f1f5f9' : '#0f172a'
-                     }}
-                     inputMode={useManualMode ? "text" : "none"}
-                   />
-                  <Button
-                    onClick={handleManualSubmit}
-                    disabled={!manualInput.trim()}
-                    className="bg-blue-600 hover:bg-blue-700 px-6 h-11"
-                  >
-                    OK
-                  </Button>
+            {useManualMode && (
+              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-black/0 space-y-2">
+                <div className="bg-white dark:bg-gray-900 border rounded-lg p-3" style={{ borderColor: isDark ? '#475569' : '#d1d5db' }}>
+                  <div className="flex gap-2">
+                    <Input
+                       ref={inputRef}
+                       placeholder="Código..."
+                       value={manualInput}
+                       onChange={handleManualInputChange}
+                       onKeyDown={handleInputKeyDown}
+                       onPaste={handleInputPaste}
+                       className="text-center font-mono h-11"
+                       style={{ 
+                         backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                         borderColor: isDark ? '#334155' : '#e5e7eb',
+                         color: isDark ? '#f1f5f9' : '#0f172a'
+                       }}
+                       autoFocus
+                     />
+                    <Button
+                      onClick={handleManualSubmit}
+                      disabled={!manualInput.trim()}
+                      className="bg-blue-600 hover:bg-blue-700 px-6 h-11"
+                    >
+                      OK
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
             </div>
       </DialogContent>
     </Dialog>
