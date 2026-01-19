@@ -237,6 +237,21 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     }
   };
 
+  const handleManualInputChange = async (e) => {
+    const value = e.target.value;
+    setManualInput(value);
+
+    // Auto-submit se parecer um código válido (números com 44 dígitos ou padrão GTIN)
+    if (value.length >= 44 || (value.length > 0 && value.endsWith('\n'))) {
+      setTimeout(() => {
+        const cleaned = value.trim().replace(/\D/g, '');
+        if (cleaned.length >= 44 || value.trim().length > 0) {
+          handleManualSubmit();
+        }
+      }, 100);
+    }
+  };
+
   const theme = {
     bg: isDark ? '#0f172a' : '#ffffff',
     text: isDark ? '#f1f5f9' : '#111827',
@@ -360,7 +375,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 <Input
                   placeholder="Código..."
                   value={manualInput}
-                  onChange={(e) => setManualInput(e.target.value)}
+                  onChange={handleManualInputChange}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && manualInput.trim()) {
                       handleManualSubmit();
