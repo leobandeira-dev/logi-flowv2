@@ -384,7 +384,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
           )}
         </DialogHeader>
 
-        <div className="absolute inset-0 w-full h-full flex flex-col">
+        <div className="absolute inset-0 w-full h-full flex flex-col" style={{ pointerEvents: 'auto' }}>
           <div className="flex-1 bg-black overflow-hidden relative">
             <video
               ref={videoRef}
