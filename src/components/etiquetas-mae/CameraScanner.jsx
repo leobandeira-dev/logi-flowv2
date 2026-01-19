@@ -16,6 +16,7 @@ import { findRearCameraIndex, findFrontCameraIndex, logCameraInfo, getCameraConf
 
 export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual, progressoAtual, externalFeedback }) {
   const videoRef = useRef(null);
+  const inputRef = useRef(null);
   const [scanning, setScanning] = useState(false);
   const [manualInput, setManualInput] = useState("");
   const [useManualMode, setUseManualMode] = useState(false);
@@ -189,6 +190,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       const result = await Promise.resolve(onScan(manualInput.trim()));
       applyFeedback(result);
       setManualInput("");
+      // Refocus no input para o próximo volume
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
 
@@ -196,16 +199,23 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     const value = e.target.value;
     setManualInput(value);
 
-    // Auto-submit se parecer um código válido (números com 44 dígitos ou padrão GTIN)
-    if (value.length >= 44 || (value.length > 0 && value.endsWith('\n'))) {
+    // Auto-submit quando atingir 44 dígitos ou pressionar Enter
+    if (value.length >= 44) {
       setTimeout(() => {
         const cleaned = value.trim().replace(/\D/g, '');
-        if (cleaned.length >= 44 || value.trim().length > 0) {
+        if (cleaned.length >= 44) {
           handleManualSubmit();
         }
-      }, 100);
+      }, 50);
     }
   };
+
+  // Manter foco no input enquanto modal estiver aberto
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 300);
+    }
+  }, [open]);
 
   const theme = {
     bg: isDark ? '#0f172a' : '#ffffff',
