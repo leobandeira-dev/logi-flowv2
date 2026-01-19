@@ -26,10 +26,22 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const [availableCameras, setAvailableCameras] = useState([]);
   const [isUsingZebraScanner, setIsUsingZebraScanner] = useState(false);
 
-  // Wrapper para onScan que também atualiza o campo de input
+  // Wrapper para onScan que busca imediatamente e limpa o campo
   const handleScanResult = useCallback(async (code) => {
-    setManualInput(code);
-    return onScan(code);
+    try {
+      const result = await Promise.resolve(onScan(code));
+      applyFeedback(result);
+      // Limpar campo imediatamente
+      setManualInput("");
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+      return result;
+    } catch (error) {
+      console.error('Erro ao processar scan:', error);
+      applyFeedback('error');
+      throw error;
+    }
   }, [onScan]);
   
   // Usar hooks customizados
