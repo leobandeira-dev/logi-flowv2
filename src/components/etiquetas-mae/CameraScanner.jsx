@@ -425,12 +425,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         console.log('Otimizações de câmera não aplicadas:', error.message);
       }
 
-      console.log('📸 Scanner QR iniciado');
-    } catch (error) {
-      console.error("Erro ao iniciar scanner:", error);
+      console.log('📸 Scanner QR iniciado com sucesso');
+      } catch (error) {
+      console.error("❌ Erro ao iniciar scanner:", error.message);
+      console.error("Stack:", error.stack);
+      // Tentar fallback para modo manual
+      toast.error("Erro ao iniciar câmera: " + error.message);
       setUseManualMode(true);
-    }
-  };
+      }
+      };
 
   const toggleCamera = async () => {
    console.log('🔄 toggleCamera chamado - useZebraScanner:', useZebraScanner);
