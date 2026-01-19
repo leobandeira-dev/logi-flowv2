@@ -76,26 +76,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     setScanning(false);
   }, []);
 
-  // Reiniciar scanner quando trocar de câmera
-  useEffect(() => {
-    if (open && !useManualMode && !isUsingZebraScanner && availableCameras.length > 0) {
-      setTimeout(() => {
-        startScanner();
-      }, 100);
-    }
-
-    return () => stopScanner();
-  }, [open, useManualMode, currentCameraIndex, isUsingZebraScanner, startScanner, stopScanner]);
-
-  // Ativar/desativar Zebra quando needed
-  useEffect(() => {
-    if (isUsingZebraScanner && open) {
-      setupZebra();
-    }
-    return cleanupZebraScanner;
-  }, [isUsingZebraScanner, open, setupZebra, cleanupZebraScanner]);
-
-  const startScanner = React.useCallback(async () => {
+  const startScanner = useCallback(async () => {
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
 
     try {
@@ -201,6 +182,25 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       setUseManualMode(true);
     }
   }, [availableCameras, currentCameraIndex, useManualMode, handleScanResult, scanFeedback, applyFeedback, stopScanner]);
+
+  // Reiniciar scanner quando trocar de câmera
+  useEffect(() => {
+    if (open && !useManualMode && !isUsingZebraScanner && availableCameras.length > 0) {
+      setTimeout(() => {
+        startScanner();
+      }, 100);
+    }
+
+    return () => stopScanner();
+  }, [open, useManualMode, currentCameraIndex, isUsingZebraScanner, startScanner, stopScanner]);
+
+  // Ativar/desativar Zebra quando needed
+  useEffect(() => {
+    if (isUsingZebraScanner && open) {
+      setupZebra();
+    }
+    return cleanupZebraScanner;
+  }, [isUsingZebraScanner, open, setupZebra, cleanupZebraScanner]);
 
   const toggleCamera = useCallback(async () => {
     if (isUsingZebraScanner) {
