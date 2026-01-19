@@ -180,8 +180,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       setScanFeedback('processing');
 
       try {
+        console.log('🦓 🚀 Chamando onScan com código:', rawCode);
         const scanResult = await Promise.resolve(onScan(rawCode));
-        console.log('🦓 ✅ RESULTADO:', scanResult);
+        console.log('🦓 ✅ RESULTADO RECEBIDO:', scanResult, 'Type:', typeof scanResult);
 
         if (scanResult === 'success') {
           setScanFeedback('success');
