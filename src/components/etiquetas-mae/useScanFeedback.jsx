@@ -11,15 +11,15 @@ export const useScanFeedback = () => {
   const lastFeedbackTimeRef = useRef(0);
 
   const applyFeedback = useCallback((feedbackType) => {
+    const config = FEEDBACK_CONFIG[feedbackType];
+    if (!config) return;
+
     // Debounce: evitar múltiplos feedbacks em rápida sucessão
     const now = Date.now();
     if (now - lastFeedbackTimeRef.current < SCANNER_CONFIG.debounceMs) {
       return;
     }
     lastFeedbackTimeRef.current = now;
-
-    const config = FEEDBACK_CONFIG[feedbackType];
-    if (!config) return;
 
     // Limpar timeout anterior
     if (feedbackTimeoutRef.current) {

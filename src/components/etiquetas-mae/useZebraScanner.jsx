@@ -24,7 +24,6 @@ export const useZebraScanner = (enabled, onScan, onFeedback) => {
       if (!data?.data) return;
 
       const scannedCode = data.data;
-      console.log('🦓 ZEBRA SCAN:', scannedCode);
 
       // Enviar para processamento
       onFeedback('processing');
@@ -41,7 +40,6 @@ export const useZebraScanner = (enabled, onScan, onFeedback) => {
     });
 
     handlersRef.current.datawedge = handleZebraScan;
-    console.log('🦓 Scanner Zebra ativado');
   }, [onScan, onFeedback]);
 
   const cleanupZebraScanner = useCallback(() => {
@@ -56,8 +54,6 @@ export const useZebraScanner = (enabled, onScan, onFeedback) => {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
-    
-    console.log('🔌 Scanner Zebra desligado');
   }, []);
 
   useEffect(() => {

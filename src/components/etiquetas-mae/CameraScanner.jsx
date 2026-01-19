@@ -258,7 +258,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       >
         <DialogHeader className="p-4 pb-3">
           <DialogTitle style={{ color: theme.text }}>
-            Scanner QR Code
+            Leitura de Código
           </DialogTitle>
           {notaAtual && progressoAtual && (
             <div className="mt-3 p-4 rounded-xl border-2 shadow-lg" style={{ backgroundColor: isDark ? '#1e3a8a' : '#dbeafe', borderColor: isDark ? '#1e40af' : '#2563eb' }}>
@@ -294,158 +294,51 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         <div className="p-4 pt-0">
           {!useManualMode ? (
             <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
-              {/* Legenda de Modo */}
-              <div className="absolute top-2 left-2 z-20 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                {isUsingZebraScanner ? '🦓 Modo Leitor' : '📷 Modo Câmera'}
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                style={{ transform: 'scaleX(-1)' }}
+              />
+
+              <div 
+                className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
+                style={{ zIndex: 5 }}
+              >
+                <div 
+                  className="transition-all duration-300"
+                  style={{
+                    width: '80%',
+                    height: '80%',
+                    border: scanFeedback === 'success' 
+                      ? '2px solid #10b981' 
+                      : scanFeedback === 'duplicate'
+                      ? '2px solid #f59e0b'
+                      : scanFeedback === 'error'
+                      ? '2px solid #ef4444'
+                      : scanFeedback === 'processing' 
+                      ? '2px solid #3b82f6' 
+                      : '2px solid rgba(255, 255, 255, 0.3)',
+                    borderRadius: '8px'
+                  }}
+                />
               </div>
 
-              {isUsingZebraScanner ? (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 to-blue-950 text-white p-8 relative">
-                  <div className="animate-pulse mb-6">
-                    <Camera className="w-24 h-24" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2">🦓 Scanner Zebra Ativo</h3>
-                  <p className="text-blue-200 text-center mb-6">
-                    Pressione os botões amarelos do coletor para ler
-                  </p>
-
-                  {/* Feedback visual para modo Zebra */}
-                  {scanFeedback && scanFeedback !== 'processing' && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
-                      <div 
-                        className={`px-8 py-4 rounded-xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
-                          scanFeedback === 'success' 
-                            ? 'bg-green-600' 
-                            : scanFeedback === 'duplicate'
-                            ? 'bg-yellow-600'
-                            : 'bg-red-600'
-                        }`}
-                        style={{ fontSize: '24px' }}
-                      >
-                        {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
-                        {scanFeedback === 'duplicate' && '⚠ JÁ BIPADO'}
-                        {scanFeedback === 'error' && '✗ VOLUME NÃO ENCONTRADO'}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <video
-                  ref={videoRef}
-                  className="w-full h-full object-cover"
-                  style={{ transform: 'scaleX(-1)' }}
-                />
-              )}
-
-              {isUsingZebraScanner ? null : (
-                <div 
-                  className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
-                  style={{ zIndex: 5 }}
-                >
+              {/* Feedback Textual Central */}
+              {scanFeedback && scanFeedback !== 'processing' && (
+                <div className="absolute inset-0 flex items-center justify-center">
                   <div 
-                    className="shadow-lg transition-all duration-300"
-                    style={{
-                      width: '85%',
-                      height: '85%',
-                      aspectRatio: '1/1',
-                      maxWidth: '85%',
-                      maxHeight: '85%',
-                      boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
-                      borderRadius: '12px',
-                      position: 'relative',
-                      border: scanFeedback === 'success' 
-                        ? '8px solid #10b981' 
+                    className={`px-6 py-3 rounded-lg font-semibold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
+                      scanFeedback === 'success' 
+                        ? 'bg-green-600' 
                         : scanFeedback === 'duplicate'
-                        ? '8px solid #f59e0b'
-                        : scanFeedback === 'error'
-                        ? '8px solid #ef4444'
-                        : scanFeedback === 'processing' 
-                        ? '8px solid #3b82f6' 
-                        : '6px solid #60a5fa',
-                      backgroundColor: scanFeedback === 'success' 
-                        ? 'rgba(16, 185, 129, 0.15)' 
-                        : scanFeedback === 'duplicate'
-                        ? 'rgba(245, 158, 11, 0.15)'
-                        : scanFeedback === 'error'
-                        ? 'rgba(239, 68, 68, 0.15)'
-                        : scanFeedback === 'processing' 
-                        ? 'rgba(59, 130, 246, 0.1)' 
-                        : 'transparent'
-                    }}
+                        ? 'bg-yellow-600'
+                        : 'bg-red-600'
+                    }`}
+                    style={{ fontSize: '16px' }}
                   >
-                    {/* Cantos com Feedback Visual */}
-                    <div className="absolute top-0 left-0 w-16 h-16 border-t-8 border-l-8 transition-all duration-300" style={{ 
-                      borderRadius: '12px 0 0 0', 
-                      borderColor: scanFeedback === 'success' 
-                        ? '#10b981' 
-                        : scanFeedback === 'duplicate'
-                        ? '#f59e0b'
-                        : scanFeedback === 'error'
-                        ? '#ef4444'
-                        : scanFeedback === 'processing' 
-                        ? '#3b82f6' 
-                        : '#60a5fa',
-                      borderWidth: scanFeedback ? '10px' : '8px'
-                    }}></div>
-                    <div className="absolute top-0 right-0 w-16 h-16 border-t-8 border-r-8 transition-all duration-300" style={{ 
-                      borderRadius: '0 12px 0 0', 
-                      borderColor: scanFeedback === 'success' 
-                        ? '#10b981' 
-                        : scanFeedback === 'duplicate'
-                        ? '#f59e0b'
-                        : scanFeedback === 'error'
-                        ? '#ef4444'
-                        : scanFeedback === 'processing' 
-                        ? '#3b82f6' 
-                        : '#60a5fa',
-                      borderWidth: scanFeedback ? '10px' : '8px'
-                    }}></div>
-                    <div className="absolute bottom-0 left-0 w-16 h-16 border-b-8 border-l-8 transition-all duration-300" style={{ 
-                      borderRadius: '0 0 0 12px', 
-                      borderColor: scanFeedback === 'success' 
-                        ? '#10b981' 
-                        : scanFeedback === 'duplicate'
-                        ? '#f59e0b'
-                        : scanFeedback === 'error'
-                        ? '#ef4444'
-                        : scanFeedback === 'processing' 
-                        ? '#3b82f6' 
-                        : '#60a5fa',
-                      borderWidth: scanFeedback ? '10px' : '8px'
-                    }}></div>
-                    <div className="absolute bottom-0 right-0 w-16 h-16 border-b-8 border-r-8 transition-all duration-300" style={{ 
-                      borderRadius: '0 0 12px 0', 
-                      borderColor: scanFeedback === 'success' 
-                        ? '#10b981' 
-                        : scanFeedback === 'duplicate'
-                        ? '#f59e0b'
-                        : scanFeedback === 'error'
-                        ? '#ef4444'
-                        : scanFeedback === 'processing' 
-                        ? '#3b82f6' 
-                        : '#60a5fa',
-                      borderWidth: scanFeedback ? '10px' : '8px'
-                    }}></div>
-
-                    {/* Feedback Textual Central */}
-                    {scanFeedback && scanFeedback !== 'processing' && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div 
-                          className={`px-6 py-3 rounded-xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
-                            scanFeedback === 'success' 
-                              ? 'bg-green-600' 
-                              : scanFeedback === 'duplicate'
-                              ? 'bg-yellow-600'
-                              : 'bg-red-600'
-                          }`}
-                          style={{ fontSize: '18px' }}
-                        >
-                          {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
-                          {scanFeedback === 'duplicate' && '⚠ JÁ BIPADO'}
-                          {scanFeedback === 'error' && '✗ VOLUME NÃO ENCONTRADO'}
-                        </div>
-                      </div>
-                    )}
+                    {scanFeedback === 'success' && 'Volume adicionado'}
+                    {scanFeedback === 'duplicate' && 'Código já bipado'}
+                    {scanFeedback === 'error' && 'Volume não encontrado'}
                   </div>
                 </div>
               )}
@@ -458,62 +351,19 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   variant="outline"
                   size="sm"
                   className="bg-white/90 hover:bg-white"
-                  title={isUsingZebraScanner ? "Usar câmera web" : "Alternar câmera / Leitor"}
+                  title="Alternar câmera"
                 >
                   <SwitchCamera className="w-4 h-4" />
-                </Button>
-                {!isUsingZebraScanner && availableCameras.length === 0 && (
-                  <Button
-                    onClick={() => {
-                      setIsUsingZebraScanner(true);
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="bg-blue-100 hover:bg-blue-200 text-blue-900 font-bold"
-                    title="Ativar leitor Zebra"
-                  >
-                    🦓 Leitor
-                  </Button>
-                )}
-                <Button
-                   onClick={() => {
-                    if (!isUsingZebraScanner) stopScanner();
-                    setUseManualMode(true);
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/90 hover:bg-white"
-                >
-                  <Keyboard className="w-4 h-4 mr-1" />
-                  Digitar
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div className="w-full">
-                <Keyboard className="w-12 h-12 mx-auto mb-3 text-blue-600" />
-                <p className="text-sm mb-2" style={{ color: theme.text }}>Modo Manual</p>
-                <Button
-                  onClick={() => {
-                    setUseManualMode(false);
-                  }}
-                  variant="outline"
-                  size="sm"
-                  style={{ borderColor: theme.border, color: theme.text }}
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Voltar para Câmera
                 </Button>
               </div>
             </div>
           )}
 
-          <div className="mt-3 space-y-2">
-            <div className="bg-white dark:bg-gray-900 border-2 rounded-lg p-3" style={{ borderColor: isDark ? '#3b82f6' : '#2563eb' }}>
+          <div className="mt-4 space-y-2">
+            <div className="bg-white dark:bg-gray-900 border rounded-lg p-3" style={{ borderColor: isDark ? '#475569' : '#d1d5db' }}>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Digite ou cole o código..."
+                  placeholder="Código..."
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -521,10 +371,10 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                       handleManualSubmit();
                     }
                   }}
-                  className="text-center font-mono text-lg h-12"
+                  className="text-center font-mono h-11"
                   style={{ 
                     backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                    borderColor: isDark ? '#475569' : '#cbd5e1',
+                    borderColor: isDark ? '#334155' : '#e5e7eb',
                     color: isDark ? '#f1f5f9' : '#0f172a'
                   }}
                   autoFocus
@@ -532,7 +382,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 <Button
                   onClick={handleManualSubmit}
                   disabled={!manualInput.trim()}
-                  className="bg-blue-600 hover:bg-blue-700 px-8 h-12 text-base"
+                  className="bg-blue-600 hover:bg-blue-700 px-6 h-11"
                 >
                   OK
                 </Button>
@@ -542,11 +392,10 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             <Button
               variant="outline"
               onClick={onClose}
-              className="w-full h-11"
+              className="w-full h-10"
               style={{ borderColor: theme.border, color: theme.text }}
             >
-              <X className="w-4 h-4 mr-2" />
-              Fechar Scanner
+              Fechar
             </Button>
           </div>
         </div>
