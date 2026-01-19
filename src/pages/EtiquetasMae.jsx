@@ -358,11 +358,27 @@ export default function EtiquetasMae() {
   };
 
   const handleScanComFeedback = async (codigo) => {
-    if (!codigo || !codigo.trim() || !etiquetaSelecionada) return 'error';
+   if (!codigo || !codigo.trim()) {
+     console.log('❌ handleScanComFeedback: Código vazio');
+     return 'error';
+   }
 
-    setProcessando(true);
-    try {
-      const codigoLimpo = codigo.trim();
+   if (!etiquetaSelecionada) {
+     console.log('❌ handleScanComFeedback: Etiqueta não selecionada');
+     return 'error';
+   }
+
+   if (processando) {
+     console.log('⏳ handleScanComFeedback: Já está processando');
+     return 'processing';
+   }
+
+   setProcessando(true);
+   console.log('🔄 handleScanComFeedback iniciado com:', codigo);
+
+   try {
+     const codigoLimpo = codigo.trim();
+     console.log('📦 Código limpo:', codigoLimpo);
       
       // Se for chave NF-e (44 dígitos), processar nota fiscal
       if (codigoLimpo.length === 44 && /^\d+$/.test(codigoLimpo)) {
