@@ -331,20 +331,30 @@ export default function EtiquetasMae() {
   };
 
   const handleVolumeCameraScan = async (codigo) => {
-    console.log('🔍 handleVolumeCameraScan chamado com:', codigo);
-    
-    if (!codigo || !codigo.trim()) {
-      console.log('❌ Código vazio');
-      return 'error';
-    }
-    
-    setCodigoScanner(codigo.trim());
-    console.log('📝 Código limpo e setado:', codigo.trim());
-    
-    // Processar o scan e retornar resultado para feedback visual
-    const resultado = await handleScanComFeedback(codigo.trim());
-    console.log('✓ Resultado do scan:', resultado);
-    return resultado;
+   console.log('🔍 handleVolumeCameraScan chamado com:', codigo);
+
+   if (!codigo || !codigo.trim()) {
+     console.log('❌ Código vazio');
+     return 'error';
+   }
+
+   if (!etiquetaSelecionada) {
+     console.log('❌ Nenhuma etiqueta selecionada');
+     toast.error('Nenhuma etiqueta selecionada');
+     return 'error';
+   }
+
+   if (processando) {
+     console.log('⏳ Já está processando');
+     return 'processing';
+   }
+
+   console.log('📝 Código recebido:', codigo.trim());
+
+   // Processar o scan direto e retornar resultado para feedback visual
+   const resultado = await handleScanComFeedback(codigo.trim());
+   console.log('✓ Resultado do scan retornado:', resultado);
+   return resultado;
   };
 
   const handleScanComFeedback = async (codigo) => {
