@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Camera, X, Loader2, Keyboard, SwitchCamera } from "lucide-react";
-import { playSuccessBeep, playDuplicateBeep, playLongErrorBeep } from "../utils/audioFeedback";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +9,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import QrScanner from "qr-scanner";
+import { useScanFeedback } from "./useScanFeedback";
+import { useZebraScanner } from "./useZebraScanner";
+import { ZEBRA_DETECTION, FEEDBACK_CONFIG, SCANNER_CONFIG } from "./scannerConstants";
 
 export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual, progressoAtual, externalFeedback }) {
   const videoRef = useRef(null);
@@ -17,25 +19,20 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const [manualInput, setManualInput] = useState("");
   const [useManualMode, setUseManualMode] = useState(false);
   const qrScannerRef = useRef(null);
-  const [scanFeedback, setScanFeedback] = useState(null); // 'success' | 'duplicate' | 'error' | 'processing' | null
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
   const [availableCameras, setAvailableCameras] = useState([]);
   const [useZebraScanner, setUseZebraScanner] = useState(false);
-  const [zebraListening, setZebraListening] = useState(false);
+  
+  // Usar hooks customizados
+  const { scanFeedback, applyFeedback } = useScanFeedback();
+  const { setupZebraScanner: setupZebra, cleanupZebraScanner } = useZebraScanner(
+    useZebraScanner && open,
+    onScan,
+    applyFeedback
+  );
 
   // Detectar dispositivo Zebra e câmeras ao abrir
   useEffect(() => {
-    const detectZebra = () => {
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isZebra = userAgent.includes('zebra') || 
-             userAgent.includes('tc21') || 
-             userAgent.includes('tc26') ||
-             userAgent.includes('mc');
-      console.log('🔍 Detectando dispositivo Zebra...');
-      console.log('📱 User Agent:', navigator.userAgent);
-      console.log('✅ É dispositivo Zebra?', isZebra);
-      return isZebra;
-    };
 
     const detectCameras = async () => {
       try {
@@ -60,26 +57,10 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     };
     
     if (open) {
-      console.log('🔓 Modal aberto, iniciando detecção...');
-      const isZebra = detectZebra();
+      const isZebra = ZEBRA_DETECTION.isZebraDevice(navigator.userAgent);
       setUseZebraScanner(isZebra);
-      
-      if (isZebra) {
-        console.log('🦓 Zebra TC210K detectado - iniciando com scanner nativo');
-        setupZebraScanner();
-      } else {
-        console.log('📷 Nenhum Zebra detectado, usando câmera');
-      }
-      
-      // Sempre detectar câmeras para permitir alternância
       detectCameras();
-    } else {
-      console.log('🔒 Modal fechado');
     }
-
-    return () => {
-      cleanupZebraScanner();
-    };
   }, [open]);
 
   // Reiniciar scanner quando trocar de câmera
@@ -97,72 +78,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     };
   }, [open, useManualMode, currentCameraIndex, useZebraScanner]);
 
-  // Setup do scanner Zebra (DataWedge Intent)
-  const setupZebraScanner = () => {
-    console.log('⚙️ setupZebraScanner chamado. zebraListening:', zebraListening);
-    if (zebraListening) {
-      console.log('⚠️ Scanner Zebra já está listening, retornando');
-      return;
+  // Ativar/desativar Zebra quando needed
+  useEffect(() => {
+    if (useZebraScanner && open) {
+      setupZebra();
     }
-
-    const handleZebraScan = async (event) => {
-      console.log('📡 handleZebraScan disparado com evento:', event);
-      const data = event.detail;
-      
-      if (data && data.data && !scanFeedback) {
-        const scannedCode = data.data;
-        console.log('🦓 ZEBRA SCAN:', scannedCode);
-
-        const cleaned = scannedCode.replace(/\D/g, '');
-        const finalCode = cleaned.length === 44 ? cleaned : scannedCode.trim();
-
-        setScanFeedback('processing');
-        const scanResult = await Promise.resolve(onScan(finalCode));
-
-        if (scanResult === 'success') {
-          setScanFeedback('success');
-          playSuccessBeep(); // 1 bipe curto
-          if (window.navigator.vibrate) window.navigator.vibrate(200);
-        } else if (scanResult === 'duplicate') {
-          setScanFeedback('duplicate');
-          playDuplicateBeep(); // 2 bipes curtos
-          if (window.navigator.vibrate) window.navigator.vibrate([100, 50, 100]);
-        } else if (scanResult === 'error') {
-          setScanFeedback('error');
-          playLongErrorBeep(); // 1 bipe longo
-          if (window.navigator.vibrate) window.navigator.vibrate([200, 100, 200]);
-        }
-
-        setTimeout(() => setScanFeedback(null), 800);
-      }
-    };
-
-    // Listener para Intent do DataWedge
-    window.addEventListener('datawedge-scan', handleZebraScan);
-    console.log('✅ Listener "datawedge-scan" registrado');
-    
-    // Listener alternativo via broadcast
-    const handleBroadcast = (e) => {
-      console.log('📡 Broadcast recebido:', e.data);
-      if (e.data && typeof e.data === 'string') {
-        handleZebraScan({ detail: { data: e.data } });
-      }
-    };
-    window.addEventListener('message', handleBroadcast);
-    console.log('✅ Listener "message" registrado');
-
-    setZebraListening(true);
-    console.log('🦓 Scanner Zebra ativado - aguardando leitura...');
-    console.log('⚠️ Aguardando: datawedge-scan ou message events...');
-  };
-
-  const cleanupZebraScanner = () => {
-    if (zebraListening) {
-      window.removeEventListener('datawedge-scan', () => {});
-      window.removeEventListener('message', () => {});
-      setZebraListening(false);
-    }
-  };
+    return cleanupZebraScanner;
+  }, [useZebraScanner, open, setupZebra, cleanupZebraScanner]);
 
   const startScanner = async () => {
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
@@ -191,36 +113,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
             console.log('📦 Código processado:', finalCode);
 
-            // Bloquear novos scans
-            setScanFeedback('processing');
-
+            // Usar hook de feedback centralizado
             const scanResult = await Promise.resolve(onScan(finalCode));
-
-            console.log('✅ Resultado do scan:', scanResult);
-
-            // Aplicar feedback baseado no resultado
-            if (scanResult === 'success') {
-              setScanFeedback('success');
-              // Vibração de sucesso no coletor Zebra
-              if (window.navigator.vibrate) {
-                window.navigator.vibrate(200);
-              }
-            } else if (scanResult === 'duplicate') {
-              setScanFeedback('duplicate');
-              // Vibração de alerta (padrão diferente)
-              if (window.navigator.vibrate) {
-                window.navigator.vibrate([100, 50, 100]);
-              }
-            } else if (scanResult === 'error') {
-              setScanFeedback('error');
-              // Vibração de erro
-              if (window.navigator.vibrate) {
-                window.navigator.vibrate([200, 100, 200]);
-              }
-            }
-
-            // Liberar para próximo scan
-            setTimeout(() => setScanFeedback(null), 800);
+            applyFeedback(scanResult);
           }
         },
         {
@@ -228,7 +123,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
           highlightScanRegion: false,
           highlightCodeOutline: false,
           preferredCamera: cameraConfig,
-          maxScansPerSecond: 8,
+          maxScansPerSecond: SCANNER_CONFIG.maxScansPerSecond,
           calculateScanRegion: (video) => {
             const smallestDimension = Math.min(video.videoWidth, video.videoHeight);
             const scanRegionSize = Math.round(0.9 * smallestDimension);
@@ -349,27 +244,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
   const handleManualSubmit = async () => {
     if (manualInput.trim()) {
-      console.log('⌨️ MODO MANUAL - Código digitado:', manualInput.trim());
-      
-      setScanFeedback('processing');
-      
       const result = await Promise.resolve(onScan(manualInput.trim()));
-      
-      console.log('⌨️ MODO MANUAL - Resultado:', result);
-      
+      applyFeedback(result);
       setManualInput("");
-      
-      // Aplicar feedback baseado no resultado
-      if (result === 'success') {
-        setScanFeedback('success');
-      } else if (result === 'duplicate') {
-        setScanFeedback('duplicate');
-      } else if (result === 'error') {
-        setScanFeedback('error');
-      }
-      
-      // Liberar para próximo scan
-      setTimeout(() => setScanFeedback(null), 800);
     }
   };
 
