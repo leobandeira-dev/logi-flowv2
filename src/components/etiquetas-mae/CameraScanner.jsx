@@ -227,17 +227,29 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     }
   };
 
-  const handleInputPaste = () => {
-    // Aguardar o React atualizar o state após cola e submeter com debounce mínimo
+  const handleInputPaste = (e) => {
+    // Interromper qualquer debounce anterior
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
     
-    debounceTimerRef.current = setTimeout(() => {
-      if (inputRef.current?.value.trim()) {
-        handleManualSubmit();
-      }
-    }, 100);
+    // Ler o conteúdo colado diretamente do clipboard
+    const pastedText = (e.clipboardData || window.clipboardData)?.getData('text');
+    
+    if (pastedText?.trim()) {
+      // Atualizar input com o valor colado
+      setManualInput(pastedText.trim());
+      
+      // Submeter imediatamente após cola
+      debounceTimerRef.current = setTimeout(() => {
+        const finalValue = pastedText.trim();
+        onScan(finalValue).then(result => {
+          applyFeedback(result);
+          setManualInput("");
+          setTimeout(() => inputRef.current?.focus(), 100);
+        });
+      }, 50);
+    }
   };
 
   // Manter foco no input enquanto modal estiver aberto
