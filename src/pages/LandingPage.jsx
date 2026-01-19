@@ -423,6 +423,9 @@ Enviado em ${new Date().toLocaleString('pt-BR')}`
               <button onClick={() => scrollToSection('funcionalidades')} className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">
                 Funcionalidades
               </button>
+              <Button onClick={handleLogin} className="w-full bg-blue-600 hover:bg-blue-700 mt-3">
+                Entrar
+              </Button>
             </div>
           )}
         </div>
