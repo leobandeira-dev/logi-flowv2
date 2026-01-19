@@ -30,6 +30,10 @@ export default function Cubagem() {
   });
   const [modelo, setModelo] = useState(null);
   const [modoCalibracao, setModoCalibracao] = useState(false);
+  const [medidasPendentes, setMedidasPendentes] = useState(() => {
+    const saved = localStorage.getItem('medidas_pendentes');
+    return saved ? JSON.parse(saved) : [];
+  });
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -407,6 +411,50 @@ export default function Cubagem() {
     }
   };
 
+  const salvarMedidaSemAssociar = () => {
+    const novaMedida = {
+      id: Date.now().toString(),
+      foto: fotoCapturada,
+      altura: medidasTempoReal.altura,
+      largura: medidasTempoReal.largura,
+      comprimento: medidasTempoReal.comprimento,
+      cubagem: cubagem,
+      objeto: objetoDetectado?.class || "objeto",
+      timestamp: new Date().toISOString()
+    };
+    
+    const novasMedidas = [...medidasPendentes, novaMedida];
+    setMedidasPendentes(novasMedidas);
+    localStorage.setItem('medidas_pendentes', JSON.stringify(novasMedidas));
+    
+    toast.success("Medida salva! Associe ao volume depois.");
+    reiniciar();
+  };
+
+  const removerMedidaPendente = (id) => {
+    const novasMedidas = medidasPendentes.filter(m => m.id !== id);
+    setMedidasPendentes(novasMedidas);
+    localStorage.setItem('medidas_pendentes', JSON.stringify(novasMedidas));
+    toast.success("Medida removida");
+  };
+
+  const associarMedidaPendente = async (medida) => {
+    setFotoCapturada(medida.foto);
+    setCubagem(medida.cubagem);
+    setObjetoDetectado({ class: medida.objeto });
+    
+    const medidasTemp = {
+      altura: medida.altura,
+      largura: medida.largura,
+      comprimento: medida.comprimento,
+      objeto: medida.objeto
+    };
+    setMedidasTempoReal(medidasTemp);
+    
+    setEtapa("associando");
+    await iniciarScanQR();
+  };
+
 
 
   const iniciarScanQR = async () => {
@@ -467,7 +515,7 @@ export default function Cubagem() {
     }
   };
 
-  const associarCubagem = async (volId) => {
+  const associarCubagem = async (volId, medidaId = null) => {
     try {
       // Upload da foto
       const blob = await fetch(fotoCapturada).then(r => r.blob());
@@ -476,14 +524,19 @@ export default function Cubagem() {
 
       // Atualizar volume com cubagem e foto
       await base44.entities.Volume.update(volId, {
-        altura_cm: medidas.altura,
-        largura_cm: medidas.largura,
-        comprimento_cm: medidas.comprimento,
+        altura_cm: medidasTempoReal.altura,
+        largura_cm: medidasTempoReal.largura,
+        comprimento_cm: medidasTempoReal.comprimento,
         cubagem_m3: cubagem,
         foto_cubagem_url: file_url,
         data_cubagem: new Date().toISOString(),
         objeto_detectado: objetoDetectado?.class || "unknown"
       });
+
+      // Se associou medida pendente, remover da lista
+      if (medidaId) {
+        removerMedidaPendente(medidaId);
+      }
 
       toast.success("Cubagem associada ao volume com sucesso!");
       setEtapa("concluido");
@@ -797,16 +850,26 @@ export default function Cubagem() {
                       </div>
                     </div>
 
-                    <Button 
-                      onClick={() => {
-                        setEtapa("associando");
-                        iniciarScanQR();
-                      }} 
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                    >
-                      <QrCode className="w-4 h-4 mr-2" />
-                      Ler QR Code do Volume
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={salvarMedidaSemAssociar}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Salvar para Depois
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          setEtapa("associando");
+                          iniciarScanQR();
+                        }} 
+                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                      >
+                        <QrCode className="w-4 h-4 mr-2" />
+                        Associar Agora
+                      </Button>
+                    </div>
                   </div>
                 )}
 
@@ -835,8 +898,67 @@ export default function Cubagem() {
             </Card>
           </div>
 
-          {/* Histórico */}
-          <div>
+          {/* Medidas Pendentes e Histórico */}
+          <div className="space-y-6">
+            {/* Medidas Pendentes */}
+            {medidasPendentes.length > 0 && (
+              <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2" style={{ color: theme.text }}>
+                    <Save className="w-5 h-5" />
+                    Medidas Pendentes ({medidasPendentes.length})
+                  </h3>
+                  
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                    {medidasPendentes.map(medida => (
+                      <div key={medida.id} className="p-3 rounded-lg border border-orange-300 bg-orange-50 dark:bg-orange-950">
+                        <div className="flex items-start gap-3">
+                          <img
+                            src={medida.foto}
+                            alt="Objeto"
+                            className="w-20 h-20 object-cover rounded"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm mb-1" style={{ color: theme.text }}>
+                              {medida.objeto}
+                            </p>
+                            <div className="grid grid-cols-2 gap-2 text-xs mb-2" style={{ color: theme.textMuted }}>
+                              <p>A: {medida.altura.toFixed(1)}cm</p>
+                              <p>L: {medida.largura.toFixed(1)}cm</p>
+                              <p>C: {medida.comprimento.toFixed(1)}cm</p>
+                              <p className="font-semibold text-orange-600">
+                                {medida.cubagem.toFixed(4)} m³
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => associarMedidaPendente(medida)}
+                                size="sm"
+                                className="bg-blue-600 hover:bg-blue-700 text-xs h-7"
+                              >
+                                <QrCode className="w-3 h-3 mr-1" />
+                                Associar
+                              </Button>
+                              <Button
+                                onClick={() => removerMedidaPendente(medida.id)}
+                                variant="outline"
+                                size="sm"
+                                className="text-xs h-7"
+                              >
+                                <X className="w-3 h-3 mr-1" />
+                                Remover
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Histórico */}
             <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
               <CardContent className="p-6">
                 <h3 className="font-semibold mb-4 flex items-center gap-2" style={{ color: theme.text }}>
@@ -844,7 +966,7 @@ export default function Cubagem() {
                   Histórico de Cubagens
                 </h3>
                 
-                <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                <div className="space-y-3 max-h-[300px] overflow-y-auto">
                   {historico.length === 0 ? (
                     <p className="text-center text-sm py-8" style={{ color: theme.textMuted }}>
                       Nenhuma cubagem registrada ainda

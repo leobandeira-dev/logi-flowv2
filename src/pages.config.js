@@ -9,6 +9,7 @@ import ChamadosAdmin from './pages/ChamadosAdmin';
 import Coletas from './pages/Coletas';
 import ConfiguracaoEtapas from './pages/ConfiguracaoEtapas';
 import Configuracoes from './pages/Configuracoes';
+import Cubagem from './pages/Cubagem';
 import Dashboard from './pages/Dashboard';
 import DashboardTV from './pages/DashboardTV';
 import EtiquetasMae from './pages/EtiquetasMae';
@@ -47,7 +48,6 @@ import TrackingTV from './pages/TrackingTV';
 import Unitizacao from './pages/Unitizacao';
 import Usuarios from './pages/Usuarios';
 import Veiculos from './pages/Veiculos';
-import Cubagem from './pages/Cubagem';
 import __Layout from './Layout.jsx';
 
 
@@ -63,6 +63,7 @@ export const PAGES = {
     "Coletas": Coletas,
     "ConfiguracaoEtapas": ConfiguracaoEtapas,
     "Configuracoes": Configuracoes,
+    "Cubagem": Cubagem,
     "Dashboard": Dashboard,
     "DashboardTV": DashboardTV,
     "EtiquetasMae": EtiquetasMae,
@@ -101,7 +102,6 @@ export const PAGES = {
     "Unitizacao": Unitizacao,
     "Usuarios": Usuarios,
     "Veiculos": Veiculos,
-    "Cubagem": Cubagem,
 }
 
 export const pagesConfig = {
