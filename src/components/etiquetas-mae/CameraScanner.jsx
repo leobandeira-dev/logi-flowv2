@@ -227,6 +227,19 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     }
   };
 
+  const handleInputPaste = () => {
+    // Aguardar o React atualizar o state após cola e submeter com debounce mínimo
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      if (inputRef.current?.value.trim()) {
+        handleManualSubmit();
+      }
+    }, 100);
+  };
+
   // Manter foco no input enquanto modal estiver aberto
   useEffect(() => {
     if (open) {
