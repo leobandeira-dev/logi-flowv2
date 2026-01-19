@@ -387,17 +387,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
 
               <div className="absolute top-2 right-2 z-10 flex gap-2">
-                {availableCameras.length > 1 && (
-                  <Button
-                    onClick={toggleCamera}
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/90 hover:bg-white"
-                    title="Alternar câmera"
-                  >
-                    <SwitchCamera className="w-4 h-4" />
-                  </Button>
-                )}
+                <Button
+                  onClick={toggleCamera}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/90 hover:bg-white"
+                  title="Alternar câmera"
+                >
+                  <SwitchCamera className="w-4 h-4" />
+                </Button>
                 <Button
                   onClick={() => {
                     stopScanner();
