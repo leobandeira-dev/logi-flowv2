@@ -102,9 +102,10 @@ export const useZebraScanner = (enabled, onScan, onFeedback) => {
   const cleanupZebraScanner = useCallback(() => {
     if (!handlersRef.current.datawedgeHandler) return;
 
-    const { datawedgeHandler, messageHandler } = handlersRef.current;
+    const { datawedgeHandler, messageHandler, keyboardHandler } = handlersRef.current;
     
     window.removeEventListener('datawedge-scan', datawedgeHandler);
+    window.removeEventListener('keydown', keyboardHandler);
     window.removeEventListener('message', messageHandler);
     
     handlersRef.current = {};
