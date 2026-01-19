@@ -478,6 +478,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
            highlightScanRegion: false,
            highlightCodeOutline: false,
            preferredCamera: cameraConfig,
+           facingMode: cameraConfig?.facingMode || "environment",
            maxScansPerSecond: 8,
            calculateScanRegion: (video) => {
              const smallestDimension = Math.min(video.videoWidth, video.videoHeight);
