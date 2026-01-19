@@ -230,26 +230,37 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   };
 
   const handleInputPaste = async (e) => {
-    // Capturar o valor colado direto do evento, antes do React atualizar o state
+    // Prevenir comportamento padrão
+    e.preventDefault();
+    
+    // Capturar o valor colado direto do evento
     const pastedValue = (e.clipboardData || window.clipboardData)?.getData('text')?.trim();
     
     if (pastedValue) {
       console.log('📋 Valor colado detectado:', pastedValue);
       
-      // Limpar debounce anterior
+      // Limpar qualquer debounce anterior
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
       
+      // Atualizar o input visualmente
+      if (inputRef.current) {
+        inputRef.current.value = pastedValue;
+      }
+      
+      // Chamar onScan direto (não esperar pelo state update)
       try {
-        // Chamar onScan direto com o valor colado (não esperar pelo state)
         const result = await Promise.resolve(onScan(pastedValue));
         console.log('✅ onScan retornou:', result);
         
         applyFeedback(result);
-        setManualInput("");
         
-        // Manter foco no input para próxima leitura
+        // Limpar input e manter foco
+        if (inputRef.current) {
+          inputRef.current.value = "";
+        }
+        setManualInput("");
         setTimeout(() => inputRef.current?.focus(), 100);
       } catch (error) {
         console.error('❌ Erro ao processar scan:', error);
