@@ -76,39 +76,47 @@ export default function Cubagem() {
   };
 
   const iniciarCamera = async () => {
-    try {
-      console.log("🎥 Solicitando acesso à câmera...");
-      
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: "environment",
-          width: { ideal: 1920 }, 
-          height: { ideal: 1080 } 
-        } 
-      });
-      
-      console.log("✅ Stream obtido:", stream);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-        setCameraAtiva(true);
+    // Ativar estado primeiro para mostrar o vídeo
+    setCameraAtiva(true);
+    setEtapa("calibracao");
+    
+    // Aguardar um momento para o DOM renderizar
+    setTimeout(async () => {
+      try {
+        console.log("🎥 Solicitando acesso à câmera...");
         
-        // Aguardar carregamento e reproduzir
-        videoRef.current.onloadedmetadata = async () => {
-          try {
-            await videoRef.current.play();
-            console.log("✅ Vídeo reproduzindo");
-            toast.success("Câmera ativada");
-          } catch (err) {
-            console.error("❌ Erro ao reproduzir:", err);
-          }
-        };
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: "environment",
+            width: { ideal: 1920 }, 
+            height: { ideal: 1080 } 
+          } 
+        });
+        
+        console.log("✅ Stream obtido:", stream);
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          streamRef.current = stream;
+          
+          // Aguardar carregamento e reproduzir
+          videoRef.current.onloadedmetadata = async () => {
+            try {
+              await videoRef.current.play();
+              console.log("✅ Vídeo reproduzindo");
+              toast.success("Câmera ativada");
+            } catch (err) {
+              console.error("❌ Erro ao reproduzir:", err);
+            }
+          };
+        }
+      } catch (error) {
+        console.error("❌ Erro ao acessar câmera:", error);
+        toast.error("Erro ao acessar câmera: " + error.message);
+        setCameraAtiva(false);
+        setEtapa("inicial");
       }
-    } catch (error) {
-      console.error("❌ Erro ao acessar câmera:", error);
-      toast.error("Erro ao acessar câmera: " + error.message);
-    }
+    }, 100);
   };
 
   const pararCamera = () => {
@@ -419,7 +427,7 @@ export default function Cubagem() {
                 </div>
 
                 {/* Etapa Inicial - Calibração */}
-                {etapa === 'inicial' && !cameraAtiva && (
+                {(etapa === 'inicial' || etapa === 'calibracao') && !cameraAtiva && (
                   <div className="text-center py-8">
                     <CreditCard className="w-16 h-16 mx-auto mb-4" style={{ color: theme.textMuted }} />
                     <h3 className="font-semibold mb-2" style={{ color: theme.text }}>
@@ -467,7 +475,7 @@ export default function Cubagem() {
                     </div>
                     <canvas ref={canvasRef} className="hidden" />
                     
-                    {!scanningQR && etapa === 'inicial' && (
+                    {!scanningQR && (etapa === 'inicial' || etapa === 'calibracao') && (
                       <div className="space-y-3">
                         <p className="text-center text-sm font-medium" style={{ color: theme.text }}>
                           Posicione o cartão de crédito no centro da imagem
