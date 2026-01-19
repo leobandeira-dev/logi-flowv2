@@ -637,7 +637,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
         <div className="p-4 pt-0">
           {!useManualMode ? (
-            <>
+            <div>
               {useZebraScanner ? (
                 // ========== TELA DO LEITOR ZEBRA NATIVO ==========
                 <div className="w-full rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
