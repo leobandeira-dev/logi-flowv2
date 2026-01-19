@@ -165,7 +165,7 @@ export default function Cubagem() {
       ctx.drawImage(video, 0, 0);
       
       try {
-        const predictions = await modelo.detect(canvas, undefined, 0.4);
+        const predictions = await modelo.detect(canvas, undefined, 0.3);
         
         if (predictions.length > 0 && overlay) {
           const objeto = predictions.reduce((prev, current) => {
