@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera, X, Loader2, Keyboard, SwitchCamera, Scan } from "lucide-react";
-import { Label } from "@/components/ui/label";
+import { Camera, X, Loader2, Keyboard } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,309 +9,159 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import QrScanner from "qr-scanner";
-import { useScanFeedback } from "./useScanFeedback";
-import { useZebraScanner } from "./useZebraScanner";
-import { ZEBRA_DETECTION, FEEDBACK_CONFIG, SCANNER_CONFIG } from "./scannerConstants";
-import { findRearCameraIndex, findFrontCameraIndex, logCameraInfo, getCameraConfig, isIOS, isAndroid, detectCameraType } from "./cameraDetection";
 
 export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual, progressoAtual, externalFeedback }) {
   const videoRef = useRef(null);
-  const inputRef = useRef(null);
-  const debounceTimerRef = useRef(null);
   const [scanning, setScanning] = useState(false);
   const [manualInput, setManualInput] = useState("");
-  const [scannerMode, setScannerMode] = useState('camera'); // 'camera' ou 'scanner'
+  const [useManualMode, setUseManualMode] = useState(false);
   const qrScannerRef = useRef(null);
-  const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
-  const [availableCameras, setAvailableCameras] = useState([]);
-  const [isUsingZebraScanner, setIsUsingZebraScanner] = useState(false);
+  const [scanFeedback, setScanFeedback] = useState(null); // 'success' | 'duplicate' | 'error' | 'processing' | null
 
-  // Handler unificado com throttling robusto
-  const lastScanRef = useRef({ code: '', timestamp: 0 });
-  const processingRef = useRef(false);
-  
-  const handleScanResult = useCallback(async (code) => {
-    const now = Date.now();
-    const minInterval = 1000; // 1 segundo entre scans
-    
-    // Anti-duplicate: mesmo código em menos de 1 segundo
-    if (code === lastScanRef.current.code && now - lastScanRef.current.timestamp < minInterval) {
-      console.log('🚫 Scan duplicado ignorado:', code);
-      return 'duplicate';
-    }
-    
-    // Prevenir processamento simultâneo
-    if (processingRef.current) {
-      console.log('⏳ Scan em processamento, ignorando:', code);
-      return 'processing';
-    }
-    
-    lastScanRef.current = { code, timestamp: now };
-    processingRef.current = true;
-    
-    try {
-      const result = await Promise.resolve(onScan(code));
-      return result;
-    } catch (error) {
-      console.error('Erro ao processar scan:', error);
-      return 'error';
-    } finally {
-      processingRef.current = false;
-    }
-  }, [onScan]);
-  
-  // Usar hooks customizados
-  const { scanFeedback, applyFeedback } = useScanFeedback();
-  const { setupZebraScanner: setupZebra, cleanupZebraScanner } = useZebraScanner(
-    scannerMode === 'scanner' && open,
-    handleScanResult,
-    applyFeedback
-  );
-
-  // Detectar dispositivo Zebra e câmeras ao abrir
   useEffect(() => {
+    if (open && !useManualMode) {
+      setTimeout(() => {
+        startScanner();
+      }, 100);
+    }
 
-    const detectCameras = async () => {
-      try {
-        const cameras = await QrScanner.listCameras(true);
-        setAvailableCameras(cameras);
-        
-        // Log detalhado para debug
-        logCameraInfo(cameras);
-        
-        // Priorizar câmera traseira por padrão
-        const rearCameraIndex = findRearCameraIndex(cameras);
-        setCurrentCameraIndex(rearCameraIndex);
-        
-        console.log(`Câmera selecionada: [${rearCameraIndex}] ${cameras[rearCameraIndex]?.label}`);
-        console.log(`Plataforma: ${isIOS() ? 'iOS' : isAndroid() ? 'Android' : 'Outro'}`);
-      } catch (error) {
-        console.error('Erro ao detectar câmeras:', error);
-      }
+    return () => {
+      stopScanner();
     };
-    
-    if (open) {
-      detectCameras();
-      
-      // Auto-selecionar modo scanner se for Zebra
-      const isZebra = ZEBRA_DETECTION.isZebraDevice(navigator.userAgent);
-      if (isZebra) {
-        setScannerMode('scanner');
-      }
-    }
-  }, [open]);
+  }, [open, useManualMode]);
 
-  const stopScanner = useCallback(() => {
-    if (qrScannerRef.current) {
-      qrScannerRef.current.stop();
-      qrScannerRef.current.destroy();
-      qrScannerRef.current = null;
-    }
-    setScanning(false);
-  }, []);
-
-  const startScanner = useCallback(async () => {
-    if (qrScannerRef.current || scannerMode !== 'camera' || !videoRef.current) return;
+  const startScanner = async () => {
+    if (qrScannerRef.current || useManualMode || !videoRef.current) return;
 
     try {
-      // Simplificar: sempre usar facingMode para câmera traseira no iOS
-      let scannerConfig = {};
-
-      if (isIOS()) {
-        scannerConfig = { facingMode: 'environment' };
-        console.log('📱 iOS: usando facingMode "environment" para câmera traseira');
-      } else if (availableCameras.length > 0 && currentCameraIndex < availableCameras.length) {
-        // Android/Desktop: usar a câmera específica
-        scannerConfig = availableCameras[currentCameraIndex];
-        console.log('📷 Usando câmera:', scannerConfig.label || 'padrão');
-      } else {
-        scannerConfig = { facingMode: 'environment' };
-      }
-
       const qrScanner = new QrScanner(
         videoRef.current,
         async (result) => {
-          if (!result?.data) return;
+          if (result?.data && !scanFeedback) {
+            const decodedText = result.data;
+            console.log('🔍 QR Code detectado:', decodedText);
 
-          const decodedText = result.data.trim();
-          const cleaned = decodedText.replace(/\D/g, '');
-          const finalCode = cleaned.length === 44 ? cleaned : decodedText;
+            const cleaned = decodedText.replace(/\D/g, '');
+            const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
 
-          const scanResult = await handleScanResult(finalCode);
-          applyFeedback(scanResult);
-          
-          // Limpar campo de input
-          setManualInput("");
-          if (inputRef.current) {
-            inputRef.current.value = "";
+            console.log('📦 Código processado:', finalCode);
+
+            // Bloquear novos scans
+            setScanFeedback('processing');
+
+            const scanResult = await Promise.resolve(onScan(finalCode));
+
+            console.log('✅ Resultado do scan:', scanResult);
+
+            // Aplicar feedback baseado no resultado
+            if (scanResult === 'success') {
+              setScanFeedback('success');
+            } else if (scanResult === 'duplicate') {
+              setScanFeedback('duplicate');
+            } else if (scanResult === 'error') {
+              setScanFeedback('error');
+            }
+
+            // Liberar para próximo scan
+            setTimeout(() => setScanFeedback(null), 800);
           }
         },
         {
           returnDetailedScanResult: true,
           highlightScanRegion: false,
           highlightCodeOutline: false,
-          preferredCamera: scannerConfig,
-          maxScansPerSecond: SCANNER_CONFIG.maxScansPerSecond
+          preferredCamera: "environment",
+          maxScansPerSecond: 5,
+          calculateScanRegion: (video) => {
+            // Área de scan maior para capturar códigos de diferentes distâncias
+            const smallestDimension = Math.min(video.videoWidth, video.videoHeight);
+            const scanRegionSize = Math.round(0.85 * smallestDimension);
+
+            return {
+              x: Math.round((video.videoWidth - scanRegionSize) / 2),
+              y: Math.round((video.videoHeight - scanRegionSize) / 2),
+              width: scanRegionSize,
+              height: scanRegionSize,
+            };
+          }
         }
       );
 
-      qrScanner.setInversionMode('both');
+      // Configurar vídeo para melhor qualidade e foco automático
+      qrScanner.setInversionMode('both'); // Detectar QR codes claros e escuros
+
       qrScannerRef.current = qrScanner;
       await qrScanner.start();
       setScanning(true);
-      console.log('📸 Scanner iniciado com sucesso');
 
+      // Otimizar configurações da câmera para diferentes distâncias
+      try {
+        const videoTrack = videoRef.current?.srcObject?.getVideoTracks()[0];
+        if (videoTrack) {
+          const capabilities = videoTrack.getCapabilities();
+          const constraints = {};
+
+          // Ativar foco contínuo se disponível
+          if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+            constraints.focusMode = 'continuous';
+          }
+
+          // Zoom ideal se disponível
+          if (capabilities.zoom) {
+            constraints.zoom = Math.max(capabilities.zoom.min, 1);
+          }
+
+          await videoTrack.applyConstraints({
+            advanced: [{ ...constraints }]
+          });
+
+          console.log('📸 Scanner otimizado para diferentes distâncias');
+        }
+      } catch (error) {
+        console.log('Otimizações de câmera não aplicadas:', error.message);
+      }
+
+      console.log('📸 Scanner QR iniciado');
     } catch (error) {
       console.error("Erro ao iniciar scanner:", error);
+      setUseManualMode(true);
     }
-  }, [availableCameras, currentCameraIndex, scannerMode, handleScanResult, applyFeedback]);
+  };
 
-  // Reiniciar scanner quando trocar de câmera
-  useEffect(() => {
-    if (open && scannerMode === 'camera' && !isUsingZebraScanner && availableCameras.length > 0) {
-      setTimeout(() => {
-        startScanner();
-      }, 100);
+  const stopScanner = () => {
+    if (qrScannerRef.current) {
+      qrScannerRef.current.stop();
+      qrScannerRef.current.destroy();
+      qrScannerRef.current = null;
     }
-
-    return () => stopScanner();
-  }, [open, scannerMode, currentCameraIndex, isUsingZebraScanner, startScanner, stopScanner]);
-
-  // Ativar/desativar Zebra quando needed
-  useEffect(() => {
-    if (scannerMode === 'scanner' && open) {
-      setupZebra();
-      return cleanupZebraScanner;
-    }
-  }, [scannerMode, open, setupZebra, cleanupZebraScanner]);
-
-  const toggleCamera = useCallback(async () => {
-    if (availableCameras.length < 2) return;
-
-    // Alternar entre câmeras disponíveis
-    stopScanner();
-    const currentType = detectCameraType(availableCameras[currentCameraIndex]?.label);
-    
-    // Se está na traseira, ir para frontal; se está na frontal, ir para traseira
-    let nextIndex;
-    if (currentType === 'rear') {
-      nextIndex = findFrontCameraIndex(availableCameras);
-    } else {
-      nextIndex = findRearCameraIndex(availableCameras);
-    }
-    
-    setCurrentCameraIndex(nextIndex);
-    console.log(`Alternando para câmera [${nextIndex}]: ${availableCameras[nextIndex]?.label}`);
-  }, [availableCameras, currentCameraIndex, stopScanner]);
+    setScanning(false);
+  };
 
   const handleManualSubmit = async () => {
     if (manualInput.trim()) {
-      const code = manualInput.trim();
+      console.log('⌨️ MODO MANUAL - Código digitado:', manualInput.trim());
       
-      try {
-        const result = await Promise.resolve(onScan(code));
-        applyFeedback(result);
-      } catch (error) {
-        console.error('❌ Erro ao processar scan:', error);
-        applyFeedback('error');
-      }
+      setScanFeedback('processing');
+      
+      const result = await Promise.resolve(onScan(manualInput.trim()));
+      
+      console.log('⌨️ MODO MANUAL - Resultado:', result);
       
       setManualInput("");
-      if (inputRef.current) {
-        inputRef.current.value = "";
+      
+      // Aplicar feedback baseado no resultado
+      if (result === 'success') {
+        setScanFeedback('success');
+      } else if (result === 'duplicate') {
+        setScanFeedback('duplicate');
+      } else if (result === 'error') {
+        setScanFeedback('error');
       }
-      setTimeout(() => inputRef.current?.focus(), 100);
+      
+      // Liberar para próximo scan
+      setTimeout(() => setScanFeedback(null), 800);
     }
   };
-
-  const handleManualInputChange = (e) => {
-    const value = e.target.value;
-    setManualInput(value);
-
-    // Limpar debounce anterior
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    // Não processar automaticamente - apenas ao pressionar Enter
-  };
-
-  const handleInputKeyDown = async (e) => {
-    // Capturar Enter - Zebra scanner envia Enter após o código
-    if (e.key === 'Enter' && manualInput.trim()) {
-      e.preventDefault();
-      
-      const code = manualInput.trim();
-      
-      try {
-        const result = await Promise.resolve(onScan(code));
-        applyFeedback(result);
-      } catch (error) {
-        console.error('❌ Erro ao processar scan:', error);
-        applyFeedback('error');
-      }
-      
-      // Limpar e focar
-      setManualInput("");
-      if (inputRef.current) {
-        inputRef.current.value = "";
-      }
-      setTimeout(() => inputRef.current?.focus(), 100);
-    }
-  };
-
-  const handleInputPaste = async (e) => {
-    // Prevenir comportamento padrão
-    e.preventDefault();
-    
-    // Capturar o valor colado direto do evento
-    const pastedValue = (e.clipboardData || window.clipboardData)?.getData('text')?.trim();
-    
-    if (pastedValue) {
-      console.log('📋 Valor colado detectado:', pastedValue);
-      
-      // Limpar qualquer debounce anterior
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      
-      // Atualizar o input visualmente
-      if (inputRef.current) {
-        inputRef.current.value = pastedValue;
-      }
-      
-      // Chamar onScan direto (não esperar pelo state update)
-      try {
-        const result = await Promise.resolve(onScan(pastedValue));
-        console.log('✅ onScan retornou:', result);
-        
-        applyFeedback(result);
-        
-        // Limpar input e manter foco
-        if (inputRef.current) {
-          inputRef.current.value = "";
-        }
-        setManualInput("");
-        setTimeout(() => inputRef.current?.focus(), 100);
-      } catch (error) {
-        console.error('❌ Erro ao processar scan:', error);
-        applyFeedback('error');
-      }
-    }
-  };
-
-
-
-
-
-  // Limpar debounce ao desmontar
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
 
   const theme = {
     bg: isDark ? '#0f172a' : '#ffffff',
@@ -322,21 +171,19 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-        <style>{`
-          .scan-region-highlight-svg,
-          .code-outline-highlight {
-            display: none !important;
-          }
-          input { -webkit-user-select: none; user-select: none; }
-          input:focus { outline: none; }
-        `}</style>
-        <DialogContent 
-          className="!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !p-0 !m-0 !rounded-none !border-0 !left-0 !top-0 !translate-x-0 !translate-y-0" 
-          style={{ backgroundColor: theme.bg, borderColor: theme.border, pointerEvents: 'none' }}
-        >
-        <DialogHeader className="absolute top-0 left-0 right-0 p-4 z-20 bg-gradient-to-b from-black/50 to-black/0">
-          <DialogTitle style={{ color: 'white' }}>
-            Leitura de Código
+      <style>{`
+        .scan-region-highlight-svg,
+        .code-outline-highlight {
+          display: none !important;
+        }
+      `}</style>
+      <DialogContent 
+        className="max-w-md w-[95vw] p-0" 
+        style={{ backgroundColor: theme.bg, borderColor: theme.border }}
+      >
+        <DialogHeader className="p-4 pb-3">
+          <DialogTitle style={{ color: theme.text }}>
+            Scanner QR Code
           </DialogTitle>
           {notaAtual && progressoAtual && (
             <div className="mt-3 p-4 rounded-xl border-2 shadow-lg" style={{ backgroundColor: isDark ? '#1e3a8a' : '#dbeafe', borderColor: isDark ? '#1e40af' : '#2563eb' }}>
@@ -369,163 +216,205 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
           )}
         </DialogHeader>
 
-        <div className="absolute inset-0 w-full h-full flex flex-col" style={{ pointerEvents: 'auto' }}>
-          <div className="flex-1 bg-black overflow-hidden relative">
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              style={{ transform: 'scaleX(-1)' }}
-            />
-
-            <div 
-              className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-200"
-              style={{ zIndex: 5 }}
-            >
-              <div 
-                className="transition-all duration-200"
-                style={{
-                  width: '92%',
-                  height: '92%',
-                  border: scanFeedback === 'success' 
-                    ? '4px solid #10b981' 
-                    : scanFeedback === 'duplicate'
-                    ? '4px solid #f59e0b'
-                    : scanFeedback === 'error'
-                    ? '4px solid #ef4444'
-                    : scanFeedback === 'processing' 
-                    ? '4px solid #3b82f6' 
-                    : '4px solid rgba(255, 255, 255, 0.5)',
-                  borderRadius: '12px',
-                  boxShadow: scanFeedback === 'success' 
-                    ? '0 0 50px rgba(16, 185, 129, 0.8), 0 0 80px rgba(16, 185, 129, 0.5), inset 0 0 25px rgba(16, 185, 129, 0.3)' 
-                    : scanFeedback === 'duplicate'
-                    ? '0 0 50px rgba(245, 158, 11, 0.8), 0 0 80px rgba(245, 158, 11, 0.5), inset 0 0 25px rgba(245, 158, 11, 0.3)'
-                    : scanFeedback === 'error'
-                    ? '0 0 50px rgba(239, 68, 68, 0.8), 0 0 80px rgba(239, 68, 68, 0.5), inset 0 0 25px rgba(239, 68, 68, 0.3)'
-                    : scanFeedback === 'processing' 
-                    ? '0 0 50px rgba(59, 130, 246, 0.8), 0 0 80px rgba(59, 130, 246, 0.5), inset 0 0 25px rgba(59, 130, 246, 0.3)' 
-                    : '0 0 40px rgba(255, 255, 255, 0.4), 0 0 60px rgba(255, 255, 255, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.15)'
-                }}
+        <div className="p-4 pt-0">
+          {!useManualMode ? (
+            <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: '1/1', maxHeight: '70vh' }}>
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                style={{ transform: 'scaleX(-1)' }}
               />
-            </div>
 
-            {/* Feedback Textual Central */}
-            {scanFeedback && scanFeedback !== 'processing' && (
-              <div className="absolute inset-0 flex items-center justify-center">
+              {/* Overlay com Feedback por Cor */}
+              <div 
+                className="absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-300"
+                style={{ zIndex: 5 }}
+              >
                 <div 
-                  className={`px-6 py-3 rounded-lg font-semibold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
-                    scanFeedback === 'success' 
-                      ? 'bg-green-600' 
+                  className="shadow-lg transition-all duration-300"
+                  style={{
+                    width: '85%',
+                    height: '85%',
+                    aspectRatio: '1/1',
+                    maxWidth: '85%',
+                    maxHeight: '85%',
+                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+                    borderRadius: '12px',
+                    position: 'relative',
+                    border: scanFeedback === 'success' 
+                      ? '8px solid #10b981' 
                       : scanFeedback === 'duplicate'
-                      ? 'bg-yellow-600'
-                      : 'bg-red-600'
-                  }`}
-                  style={{ fontSize: '16px' }}
+                      ? '8px solid #f59e0b'
+                      : scanFeedback === 'error'
+                      ? '8px solid #ef4444'
+                      : scanFeedback === 'processing' 
+                      ? '8px solid #3b82f6' 
+                      : '6px solid #60a5fa',
+                    backgroundColor: scanFeedback === 'success' 
+                      ? 'rgba(16, 185, 129, 0.15)' 
+                      : scanFeedback === 'duplicate'
+                      ? 'rgba(245, 158, 11, 0.15)'
+                      : scanFeedback === 'error'
+                      ? 'rgba(239, 68, 68, 0.15)'
+                      : scanFeedback === 'processing' 
+                      ? 'rgba(59, 130, 246, 0.1)' 
+                      : 'transparent'
+                  }}
                 >
-                  {scanFeedback === 'success' && 'Volume adicionado'}
-                  {scanFeedback === 'duplicate' && 'Código já bipado'}
-                  {scanFeedback === 'error' && 'Volume não encontrado'}
+                  {/* Cantos com Feedback Visual */}
+                  <div className="absolute top-0 left-0 w-16 h-16 border-t-8 border-l-8 transition-all duration-300" style={{ 
+                    borderRadius: '12px 0 0 0', 
+                    borderColor: scanFeedback === 'success' 
+                      ? '#10b981' 
+                      : scanFeedback === 'duplicate'
+                      ? '#f59e0b'
+                      : scanFeedback === 'error'
+                      ? '#ef4444'
+                      : scanFeedback === 'processing' 
+                      ? '#3b82f6' 
+                      : '#60a5fa',
+                    borderWidth: scanFeedback ? '10px' : '8px'
+                  }}></div>
+                  <div className="absolute top-0 right-0 w-16 h-16 border-t-8 border-r-8 transition-all duration-300" style={{ 
+                    borderRadius: '0 12px 0 0', 
+                    borderColor: scanFeedback === 'success' 
+                      ? '#10b981' 
+                      : scanFeedback === 'duplicate'
+                      ? '#f59e0b'
+                      : scanFeedback === 'error'
+                      ? '#ef4444'
+                      : scanFeedback === 'processing' 
+                      ? '#3b82f6' 
+                      : '#60a5fa',
+                    borderWidth: scanFeedback ? '10px' : '8px'
+                  }}></div>
+                  <div className="absolute bottom-0 left-0 w-16 h-16 border-b-8 border-l-8 transition-all duration-300" style={{ 
+                    borderRadius: '0 0 0 12px', 
+                    borderColor: scanFeedback === 'success' 
+                      ? '#10b981' 
+                      : scanFeedback === 'duplicate'
+                      ? '#f59e0b'
+                      : scanFeedback === 'error'
+                      ? '#ef4444'
+                      : scanFeedback === 'processing' 
+                      ? '#3b82f6' 
+                      : '#60a5fa',
+                    borderWidth: scanFeedback ? '10px' : '8px'
+                  }}></div>
+                  <div className="absolute bottom-0 right-0 w-16 h-16 border-b-8 border-r-8 transition-all duration-300" style={{ 
+                    borderRadius: '0 0 12px 0', 
+                    borderColor: scanFeedback === 'success' 
+                      ? '#10b981' 
+                      : scanFeedback === 'duplicate'
+                      ? '#f59e0b'
+                      : scanFeedback === 'error'
+                      ? '#ef4444'
+                      : scanFeedback === 'processing' 
+                      ? '#3b82f6' 
+                      : '#60a5fa',
+                    borderWidth: scanFeedback ? '10px' : '8px'
+                  }}></div>
+
+                  {/* Feedback Textual Central */}
+                  {scanFeedback && scanFeedback !== 'processing' && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div 
+                        className={`px-6 py-3 rounded-xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
+                          scanFeedback === 'success' 
+                            ? 'bg-green-600' 
+                            : scanFeedback === 'duplicate'
+                            ? 'bg-yellow-600'
+                            : 'bg-red-600'
+                        }`}
+                        style={{ fontSize: '18px' }}
+                      >
+                        {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
+                        {scanFeedback === 'duplicate' && '⚠ JÁ BIPADO'}
+                        {scanFeedback === 'error' && '✗ ERRO'}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
 
-            <div className="absolute top-4 left-4 right-4 z-10 flex gap-2 justify-between">
-              <div className="flex gap-2">
+
+
+              <div className="absolute top-2 right-2 z-10">
                 <Button
                   onClick={() => {
-                    if (scannerMode === 'camera') {
-                      stopScanner();
-                      setScannerMode('scanner');
-                    } else {
-                      setScannerMode('camera');
-                    }
+                    stopScanner();
+                    setUseManualMode(true);
                   }}
-                  variant="outline"
-                  size="sm"
-                  className={scannerMode === 'scanner' ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white/90 hover:bg-white"}
-                  title="Modo Scanner Zebra"
-                >
-                  <Scan className="w-4 h-4 mr-1" />
-                  Scanner
-                </Button>
-                <Button
-                  onClick={() => {
-                    if (scannerMode === 'scanner') {
-                      setScannerMode('camera');
-                    } else {
-                      stopScanner();
-                      setScannerMode('camera');
-                      setTimeout(() => startScanner(), 200);
-                    }
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className={scannerMode === 'camera' ? "bg-green-600 hover:bg-green-700 text-white" : "bg-white/90 hover:bg-white"}
-                  title="Modo Câmera QR"
-                >
-                  <Camera className="w-4 h-4 mr-1" />
-                  Câmera
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                {scannerMode === 'camera' && (
-                  <Button
-                    onClick={toggleCamera}
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/90 hover:bg-white"
-                    title="Alternar câmera"
-                  >
-                    <SwitchCamera className="w-4 h-4" />
-                  </Button>
-                )}
-                <Button
-                  onClick={onClose}
                   variant="outline"
                   size="sm"
                   className="bg-white/90 hover:bg-white"
-                  title="Fechar"
                 >
-                  <X className="w-4 h-4" />
+                  <Keyboard className="w-4 h-4 mr-1" />
+                  Digitar
                 </Button>
               </div>
             </div>
+          ) : (
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center" style={{ aspectRatio: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="w-full">
+                <Keyboard className="w-12 h-12 mx-auto mb-3 text-blue-600" />
+                <p className="text-sm mb-2" style={{ color: theme.text }}>Modo Manual</p>
+                <Button
+                  onClick={() => {
+                    setUseManualMode(false);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  style={{ borderColor: theme.border, color: theme.text }}
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  Voltar para Câmera
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-3 space-y-2">
+            <div className="bg-white dark:bg-gray-900 border-2 rounded-lg p-3" style={{ borderColor: isDark ? '#3b82f6' : '#2563eb' }}>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Digite ou cole o código..."
+                  value={manualInput}
+                  onChange={(e) => setManualInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && manualInput.trim()) {
+                      handleManualSubmit();
+                    }
+                  }}
+                  className="text-center font-mono text-lg h-12"
+                  style={{ 
+                    backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                    borderColor: isDark ? '#475569' : '#cbd5e1',
+                    color: isDark ? '#f1f5f9' : '#0f172a'
+                  }}
+                  autoFocus
+                />
+                <Button
+                  onClick={handleManualSubmit}
+                  disabled={!manualInput.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 px-8 h-12 text-base"
+                >
+                  OK
+                </Button>
+              </div>
             </div>
 
-            {scannerMode === 'scanner' && (
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-black/0 space-y-2">
-                <div className="bg-white dark:bg-gray-900 border rounded-lg p-3" style={{ borderColor: isDark ? '#475569' : '#d1d5db' }}>
-                  <Label className="text-xs mb-2 block" style={{ color: isDark ? '#f1f5f9' : '#0f172a' }}>
-                    Scanner Zebra - Digite ou bipe o código
-                  </Label>
-                  <div className="flex gap-2">
-                    <Input
-                       ref={inputRef}
-                       placeholder="Bipe ou digite o código..."
-                       value={manualInput}
-                       onChange={handleManualInputChange}
-                       onKeyDown={handleInputKeyDown}
-                       onPaste={handleInputPaste}
-                       className="text-center font-mono h-11"
-                       style={{ 
-                         backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                         borderColor: isDark ? '#334155' : '#e5e7eb',
-                         color: isDark ? '#f1f5f9' : '#0f172a'
-                       }}
-                       autoFocus
-                     />
-                    <Button
-                      onClick={handleManualSubmit}
-                      disabled={!manualInput.trim()}
-                      className="bg-blue-600 hover:bg-blue-700 px-6 h-11"
-                    >
-                      OK
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="w-full h-11"
+              style={{ borderColor: theme.border, color: theme.text }}
+            >
+              <X className="w-4 h-4 mr-2" />
+              Fechar Scanner
+            </Button>
           </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -802,7 +802,7 @@ export default function Apresentacao() {
       {/* Container para impressão (todos os slides) */}
       <div className="print-container">
         {slides.map((slide, index) => (
-          <div key={index} className="slide-wrapper">
+          <div key={index} className={`slide-wrapper ${index === currentSlide ? 'active' : ''}`}>
             {slide.content}
           </div>
         ))}
