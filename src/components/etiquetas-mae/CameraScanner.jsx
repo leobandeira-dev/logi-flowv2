@@ -285,7 +285,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   }}
                 >
                   {/* Cantos com Feedback Visual - Design Clean */}
-                  <div className="absolute top-0 left-0 w-12 h-12 transition-all duration-300" style={{ 
+                  <div className="absolute top-0 left-0 w-16 h-16 transition-all duration-300" style={{ 
                     borderTop: scanFeedback ? '3px solid' : '2px solid',
                     borderLeft: scanFeedback ? '3px solid' : '2px solid',
                     borderRadius: '8px 0 0 0', 
@@ -312,7 +312,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                         : '0 0 12px rgba(59, 130, 246, 0.5)' 
                       : '0 0 8px rgba(96, 165, 250, 0.3)'
                   }}></div>
-                  <div className="absolute top-0 right-0 w-12 h-12 transition-all duration-300" style={{ 
+                  <div className="absolute top-0 right-0 w-16 h-16 transition-all duration-300" style={{ 
                     borderTop: scanFeedback ? '3px solid' : '2px solid',
                     borderRight: scanFeedback ? '3px solid' : '2px solid',
                     borderRadius: '0 8px 0 0', 
@@ -339,7 +339,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                         : '0 0 12px rgba(59, 130, 246, 0.5)' 
                       : '0 0 8px rgba(96, 165, 250, 0.3)'
                   }}></div>
-                  <div className="absolute bottom-0 left-0 w-12 h-12 transition-all duration-300" style={{ 
+                  <div className="absolute bottom-0 left-0 w-16 h-16 transition-all duration-300" style={{ 
                     borderBottom: scanFeedback ? '3px solid' : '2px solid',
                     borderLeft: scanFeedback ? '3px solid' : '2px solid',
                     borderRadius: '0 0 0 8px', 
@@ -366,7 +366,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                         : '0 0 12px rgba(59, 130, 246, 0.5)' 
                       : '0 0 8px rgba(96, 165, 250, 0.3)'
                   }}></div>
-                  <div className="absolute bottom-0 right-0 w-12 h-12 transition-all duration-300" style={{ 
+                  <div className="absolute bottom-0 right-0 w-16 h-16 transition-all duration-300" style={{ 
                     borderBottom: scanFeedback ? '3px solid' : '2px solid',
                     borderRight: scanFeedback ? '3px solid' : '2px solid',
                     borderRadius: '0 0 8px 0', 
