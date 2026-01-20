@@ -12,6 +12,7 @@ import QrScanner from "qr-scanner";
 
 export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual, progressoAtual, externalFeedback }) {
   const videoRef = useRef(null);
+  const inputRef = useRef(null);
   const [scanning, setScanning] = useState(false);
   const [manualInput, setManualInput] = useState("");
   const [useManualMode, setUseManualMode] = useState(false);
@@ -29,6 +30,27 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       stopScanner();
     };
   }, [open, useManualMode]);
+
+  // Auto-focus no input sempre que o modal abrir ou quando o scanFeedback voltar a null
+  useEffect(() => {
+    if (open && inputRef.current) {
+      // Delay para garantir que o DOM está pronto
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [open, scanFeedback]);
+
+  // Auto-focus ao mudar para modo manual
+  useEffect(() => {
+    if (useManualMode && inputRef.current) {
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [useManualMode]);
 
   const startScanner = async () => {
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
@@ -158,8 +180,11 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         setScanFeedback('error');
       }
       
-      // Liberar para próximo scan
-      setTimeout(() => setScanFeedback(null), 800);
+      // Liberar para próximo scan e refocalizar
+      setTimeout(() => {
+        setScanFeedback(null);
+        inputRef.current?.focus();
+      }, 800);
     }
   };
 
@@ -378,6 +403,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             <div className="bg-white dark:bg-gray-900 border-2 rounded-lg p-3" style={{ borderColor: isDark ? '#3b82f6' : '#2563eb' }}>
               <div className="flex gap-2">
                 <Input
+                  ref={inputRef}
                   placeholder="Digite ou cole o código..."
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
