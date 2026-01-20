@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera, X, Loader2, Keyboard, SwitchCamera } from "lucide-react";
+import { Camera, X, Loader2, Keyboard, SwitchCamera, Scan } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -163,9 +164,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
     } catch (error) {
       console.error("Erro ao iniciar scanner:", error);
-      setUseManualMode(true);
     }
-  }, [availableCameras, currentCameraIndex, useManualMode, handleScanResult, scanFeedback, applyFeedback, stopScanner]);
+  }, [availableCameras, currentCameraIndex, scannerMode, handleScanResult, applyFeedback]);
 
   // Reiniciar scanner quando trocar de câmera
   useEffect(() => {
