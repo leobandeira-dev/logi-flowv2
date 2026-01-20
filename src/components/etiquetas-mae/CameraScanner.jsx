@@ -26,22 +26,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const [availableCameras, setAvailableCameras] = useState([]);
   const [isUsingZebraScanner, setIsUsingZebraScanner] = useState(false);
 
-  // Wrapper para onScan que busca imediatamente e limpa o campo
+  // Wrapper simples - apenas chama onScan sem processamento duplicado
   const handleScanResult = useCallback(async (code) => {
-    try {
-      const result = await Promise.resolve(onScan(code));
-      applyFeedback(result);
-      // Limpar campo imediatamente
-      setManualInput("");
-      if (inputRef.current) {
-        inputRef.current.value = "";
-      }
-      return result;
-    } catch (error) {
-      console.error('Erro ao processar scan:', error);
-      applyFeedback('error');
-      throw error;
-    }
+    return onScan(code);
   }, [onScan]);
   
   // Usar hooks customizados
@@ -115,20 +102,17 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       const qrScanner = new QrScanner(
         videoRef.current,
         async (result) => {
-          if (!result?.data || processingRef) return;
+          if (!result?.data) return;
 
           const now = Date.now();
           const decodedText = result.data.trim();
 
-          // Debounce por tipo de scanner
-          const minInterval = useManualMode ? SCANNER_CONFIG.cameraDebounceMs : SCANNER_CONFIG.cameraDebounceMs;
-
           // Anti-duplicate: mesmo código em intervalo curto
-          if (decodedText === lastScannedCode && now - lastScanTime < minInterval) {
+          if (decodedText === lastScannedCode && now - lastScanTime < SCANNER_CONFIG.cameraDebounceMs) {
             return;
           }
 
-          // Prevenir múltiplas requisições simultâneas
+          // Prevenir processamento simultâneo
           if (processingRef) {
             return;
           }
@@ -141,8 +125,14 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             const cleaned = decodedText.replace(/\D/g, '');
             const finalCode = cleaned.length === 44 ? cleaned : decodedText;
 
-            const scanResult = await Promise.resolve(handleScanResult(finalCode));
+            const scanResult = await Promise.resolve(onScan(finalCode));
             applyFeedback(scanResult);
+            
+            // Limpar campo
+            setManualInput("");
+            if (inputRef.current) {
+              inputRef.current.value = "";
+            }
           } catch (error) {
             console.error('❌ Erro ao processar QR:', error);
             applyFeedback('error');
@@ -228,58 +218,57 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
   const handleManualSubmit = async () => {
     if (manualInput.trim()) {
-      const result = await Promise.resolve(onScan(manualInput.trim()));
-      applyFeedback(result);
+      const code = manualInput.trim();
+      
+      try {
+        const result = await Promise.resolve(onScan(code));
+        applyFeedback(result);
+      } catch (error) {
+        console.error('❌ Erro ao processar scan:', error);
+        applyFeedback('error');
+      }
+      
       setManualInput("");
-      // Refocus no input para o próximo volume
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
 
-  const handleManualInputChange = async (e) => {
+  const handleManualInputChange = (e) => {
     const value = e.target.value;
     setManualInput(value);
 
-    // Limpar debounce anterior para evitar múltiplas chamadas
+    // Limpar debounce anterior
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
-    // Se tem conteúdo e está completo (ou digitou espaço/Enter), buscar imediatamente
-    if (value.trim()) {
-      // Se detectar espaço ou caractere especial final, submit imediato
-      if (value.includes(' ') || value.includes('\n') || value.endsWith('\t')) {
-        const cleanValue = value.trim();
-        if (cleanValue.length > 0) {
-          // Atualizar state e chamar onScan
-          setManualInput("");
-          setTimeout(() => inputRef.current?.focus(), 50);
-          onScan(cleanValue);
-        }
-      } else {
-        // Debounce mais conservador para evitar múltiplas requisições
-        debounceTimerRef.current = setTimeout(async () => {
-          const finalValue = inputRef.current?.value?.trim();
-          if (finalValue && finalValue.length > 0) {
-            const result = await Promise.resolve(onScan(finalValue));
-            applyFeedback(result);
-            setManualInput("");
-            setTimeout(() => inputRef.current?.focus(), 50);
-          }
-        }, 300);
-      }
-    }
+    // Não processar automaticamente - apenas ao pressionar Enter
   };
 
-  const handleInputKeyDown = (e) => {
+  const handleInputKeyDown = async (e) => {
     // Capturar Enter - Zebra scanner envia Enter após o código
     if (e.key === 'Enter' && manualInput.trim()) {
       e.preventDefault();
-      // Limpar debounce pendente e submeter imediatamente
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
+      
+      const code = manualInput.trim();
+      
+      try {
+        const result = await Promise.resolve(onScan(code));
+        applyFeedback(result);
+      } catch (error) {
+        console.error('❌ Erro ao processar scan:', error);
+        applyFeedback('error');
       }
-      handleManualSubmit();
+      
+      // Limpar e focar
+      setManualInput("");
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
 
