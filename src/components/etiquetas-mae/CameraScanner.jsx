@@ -17,7 +17,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const [manualInput, setManualInput] = useState("");
   const [useManualMode, setUseManualMode] = useState(false);
   const qrScannerRef = useRef(null);
-  const [scanFeedback, setScanFeedback] = useState(null); // 'success' | 'duplicate' | 'error' | 'processing' | null
+  const [scanFeedback, setScanFeedback] = useState(null); // 'success' | 'duplicate' | 'error' | 'not_found' | 'processing' | null
 
   useEffect(() => {
     if (open && !useManualMode) {
@@ -80,6 +80,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
               setScanFeedback('success');
             } else if (scanResult === 'duplicate') {
               setScanFeedback('duplicate');
+            } else if (scanResult === 'not_found') {
+              setScanFeedback('not_found');
             } else if (scanResult === 'error') {
               setScanFeedback('error');
             }
@@ -176,6 +178,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         setScanFeedback('success');
       } else if (result === 'duplicate') {
         setScanFeedback('duplicate');
+      } else if (result === 'not_found') {
+        setScanFeedback('not_found');
       } else if (result === 'error') {
         setScanFeedback('error');
       }
@@ -271,6 +275,8 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                       ? 'rgba(16, 185, 129, 0.15)' 
                       : scanFeedback === 'duplicate'
                       ? 'rgba(245, 158, 11, 0.15)'
+                      : scanFeedback === 'not_found'
+                      ? 'rgba(249, 115, 22, 0.15)'
                       : scanFeedback === 'error'
                       ? 'rgba(239, 68, 68, 0.15)'
                       : scanFeedback === 'processing' 
@@ -381,12 +387,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                             ? 'bg-green-600' 
                             : scanFeedback === 'duplicate'
                             ? 'bg-yellow-600'
+                            : scanFeedback === 'not_found'
+                            ? 'bg-orange-600'
                             : 'bg-red-600'
                         }`}
                         style={{ fontSize: '18px' }}
                       >
                         {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
                         {scanFeedback === 'duplicate' && '⚠ JÁ BIPADO'}
+                        {scanFeedback === 'not_found' && '⚠ VOLUME NÃO ENCONTRADO'}
                         {scanFeedback === 'error' && '✗ ERRO'}
                       </div>
                     </div>
