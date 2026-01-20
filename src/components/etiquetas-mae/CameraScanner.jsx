@@ -20,15 +20,44 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const debounceTimerRef = useRef(null);
   const [scanning, setScanning] = useState(false);
   const [manualInput, setManualInput] = useState("");
-  const [useManualMode, setUseManualMode] = useState(false);
+  const [scannerMode, setScannerMode] = useState('camera'); // 'camera' ou 'scanner'
   const qrScannerRef = useRef(null);
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
   const [availableCameras, setAvailableCameras] = useState([]);
   const [isUsingZebraScanner, setIsUsingZebraScanner] = useState(false);
 
-  // Wrapper simples - apenas chama onScan sem processamento duplicado
+  // Handler unificado com throttling robusto
+  const lastScanRef = useRef({ code: '', timestamp: 0 });
+  const processingRef = useRef(false);
+  
   const handleScanResult = useCallback(async (code) => {
-    return onScan(code);
+    const now = Date.now();
+    const minInterval = 1000; // 1 segundo entre scans
+    
+    // Anti-duplicate: mesmo código em menos de 1 segundo
+    if (code === lastScanRef.current.code && now - lastScanRef.current.timestamp < minInterval) {
+      console.log('🚫 Scan duplicado ignorado:', code);
+      return 'duplicate';
+    }
+    
+    // Prevenir processamento simultâneo
+    if (processingRef.current) {
+      console.log('⏳ Scan em processamento, ignorando:', code);
+      return 'processing';
+    }
+    
+    lastScanRef.current = { code, timestamp: now };
+    processingRef.current = true;
+    
+    try {
+      const result = await Promise.resolve(onScan(code));
+      return result;
+    } catch (error) {
+      console.error('Erro ao processar scan:', error);
+      return 'error';
+    } finally {
+      processingRef.current = false;
+    }
   }, [onScan]);
   
   // Usar hooks customizados
@@ -78,7 +107,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   }, []);
 
   const startScanner = useCallback(async () => {
-    if (qrScannerRef.current || useManualMode || !videoRef.current) return;
+    if (qrScannerRef.current || scannerMode !== 'camera' || !videoRef.current) return;
 
     try {
       // Simplificar: sempre usar facingMode para câmera traseira no iOS
@@ -95,49 +124,22 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
         scannerConfig = { facingMode: 'environment' };
       }
 
-      let lastScannedCode = null;
-      let lastScanTime = 0;
-      let processingRef = false;
-
       const qrScanner = new QrScanner(
         videoRef.current,
         async (result) => {
           if (!result?.data) return;
 
-          const now = Date.now();
           const decodedText = result.data.trim();
+          const cleaned = decodedText.replace(/\D/g, '');
+          const finalCode = cleaned.length === 44 ? cleaned : decodedText;
 
-          // Anti-duplicate: mesmo código em intervalo curto
-          if (decodedText === lastScannedCode && now - lastScanTime < SCANNER_CONFIG.cameraDebounceMs) {
-            return;
-          }
-
-          // Prevenir processamento simultâneo
-          if (processingRef) {
-            return;
-          }
-
-          lastScannedCode = decodedText;
-          lastScanTime = now;
-          processingRef = true;
-
-          try {
-            const cleaned = decodedText.replace(/\D/g, '');
-            const finalCode = cleaned.length === 44 ? cleaned : decodedText;
-
-            const scanResult = await Promise.resolve(onScan(finalCode));
-            applyFeedback(scanResult);
-            
-            // Limpar campo
-            setManualInput("");
-            if (inputRef.current) {
-              inputRef.current.value = "";
-            }
-          } catch (error) {
-            console.error('❌ Erro ao processar QR:', error);
-            applyFeedback('error');
-          } finally {
-            processingRef = false;
+          const scanResult = await handleScanResult(finalCode);
+          applyFeedback(scanResult);
+          
+          // Limpar campo de input
+          setManualInput("");
+          if (inputRef.current) {
+            inputRef.current.value = "";
           }
         },
         {
@@ -163,14 +165,14 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
   // Reiniciar scanner quando trocar de câmera
   useEffect(() => {
-    if (open && !useManualMode && !isUsingZebraScanner && availableCameras.length > 0) {
+    if (open && scannerMode === 'camera' && !isUsingZebraScanner && availableCameras.length > 0) {
       setTimeout(() => {
         startScanner();
       }, 100);
     }
 
     return () => stopScanner();
-  }, [open, useManualMode, currentCameraIndex, isUsingZebraScanner, startScanner, stopScanner]);
+  }, [open, scannerMode, currentCameraIndex, isUsingZebraScanner, startScanner, stopScanner]);
 
   // Ativar/desativar Zebra quando needed
   useEffect(() => {
@@ -440,38 +442,70 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
               </div>
             )}
 
-            <div className="absolute top-4 right-4 z-10 flex gap-2">
-              <Button
-                onClick={() => setUseManualMode(!useManualMode)}
-                variant="outline"
-                size="sm"
-                className={useManualMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white/90 hover:bg-white"}
-                title="Modo manual"
-              >
-                <Keyboard className="w-4 h-4" />
-              </Button>
-              <Button
-                onClick={toggleCamera}
-                variant="outline"
-                size="sm"
-                className="bg-white/90 hover:bg-white"
-                title="Alternar câmera"
-              >
-                <SwitchCamera className="w-4 h-4" />
-              </Button>
-              <Button
-                onClick={onClose}
-                variant="outline"
-                size="sm"
-                className="bg-white/90 hover:bg-white"
-                title="Fechar"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+            <div className="absolute top-4 left-4 right-4 z-10 flex gap-2 justify-between">
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    if (scannerMode === 'camera') {
+                      stopScanner();
+                      setScannerMode('scanner');
+                    } else {
+                      setScannerMode('camera');
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className={scannerMode === 'scanner' ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white/90 hover:bg-white"}
+                  title="Modo Scanner Zebra"
+                >
+                  <Scan className="w-4 h-4 mr-1" />
+                  Scanner
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (scannerMode === 'scanner') {
+                      setScannerMode('camera');
+                    } else {
+                      stopScanner();
+                      setScannerMode('camera');
+                      setTimeout(() => startScanner(), 200);
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className={scannerMode === 'camera' ? "bg-green-600 hover:bg-green-700 text-white" : "bg-white/90 hover:bg-white"}
+                  title="Modo Câmera QR"
+                >
+                  <Camera className="w-4 h-4 mr-1" />
+                  Câmera
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                {scannerMode === 'camera' && (
+                  <Button
+                    onClick={toggleCamera}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/90 hover:bg-white"
+                    title="Alternar câmera"
+                  >
+                    <SwitchCamera className="w-4 h-4" />
+                  </Button>
+                )}
+                <Button
+                  onClick={onClose}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/90 hover:bg-white"
+                  title="Fechar"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
             </div>
 
-            {useManualMode && (
+            {scannerMode === 'scanner' && (
               <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-black/0 space-y-2">
                 <div className="bg-white dark:bg-gray-900 border rounded-lg p-3" style={{ borderColor: isDark ? '#475569' : '#d1d5db' }}>
                   <div className="flex gap-2">
