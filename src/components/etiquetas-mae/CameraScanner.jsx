@@ -266,15 +266,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                     boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
                     borderRadius: '12px',
                     position: 'relative',
-                    border: scanFeedback === 'success' 
-                      ? '8px solid #10b981' 
-                      : scanFeedback === 'duplicate'
-                      ? '8px solid #f59e0b'
-                      : scanFeedback === 'error'
-                      ? '8px solid #ef4444'
-                      : scanFeedback === 'processing' 
-                      ? '8px solid #3b82f6' 
-                      : '6px solid #60a5fa',
+                    border: 'none',
                     backgroundColor: scanFeedback === 'success' 
                       ? 'rgba(16, 185, 129, 0.15)' 
                       : scanFeedback === 'duplicate'
@@ -286,9 +278,11 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                       : 'transparent'
                   }}
                 >
-                  {/* Cantos com Feedback Visual */}
-                  <div className="absolute top-0 left-0 w-16 h-16 border-t-8 border-l-8 transition-all duration-300" style={{ 
-                    borderRadius: '12px 0 0 0', 
+                  {/* Cantos com Feedback Visual - Design Clean */}
+                  <div className="absolute top-0 left-0 w-12 h-12 transition-all duration-300" style={{ 
+                    borderTop: scanFeedback ? '3px solid' : '2px solid',
+                    borderLeft: scanFeedback ? '3px solid' : '2px solid',
+                    borderRadius: '8px 0 0 0', 
                     borderColor: scanFeedback === 'success' 
                       ? '#10b981' 
                       : scanFeedback === 'duplicate'
@@ -297,11 +291,21 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                       ? '#ef4444'
                       : scanFeedback === 'processing' 
                       ? '#3b82f6' 
-                      : '#60a5fa',
-                    borderWidth: scanFeedback ? '10px' : '8px'
+                      : 'rgba(96, 165, 250, 0.8)',
+                    boxShadow: scanFeedback 
+                      ? scanFeedback === 'success' 
+                        ? '0 0 12px rgba(16, 185, 129, 0.5)' 
+                        : scanFeedback === 'duplicate'
+                        ? '0 0 12px rgba(245, 158, 11, 0.5)'
+                        : scanFeedback === 'error'
+                        ? '0 0 12px rgba(239, 68, 68, 0.5)'
+                        : '0 0 12px rgba(59, 130, 246, 0.5)' 
+                      : '0 0 8px rgba(96, 165, 250, 0.3)'
                   }}></div>
-                  <div className="absolute top-0 right-0 w-16 h-16 border-t-8 border-r-8 transition-all duration-300" style={{ 
-                    borderRadius: '0 12px 0 0', 
+                  <div className="absolute top-0 right-0 w-12 h-12 transition-all duration-300" style={{ 
+                    borderTop: scanFeedback ? '3px solid' : '2px solid',
+                    borderRight: scanFeedback ? '3px solid' : '2px solid',
+                    borderRadius: '0 8px 0 0', 
                     borderColor: scanFeedback === 'success' 
                       ? '#10b981' 
                       : scanFeedback === 'duplicate'
@@ -310,11 +314,21 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                       ? '#ef4444'
                       : scanFeedback === 'processing' 
                       ? '#3b82f6' 
-                      : '#60a5fa',
-                    borderWidth: scanFeedback ? '10px' : '8px'
+                      : 'rgba(96, 165, 250, 0.8)',
+                    boxShadow: scanFeedback 
+                      ? scanFeedback === 'success' 
+                        ? '0 0 12px rgba(16, 185, 129, 0.5)' 
+                        : scanFeedback === 'duplicate'
+                        ? '0 0 12px rgba(245, 158, 11, 0.5)'
+                        : scanFeedback === 'error'
+                        ? '0 0 12px rgba(239, 68, 68, 0.5)'
+                        : '0 0 12px rgba(59, 130, 246, 0.5)' 
+                      : '0 0 8px rgba(96, 165, 250, 0.3)'
                   }}></div>
-                  <div className="absolute bottom-0 left-0 w-16 h-16 border-b-8 border-l-8 transition-all duration-300" style={{ 
-                    borderRadius: '0 0 0 12px', 
+                  <div className="absolute bottom-0 left-0 w-12 h-12 transition-all duration-300" style={{ 
+                    borderBottom: scanFeedback ? '3px solid' : '2px solid',
+                    borderLeft: scanFeedback ? '3px solid' : '2px solid',
+                    borderRadius: '0 0 0 8px', 
                     borderColor: scanFeedback === 'success' 
                       ? '#10b981' 
                       : scanFeedback === 'duplicate'
@@ -323,11 +337,21 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                       ? '#ef4444'
                       : scanFeedback === 'processing' 
                       ? '#3b82f6' 
-                      : '#60a5fa',
-                    borderWidth: scanFeedback ? '10px' : '8px'
+                      : 'rgba(96, 165, 250, 0.8)',
+                    boxShadow: scanFeedback 
+                      ? scanFeedback === 'success' 
+                        ? '0 0 12px rgba(16, 185, 129, 0.5)' 
+                        : scanFeedback === 'duplicate'
+                        ? '0 0 12px rgba(245, 158, 11, 0.5)'
+                        : scanFeedback === 'error'
+                        ? '0 0 12px rgba(239, 68, 68, 0.5)'
+                        : '0 0 12px rgba(59, 130, 246, 0.5)' 
+                      : '0 0 8px rgba(96, 165, 250, 0.3)'
                   }}></div>
-                  <div className="absolute bottom-0 right-0 w-16 h-16 border-b-8 border-r-8 transition-all duration-300" style={{ 
-                    borderRadius: '0 0 12px 0', 
+                  <div className="absolute bottom-0 right-0 w-12 h-12 transition-all duration-300" style={{ 
+                    borderBottom: scanFeedback ? '3px solid' : '2px solid',
+                    borderRight: scanFeedback ? '3px solid' : '2px solid',
+                    borderRadius: '0 0 8px 0', 
                     borderColor: scanFeedback === 'success' 
                       ? '#10b981' 
                       : scanFeedback === 'duplicate'
@@ -336,8 +360,16 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                       ? '#ef4444'
                       : scanFeedback === 'processing' 
                       ? '#3b82f6' 
-                      : '#60a5fa',
-                    borderWidth: scanFeedback ? '10px' : '8px'
+                      : 'rgba(96, 165, 250, 0.8)',
+                    boxShadow: scanFeedback 
+                      ? scanFeedback === 'success' 
+                        ? '0 0 12px rgba(16, 185, 129, 0.5)' 
+                        : scanFeedback === 'duplicate'
+                        ? '0 0 12px rgba(245, 158, 11, 0.5)'
+                        : scanFeedback === 'error'
+                        ? '0 0 12px rgba(239, 68, 68, 0.5)'
+                        : '0 0 12px rgba(59, 130, 246, 0.5)' 
+                      : '0 0 8px rgba(96, 165, 250, 0.3)'
                   }}></div>
 
                   {/* Feedback Textual Central */}
