@@ -176,11 +176,11 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
   // Ativar/desativar Zebra quando needed
   useEffect(() => {
-    if (isUsingZebraScanner && open) {
+    if (scannerMode === 'scanner' && open) {
       setupZebra();
+      return cleanupZebraScanner;
     }
-    return cleanupZebraScanner;
-  }, [isUsingZebraScanner, open, setupZebra, cleanupZebraScanner]);
+  }, [scannerMode, open, setupZebra, cleanupZebraScanner]);
 
   const toggleCamera = useCallback(async () => {
     if (isUsingZebraScanner) {
@@ -508,10 +508,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             {scannerMode === 'scanner' && (
               <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-black/0 space-y-2">
                 <div className="bg-white dark:bg-gray-900 border rounded-lg p-3" style={{ borderColor: isDark ? '#475569' : '#d1d5db' }}>
+                  <Label className="text-xs mb-2 block" style={{ color: isDark ? '#f1f5f9' : '#0f172a' }}>
+                    Scanner Zebra - Digite ou bipe o código
+                  </Label>
                   <div className="flex gap-2">
                     <Input
                        ref={inputRef}
-                       placeholder="Código..."
+                       placeholder="Bipe ou digite o código..."
                        value={manualInput}
                        onChange={handleManualInputChange}
                        onKeyDown={handleInputKeyDown}
@@ -535,7 +538,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                 </div>
               </div>
             )}
-            </div>
+          </div>
       </DialogContent>
     </Dialog>
   );
