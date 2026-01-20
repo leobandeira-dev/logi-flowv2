@@ -63,7 +63,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   // Usar hooks customizados
   const { scanFeedback, applyFeedback } = useScanFeedback();
   const { setupZebraScanner: setupZebra, cleanupZebraScanner } = useZebraScanner(
-    isUsingZebraScanner && open,
+    scannerMode === 'scanner' && open,
     handleScanResult,
     applyFeedback
   );
@@ -91,9 +91,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     };
     
     if (open) {
-      const isZebra = ZEBRA_DETECTION.isZebraDevice(navigator.userAgent);
-      setIsUsingZebraScanner(isZebra);
       detectCameras();
+      
+      // Auto-selecionar modo scanner se for Zebra
+      const isZebra = ZEBRA_DETECTION.isZebraDevice(navigator.userAgent);
+      if (isZebra) {
+        setScannerMode('scanner');
+      }
     }
   }, [open]);
 
@@ -183,24 +187,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   }, [scannerMode, open, setupZebra, cleanupZebraScanner]);
 
   const toggleCamera = useCallback(async () => {
-    if (isUsingZebraScanner) {
-      cleanupZebraScanner();
-      setIsUsingZebraScanner(false);
-      setTimeout(() => {
-        if (availableCameras.length > 0) {
-          startScanner();
-        }
-      }, 300);
-      return;
-    }
-
-    if (availableCameras.length < 2) {
-      if (ZEBRA_DETECTION.isZebraDevice(navigator.userAgent)) {
-        stopScanner();
-        setIsUsingZebraScanner(true);
-      }
-      return;
-    }
+    if (availableCameras.length < 2) return;
 
     // Alternar entre câmeras disponíveis
     stopScanner();
@@ -216,7 +203,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     
     setCurrentCameraIndex(nextIndex);
     console.log(`Alternando para câmera [${nextIndex}]: ${availableCameras[nextIndex]?.label}`);
-  }, [availableCameras, currentCameraIndex, stopScanner, startScanner]);
+  }, [availableCameras, currentCameraIndex, stopScanner]);
 
   const handleManualSubmit = async () => {
     if (manualInput.trim()) {
