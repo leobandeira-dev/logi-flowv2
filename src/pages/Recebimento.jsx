@@ -192,15 +192,18 @@ export default function Recebimento() {
 
     const volumesTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.volumes_total_consolidado || 0), 0);
     const pesoTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.peso_total_consolidado || 0), 0);
+    const valorTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.valor_total_consolidado || 0), 0);
     
     // Totais comparativos
     const totalMesAnterior = recebimentosMesAnterior.length;
     const pesoMesAnterior = recebimentosMesAnterior.reduce((sum, r) => sum + (r.peso_total_consolidado || 0), 0);
     const volumesMesAnterior = recebimentosMesAnterior.reduce((sum, r) => sum + (r.volumes_total_consolidado || 0), 0);
+    const valorMesAnterior = recebimentosMesAnterior.reduce((sum, r) => sum + (r.valor_total_consolidado || 0), 0);
     
     const totalMesmoMesAnoAnterior = recebimentosMesmoMesAnoAnterior.length;
     const pesoMesmoMesAnoAnterior = recebimentosMesmoMesAnoAnterior.reduce((sum, r) => sum + (r.peso_total_consolidado || 0), 0);
     const volumesMesmoMesAnoAnterior = recebimentosMesmoMesAnoAnterior.reduce((sum, r) => sum + (r.volumes_total_consolidado || 0), 0);
+    const valorMesmoMesAnoAnterior = recebimentosMesmoMesAnoAnterior.reduce((sum, r) => sum + (r.valor_total_consolidado || 0), 0);
     
     // Calcular variações percentuais
     const calcVariacao = (atual, anterior) => {
@@ -212,6 +215,7 @@ export default function Recebimento() {
       totalRecebimentos: recebimentosFiltrados.length,
       volumesTotal,
       pesoTotal,
+      valorTotal,
       // Valores absolutos de referência
       totalMesAnterior,
       totalMesmoMesAnoAnterior,
@@ -219,6 +223,8 @@ export default function Recebimento() {
       pesoMesmoMesAnoAnterior,
       volumesMesAnterior,
       volumesMesmoMesAnoAnterior,
+      valorMesAnterior,
+      valorMesmoMesAnoAnterior,
       // Comparativos
       variacaoTotalMesAnterior: calcVariacao(recebimentosFiltrados.length, totalMesAnterior),
       variacaoTotalAnoAnterior: calcVariacao(recebimentosFiltrados.length, totalMesmoMesAnoAnterior),
@@ -226,6 +232,8 @@ export default function Recebimento() {
       variacaoPesoAnoAnterior: calcVariacao(pesoTotal, pesoMesmoMesAnoAnterior),
       variacaoVolumesMesAnterior: calcVariacao(volumesTotal, volumesMesAnterior),
       variacaoVolumesAnoAnterior: calcVariacao(volumesTotal, volumesMesmoMesAnoAnterior),
+      variacaoValorMesAnterior: calcVariacao(valorTotal, valorMesAnterior),
+      variacaoValorAnoAnterior: calcVariacao(valorTotal, valorMesmoMesAnoAnterior),
     };
   }, [recebimentos, filtroDataCompartilhado]);
 
@@ -2060,13 +2068,47 @@ export default function Recebimento() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-purple-600">
-                    R$ {indicadoresNotas.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {indicadoresRecebimentos.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     {filtroDataCompartilhado.dataInicio || filtroDataCompartilhado.dataFim 
                       ? 'No período selecionado' 
                       : 'Recebidos hoje'}
                   </p>
+                  <div className="flex flex-col gap-1 mt-2">
+                    <div className="flex items-center gap-1">
+                      {indicadoresRecebimentos.variacaoValorMesAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresRecebimentos.variacaoValorMesAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresRecebimentos.variacaoValorMesAnterior > 0 ? 'text-green-600' : 
+                        indicadoresRecebimentos.variacaoValorMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresRecebimentos.variacaoValorMesAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. (R$ {indicadoresRecebimentos.valorMesAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })})</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {indicadoresRecebimentos.variacaoValorAnoAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresRecebimentos.variacaoValorAnoAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresRecebimentos.variacaoValorAnoAnterior > 0 ? 'text-green-600' : 
+                        indicadoresRecebimentos.variacaoValorAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresRecebimentos.variacaoValorAnoAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. (R$ {indicadoresRecebimentos.valorMesmoMesAnoAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })})</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
