@@ -1688,6 +1688,104 @@ export default function Recebimento() {
               </Card>
             </div>
 
+            {/* Campo de Busca - Mesma posição que Notas Fiscais */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4">
+              <div className="flex gap-2 w-full lg:w-auto flex-1">
+                <div className="relative flex-1 lg:w-64">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
+                  <Input
+                    placeholder="Buscar recebimentos..."
+                    value={searchTermRecebimentos}
+                    onChange={(e) => setSearchTermRecebimentos(e.target.value)}
+                    className="pl-10 h-9 text-sm"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <FiltrosPredefinidos
+                  rota="recebimentos"
+                  filtrosAtuais={{ ...filtersRecebimentos, ...filtroDataCompartilhado }}
+                  onAplicarFiltro={(novosFiltros) => {
+                    // Separar filtros de data dos outros filtros
+                    const { dataInicio, dataFim, ...outrosFiltros } = novosFiltros;
+                    setFiltroDataCompartilhado({ dataInicio: dataInicio || "", dataFim: dataFim || "" });
+                    setFiltersRecebimentos(outrosFiltros);
+                    setPaginaAtualRecebimentos(1);
+                  }}
+                />
+                <PaginacaoControles
+                  paginaAtual={paginaAtualRecebimentos}
+                  totalRegistros={recebimentosFiltrados.length}
+                  limite={limiteRecebimentos}
+                  onPaginaAnterior={() => setPaginaAtualRecebimentos(prev => Math.max(1, prev - 1))}
+                  onProximaPagina={() => setPaginaAtualRecebimentos(prev => prev + 1)}
+                  isDark={isDark}
+                />
+                <Button
+                  variant={showFiltersRecebimentos ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowFiltersRecebimentos(!showFiltersRecebimentos)}
+                  className="h-9"
+                  style={!showFiltersRecebimentos ? {
+                    backgroundColor: 'transparent',
+                    borderColor: theme.inputBorder,
+                    color: theme.text
+                  } : {}}
+                >
+                  <Filter className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {showFiltersRecebimentos && (
+              <Card className="mb-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                <CardContent className="pt-4 pb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Fornecedor</Label>
+                      <Input
+                        value={filtersRecebimentos.fornecedor}
+                        onChange={(e) => setFiltersRecebimentos({...filtersRecebimentos, fornecedor: e.target.value})}
+                        placeholder="Filtrar por fornecedor"
+                        className="h-8 text-sm"
+                        style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Conferente</Label>
+                      <Input
+                        value={filtersRecebimentos.conferente}
+                        onChange={(e) => setFiltersRecebimentos({...filtersRecebimentos, conferente: e.target.value})}
+                        placeholder="Filtrar por conferente"
+                        className="h-8 text-sm"
+                        style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end mt-3 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFiltersRecebimentos({
+                        fornecedor: "",
+                        conferente: ""
+                      })}
+                      className="h-7 text-xs"
+                      style={{
+                        backgroundColor: 'transparent',
+                        borderColor: theme.inputBorder,
+                        color: theme.text
+                      }}
+                    >
+                      Limpar Filtros
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Gráfico de Recebimentos */}
             <Card className="mb-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
               <CardHeader className="pb-3">
@@ -1851,103 +1949,6 @@ export default function Recebimento() {
               </CardContent>
               )}
             </Card>
-
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4">
-              <div className="flex gap-2 w-full lg:w-auto flex-1">
-                <div className="relative flex-1 lg:w-64">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: theme.textMuted }} />
-                  <Input
-                    placeholder="Buscar recebimentos..."
-                    value={searchTermRecebimentos}
-                    onChange={(e) => setSearchTermRecebimentos(e.target.value)}
-                    className="pl-10 h-9 text-sm"
-                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <FiltrosPredefinidos
-                  rota="recebimentos"
-                  filtrosAtuais={{ ...filtersRecebimentos, ...filtroDataCompartilhado }}
-                  onAplicarFiltro={(novosFiltros) => {
-                    // Separar filtros de data dos outros filtros
-                    const { dataInicio, dataFim, ...outrosFiltros } = novosFiltros;
-                    setFiltroDataCompartilhado({ dataInicio: dataInicio || "", dataFim: dataFim || "" });
-                    setFiltersRecebimentos(outrosFiltros);
-                    setPaginaAtualRecebimentos(1);
-                  }}
-                />
-                <PaginacaoControles
-                  paginaAtual={paginaAtualRecebimentos}
-                  totalRegistros={recebimentosFiltrados.length}
-                  limite={limiteRecebimentos}
-                  onPaginaAnterior={() => setPaginaAtualRecebimentos(prev => Math.max(1, prev - 1))}
-                  onProximaPagina={() => setPaginaAtualRecebimentos(prev => prev + 1)}
-                  isDark={isDark}
-                />
-                <Button
-                  variant={showFiltersRecebimentos ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowFiltersRecebimentos(!showFiltersRecebimentos)}
-                  className="h-9"
-                  style={!showFiltersRecebimentos ? {
-                    backgroundColor: 'transparent',
-                    borderColor: theme.inputBorder,
-                    color: theme.text
-                  } : {}}
-                >
-                  <Filter className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            {showFiltersRecebimentos && (
-              <Card className="mb-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardContent className="pt-4 pb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Fornecedor</Label>
-                      <Input
-                        value={filtersRecebimentos.fornecedor}
-                        onChange={(e) => setFiltersRecebimentos({...filtersRecebimentos, fornecedor: e.target.value})}
-                        placeholder="Filtrar por fornecedor"
-                        className="h-8 text-sm"
-                        style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Conferente</Label>
-                      <Input
-                        value={filtersRecebimentos.conferente}
-                        onChange={(e) => setFiltersRecebimentos({...filtersRecebimentos, conferente: e.target.value})}
-                        placeholder="Filtrar por conferente"
-                        className="h-8 text-sm"
-                        style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end mt-3 gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setFiltersRecebimentos({
-                        fornecedor: "",
-                        conferente: ""
-                      })}
-                      className="h-7 text-xs"
-                      style={{
-                        backgroundColor: 'transparent',
-                        borderColor: theme.inputBorder,
-                        color: theme.text
-                      }}
-                    >
-                      Limpar Filtros
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
         {showForm && (
           <Card className="mb-4 sm:mb-6" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
