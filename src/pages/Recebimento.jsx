@@ -139,27 +139,43 @@ export default function Recebimento() {
     return filtered.length;
   }, [todasNotasFiscais, searchTermNotas, filtroDataCompartilhado]);
 
-  // Memoizar indicadores de recebimentos para evitar recalcular a cada digitação
+  // Memoizar indicadores de recebimentos (COM FILTRO DE DATA)
   const indicadoresRecebimentos = useMemo(() => {
-    const hoje = new Date();
-    const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
-
-    const recebimentosMes = recebimentos.filter(r => {
-      if (!r.data_solicitacao || r.status === "cancelado") return false;
+    // Aplicar filtro de data compartilhado
+    const recebimentosFiltrados = recebimentos.filter(r => {
+      if (r.status === "cancelado") return false;
+      
+      // Se há filtro de data, usar data_solicitacao
+      if (filtroDataCompartilhado.dataInicio || filtroDataCompartilhado.dataFim) {
+        const matchesDataInicio = !filtroDataCompartilhado.dataInicio || 
+          (r.data_solicitacao && new Date(r.data_solicitacao) >= new Date(filtroDataCompartilhado.dataInicio));
+        
+        const matchesDataFim = !filtroDataCompartilhado.dataFim || 
+          (r.data_solicitacao && new Date(r.data_solicitacao) <= new Date(filtroDataCompartilhado.dataFim + 'T23:59:59'));
+        
+        return matchesDataInicio && matchesDataFim;
+      }
+      
+      // Se não há filtro, usar período padrão (mês atual)
+      if (!r.data_solicitacao) return false;
+      const hoje = new Date();
+      const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
       const dataRec = new Date(r.data_solicitacao);
       const dataRecSP = dataRec.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
       const [, mesRec, anoRec] = dataRecSP.split('/');
       return mesRec === mesHojeSP && anoRec === anoHojeSP;
     });
 
-    const mesNome = new Date(parseInt(anoHojeSP), parseInt(mesHojeSP) - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    const volumesTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.volumes_total_consolidado || 0), 0);
+    const pesoTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.peso_total_consolidado || 0), 0);
 
     return {
-      totalMes: recebimentosMes.length,
-      mesNome
+      totalRecebimentos: recebimentosFiltrados.length,
+      volumesTotal,
+      pesoTotal
     };
-  }, [recebimentos]);
+  }, [recebimentos, filtroDataCompartilhado]);
 
   // Memoizar dados do gráfico de recebimentos
   const dadosGraficoRecebimentos = useMemo(() => {
@@ -274,33 +290,50 @@ export default function Recebimento() {
     }
   }, [recebimentos, searchTermRecebimentos, filtersRecebimentos, usuarios, visualizacaoGrafico, anoSelecionadoRecebimento, mesSelecionadoRecebimento]);
 
-  // Memoizar indicadores de notas fiscais
+  // Memoizar indicadores de notas fiscais (COM FILTRO DE DATA)
   const indicadoresNotas = useMemo(() => {
-    const hoje = new Date();
-    const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
-
-    const notasMes = todasNotasFiscais.filter(n => {
-      if (!n.created_date || n.status_nf === "cancelada") return false;
+    // Aplicar filtro de data compartilhado
+    const notasFiltradas = todasNotasFiscais.filter(n => {
+      if (n.status_nf === "cancelada") return false;
+      
+      // Se há filtro de data, usar data_hora_emissao
+      if (filtroDataCompartilhado.dataInicio || filtroDataCompartilhado.dataFim) {
+        const matchesDataInicio = !filtroDataCompartilhado.dataInicio || 
+          (n.data_hora_emissao && new Date(n.data_hora_emissao) >= new Date(filtroDataCompartilhado.dataInicio));
+        
+        const matchesDataFim = !filtroDataCompartilhado.dataFim || 
+          (n.data_hora_emissao && new Date(n.data_hora_emissao) <= new Date(filtroDataCompartilhado.dataFim + 'T23:59:59'));
+        
+        return matchesDataInicio && matchesDataFim;
+      }
+      
+      // Se não há filtro, usar período padrão (mês atual)
+      if (!n.created_date) return false;
+      const hoje = new Date();
+      const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
       const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
       const [, mesNota, anoNota] = dataNota.split('/');
       return mesNota === mesHojeSP && anoNota === anoHojeSP;
     });
 
-    const notasHoje = todasNotasFiscais.filter(n => {
-      if (!n.created_date || n.status_nf === "cancelada") return false;
+    const hoje = new Date();
+    const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    
+    const notasHoje = notasFiltradas.filter(n => {
+      if (!n.created_date) return false;
       const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
       return dataNota === dataHojeSP;
     });
 
-    const volumesTotal = notasMes.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
+    const volumesTotal = notasFiltradas.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
     const volumesHoje = notasHoje.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
-    const pesoTotal = notasMes.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0);
-    const valorTotal = notasMes.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
+    const pesoTotal = notasFiltradas.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0);
+    const valorTotal = notasFiltradas.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
     const valorHoje = notasHoje.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
 
     return {
-      totalMes: notasMes.length,
+      totalMes: notasFiltradas.length,
       totalHoje: notasHoje.length,
       volumesTotal,
       volumesHoje,
@@ -308,7 +341,7 @@ export default function Recebimento() {
       valorTotal,
       valorHoje
     };
-  }, [todasNotasFiscais]);
+  }, [todasNotasFiscais, filtroDataCompartilhado]);
 
   // Memoizar filtros de recebimentos
   const recebimentosFiltrados = useMemo(() => {
@@ -1610,10 +1643,12 @@ export default function Recebimento() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-blue-600">
-                    {indicadoresRecebimentos.totalMes}
+                    {indicadoresRecebimentos.totalRecebimentos}
                   </p>
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
-                    Em {indicadoresRecebimentos.mesNome}
+                    {filtroDataCompartilhado.dataInicio || filtroDataCompartilhado.dataFim 
+                      ? 'No período selecionado' 
+                      : 'Em janeiro de 2026'}
                   </p>
                 </CardContent>
               </Card>
@@ -1627,10 +1662,10 @@ export default function Recebimento() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-green-600">
-                    {indicadoresNotas.volumesTotal}
+                    {indicadoresRecebimentos.volumesTotal}
                   </p>
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
-                    {indicadoresNotas.pesoTotal.toLocaleString()} kg
+                    {indicadoresRecebimentos.pesoTotal.toLocaleString()} kg
                   </p>
                 </CardContent>
               </Card>
