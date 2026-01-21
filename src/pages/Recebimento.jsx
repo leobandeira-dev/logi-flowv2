@@ -1533,7 +1533,7 @@ export default function Recebimento() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-orange-600">
-                    {indicadoresNotas.pesoTotal.toLocaleString('pt-BR')} kg
+                    {indicadoresNotas.pesoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
                   </p>
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.totalMes} nota{indicadoresNotas.totalMes !== 1 ? 's' : ''}
@@ -1696,7 +1696,7 @@ export default function Recebimento() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-orange-600">
-                    {indicadoresRecebimentos.pesoTotal.toLocaleString('pt-BR')} kg
+                    {indicadoresRecebimentos.pesoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
                   </p>
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.totalMes} nota{indicadoresNotas.totalMes !== 1 ? 's' : ''}
