@@ -210,8 +210,11 @@ export default function EtiquetasMae() {
     if (etiqueta.volumes_ids && etiqueta.volumes_ids.length > 0) {
       const vinculados = volumes.filter(v => etiqueta.volumes_ids.includes(v.id));
       setVolumesVinculados(vinculados);
+      // Atualizar ref com IDs dos volumes já vinculados
+      volumesVinculadosIdsRef.current = new Set(etiqueta.volumes_ids);
     } else {
       setVolumesVinculados([]);
+      volumesVinculadosIdsRef.current = new Set();
     }
     
     setCodigoScanner("");
@@ -299,7 +302,8 @@ export default function EtiquetasMae() {
         }
       }
 
-      if (volumesVinculados.some(v => v.id === volumeEncontrado.id)) {
+      // Verificação instantânea usando ref
+      if (volumesVinculadosIdsRef.current.has(volumeEncontrado.id)) {
         playErrorBeep();
         toast.warning("⚠️ Volume já adicionado nesta etiqueta");
         setCodigoScanner("");
@@ -601,6 +605,9 @@ export default function EtiquetasMae() {
 
       const novosVolumesIds = (etiquetaSelecionada.volumes_ids || []).filter(id => id !== volume.id);
       const volumesAtualizadosList = volumesVinculados.filter(v => v.id !== volume.id);
+      
+      // Remover da ref
+      volumesVinculadosIdsRef.current.delete(volume.id);
 
       const pesoTotal = volumesAtualizadosList.reduce((sum, v) => sum + (v.peso_volume || 0), 0);
       const m3Total = volumesAtualizadosList.reduce((sum, v) => sum + (v.m3 || 0), 0);
