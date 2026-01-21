@@ -288,6 +288,18 @@ export default function EtiquetasMae() {
         return 'not_found';
       }
 
+      // Verificar se já está vinculado à MESMA etiqueta (no banco)
+      if (volumeEncontrado.etiqueta_mae_id === etiquetaSelecionada.id) {
+        playErrorBeep();
+        toast.warning("⚠️ Volume já adicionado nesta etiqueta");
+        setCodigoScanner("");
+        setProcessando(false);
+        setCameraScanFeedback('duplicate');
+        setTimeout(() => setCameraScanFeedback(null), 1200);
+        return 'duplicate';
+      }
+
+      // Verificar se está vinculado a OUTRA etiqueta
       if (volumeEncontrado.etiqueta_mae_id && volumeEncontrado.etiqueta_mae_id !== etiquetaSelecionada.id) {
         const etiquetaAnterior = await base44.entities.EtiquetaMae.get(volumeEncontrado.etiqueta_mae_id);
         
