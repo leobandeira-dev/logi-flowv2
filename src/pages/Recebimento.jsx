@@ -212,6 +212,13 @@ export default function Recebimento() {
       totalRecebimentos: recebimentosFiltrados.length,
       volumesTotal,
       pesoTotal,
+      // Valores absolutos de referência
+      totalMesAnterior,
+      totalMesmoMesAnoAnterior,
+      pesoMesAnterior,
+      pesoMesmoMesAnoAnterior,
+      volumesMesAnterior,
+      volumesMesmoMesAnoAnterior,
       // Comparativos
       variacaoTotalMesAnterior: calcVariacao(recebimentosFiltrados.length, totalMesAnterior),
       variacaoTotalAnoAnterior: calcVariacao(recebimentosFiltrados.length, totalMesmoMesAnoAnterior),
@@ -424,6 +431,15 @@ export default function Recebimento() {
       pesoTotal,
       valorTotal,
       valorHoje,
+      // Valores absolutos de referência
+      totalMesAnterior,
+      totalMesmoMesAnoAnterior,
+      pesoMesAnterior,
+      pesoMesmoMesAnoAnterior,
+      volumesMesAnterior,
+      volumesMesmoMesAnoAnterior,
+      valorMesAnterior,
+      valorMesmoMesAnoAnterior,
       // Comparativos
       variacaoTotalMesAnterior: calcVariacao(notasFiltradas.length, totalMesAnterior),
       variacaoTotalAnoAnterior: calcVariacao(notasFiltradas.length, totalMesmoMesAnoAnterior),
@@ -1599,7 +1615,7 @@ export default function Recebimento() {
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.totalHoje} recebidas hoje
                   </p>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-col gap-1 mt-2">
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoTotalMesAnterior > 0 ? (
                         <ArrowUp className="w-3 h-3 text-green-600" />
@@ -1614,7 +1630,7 @@ export default function Recebimento() {
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoTotalMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant.</span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresNotas.totalMesAnterior})</span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoTotalAnoAnterior > 0 ? (
@@ -1630,7 +1646,7 @@ export default function Recebimento() {
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoTotalAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant.</span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresNotas.totalMesmoMesAnoAnterior})</span>
                     </div>
                   </div>
                 </CardContent>
@@ -1648,7 +1664,7 @@ export default function Recebimento() {
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.volumesHoje} volumes hoje
                   </p>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-col gap-1 mt-2">
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoVolumesMesAnterior > 0 ? (
                         <ArrowUp className="w-3 h-3 text-green-600" />
@@ -1663,7 +1679,7 @@ export default function Recebimento() {
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoVolumesMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant.</span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresNotas.volumesMesAnterior.toLocaleString()})</span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoVolumesAnoAnterior > 0 ? (
@@ -1679,7 +1695,7 @@ export default function Recebimento() {
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoVolumesAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant.</span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresNotas.volumesMesmoMesAnoAnterior.toLocaleString()})</span>
                     </div>
                   </div>
                 </CardContent>
@@ -1699,7 +1715,7 @@ export default function Recebimento() {
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.totalMes} nota{indicadoresNotas.totalMes !== 1 ? 's' : ''}
                   </p>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-col gap-1 mt-2">
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoPesoMesAnterior > 0 ? (
                         <ArrowUp className="w-3 h-3 text-green-600" />
@@ -1714,7 +1730,7 @@ export default function Recebimento() {
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoPesoMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant.</span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresNotas.pesoMesAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg)</span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoPesoAnoAnterior > 0 ? (
@@ -1730,7 +1746,7 @@ export default function Recebimento() {
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoPesoAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant.</span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresNotas.pesoMesmoMesAnoAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg)</span>
                     </div>
                   </div>
                 </CardContent>
@@ -1750,7 +1766,7 @@ export default function Recebimento() {
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     R$ {indicadoresNotas.valorHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} recebidos hoje
                   </p>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-col gap-1 mt-2">
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoValorMesAnterior > 0 ? (
                         <ArrowUp className="w-3 h-3 text-green-600" />
@@ -1765,7 +1781,7 @@ export default function Recebimento() {
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoValorMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant.</span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. (R$ {indicadoresNotas.valorMesAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })})</span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoValorAnoAnterior > 0 ? (
@@ -1781,7 +1797,7 @@ export default function Recebimento() {
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoValorAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant.</span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. (R$ {indicadoresNotas.valorMesmoMesAnoAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })})</span>
                     </div>
                   </div>
                 </CardContent>
@@ -1896,7 +1912,7 @@ export default function Recebimento() {
                       ? 'No período selecionado' 
                       : 'Em janeiro de 2026'}
                   </p>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-col gap-1 mt-2">
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoTotalMesAnterior > 0 ? (
                         <ArrowUp className="w-3 h-3 text-green-600" />
@@ -1911,7 +1927,7 @@ export default function Recebimento() {
                       }`}>
                         {Math.abs(indicadoresRecebimentos.variacaoTotalMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant.</span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresRecebimentos.totalMesAnterior})</span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoTotalAnoAnterior > 0 ? (
@@ -1927,7 +1943,7 @@ export default function Recebimento() {
                       }`}>
                         {Math.abs(indicadoresRecebimentos.variacaoTotalAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant.</span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresRecebimentos.totalMesmoMesAnoAnterior})</span>
                     </div>
                   </div>
                 </CardContent>
@@ -1947,7 +1963,7 @@ export default function Recebimento() {
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     {indicadoresRecebimentos.totalRecebimentos} recebimento{indicadoresRecebimentos.totalRecebimentos !== 1 ? 's' : ''}
                   </p>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-col gap-1 mt-2">
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoVolumesMesAnterior > 0 ? (
                         <ArrowUp className="w-3 h-3 text-green-600" />
@@ -1962,7 +1978,7 @@ export default function Recebimento() {
                       }`}>
                         {Math.abs(indicadoresRecebimentos.variacaoVolumesMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant.</span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresRecebimentos.volumesMesAnterior.toLocaleString()})</span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoVolumesAnoAnterior > 0 ? (
@@ -1978,7 +1994,7 @@ export default function Recebimento() {
                       }`}>
                         {Math.abs(indicadoresRecebimentos.variacaoVolumesAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant.</span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresRecebimentos.volumesMesmoMesAnoAnterior.toLocaleString()})</span>
                     </div>
                   </div>
                 </CardContent>
@@ -1998,7 +2014,7 @@ export default function Recebimento() {
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.totalMes} nota{indicadoresNotas.totalMes !== 1 ? 's' : ''}
                   </p>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-col gap-1 mt-2">
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoPesoMesAnterior > 0 ? (
                         <ArrowUp className="w-3 h-3 text-green-600" />
@@ -2013,7 +2029,7 @@ export default function Recebimento() {
                       }`}>
                         {Math.abs(indicadoresRecebimentos.variacaoPesoMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant.</span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresRecebimentos.pesoMesAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg)</span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoPesoAnoAnterior > 0 ? (
@@ -2029,7 +2045,7 @@ export default function Recebimento() {
                       }`}>
                         {Math.abs(indicadoresRecebimentos.variacaoPesoAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant.</span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresRecebimentos.pesoMesmoMesAnoAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg)</span>
                     </div>
                   </div>
                 </CardContent>

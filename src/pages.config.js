@@ -39,6 +39,7 @@ import Precificacao from './pages/Precificacao';
 import Procedimentos from './pages/Procedimentos';
 import ProcessarEtapasNovembro from './pages/ProcessarEtapasNovembro';
 import ProdutosPalets from './pages/ProdutosPalets';
+import Recebimento from './pages/Recebimento';
 import SAC from './pages/SAC';
 import SolicitacaoColeta from './pages/SolicitacaoColeta';
 import Tabelas from './pages/Tabelas';
@@ -47,7 +48,6 @@ import TrackingTV from './pages/TrackingTV';
 import Unitizacao from './pages/Unitizacao';
 import Usuarios from './pages/Usuarios';
 import Veiculos from './pages/Veiculos';
-import Recebimento from './pages/Recebimento';
 import __Layout from './Layout.jsx';
 
 
@@ -93,6 +93,7 @@ export const PAGES = {
     "Procedimentos": Procedimentos,
     "ProcessarEtapasNovembro": ProcessarEtapasNovembro,
     "ProdutosPalets": ProdutosPalets,
+    "Recebimento": Recebimento,
     "SAC": SAC,
     "SolicitacaoColeta": SolicitacaoColeta,
     "Tabelas": Tabelas,
@@ -101,7 +102,6 @@ export const PAGES = {
     "Unitizacao": Unitizacao,
     "Usuarios": Usuarios,
     "Veiculos": Veiculos,
-    "Recebimento": Recebimento,
 }
 
 export const pagesConfig = {
