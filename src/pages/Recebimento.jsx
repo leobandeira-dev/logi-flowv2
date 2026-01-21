@@ -1745,6 +1745,69 @@ export default function Recebimento() {
                 </div>
               </div>
               <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                  <select
+                    value={mesSelecionadoRecebimento}
+                    onChange={(e) => {
+                      const mes = parseInt(e.target.value);
+                      setMesSelecionadoRecebimento(mes);
+                      
+                      // Aplicar filtro de data automaticamente
+                      const ano = anoSelecionadoRecebimento;
+                      const dataInicio = new Date(ano, mes - 1, 1).toISOString().split('T')[0];
+                      const ultimoDia = new Date(ano, mes, 0).getDate();
+                      const dataFim = new Date(ano, mes - 1, ultimoDia).toISOString().split('T')[0];
+                      
+                      setFiltersRecebimentos(prev => ({
+                        ...prev,
+                        dataInicio,
+                        dataFim
+                      }));
+                      setPaginaAtualRecebimentos(1);
+                    }}
+                    className="h-9 text-sm px-2 rounded-lg border"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  >
+                    <option value={1}>Janeiro</option>
+                    <option value={2}>Fevereiro</option>
+                    <option value={3}>Março</option>
+                    <option value={4}>Abril</option>
+                    <option value={5}>Maio</option>
+                    <option value={6}>Junho</option>
+                    <option value={7}>Julho</option>
+                    <option value={8}>Agosto</option>
+                    <option value={9}>Setembro</option>
+                    <option value={10}>Outubro</option>
+                    <option value={11}>Novembro</option>
+                    <option value={12}>Dezembro</option>
+                  </select>
+                  <select
+                    value={anoSelecionadoRecebimento}
+                    onChange={(e) => {
+                      const ano = parseInt(e.target.value);
+                      setAnoSelecionadoRecebimento(ano);
+                      
+                      // Aplicar filtro de data automaticamente
+                      const mes = mesSelecionadoRecebimento;
+                      const dataInicio = new Date(ano, mes - 1, 1).toISOString().split('T')[0];
+                      const ultimoDia = new Date(ano, mes, 0).getDate();
+                      const dataFim = new Date(ano, mes - 1, ultimoDia).toISOString().split('T')[0];
+                      
+                      setFiltersRecebimentos(prev => ({
+                        ...prev,
+                        dataInicio,
+                        dataFim
+                      }));
+                      setPaginaAtualRecebimentos(1);
+                    }}
+                    className="h-9 text-sm px-2 rounded-lg border"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  >
+                    {[2026, 2025, 2024, 2023, 2022, 2021].map(ano => (
+                      <option key={ano} value={ano}>{ano}</option>
+                    ))}
+                  </select>
+                </div>
                 <FiltrosPredefinidos
                   rota="recebimentos"
                   filtrosAtuais={filtersRecebimentos}
