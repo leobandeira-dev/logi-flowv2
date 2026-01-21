@@ -191,9 +191,20 @@ export default function Recebimento() {
       return dataRec.getMonth() === mesAnoAnterior && dataRec.getFullYear() === anoAnterior;
     });
 
+    const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    
+    const recebimentosHoje = recebimentosFiltrados.filter(r => {
+      if (!r.created_date) return false;
+      const dataRec = new Date(r.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      return dataRec === dataHojeSP;
+    });
+
     const volumesTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.volumes_total_consolidado || 0), 0);
+    const volumesHoje = recebimentosHoje.reduce((sum, r) => sum + (r.volumes_total_consolidado || 0), 0);
     const pesoTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.peso_total_consolidado || 0), 0);
+    const pesoHoje = recebimentosHoje.reduce((sum, r) => sum + (r.peso_total_consolidado || 0), 0);
     const valorTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.valor_total_consolidado || 0), 0);
+    const valorHoje = recebimentosHoje.reduce((sum, r) => sum + (r.valor_total_consolidado || 0), 0);
     
     // Calcular tempo médio de recebimento (em horas)
     // Fórmula: (Último input do dia - Primeiro input do dia) / Quantidade de inputs no dia
@@ -297,8 +308,11 @@ export default function Recebimento() {
     return {
       totalRecebimentos: recebimentosFiltrados.length,
       volumesTotal,
+      volumesHoje,
       pesoTotal,
+      pesoHoje,
       valorTotal,
+      valorHoje,
       tempoMedioRecebimento,
       // Valores absolutos de referência
       totalMesAnterior,
@@ -499,6 +513,7 @@ export default function Recebimento() {
     const volumesTotal = notasFiltradas.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
     const volumesHoje = notasHoje.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
     const pesoTotal = notasFiltradas.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0);
+    const pesoHoje = notasHoje.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0);
     const valorTotal = notasFiltradas.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
     const valorHoje = notasHoje.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
     
@@ -607,6 +622,7 @@ export default function Recebimento() {
       volumesTotal,
       volumesHoje,
       pesoTotal,
+      pesoHoje,
       valorTotal,
       valorHoje,
       tempoMedioRecebimento,
@@ -1896,7 +1912,7 @@ export default function Recebimento() {
                     {indicadoresNotas.pesoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
                   </p>
                   <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
-                    {indicadoresNotas.totalMes} nota{indicadoresNotas.totalMes !== 1 ? 's' : ''}
+                    Peso Hoje: {indicadoresNotas.pesoHoje.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg
                   </p>
                   <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
@@ -1947,7 +1963,7 @@ export default function Recebimento() {
                     R$ {indicadoresNotas.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                   <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
-                    Recebidos hoje
+                    Hoje: R$ {indicadoresNotas.valorHoje.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}
                   </p>
                   <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
@@ -2267,7 +2283,7 @@ export default function Recebimento() {
                     {indicadoresRecebimentos.pesoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
                   </p>
                   <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
-                    {indicadoresNotas.totalMes} nota{indicadoresNotas.totalMes !== 1 ? 's' : ''}
+                    Peso Hoje: {indicadoresRecebimentos.pesoHoje.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg
                   </p>
                   <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
@@ -2318,7 +2334,7 @@ export default function Recebimento() {
                     R$ {indicadoresRecebimentos.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                   <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
-                    Recebidos hoje
+                    Hoje: R$ {indicadoresRecebimentos.valorHoje.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}
                   </p>
                   <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
