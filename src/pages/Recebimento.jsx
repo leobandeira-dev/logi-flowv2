@@ -1787,18 +1787,18 @@ export default function Recebimento() {
             {/* Indicadores Memoizados */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-1">
+                <CardHeader className="pb-0.5 pt-3 px-3">
                   <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
                     <FileText className="w-3 h-3 text-blue-600" />
                     Total de Notas Fiscais
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pb-2">
-                  <p className="text-lg font-bold text-blue-600">{indicadoresNotas.totalMes}</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
+                <CardContent className="pb-2 pt-1 px-3">
+                  <p className="text-xl font-bold text-blue-600">{indicadoresNotas.totalMes}</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.totalHoje} recebidas hoje
                   </p>
-                  <div className="flex flex-col gap-0.5 mt-1">
+                  <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoTotalMesAnterior > 0 ? (
                         <ArrowUp className="w-2 h-2 text-green-600" />
@@ -1836,18 +1836,18 @@ export default function Recebimento() {
               </Card>
 
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-1">
+                <CardHeader className="pb-0.5 pt-3 px-3">
                   <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
                     <Package className="w-3 h-3 text-green-600" />
                     Total de Volumes
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pb-2">
-                  <p className="text-lg font-bold text-green-600">{indicadoresNotas.volumesTotal}</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
+                <CardContent className="pb-2 pt-1 px-3">
+                  <p className="text-xl font-bold text-green-600">{indicadoresNotas.volumesTotal}</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.volumesHoje} volumes hoje
                   </p>
-                  <div className="flex flex-col gap-0.5 mt-1">
+                  <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoVolumesMesAnterior > 0 ? (
                         <ArrowUp className="w-2 h-2 text-green-600" />
@@ -1885,20 +1885,20 @@ export default function Recebimento() {
               </Card>
 
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-1">
+                <CardHeader className="pb-0.5 pt-3 px-3">
                   <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
                     <TrendingUp className="w-3 h-3 text-orange-600" />
                     Peso Total
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pb-2">
-                  <p className="text-lg font-bold text-orange-600">
+                <CardContent className="pb-2 pt-1 px-3">
+                  <p className="text-base font-bold text-orange-600 leading-tight">
                     {indicadoresNotas.pesoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
                   </p>
-                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
+                  <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.totalMes} nota{indicadoresNotas.totalMes !== 1 ? 's' : ''}
                   </p>
-                  <div className="flex flex-col gap-0.5 mt-1">
+                  <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoPesoMesAnterior > 0 ? (
                         <ArrowUp className="w-2 h-2 text-green-600" />
@@ -1936,20 +1936,20 @@ export default function Recebimento() {
               </Card>
 
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-1">
+                <CardHeader className="pb-0.5 pt-3 px-3">
                   <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
                     <TrendingUp className="w-3 h-3 text-purple-600" />
                     Valor Total
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pb-2">
-                  <p className="text-lg font-bold text-purple-600 leading-tight">
+                <CardContent className="pb-2 pt-1 px-3">
+                  <p className="text-base font-bold text-purple-600 leading-tight">
                     R$ {indicadoresNotas.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
-                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
+                  <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
                     Recebidos hoje
                   </p>
-                  <div className="flex flex-col gap-0.5 mt-1">
+                  <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoValorMesAnterior > 0 ? (
                         <ArrowUp className="w-2 h-2 text-green-600" />
@@ -1991,19 +1991,19 @@ export default function Recebimento() {
               </Card>
 
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-1">
+                <CardHeader className="pb-0.5 pt-3 px-3">
                   <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
                     <Clock className="w-3 h-3 text-indigo-600" />
                     Tempo Médio
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pb-2">
-                  <p className="text-lg font-bold text-indigo-600">
+                <CardContent className="pb-2 pt-1 px-3">
+                  <p className="text-xl font-bold text-indigo-600 leading-tight">
                     {indicadoresNotas.tempoMedioRecebimento > 0 
                       ? `${Math.floor(indicadoresNotas.tempoMedioRecebimento)}h ${Math.round((indicadoresNotas.tempoMedioRecebimento % 1) * 60)}min`
                       : '—'}
                   </p>
-                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
+                  <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
                     Por nota fiscal
                   </p>
                   <div className="mt-1 mb-1">
@@ -2017,7 +2017,7 @@ export default function Recebimento() {
                       min="0"
                     />
                   </div>
-                  <div className="flex flex-col gap-0.5 mt-1">
+                  <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoTempoMesAnterior < 0 ? (
                         <ArrowDown className="w-2 h-2 text-green-600" />
@@ -2152,22 +2152,22 @@ export default function Recebimento() {
             {/* Indicadores e Gráficos */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-1">
+                <CardHeader className="pb-0.5 pt-3 px-3">
                   <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
                     <Package className="w-3 h-3 text-blue-600" />
                     Total de Recebimentos
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pb-2">
-                  <p className="text-lg font-bold text-blue-600">
+                <CardContent className="pb-2 pt-1 px-3">
+                  <p className="text-xl font-bold text-blue-600">
                     {indicadoresRecebimentos.totalRecebimentos}
                   </p>
-                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
+                  <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
                     {filtroDataCompartilhado.dataInicio || filtroDataCompartilhado.dataFim 
                       ? 'No período selecionado' 
                       : 'Em janeiro de 2026'}
                   </p>
-                  <div className="flex flex-col gap-0.5 mt-1">
+                  <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoTotalMesAnterior > 0 ? (
                         <ArrowUp className="w-2 h-2 text-green-600" />
@@ -2205,20 +2205,20 @@ export default function Recebimento() {
               </Card>
 
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-1">
+                <CardHeader className="pb-0.5 pt-3 px-3">
                   <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
                     <TrendingUp className="w-3 h-3 text-green-600" />
                     Volume Total
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pb-2">
-                  <p className="text-lg font-bold text-green-600">
+                <CardContent className="pb-2 pt-1 px-3">
+                  <p className="text-xl font-bold text-green-600">
                     {indicadoresRecebimentos.volumesTotal}
                   </p>
-                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
+                  <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
                     {indicadoresRecebimentos.totalRecebimentos} recebimento{indicadoresRecebimentos.totalRecebimentos !== 1 ? 's' : ''}
                   </p>
-                  <div className="flex flex-col gap-0.5 mt-1">
+                  <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoVolumesMesAnterior > 0 ? (
                         <ArrowUp className="w-2 h-2 text-green-600" />
@@ -2256,20 +2256,20 @@ export default function Recebimento() {
               </Card>
 
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-1">
+                <CardHeader className="pb-0.5 pt-3 px-3">
                   <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
                     <TrendingUp className="w-3 h-3 text-orange-600" />
                     Peso Total
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pb-2">
-                  <p className="text-lg font-bold text-orange-600">
+                <CardContent className="pb-2 pt-1 px-3">
+                  <p className="text-base font-bold text-orange-600 leading-tight">
                     {indicadoresRecebimentos.pesoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
                   </p>
-                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
+                  <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.totalMes} nota{indicadoresNotas.totalMes !== 1 ? 's' : ''}
                   </p>
-                  <div className="flex flex-col gap-0.5 mt-1">
+                  <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoPesoMesAnterior > 0 ? (
                         <ArrowUp className="w-2 h-2 text-green-600" />
@@ -2307,22 +2307,22 @@ export default function Recebimento() {
               </Card>
 
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-1">
+                <CardHeader className="pb-0.5 pt-3 px-3">
                   <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
                     <FileText className="w-3 h-3 text-purple-600" />
                     Valor Total
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pb-2">
-                  <p className="text-lg font-bold text-purple-600 leading-tight">
+                <CardContent className="pb-2 pt-1 px-3">
+                  <p className="text-base font-bold text-purple-600 leading-tight">
                     R$ {indicadoresRecebimentos.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
-                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
+                  <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
                     {filtroDataCompartilhado.dataInicio || filtroDataCompartilhado.dataFim 
                       ? 'No período' 
                       : 'Recebidos hoje'}
                   </p>
-                  <div className="flex flex-col gap-0.5 mt-1">
+                  <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoValorMesAnterior > 0 ? (
                         <ArrowUp className="w-2 h-2 text-green-600" />
@@ -2364,19 +2364,19 @@ export default function Recebimento() {
               </Card>
 
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-1">
+                <CardHeader className="pb-0.5 pt-3 px-3">
                   <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
                     <Clock className="w-3 h-3 text-indigo-600" />
                     Tempo Médio
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pb-2">
-                  <p className="text-lg font-bold text-indigo-600">
+                <CardContent className="pb-2 pt-1 px-3">
+                  <p className="text-xl font-bold text-indigo-600 leading-tight">
                     {indicadoresRecebimentos.tempoMedioRecebimento > 0 
                       ? `${Math.floor(indicadoresRecebimentos.tempoMedioRecebimento)}h ${Math.round((indicadoresRecebimentos.tempoMedioRecebimento % 1) * 60)}min`
                       : '—'}
                   </p>
-                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
+                  <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
                     Por ordem
                   </p>
                   <div className="mt-1 mb-1">
@@ -2390,7 +2390,7 @@ export default function Recebimento() {
                       min="0"
                     />
                   </div>
-                  <div className="flex flex-col gap-0.5 mt-1">
+                  <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoTempoMesAnterior < 0 ? (
                         <ArrowDown className="w-2 h-2 text-green-600" />
