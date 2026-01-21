@@ -2216,7 +2216,7 @@ export default function Recebimento() {
                     {indicadoresRecebimentos.volumesTotal}
                   </p>
                   <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
-                    {indicadoresRecebimentos.totalRecebimentos} recebimento{indicadoresRecebimentos.totalRecebimentos !== 1 ? 's' : ''}
+                    {indicadoresRecebimentos.totalRecebimentos} recebimentos
                   </p>
                   <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
@@ -2318,9 +2318,7 @@ export default function Recebimento() {
                     R$ {indicadoresRecebimentos.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                   <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
-                    {filtroDataCompartilhado.dataInicio || filtroDataCompartilhado.dataFim 
-                      ? 'No período' 
-                      : 'Recebidos hoje'}
+                    Recebidos hoje
                   </p>
                   <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
@@ -2338,7 +2336,7 @@ export default function Recebimento() {
                         {Math.abs(indicadoresRecebimentos.variacaoValorMesAnterior).toFixed(1)}%
                       </span>
                       <span className="text-[10px]" style={{ color: theme.textMuted }}>
-                        vs mês ant.
+                        vs mês ant. (R$ {indicadoresRecebimentos.valorMesAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })})
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
@@ -2356,7 +2354,7 @@ export default function Recebimento() {
                         {Math.abs(indicadoresRecebimentos.variacaoValorAnoAnterior).toFixed(1)}%
                       </span>
                       <span className="text-[10px]" style={{ color: theme.textMuted }}>
-                        vs ano ant.
+                        vs ano ant. (R$ {indicadoresRecebimentos.valorMesmoMesAnoAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })})
                       </span>
                     </div>
                   </div>
