@@ -195,15 +195,12 @@ export default function Recebimento() {
     const valorTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.valor_total_consolidado || 0), 0);
     
     // Calcular tempo médio de recebimento (em horas)
-    // Usar data_solicitacao até finalizacao_processo, ou descarga_realizada_data, ou fim_descarregamento
-    const recebimentosComTempo = recebimentosFiltrados.filter(r => {
-      if (!r.data_solicitacao) return false;
-      return r.finalizacao_processo || r.descarga_realizada_data || r.fim_descarregamento || r.fim_carregamento;
-    });
+    // Usar data_solicitacao até created_date (quando foi criada no sistema)
+    const recebimentosComTempo = recebimentosFiltrados.filter(r => r.data_solicitacao && r.created_date);
     const tempoMedioRecebimento = recebimentosComTempo.length > 0
       ? recebimentosComTempo.reduce((sum, r) => {
           const inicio = new Date(r.data_solicitacao);
-          const fim = new Date(r.finalizacao_processo || r.descarga_realizada_data || r.fim_descarregamento || r.fim_carregamento);
+          const fim = new Date(r.created_date);
           const horas = (fim - inicio) / (1000 * 60 * 60);
           return sum + horas;
         }, 0) / recebimentosComTempo.length
@@ -221,28 +218,22 @@ export default function Recebimento() {
     const valorMesmoMesAnoAnterior = recebimentosMesmoMesAnoAnterior.reduce((sum, r) => sum + (r.valor_total_consolidado || 0), 0);
     
     // Tempo médio mês anterior
-    const recebimentosComTempoMesAnterior = recebimentosMesAnterior.filter(r => {
-      if (!r.data_solicitacao) return false;
-      return r.finalizacao_processo || r.descarga_realizada_data || r.fim_descarregamento || r.fim_carregamento;
-    });
+    const recebimentosComTempoMesAnterior = recebimentosMesAnterior.filter(r => r.data_solicitacao && r.created_date);
     const tempoMedioMesAnterior = recebimentosComTempoMesAnterior.length > 0
       ? recebimentosComTempoMesAnterior.reduce((sum, r) => {
           const inicio = new Date(r.data_solicitacao);
-          const fim = new Date(r.finalizacao_processo || r.descarga_realizada_data || r.fim_descarregamento || r.fim_carregamento);
+          const fim = new Date(r.created_date);
           const horas = (fim - inicio) / (1000 * 60 * 60);
           return sum + horas;
         }, 0) / recebimentosComTempoMesAnterior.length
       : 0;
     
     // Tempo médio ano anterior
-    const recebimentosComTempoAnoAnterior = recebimentosMesmoMesAnoAnterior.filter(r => {
-      if (!r.data_solicitacao) return false;
-      return r.finalizacao_processo || r.descarga_realizada_data || r.fim_descarregamento || r.fim_carregamento;
-    });
+    const recebimentosComTempoAnoAnterior = recebimentosMesmoMesAnoAnterior.filter(r => r.data_solicitacao && r.created_date);
     const tempoMedioAnoAnterior = recebimentosComTempoAnoAnterior.length > 0
       ? recebimentosComTempoAnoAnterior.reduce((sum, r) => {
           const inicio = new Date(r.data_solicitacao);
-          const fim = new Date(r.finalizacao_processo || r.descarga_realizada_data || r.fim_descarregamento || r.fim_carregamento);
+          const fim = new Date(r.created_date);
           const horas = (fim - inicio) / (1000 * 60 * 60);
           return sum + horas;
         }, 0) / recebimentosComTempoAnoAnterior.length
@@ -463,11 +454,12 @@ export default function Recebimento() {
     const valorHoje = notasHoje.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
     
     // Calcular tempo médio de recebimento (em horas)
-    const notasComTempo = notasFiltradas.filter(n => n.data_hora_emissao && n.data_conferencia_completa);
+    // Usar data_hora_emissao até created_date (quando foi cadastrada no sistema = recebida)
+    const notasComTempo = notasFiltradas.filter(n => n.data_hora_emissao && n.created_date);
     const tempoMedioRecebimento = notasComTempo.length > 0
       ? notasComTempo.reduce((sum, n) => {
           const inicio = new Date(n.data_hora_emissao);
-          const fim = new Date(n.data_conferencia_completa);
+          const fim = new Date(n.created_date);
           const horas = (fim - inicio) / (1000 * 60 * 60);
           return sum + horas;
         }, 0) / notasComTempo.length
@@ -485,22 +477,22 @@ export default function Recebimento() {
     const valorMesmoMesAnoAnterior = notasMesmoMesAnoAnterior.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
     
     // Tempo médio mês anterior
-    const notasComTempoMesAnterior = notasMesAnterior.filter(n => n.data_hora_emissao && n.data_conferencia_completa);
+    const notasComTempoMesAnterior = notasMesAnterior.filter(n => n.data_hora_emissao && n.created_date);
     const tempoMedioMesAnterior = notasComTempoMesAnterior.length > 0
       ? notasComTempoMesAnterior.reduce((sum, n) => {
           const inicio = new Date(n.data_hora_emissao);
-          const fim = new Date(n.data_conferencia_completa);
+          const fim = new Date(n.created_date);
           const horas = (fim - inicio) / (1000 * 60 * 60);
           return sum + horas;
         }, 0) / notasComTempoMesAnterior.length
       : 0;
     
     // Tempo médio ano anterior
-    const notasComTempoAnoAnterior = notasMesmoMesAnoAnterior.filter(n => n.data_hora_emissao && n.data_conferencia_completa);
+    const notasComTempoAnoAnterior = notasMesmoMesAnoAnterior.filter(n => n.data_hora_emissao && n.created_date);
     const tempoMedioAnoAnterior = notasComTempoAnoAnterior.length > 0
       ? notasComTempoAnoAnterior.reduce((sum, n) => {
           const inicio = new Date(n.data_hora_emissao);
-          const fim = new Date(n.data_conferencia_completa);
+          const fim = new Date(n.created_date);
           const horas = (fim - inicio) / (1000 * 60 * 60);
           return sum + horas;
         }, 0) / notasComTempoAnoAnterior.length
