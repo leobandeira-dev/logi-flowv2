@@ -1886,6 +1886,61 @@ export default function Recebimento() {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
+                    <Clock className="w-4 h-4 text-indigo-600" />
+                    Tempo Médio de Recebimento
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-indigo-600">
+                    {indicadoresNotas.tempoMedioRecebimento > 0 
+                      ? `${indicadoresNotas.tempoMedioRecebimento.toFixed(1)}h`
+                      : '—'}
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                    Por nota fiscal
+                  </p>
+                  {indicadoresNotas.tempoMedioRecebimento > 0 && (
+                    <div className="flex flex-col gap-1 mt-2">
+                      <div className="flex items-center gap-1">
+                        {indicadoresNotas.variacaoTempoMesAnterior < 0 ? (
+                          <ArrowDown className="w-3 h-3 text-green-600" />
+                        ) : indicadoresNotas.variacaoTempoMesAnterior > 0 ? (
+                          <ArrowUp className="w-3 h-3 text-red-600" />
+                        ) : (
+                          <Minus className="w-3 h-3 text-gray-500" />
+                        )}
+                        <span className={`text-xs font-semibold ${
+                          indicadoresNotas.variacaoTempoMesAnterior < 0 ? 'text-green-600' : 
+                          indicadoresNotas.variacaoTempoMesAnterior > 0 ? 'text-red-600' : 'text-gray-500'
+                        }`}>
+                          {Math.abs(indicadoresNotas.variacaoTempoMesAnterior).toFixed(1)}%
+                        </span>
+                        <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresNotas.tempoMedioMesAnterior.toFixed(1)}h)</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {indicadoresNotas.variacaoTempoAnoAnterior < 0 ? (
+                          <ArrowDown className="w-3 h-3 text-green-600" />
+                        ) : indicadoresNotas.variacaoTempoAnoAnterior > 0 ? (
+                          <ArrowUp className="w-3 h-3 text-red-600" />
+                        ) : (
+                          <Minus className="w-3 h-3 text-gray-500" />
+                        )}
+                        <span className={`text-xs font-semibold ${
+                          indicadoresNotas.variacaoTempoAnoAnterior < 0 ? 'text-green-600' : 
+                          indicadoresNotas.variacaoTempoAnoAnterior > 0 ? 'text-red-600' : 'text-gray-500'
+                        }`}>
+                          {Math.abs(indicadoresNotas.variacaoTempoAnoAnterior).toFixed(1)}%
+                        </span>
+                        <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresNotas.tempoMedioAnoAnterior.toFixed(1)}h)</span>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
 
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4">
@@ -2185,6 +2240,61 @@ export default function Recebimento() {
                       <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. (R$ {indicadoresRecebimentos.valorMesmoMesAnoAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })})</span>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
+                    <Clock className="w-4 h-4 text-indigo-600" />
+                    Tempo Médio de Recebimento
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-indigo-600">
+                    {indicadoresRecebimentos.tempoMedioRecebimento > 0 
+                      ? `${indicadoresRecebimentos.tempoMedioRecebimento.toFixed(1)}h`
+                      : '—'}
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                    Por ordem de recebimento
+                  </p>
+                  {indicadoresRecebimentos.tempoMedioRecebimento > 0 && (
+                    <div className="flex flex-col gap-1 mt-2">
+                      <div className="flex items-center gap-1">
+                        {indicadoresRecebimentos.variacaoTempoMesAnterior < 0 ? (
+                          <ArrowDown className="w-3 h-3 text-green-600" />
+                        ) : indicadoresRecebimentos.variacaoTempoMesAnterior > 0 ? (
+                          <ArrowUp className="w-3 h-3 text-red-600" />
+                        ) : (
+                          <Minus className="w-3 h-3 text-gray-500" />
+                        )}
+                        <span className={`text-xs font-semibold ${
+                          indicadoresRecebimentos.variacaoTempoMesAnterior < 0 ? 'text-green-600' : 
+                          indicadoresRecebimentos.variacaoTempoMesAnterior > 0 ? 'text-red-600' : 'text-gray-500'
+                        }`}>
+                          {Math.abs(indicadoresRecebimentos.variacaoTempoMesAnterior).toFixed(1)}%
+                        </span>
+                        <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresRecebimentos.tempoMedioMesAnterior.toFixed(1)}h)</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {indicadoresRecebimentos.variacaoTempoAnoAnterior < 0 ? (
+                          <ArrowDown className="w-3 h-3 text-green-600" />
+                        ) : indicadoresRecebimentos.variacaoTempoAnoAnterior > 0 ? (
+                          <ArrowUp className="w-3 h-3 text-red-600" />
+                        ) : (
+                          <Minus className="w-3 h-3 text-gray-500" />
+                        )}
+                        <span className={`text-xs font-semibold ${
+                          indicadoresRecebimentos.variacaoTempoAnoAnterior < 0 ? 'text-green-600' : 
+                          indicadoresRecebimentos.variacaoTempoAnoAnterior > 0 ? 'text-red-600' : 'text-gray-500'
+                        }`}>
+                          {Math.abs(indicadoresRecebimentos.variacaoTempoAnoAnterior).toFixed(1)}%
+                        </span>
+                        <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresRecebimentos.tempoMedioAnoAnterior.toFixed(1)}h)</span>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
