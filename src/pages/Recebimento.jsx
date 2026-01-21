@@ -2659,6 +2659,12 @@ export default function Recebimento() {
                       strokeWidth={2}
                       dot={{ fill: '#3b82f6', r: 3 }}
                       activeDot={{ r: 5 }}
+                      label={{ 
+                        position: 'top', 
+                        fill: isDark ? '#94a3b8' : '#6b7280',
+                        fontSize: 11,
+                        fontWeight: 600
+                      }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
