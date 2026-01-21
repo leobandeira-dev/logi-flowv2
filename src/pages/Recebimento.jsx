@@ -194,6 +194,17 @@ export default function Recebimento() {
     const pesoTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.peso_total_consolidado || 0), 0);
     const valorTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.valor_total_consolidado || 0), 0);
     
+    // Calcular tempo médio de recebimento (em horas)
+    const recebimentosComTempo = recebimentosFiltrados.filter(r => r.data_solicitacao && r.fim_carregamento);
+    const tempoMedioRecebimento = recebimentosComTempo.length > 0
+      ? recebimentosComTempo.reduce((sum, r) => {
+          const inicio = new Date(r.data_solicitacao);
+          const fim = new Date(r.fim_carregamento);
+          const horas = (fim - inicio) / (1000 * 60 * 60);
+          return sum + horas;
+        }, 0) / recebimentosComTempo.length
+      : 0;
+    
     // Totais comparativos
     const totalMesAnterior = recebimentosMesAnterior.length;
     const pesoMesAnterior = recebimentosMesAnterior.reduce((sum, r) => sum + (r.peso_total_consolidado || 0), 0);
@@ -204,6 +215,28 @@ export default function Recebimento() {
     const pesoMesmoMesAnoAnterior = recebimentosMesmoMesAnoAnterior.reduce((sum, r) => sum + (r.peso_total_consolidado || 0), 0);
     const volumesMesmoMesAnoAnterior = recebimentosMesmoMesAnoAnterior.reduce((sum, r) => sum + (r.volumes_total_consolidado || 0), 0);
     const valorMesmoMesAnoAnterior = recebimentosMesmoMesAnoAnterior.reduce((sum, r) => sum + (r.valor_total_consolidado || 0), 0);
+    
+    // Tempo médio mês anterior
+    const recebimentosComTempoMesAnterior = recebimentosMesAnterior.filter(r => r.data_solicitacao && r.fim_carregamento);
+    const tempoMedioMesAnterior = recebimentosComTempoMesAnterior.length > 0
+      ? recebimentosComTempoMesAnterior.reduce((sum, r) => {
+          const inicio = new Date(r.data_solicitacao);
+          const fim = new Date(r.fim_carregamento);
+          const horas = (fim - inicio) / (1000 * 60 * 60);
+          return sum + horas;
+        }, 0) / recebimentosComTempoMesAnterior.length
+      : 0;
+    
+    // Tempo médio ano anterior
+    const recebimentosComTempoAnoAnterior = recebimentosMesmoMesAnoAnterior.filter(r => r.data_solicitacao && r.fim_carregamento);
+    const tempoMedioAnoAnterior = recebimentosComTempoAnoAnterior.length > 0
+      ? recebimentosComTempoAnoAnterior.reduce((sum, r) => {
+          const inicio = new Date(r.data_solicitacao);
+          const fim = new Date(r.fim_carregamento);
+          const horas = (fim - inicio) / (1000 * 60 * 60);
+          return sum + horas;
+        }, 0) / recebimentosComTempoAnoAnterior.length
+      : 0;
     
     // Calcular variações percentuais
     const calcVariacao = (atual, anterior) => {
@@ -216,6 +249,7 @@ export default function Recebimento() {
       volumesTotal,
       pesoTotal,
       valorTotal,
+      tempoMedioRecebimento,
       // Valores absolutos de referência
       totalMesAnterior,
       totalMesmoMesAnoAnterior,
@@ -234,6 +268,8 @@ export default function Recebimento() {
       variacaoVolumesAnoAnterior: calcVariacao(volumesTotal, volumesMesmoMesAnoAnterior),
       variacaoValorMesAnterior: calcVariacao(valorTotal, valorMesAnterior),
       variacaoValorAnoAnterior: calcVariacao(valorTotal, valorMesmoMesAnoAnterior),
+      variacaoTempoMesAnterior: calcVariacao(tempoMedioRecebimento, tempoMedioMesAnterior),
+      variacaoTempoAnoAnterior: calcVariacao(tempoMedioRecebimento, tempoMedioAnoAnterior),
     };
   }, [recebimentos, filtroDataCompartilhado]);
 
@@ -414,6 +450,17 @@ export default function Recebimento() {
     const valorTotal = notasFiltradas.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
     const valorHoje = notasHoje.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
     
+    // Calcular tempo médio de recebimento (em horas)
+    const notasComTempo = notasFiltradas.filter(n => n.data_hora_emissao && n.data_conferencia_completa);
+    const tempoMedioRecebimento = notasComTempo.length > 0
+      ? notasComTempo.reduce((sum, n) => {
+          const inicio = new Date(n.data_hora_emissao);
+          const fim = new Date(n.data_conferencia_completa);
+          const horas = (fim - inicio) / (1000 * 60 * 60);
+          return sum + horas;
+        }, 0) / notasComTempo.length
+      : 0;
+    
     // Totais comparativos
     const totalMesAnterior = notasMesAnterior.length;
     const pesoMesAnterior = notasMesAnterior.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0);
@@ -424,6 +471,28 @@ export default function Recebimento() {
     const pesoMesmoMesAnoAnterior = notasMesmoMesAnoAnterior.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0);
     const volumesMesmoMesAnoAnterior = notasMesmoMesAnoAnterior.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
     const valorMesmoMesAnoAnterior = notasMesmoMesAnoAnterior.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
+    
+    // Tempo médio mês anterior
+    const notasComTempoMesAnterior = notasMesAnterior.filter(n => n.data_hora_emissao && n.data_conferencia_completa);
+    const tempoMedioMesAnterior = notasComTempoMesAnterior.length > 0
+      ? notasComTempoMesAnterior.reduce((sum, n) => {
+          const inicio = new Date(n.data_hora_emissao);
+          const fim = new Date(n.data_conferencia_completa);
+          const horas = (fim - inicio) / (1000 * 60 * 60);
+          return sum + horas;
+        }, 0) / notasComTempoMesAnterior.length
+      : 0;
+    
+    // Tempo médio ano anterior
+    const notasComTempoAnoAnterior = notasMesmoMesAnoAnterior.filter(n => n.data_hora_emissao && n.data_conferencia_completa);
+    const tempoMedioAnoAnterior = notasComTempoAnoAnterior.length > 0
+      ? notasComTempoAnoAnterior.reduce((sum, n) => {
+          const inicio = new Date(n.data_hora_emissao);
+          const fim = new Date(n.data_conferencia_completa);
+          const horas = (fim - inicio) / (1000 * 60 * 60);
+          return sum + horas;
+        }, 0) / notasComTempoAnoAnterior.length
+      : 0;
     
     // Calcular variações percentuais
     const calcVariacao = (atual, anterior) => {
@@ -439,6 +508,7 @@ export default function Recebimento() {
       pesoTotal,
       valorTotal,
       valorHoje,
+      tempoMedioRecebimento,
       // Valores absolutos de referência
       totalMesAnterior,
       totalMesmoMesAnoAnterior,
@@ -457,6 +527,8 @@ export default function Recebimento() {
       variacaoVolumesAnoAnterior: calcVariacao(volumesTotal, volumesMesmoMesAnoAnterior),
       variacaoValorMesAnterior: calcVariacao(valorTotal, valorMesAnterior),
       variacaoValorAnoAnterior: calcVariacao(valorTotal, valorMesmoMesAnoAnterior),
+      variacaoTempoMesAnterior: calcVariacao(tempoMedioRecebimento, tempoMedioMesAnterior),
+      variacaoTempoAnoAnterior: calcVariacao(tempoMedioRecebimento, tempoMedioAnoAnterior),
     };
   }, [todasNotasFiscais, filtroDataCompartilhado]);
 
