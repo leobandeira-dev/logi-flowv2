@@ -144,6 +144,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const [loading, setLoading] = useState(true);
   const [tipoVeiculo, setTipoVeiculo] = useState("CARRETA");
   const [numLinhas, setNumLinhas] = useState(6);
+  const [numLinhasInput, setNumLinhasInput] = useState("6");
   const [layoutConfig, setLayoutConfig] = useState({ linhas: 6, colunas: ["Esquerda", "Centro", "Direita"] });
   const [enderecamentos, setEnderecamentos] = useState([]);
   const [volumesSelecionados, setVolumesSelecionados] = useState([]);
@@ -422,6 +423,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       setTipoVeiculo(tipoBase);
       setLayoutConfig(template);
       setNumLinhas(template.linhas);
+      setNumLinhasInput(template.linhas.toString());
     }
   }, [ordem.tipo_veiculo]);
 
@@ -3319,16 +3321,25 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                 <div className="px-2 py-1.5 border-b flex items-center gap-2" style={{ borderColor: theme.cardBorder }}>
                   <Label className="text-xs whitespace-nowrap" style={{ color: theme.text }}>Linhas:</Label>
                   <Input
-                    type="number"
-                    value={numLinhas}
+                    type="text"
+                    inputMode="numeric"
+                    value={numLinhasInput}
                     onChange={(e) => {
-                      const val = parseInt(e.target.value) || 1;
-                      setNumLinhas(Math.max(1, Math.min(20, val)));
+                      const value = e.target.value.replace(/\D/g, '');
+                      setNumLinhasInput(value);
+                      if (value) {
+                        const val = parseInt(value);
+                        setNumLinhas(Math.max(1, Math.min(20, val)));
+                      }
                     }}
-                    className="w-16 h-7 text-xs"
+                    onBlur={() => {
+                      if (!numLinhasInput) {
+                        setNumLinhasInput("1");
+                        setNumLinhas(1);
+                      }
+                    }}
+                    className="w-16 h-7 text-xs text-center"
                     style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                    min={1}
-                    max={20}
                   />
                 </div>
 
@@ -4883,16 +4894,25 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               <div className="flex items-center gap-2">
                 <Label className="text-xs sm:text-sm" style={{ color: theme.text }}>Linhas:</Label>
                 <Input
-                  type="number"
-                  value={numLinhas}
+                  type="text"
+                  inputMode="numeric"
+                  value={numLinhasInput}
                   onChange={(e) => {
-                    const val = parseInt(e.target.value) || 1;
-                    setNumLinhas(Math.max(1, Math.min(20, val)));
+                    const value = e.target.value.replace(/\D/g, '');
+                    setNumLinhasInput(value);
+                    if (value) {
+                      const val = parseInt(value);
+                      setNumLinhas(Math.max(1, Math.min(20, val)));
+                    }
                   }}
-                  className="w-14 sm:w-16 h-7 sm:h-8 text-xs sm:text-sm"
+                  onBlur={() => {
+                    if (!numLinhasInput) {
+                      setNumLinhasInput("1");
+                      setNumLinhas(1);
+                    }
+                  }}
+                  className="w-14 sm:w-16 h-7 sm:h-8 text-xs sm:text-sm text-center"
                   style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                  min={1}
-                  max={20}
                 />
               </div>
             </div>
