@@ -1965,7 +1965,7 @@ export default function Recebimento() {
                         {Math.abs(indicadoresNotas.variacaoValorMesAnterior).toFixed(1)}%
                       </span>
                       <span className="text-[10px]" style={{ color: theme.textMuted }}>
-                        vs mês ant.
+                        vs mês ant. (R$ {indicadoresNotas.valorMesAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })})
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
@@ -1983,7 +1983,7 @@ export default function Recebimento() {
                         {Math.abs(indicadoresNotas.variacaoValorAnoAnterior).toFixed(1)}%
                       </span>
                       <span className="text-[10px]" style={{ color: theme.textMuted }}>
-                        vs ano ant.
+                        vs ano ant. (R$ {indicadoresNotas.valorMesmoMesAnoAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })})
                       </span>
                     </div>
                   </div>
