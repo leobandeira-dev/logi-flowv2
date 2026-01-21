@@ -199,6 +199,7 @@ export default function Recebimento() {
       return dataRec === dataHojeSP;
     });
 
+    const totalRecebimentosHoje = recebimentosHoje.length;
     const volumesTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.volumes_total_consolidado || 0), 0);
     const volumesHoje = recebimentosHoje.reduce((sum, r) => sum + (r.volumes_total_consolidado || 0), 0);
     const pesoTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.peso_total_consolidado || 0), 0);
@@ -307,6 +308,7 @@ export default function Recebimento() {
 
     return {
       totalRecebimentos: recebimentosFiltrados.length,
+      totalRecebimentosHoje,
       volumesTotal,
       volumesHoje,
       pesoTotal,
@@ -2179,9 +2181,7 @@ export default function Recebimento() {
                     {indicadoresRecebimentos.totalRecebimentos}
                   </p>
                   <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
-                    {filtroDataCompartilhado.dataInicio || filtroDataCompartilhado.dataFim 
-                      ? 'No período selecionado' 
-                      : 'Em janeiro de 2026'}
+                    {indicadoresRecebimentos.totalRecebimentosHoje} recebimentos hoje
                   </p>
                   <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
