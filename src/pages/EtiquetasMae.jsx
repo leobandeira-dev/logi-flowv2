@@ -289,6 +289,17 @@ export default function EtiquetasMae() {
         return 'not_found';
       }
 
+      // Verificação instantânea usando ref - PRIMEIRO
+      if (volumesVinculadosIdsRef.current.has(volumeEncontrado.id)) {
+        playErrorBeep();
+        toast.warning("⚠️ Volume já adicionado nesta etiqueta");
+        setCodigoScanner("");
+        setProcessando(false);
+        setCameraScanFeedback('duplicate');
+        setTimeout(() => setCameraScanFeedback(null), 1200);
+        return 'duplicate';
+      }
+
       // Verificar se já está vinculado à MESMA etiqueta (no banco)
       if (volumeEncontrado.etiqueta_mae_id === etiquetaSelecionada.id) {
         playErrorBeep();
@@ -313,17 +324,6 @@ export default function EtiquetasMae() {
           setTimeout(() => setCameraScanFeedback(null), 1200);
           return 'error';
         }
-      }
-
-      // Verificação instantânea usando ref
-      if (volumesVinculadosIdsRef.current.has(volumeEncontrado.id)) {
-        playErrorBeep();
-        toast.warning("⚠️ Volume já adicionado nesta etiqueta");
-        setCodigoScanner("");
-        setProcessando(false);
-        setCameraScanFeedback('duplicate');
-        setTimeout(() => setCameraScanFeedback(null), 1200);
-        return 'duplicate';
       }
 
       // Marcar origem do volume se ainda não existir
@@ -356,6 +356,9 @@ export default function EtiquetasMae() {
 
       const novosVolumesIds = [...(etiquetaSelecionada.volumes_ids || []), volumeEncontrado.id];
       const volumesAtualizados = [...volumesVinculados, volumeAtualizado];
+
+      // Adicionar à ref APÓS sucesso no banco e ANTES de atualizar estado
+      volumesVinculadosIdsRef.current.add(volumeEncontrado.id);
 
       const pesoTotal = volumesAtualizados.reduce((sum, v) => sum + (v.peso_volume || 0), 0);
       const m3Total = volumesAtualizados.reduce((sum, v) => sum + (v.m3 || 0), 0);
