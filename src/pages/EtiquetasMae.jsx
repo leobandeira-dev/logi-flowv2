@@ -277,12 +277,12 @@ export default function EtiquetasMae() {
 
       if (!volumeEncontrado) {
         playErrorBeep();
-        toast.error("Volume não encontrado");
+        toast.error("Volume não encontrado no sistema");
         setCodigoScanner("");
         setProcessando(false);
-        setCameraScanFeedback('error');
-        setTimeout(() => setCameraScanFeedback(null), 800);
-        return 'error';
+        setCameraScanFeedback('not_found');
+        setTimeout(() => setCameraScanFeedback(null), 1200);
+        return 'not_found';
       }
 
       if (volumeEncontrado.etiqueta_mae_id && volumeEncontrado.etiqueta_mae_id !== etiquetaSelecionada.id) {
@@ -290,22 +290,22 @@ export default function EtiquetasMae() {
         
         if (etiquetaAnterior.status !== "cancelada") {
           playErrorBeep();
-          toast.error(`Volume já vinculado à etiqueta ${etiquetaAnterior.codigo}`);
+          toast.error(`Volume já está na etiqueta ${etiquetaAnterior.codigo}`);
           setCodigoScanner("");
           setProcessando(false);
           setCameraScanFeedback('error');
-          setTimeout(() => setCameraScanFeedback(null), 800);
+          setTimeout(() => setCameraScanFeedback(null), 1200);
           return 'error';
         }
       }
 
       if (volumesVinculados.some(v => v.id === volumeEncontrado.id)) {
         playErrorBeep();
-        toast.warning("⚠️ Volume já bipado nesta etiqueta");
+        toast.warning("⚠️ Volume já adicionado nesta etiqueta");
         setCodigoScanner("");
         setProcessando(false);
         setCameraScanFeedback('duplicate');
-        setTimeout(() => setCameraScanFeedback(null), 800);
+        setTimeout(() => setCameraScanFeedback(null), 1200);
         return 'duplicate';
       }
 
@@ -395,7 +395,7 @@ export default function EtiquetasMae() {
       setCodigoScanner("");
       setProcessando(false);
       setCameraScanFeedback('success');
-      setTimeout(() => setCameraScanFeedback(null), 800);
+      setTimeout(() => setCameraScanFeedback(null), 1000);
       
       return 'success';
     } catch (error) {
