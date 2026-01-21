@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, Upload, Plus, RefreshCw, Printer, X, Tag, FileText, Edit, Search, Filter, TrendingUp, Calendar, Clock } from "lucide-react";
+import { Package, Upload, Plus, RefreshCw, Printer, X, Tag, FileText, Edit, Search, Filter, TrendingUp, Calendar, Clock, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ImpressaoEtiquetas from "../components/notas-fiscais/ImpressaoEtiquetas";
 import NotasFiscaisTable from "../components/notas-fiscais/NotasFiscaisTable";
@@ -139,8 +139,18 @@ export default function Recebimento() {
     return filtered.length;
   }, [todasNotasFiscais, searchTermNotas, filtroDataCompartilhado]);
 
-  // Memoizar indicadores de recebimentos (COM FILTRO DE DATA)
+  // Memoizar indicadores de recebimentos (COM FILTRO DE DATA E COMPARATIVOS)
   const indicadoresRecebimentos = useMemo(() => {
+    const hoje = new Date();
+    const mesAtual = hoje.getMonth();
+    const anoAtual = hoje.getFullYear();
+    
+    // Calcular período anterior e ano anterior
+    const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
+    const anoMesAnterior = mesAtual === 0 ? anoAtual - 1 : anoAtual;
+    const mesAnoAnterior = mesAtual;
+    const anoAnterior = anoAtual - 1;
+    
     // Aplicar filtro de data compartilhado
     const recebimentosFiltrados = recebimentos.filter(r => {
       if (r.status === "cancelado") return false;
@@ -158,7 +168,6 @@ export default function Recebimento() {
       
       // Se não há filtro, usar período padrão (mês atual)
       if (!r.data_solicitacao) return false;
-      const hoje = new Date();
       const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
       const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
       const dataRec = new Date(r.data_solicitacao);
@@ -166,14 +175,50 @@ export default function Recebimento() {
       const [, mesRec, anoRec] = dataRecSP.split('/');
       return mesRec === mesHojeSP && anoRec === anoHojeSP;
     });
+    
+    // Dados do mês anterior
+    const recebimentosMesAnterior = recebimentos.filter(r => {
+      if (r.status === "cancelado" || !r.data_solicitacao) return false;
+      const dataRec = new Date(r.data_solicitacao);
+      return dataRec.getMonth() === mesAnterior && dataRec.getFullYear() === anoMesAnterior;
+    });
+    
+    // Dados do mesmo mês do ano anterior
+    const recebimentosMesmoMesAnoAnterior = recebimentos.filter(r => {
+      if (r.status === "cancelado" || !r.data_solicitacao) return false;
+      const dataRec = new Date(r.data_solicitacao);
+      return dataRec.getMonth() === mesAnoAnterior && dataRec.getFullYear() === anoAnterior;
+    });
 
     const volumesTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.volumes_total_consolidado || 0), 0);
     const pesoTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.peso_total_consolidado || 0), 0);
+    
+    // Totais comparativos
+    const totalMesAnterior = recebimentosMesAnterior.length;
+    const pesoMesAnterior = recebimentosMesAnterior.reduce((sum, r) => sum + (r.peso_total_consolidado || 0), 0);
+    const volumesMesAnterior = recebimentosMesAnterior.reduce((sum, r) => sum + (r.volumes_total_consolidado || 0), 0);
+    
+    const totalMesmoMesAnoAnterior = recebimentosMesmoMesAnoAnterior.length;
+    const pesoMesmoMesAnoAnterior = recebimentosMesmoMesAnoAnterior.reduce((sum, r) => sum + (r.peso_total_consolidado || 0), 0);
+    const volumesMesmoMesAnoAnterior = recebimentosMesmoMesAnoAnterior.reduce((sum, r) => sum + (r.volumes_total_consolidado || 0), 0);
+    
+    // Calcular variações percentuais
+    const calcVariacao = (atual, anterior) => {
+      if (anterior === 0) return atual > 0 ? 100 : 0;
+      return ((atual - anterior) / anterior) * 100;
+    };
 
     return {
       totalRecebimentos: recebimentosFiltrados.length,
       volumesTotal,
-      pesoTotal
+      pesoTotal,
+      // Comparativos
+      variacaoTotalMesAnterior: calcVariacao(recebimentosFiltrados.length, totalMesAnterior),
+      variacaoTotalAnoAnterior: calcVariacao(recebimentosFiltrados.length, totalMesmoMesAnoAnterior),
+      variacaoPesoMesAnterior: calcVariacao(pesoTotal, pesoMesAnterior),
+      variacaoPesoAnoAnterior: calcVariacao(pesoTotal, pesoMesmoMesAnoAnterior),
+      variacaoVolumesMesAnterior: calcVariacao(volumesTotal, volumesMesAnterior),
+      variacaoVolumesAnoAnterior: calcVariacao(volumesTotal, volumesMesmoMesAnoAnterior),
     };
   }, [recebimentos, filtroDataCompartilhado]);
 
@@ -290,8 +335,18 @@ export default function Recebimento() {
     }
   }, [recebimentos, searchTermRecebimentos, filtersRecebimentos, usuarios, visualizacaoGrafico, anoSelecionadoRecebimento, mesSelecionadoRecebimento]);
 
-  // Memoizar indicadores de notas fiscais (COM FILTRO DE DATA)
+  // Memoizar indicadores de notas fiscais (COM FILTRO DE DATA E COMPARATIVOS)
   const indicadoresNotas = useMemo(() => {
+    const hoje = new Date();
+    const mesAtual = hoje.getMonth();
+    const anoAtual = hoje.getFullYear();
+    
+    // Calcular período anterior e ano anterior
+    const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
+    const anoMesAnterior = mesAtual === 0 ? anoAtual - 1 : anoAtual;
+    const mesAnoAnterior = mesAtual;
+    const anoAnterior = anoAtual - 1;
+    
     // Aplicar filtro de data compartilhado
     const notasFiltradas = todasNotasFiscais.filter(n => {
       if (n.status_nf === "cancelada") return false;
@@ -309,15 +364,27 @@ export default function Recebimento() {
       
       // Se não há filtro, usar período padrão (mês atual)
       if (!n.created_date) return false;
-      const hoje = new Date();
       const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
       const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
       const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
       const [, mesNota, anoNota] = dataNota.split('/');
       return mesNota === mesHojeSP && anoNota === anoHojeSP;
     });
+    
+    // Dados do mês anterior
+    const notasMesAnterior = todasNotasFiscais.filter(n => {
+      if (n.status_nf === "cancelada" || !n.created_date) return false;
+      const dataNota = new Date(n.created_date);
+      return dataNota.getMonth() === mesAnterior && dataNota.getFullYear() === anoMesAnterior;
+    });
+    
+    // Dados do mesmo mês do ano anterior
+    const notasMesmoMesAnoAnterior = todasNotasFiscais.filter(n => {
+      if (n.status_nf === "cancelada" || !n.created_date) return false;
+      const dataNota = new Date(n.created_date);
+      return dataNota.getMonth() === mesAnoAnterior && dataNota.getFullYear() === anoAnterior;
+    });
 
-    const hoje = new Date();
     const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
     
     const notasHoje = notasFiltradas.filter(n => {
@@ -331,6 +398,23 @@ export default function Recebimento() {
     const pesoTotal = notasFiltradas.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0);
     const valorTotal = notasFiltradas.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
     const valorHoje = notasHoje.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
+    
+    // Totais comparativos
+    const totalMesAnterior = notasMesAnterior.length;
+    const pesoMesAnterior = notasMesAnterior.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0);
+    const volumesMesAnterior = notasMesAnterior.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
+    const valorMesAnterior = notasMesAnterior.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
+    
+    const totalMesmoMesAnoAnterior = notasMesmoMesAnoAnterior.length;
+    const pesoMesmoMesAnoAnterior = notasMesmoMesAnoAnterior.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0);
+    const volumesMesmoMesAnoAnterior = notasMesmoMesAnoAnterior.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
+    const valorMesmoMesAnoAnterior = notasMesmoMesAnoAnterior.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
+    
+    // Calcular variações percentuais
+    const calcVariacao = (atual, anterior) => {
+      if (anterior === 0) return atual > 0 ? 100 : 0;
+      return ((atual - anterior) / anterior) * 100;
+    };
 
     return {
       totalMes: notasFiltradas.length,
@@ -339,7 +423,16 @@ export default function Recebimento() {
       volumesHoje,
       pesoTotal,
       valorTotal,
-      valorHoje
+      valorHoje,
+      // Comparativos
+      variacaoTotalMesAnterior: calcVariacao(notasFiltradas.length, totalMesAnterior),
+      variacaoTotalAnoAnterior: calcVariacao(notasFiltradas.length, totalMesmoMesAnoAnterior),
+      variacaoPesoMesAnterior: calcVariacao(pesoTotal, pesoMesAnterior),
+      variacaoPesoAnoAnterior: calcVariacao(pesoTotal, pesoMesmoMesAnoAnterior),
+      variacaoVolumesMesAnterior: calcVariacao(volumesTotal, volumesMesAnterior),
+      variacaoVolumesAnoAnterior: calcVariacao(volumesTotal, volumesMesmoMesAnoAnterior),
+      variacaoValorMesAnterior: calcVariacao(valorTotal, valorMesAnterior),
+      variacaoValorAnoAnterior: calcVariacao(valorTotal, valorMesmoMesAnoAnterior),
     };
   }, [todasNotasFiscais, filtroDataCompartilhado]);
 
@@ -1506,6 +1599,40 @@ export default function Recebimento() {
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.totalHoje} recebidas hoje
                   </p>
+                  <div className="flex gap-2 mt-2">
+                    <div className="flex items-center gap-1">
+                      {indicadoresNotas.variacaoTotalMesAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresNotas.variacaoTotalMesAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresNotas.variacaoTotalMesAnterior > 0 ? 'text-green-600' : 
+                        indicadoresNotas.variacaoTotalMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresNotas.variacaoTotalMesAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant.</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {indicadoresNotas.variacaoTotalAnoAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresNotas.variacaoTotalAnoAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresNotas.variacaoTotalAnoAnterior > 0 ? 'text-green-600' : 
+                        indicadoresNotas.variacaoTotalAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresNotas.variacaoTotalAnoAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant.</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1521,6 +1648,40 @@ export default function Recebimento() {
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.volumesHoje} volumes hoje
                   </p>
+                  <div className="flex gap-2 mt-2">
+                    <div className="flex items-center gap-1">
+                      {indicadoresNotas.variacaoVolumesMesAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresNotas.variacaoVolumesMesAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresNotas.variacaoVolumesMesAnterior > 0 ? 'text-green-600' : 
+                        indicadoresNotas.variacaoVolumesMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresNotas.variacaoVolumesMesAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant.</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {indicadoresNotas.variacaoVolumesAnoAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresNotas.variacaoVolumesAnoAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresNotas.variacaoVolumesAnoAnterior > 0 ? 'text-green-600' : 
+                        indicadoresNotas.variacaoVolumesAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresNotas.variacaoVolumesAnoAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant.</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1538,6 +1699,40 @@ export default function Recebimento() {
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.totalMes} nota{indicadoresNotas.totalMes !== 1 ? 's' : ''}
                   </p>
+                  <div className="flex gap-2 mt-2">
+                    <div className="flex items-center gap-1">
+                      {indicadoresNotas.variacaoPesoMesAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresNotas.variacaoPesoMesAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresNotas.variacaoPesoMesAnterior > 0 ? 'text-green-600' : 
+                        indicadoresNotas.variacaoPesoMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresNotas.variacaoPesoMesAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant.</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {indicadoresNotas.variacaoPesoAnoAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresNotas.variacaoPesoAnoAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresNotas.variacaoPesoAnoAnterior > 0 ? 'text-green-600' : 
+                        indicadoresNotas.variacaoPesoAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresNotas.variacaoPesoAnoAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant.</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1555,6 +1750,40 @@ export default function Recebimento() {
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     R$ {indicadoresNotas.valorHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} recebidos hoje
                   </p>
+                  <div className="flex gap-2 mt-2">
+                    <div className="flex items-center gap-1">
+                      {indicadoresNotas.variacaoValorMesAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresNotas.variacaoValorMesAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresNotas.variacaoValorMesAnterior > 0 ? 'text-green-600' : 
+                        indicadoresNotas.variacaoValorMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresNotas.variacaoValorMesAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant.</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {indicadoresNotas.variacaoValorAnoAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresNotas.variacaoValorAnoAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresNotas.variacaoValorAnoAnterior > 0 ? 'text-green-600' : 
+                        indicadoresNotas.variacaoValorAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresNotas.variacaoValorAnoAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant.</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -1667,6 +1896,40 @@ export default function Recebimento() {
                       ? 'No período selecionado' 
                       : 'Em janeiro de 2026'}
                   </p>
+                  <div className="flex gap-2 mt-2">
+                    <div className="flex items-center gap-1">
+                      {indicadoresRecebimentos.variacaoTotalMesAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresRecebimentos.variacaoTotalMesAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresRecebimentos.variacaoTotalMesAnterior > 0 ? 'text-green-600' : 
+                        indicadoresRecebimentos.variacaoTotalMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresRecebimentos.variacaoTotalMesAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant.</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {indicadoresRecebimentos.variacaoTotalAnoAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresRecebimentos.variacaoTotalAnoAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresRecebimentos.variacaoTotalAnoAnterior > 0 ? 'text-green-600' : 
+                        indicadoresRecebimentos.variacaoTotalAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresRecebimentos.variacaoTotalAnoAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant.</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1684,6 +1947,40 @@ export default function Recebimento() {
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     {indicadoresRecebimentos.totalRecebimentos} recebimento{indicadoresRecebimentos.totalRecebimentos !== 1 ? 's' : ''}
                   </p>
+                  <div className="flex gap-2 mt-2">
+                    <div className="flex items-center gap-1">
+                      {indicadoresRecebimentos.variacaoVolumesMesAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresRecebimentos.variacaoVolumesMesAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresRecebimentos.variacaoVolumesMesAnterior > 0 ? 'text-green-600' : 
+                        indicadoresRecebimentos.variacaoVolumesMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresRecebimentos.variacaoVolumesMesAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant.</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {indicadoresRecebimentos.variacaoVolumesAnoAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresRecebimentos.variacaoVolumesAnoAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresRecebimentos.variacaoVolumesAnoAnterior > 0 ? 'text-green-600' : 
+                        indicadoresRecebimentos.variacaoVolumesAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresRecebimentos.variacaoVolumesAnoAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant.</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1701,6 +1998,40 @@ export default function Recebimento() {
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.totalMes} nota{indicadoresNotas.totalMes !== 1 ? 's' : ''}
                   </p>
+                  <div className="flex gap-2 mt-2">
+                    <div className="flex items-center gap-1">
+                      {indicadoresRecebimentos.variacaoPesoMesAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresRecebimentos.variacaoPesoMesAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresRecebimentos.variacaoPesoMesAnterior > 0 ? 'text-green-600' : 
+                        indicadoresRecebimentos.variacaoPesoMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresRecebimentos.variacaoPesoMesAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant.</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {indicadoresRecebimentos.variacaoPesoAnoAnterior > 0 ? (
+                        <ArrowUp className="w-3 h-3 text-green-600" />
+                      ) : indicadoresRecebimentos.variacaoPesoAnoAnterior < 0 ? (
+                        <ArrowDown className="w-3 h-3 text-red-600" />
+                      ) : (
+                        <Minus className="w-3 h-3 text-gray-500" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        indicadoresRecebimentos.variacaoPesoAnoAnterior > 0 ? 'text-green-600' : 
+                        indicadoresRecebimentos.variacaoPesoAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresRecebimentos.variacaoPesoAnoAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant.</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
