@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera, X, Loader2, Keyboard } from "lucide-react";
+import { Camera, X, Loader2, Keyboard, RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const [useManualMode, setUseManualMode] = useState(false);
   const qrScannerRef = useRef(null);
   const [scanFeedback, setScanFeedback] = useState(null); // 'success' | 'duplicate' | 'error' | 'not_found' | 'processing' | null
+  const [currentFacingMode, setCurrentFacingMode] = useState("environment"); // 'environment' ou 'user'
 
   useEffect(() => {
     if (open && !useManualMode) {
@@ -58,10 +59,17 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     }
   }, [open, scanFeedback]);
 
-  const startScanner = async () => {
+  const startScanner = async (facingMode = currentFacingMode) => {
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
 
     try {
+      // Forçar câmera traseira especificamente para Android
+      const constraints = {
+        video: {
+          facingMode: { exact: facingMode }
+        }
+      };
+
       const qrScanner = new QrScanner(
         videoRef.current,
         async (result) => {
@@ -100,7 +108,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
           returnDetailedScanResult: true,
           highlightScanRegion: false,
           highlightCodeOutline: false,
-          preferredCamera: "environment",
+          preferredCamera: facingMode,
           maxScansPerSecond: 5,
           calculateScanRegion: (video) => {
             // Área de scan maior para capturar códigos de diferentes distâncias
@@ -123,10 +131,24 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       qrScannerRef.current = qrScanner;
       await qrScanner.start();
       setScanning(true);
+      setCurrentFacingMode(facingMode);
 
-      // Otimizar configurações da câmera para diferentes distâncias
+      // Forçar câmera traseira via MediaDevices API (para Android)
       try {
-        const videoTrack = videoRef.current?.srcObject?.getVideoTracks()[0];
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { 
+            facingMode: { exact: facingMode },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        });
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+
+        // Otimizar configurações da câmera para diferentes distâncias
+        const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const capabilities = videoTrack.getCapabilities();
           const constraints = {};
@@ -145,16 +167,27 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
             advanced: [{ ...constraints }]
           });
 
-          console.log('📸 Scanner otimizado para diferentes distâncias');
+          console.log('📸 Scanner otimizado - Câmera:', facingMode);
         }
       } catch (error) {
         console.log('Otimizações de câmera não aplicadas:', error.message);
       }
 
-      console.log('📸 Scanner QR iniciado');
+      console.log('📸 Scanner QR iniciado com câmera:', facingMode);
     } catch (error) {
       console.error("Erro ao iniciar scanner:", error);
-      setUseManualMode(true);
+      
+      // Se falhar com câmera traseira, tentar frontal
+      if (facingMode === "environment") {
+        console.log("Tentando câmera frontal...");
+        try {
+          await startScanner("user");
+        } catch (err) {
+          setUseManualMode(true);
+        }
+      } else {
+        setUseManualMode(true);
+      }
     }
   };
 
@@ -164,7 +197,21 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       qrScannerRef.current.destroy();
       qrScannerRef.current = null;
     }
+    
+    // Parar todas as tracks de vídeo
+    if (videoRef.current?.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    
     setScanning(false);
+  };
+
+  const toggleCamera = async () => {
+    stopScanner();
+    const newFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+    await startScanner(newFacingMode);
   };
 
   const handleManualSubmit = async () => {
@@ -441,7 +488,16 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
 
 
-              <div className="absolute top-2 right-2 z-10">
+              <div className="absolute top-2 right-2 z-10 flex gap-2">
+                <Button
+                  onClick={toggleCamera}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/90 hover:bg-white"
+                  title="Alternar câmera"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
                 <Button
                   onClick={() => {
                     stopScanner();
