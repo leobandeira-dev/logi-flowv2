@@ -1845,7 +1845,7 @@ export default function Recebimento() {
                 <CardContent className="pb-2 pt-1 px-3">
                   <p className="text-xl font-bold text-green-600">{indicadoresNotas.volumesTotal}</p>
                   <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
-                    {indicadoresNotas.volumesHoje} volumes recebidos hoje
+                    {indicadoresNotas.volumesHoje} volumes hoje
                   </p>
                   <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
@@ -2216,7 +2216,7 @@ export default function Recebimento() {
                     {indicadoresRecebimentos.volumesTotal}
                   </p>
                   <p className="text-[11px] mt-0.5" style={{ color: theme.textMuted }}>
-                    {indicadoresRecebimentos.totalRecebimentos} recebimentos
+                    {indicadoresRecebimentos.volumesHoje} volumes hoje
                   </p>
                   <div className="flex flex-col gap-0.5 mt-1.5">
                     <div className="flex items-center gap-1">
