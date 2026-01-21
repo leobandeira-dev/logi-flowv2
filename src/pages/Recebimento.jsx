@@ -520,7 +520,9 @@ export default function Recebimento() {
         const ordenadas = datas.sort((a, b) => a - b);
         const primeiro = ordenadas[0];
         const ultimo = ordenadas[ordenadas.length - 1];
-        const diferencaHoras = (ultimo - primeiro) / (1000 * 60 * 60);
+        const diferencaMinutos = (ultimo - primeiro) / (1000 * 60);
+        const diferencaAjustada = Math.max(0, diferencaMinutos - intervaloMinutos);
+        const diferencaHoras = diferencaAjustada / 60;
         return diferencaHoras / datas.length;
       });
     
@@ -556,7 +558,9 @@ export default function Recebimento() {
         const ordenadas = datas.sort((a, b) => a - b);
         const primeiro = ordenadas[0];
         const ultimo = ordenadas[ordenadas.length - 1];
-        const diferencaHoras = (ultimo - primeiro) / (1000 * 60 * 60);
+        const diferencaMinutos = (ultimo - primeiro) / (1000 * 60);
+        const diferencaAjustada = Math.max(0, diferencaMinutos - intervaloMinutos);
+        const diferencaHoras = diferencaAjustada / 60;
         return diferencaHoras / datas.length;
       });
     
@@ -581,7 +585,9 @@ export default function Recebimento() {
         const ordenadas = datas.sort((a, b) => a - b);
         const primeiro = ordenadas[0];
         const ultimo = ordenadas[ordenadas.length - 1];
-        const diferencaHoras = (ultimo - primeiro) / (1000 * 60 * 60);
+        const diferencaMinutos = (ultimo - primeiro) / (1000 * 60);
+        const diferencaAjustada = Math.max(0, diferencaMinutos - intervaloMinutos);
+        const diferencaHoras = diferencaAjustada / 60;
         return diferencaHoras / datas.length;
       });
     
@@ -1781,149 +1787,149 @@ export default function Recebimento() {
             {/* Indicadores Memoizados */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
-                    <FileText className="w-4 h-4 text-blue-600" />
+                <CardHeader className="pb-1">
+                  <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
+                    <FileText className="w-3 h-3 text-blue-600" />
                     Total de Notas Fiscais
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-blue-600">{indicadoresNotas.totalMes}</p>
-                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                <CardContent className="pb-2">
+                  <p className="text-lg font-bold text-blue-600">{indicadoresNotas.totalMes}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.totalHoje} recebidas hoje
                   </p>
-                  <div className="flex flex-col gap-1 mt-2">
+                  <div className="flex flex-col gap-0.5 mt-1">
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoTotalMesAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresNotas.variacaoTotalMesAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresNotas.variacaoTotalMesAnterior > 0 ? 'text-green-600' : 
                         indicadoresNotas.variacaoTotalMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoTotalMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresNotas.totalMesAnterior})</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresNotas.totalMesAnterior})</span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoTotalAnoAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresNotas.variacaoTotalAnoAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresNotas.variacaoTotalAnoAnterior > 0 ? 'text-green-600' : 
                         indicadoresNotas.variacaoTotalAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoTotalAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresNotas.totalMesmoMesAnoAnterior})</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresNotas.totalMesmoMesAnoAnterior})</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
-                    <Package className="w-4 h-4 text-green-600" />
+                <CardHeader className="pb-1">
+                  <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
+                    <Package className="w-3 h-3 text-green-600" />
                     Total de Volumes
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-green-600">{indicadoresNotas.volumesTotal}</p>
-                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                <CardContent className="pb-2">
+                  <p className="text-lg font-bold text-green-600">{indicadoresNotas.volumesTotal}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.volumesHoje} volumes hoje
                   </p>
-                  <div className="flex flex-col gap-1 mt-2">
+                  <div className="flex flex-col gap-0.5 mt-1">
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoVolumesMesAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresNotas.variacaoVolumesMesAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresNotas.variacaoVolumesMesAnterior > 0 ? 'text-green-600' : 
                         indicadoresNotas.variacaoVolumesMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoVolumesMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresNotas.volumesMesAnterior.toLocaleString()})</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresNotas.volumesMesAnterior.toLocaleString()})</span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoVolumesAnoAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresNotas.variacaoVolumesAnoAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresNotas.variacaoVolumesAnoAnterior > 0 ? 'text-green-600' : 
                         indicadoresNotas.variacaoVolumesAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoVolumesAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresNotas.volumesMesmoMesAnoAnterior.toLocaleString()})</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresNotas.volumesMesmoMesAnoAnterior.toLocaleString()})</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
-                    <TrendingUp className="w-4 h-4 text-orange-600" />
+                <CardHeader className="pb-1">
+                  <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
+                    <TrendingUp className="w-3 h-3 text-orange-600" />
                     Peso Total
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-orange-600">
+                <CardContent className="pb-2">
+                  <p className="text-lg font-bold text-orange-600">
                     {indicadoresNotas.pesoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
                   </p>
-                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.totalMes} nota{indicadoresNotas.totalMes !== 1 ? 's' : ''}
                   </p>
-                  <div className="flex flex-col gap-1 mt-2">
+                  <div className="flex flex-col gap-0.5 mt-1">
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoPesoMesAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresNotas.variacaoPesoMesAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresNotas.variacaoPesoMesAnterior > 0 ? 'text-green-600' : 
                         indicadoresNotas.variacaoPesoMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoPesoMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresNotas.pesoMesAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg)</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresNotas.pesoMesAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg)</span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoPesoAnoAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresNotas.variacaoPesoAnoAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresNotas.variacaoPesoAnoAnterior > 0 ? 'text-green-600' : 
                         indicadoresNotas.variacaoPesoAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoPesoAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresNotas.pesoMesmoMesAnoAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg)</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresNotas.pesoMesmoMesAnoAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg)</span>
                     </div>
                   </div>
                 </CardContent>
@@ -1937,44 +1943,48 @@ export default function Recebimento() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pb-2">
-                  <p className="text-base font-bold text-purple-600 leading-tight">
+                  <p className="text-lg font-bold text-purple-600 leading-tight">
                     R$ {indicadoresNotas.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                   <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
                     Recebidos hoje
                   </p>
-                  <div className="flex flex-col gap-1 mt-2">
+                  <div className="flex flex-col gap-0.5 mt-1">
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoValorMesAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresNotas.variacaoValorMesAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresNotas.variacaoValorMesAnterior > 0 ? 'text-green-600' : 
                         indicadoresNotas.variacaoValorMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoValorMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. (R$ {indicadoresNotas.valorMesAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })})</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>
+                        vs mês ant.
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresNotas.variacaoValorAnoAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresNotas.variacaoValorAnoAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresNotas.variacaoValorAnoAnterior > 0 ? 'text-green-600' : 
                         indicadoresNotas.variacaoValorAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresNotas.variacaoValorAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. (R$ {indicadoresNotas.valorMesmoMesAnoAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })})</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>
+                        vs ano ant.
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -2007,46 +2017,44 @@ export default function Recebimento() {
                       min="0"
                     />
                   </div>
-                  {indicadoresNotas.tempoMedioRecebimento > 0 && (
-                    <div className="flex flex-col gap-0.5 mt-1">
-                      <div className="flex items-center gap-1">
-                        {indicadoresNotas.variacaoTempoMesAnterior < 0 ? (
-                          <ArrowDown className="w-2 h-2 text-green-600" />
-                        ) : indicadoresNotas.variacaoTempoMesAnterior > 0 ? (
-                          <ArrowUp className="w-2 h-2 text-red-600" />
-                        ) : (
-                          <Minus className="w-2 h-2 text-gray-500" />
-                        )}
-                        <span className={`text-[10px] font-semibold ${
-                          indicadoresNotas.variacaoTempoMesAnterior < 0 ? 'text-green-600' : 
-                          indicadoresNotas.variacaoTempoMesAnterior > 0 ? 'text-red-600' : 'text-gray-500'
-                        }`}>
-                          {Math.abs(indicadoresNotas.variacaoTempoMesAnterior).toFixed(1)}%
-                        </span>
-                        <span className="text-[10px]" style={{ color: theme.textMuted }}>
-                          vs mês ant.
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {indicadoresNotas.variacaoTempoAnoAnterior < 0 ? (
-                          <ArrowDown className="w-2 h-2 text-green-600" />
-                        ) : indicadoresNotas.variacaoTempoAnoAnterior > 0 ? (
-                          <ArrowUp className="w-2 h-2 text-red-600" />
-                        ) : (
-                          <Minus className="w-2 h-2 text-gray-500" />
-                        )}
-                        <span className={`text-[10px] font-semibold ${
-                          indicadoresNotas.variacaoTempoAnoAnterior < 0 ? 'text-green-600' : 
-                          indicadoresNotas.variacaoTempoAnoAnterior > 0 ? 'text-red-600' : 'text-gray-500'
-                        }`}>
-                          {Math.abs(indicadoresNotas.variacaoTempoAnoAnterior).toFixed(1)}%
-                        </span>
-                        <span className="text-[10px]" style={{ color: theme.textMuted }}>
-                          vs ano ant.
-                        </span>
-                      </div>
+                  <div className="flex flex-col gap-0.5 mt-1">
+                    <div className="flex items-center gap-1">
+                      {indicadoresNotas.variacaoTempoMesAnterior < 0 ? (
+                        <ArrowDown className="w-2 h-2 text-green-600" />
+                      ) : indicadoresNotas.variacaoTempoMesAnterior > 0 ? (
+                        <ArrowUp className="w-2 h-2 text-red-600" />
+                      ) : (
+                        <Minus className="w-2 h-2 text-gray-500" />
+                      )}
+                      <span className={`text-[10px] font-semibold ${
+                        indicadoresNotas.variacaoTempoMesAnterior < 0 ? 'text-green-600' : 
+                        indicadoresNotas.variacaoTempoMesAnterior > 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresNotas.variacaoTempoMesAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>
+                        vs mês ant. ({Math.floor(indicadoresNotas.tempoMedioMesAnterior)}h {Math.round((indicadoresNotas.tempoMedioMesAnterior % 1) * 60)}min)
+                      </span>
                     </div>
-                  )}
+                    <div className="flex items-center gap-1">
+                      {indicadoresNotas.variacaoTempoAnoAnterior < 0 ? (
+                        <ArrowDown className="w-2 h-2 text-green-600" />
+                      ) : indicadoresNotas.variacaoTempoAnoAnterior > 0 ? (
+                        <ArrowUp className="w-2 h-2 text-red-600" />
+                      ) : (
+                        <Minus className="w-2 h-2 text-gray-500" />
+                      )}
+                      <span className={`text-[10px] font-semibold ${
+                        indicadoresNotas.variacaoTempoAnoAnterior < 0 ? 'text-green-600' : 
+                        indicadoresNotas.variacaoTempoAnoAnterior > 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresNotas.variacaoTempoAnoAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>
+                        vs ano ant. ({Math.floor(indicadoresNotas.tempoMedioAnoAnterior)}h {Math.round((indicadoresNotas.tempoMedioAnoAnterior % 1) * 60)}min)
+                      </span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -2144,155 +2152,155 @@ export default function Recebimento() {
             {/* Indicadores e Gráficos */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
-                    <Package className="w-4 h-4 text-blue-600" />
+                <CardHeader className="pb-1">
+                  <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
+                    <Package className="w-3 h-3 text-blue-600" />
                     Total de Recebimentos
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-blue-600">
+                <CardContent className="pb-2">
+                  <p className="text-lg font-bold text-blue-600">
                     {indicadoresRecebimentos.totalRecebimentos}
                   </p>
-                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
                     {filtroDataCompartilhado.dataInicio || filtroDataCompartilhado.dataFim 
                       ? 'No período selecionado' 
                       : 'Em janeiro de 2026'}
                   </p>
-                  <div className="flex flex-col gap-1 mt-2">
+                  <div className="flex flex-col gap-0.5 mt-1">
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoTotalMesAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresRecebimentos.variacaoTotalMesAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresRecebimentos.variacaoTotalMesAnterior > 0 ? 'text-green-600' : 
                         indicadoresRecebimentos.variacaoTotalMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresRecebimentos.variacaoTotalMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresRecebimentos.totalMesAnterior})</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresRecebimentos.totalMesAnterior})</span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoTotalAnoAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresRecebimentos.variacaoTotalAnoAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresRecebimentos.variacaoTotalAnoAnterior > 0 ? 'text-green-600' : 
                         indicadoresRecebimentos.variacaoTotalAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresRecebimentos.variacaoTotalAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresRecebimentos.totalMesmoMesAnoAnterior})</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresRecebimentos.totalMesmoMesAnoAnterior})</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
-                    <TrendingUp className="w-4 h-4 text-green-600" />
+                <CardHeader className="pb-1">
+                  <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
+                    <TrendingUp className="w-3 h-3 text-green-600" />
                     Volume Total
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-green-600">
+                <CardContent className="pb-2">
+                  <p className="text-lg font-bold text-green-600">
                     {indicadoresRecebimentos.volumesTotal}
                   </p>
-                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
                     {indicadoresRecebimentos.totalRecebimentos} recebimento{indicadoresRecebimentos.totalRecebimentos !== 1 ? 's' : ''}
                   </p>
-                  <div className="flex flex-col gap-1 mt-2">
+                  <div className="flex flex-col gap-0.5 mt-1">
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoVolumesMesAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresRecebimentos.variacaoVolumesMesAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresRecebimentos.variacaoVolumesMesAnterior > 0 ? 'text-green-600' : 
                         indicadoresRecebimentos.variacaoVolumesMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresRecebimentos.variacaoVolumesMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresRecebimentos.volumesMesAnterior.toLocaleString()})</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresRecebimentos.volumesMesAnterior.toLocaleString()})</span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoVolumesAnoAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresRecebimentos.variacaoVolumesAnoAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresRecebimentos.variacaoVolumesAnoAnterior > 0 ? 'text-green-600' : 
                         indicadoresRecebimentos.variacaoVolumesAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresRecebimentos.variacaoVolumesAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresRecebimentos.volumesMesmoMesAnoAnterior.toLocaleString()})</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresRecebimentos.volumesMesmoMesAnoAnterior.toLocaleString()})</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
-                    <TrendingUp className="w-4 h-4 text-orange-600" />
+                <CardHeader className="pb-1">
+                  <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
+                    <TrendingUp className="w-3 h-3 text-orange-600" />
                     Peso Total
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-orange-600">
+                <CardContent className="pb-2">
+                  <p className="text-lg font-bold text-orange-600">
                     {indicadoresRecebimentos.pesoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
                   </p>
-                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.totalMes} nota{indicadoresNotas.totalMes !== 1 ? 's' : ''}
                   </p>
-                  <div className="flex flex-col gap-1 mt-2">
+                  <div className="flex flex-col gap-0.5 mt-1">
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoPesoMesAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresRecebimentos.variacaoPesoMesAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresRecebimentos.variacaoPesoMesAnterior > 0 ? 'text-green-600' : 
                         indicadoresRecebimentos.variacaoPesoMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresRecebimentos.variacaoPesoMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresRecebimentos.pesoMesAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg)</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresRecebimentos.pesoMesAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg)</span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoPesoAnoAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresRecebimentos.variacaoPesoAnoAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresRecebimentos.variacaoPesoAnoAnterior > 0 ? 'text-green-600' : 
                         indicadoresRecebimentos.variacaoPesoAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresRecebimentos.variacaoPesoAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresRecebimentos.pesoMesmoMesAnoAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg)</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresRecebimentos.pesoMesmoMesAnoAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg)</span>
                     </div>
                   </div>
                 </CardContent>
@@ -2306,7 +2314,7 @@ export default function Recebimento() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pb-2">
-                  <p className="text-base font-bold text-purple-600 leading-tight">
+                  <p className="text-lg font-bold text-purple-600 leading-tight">
                     R$ {indicadoresRecebimentos.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                   <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
@@ -2314,38 +2322,42 @@ export default function Recebimento() {
                       ? 'No período' 
                       : 'Recebidos hoje'}
                   </p>
-                  <div className="flex flex-col gap-1 mt-2">
+                  <div className="flex flex-col gap-0.5 mt-1">
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoValorMesAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresRecebimentos.variacaoValorMesAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresRecebimentos.variacaoValorMesAnterior > 0 ? 'text-green-600' : 
                         indicadoresRecebimentos.variacaoValorMesAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresRecebimentos.variacaoValorMesAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. (R$ {indicadoresRecebimentos.valorMesAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })})</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>
+                        vs mês ant.
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       {indicadoresRecebimentos.variacaoValorAnoAnterior > 0 ? (
-                        <ArrowUp className="w-3 h-3 text-green-600" />
+                        <ArrowUp className="w-2 h-2 text-green-600" />
                       ) : indicadoresRecebimentos.variacaoValorAnoAnterior < 0 ? (
-                        <ArrowDown className="w-3 h-3 text-red-600" />
+                        <ArrowDown className="w-2 h-2 text-red-600" />
                       ) : (
-                        <Minus className="w-3 h-3 text-gray-500" />
+                        <Minus className="w-2 h-2 text-gray-500" />
                       )}
-                      <span className={`text-xs font-semibold ${
+                      <span className={`text-[10px] font-semibold ${
                         indicadoresRecebimentos.variacaoValorAnoAnterior > 0 ? 'text-green-600' : 
                         indicadoresRecebimentos.variacaoValorAnoAnterior < 0 ? 'text-red-600' : 'text-gray-500'
                       }`}>
                         {Math.abs(indicadoresRecebimentos.variacaoValorAnoAnterior).toFixed(1)}%
                       </span>
-                      <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. (R$ {indicadoresRecebimentos.valorMesmoMesAnoAnterior.toLocaleString('pt-BR', { maximumFractionDigits: 0 })})</span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>
+                        vs ano ant.
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -2378,46 +2390,44 @@ export default function Recebimento() {
                       min="0"
                     />
                   </div>
-                  {indicadoresRecebimentos.tempoMedioRecebimento > 0 && (
-                    <div className="flex flex-col gap-0.5 mt-1">
-                      <div className="flex items-center gap-1">
-                        {indicadoresRecebimentos.variacaoTempoMesAnterior < 0 ? (
-                          <ArrowDown className="w-2 h-2 text-green-600" />
-                        ) : indicadoresRecebimentos.variacaoTempoMesAnterior > 0 ? (
-                          <ArrowUp className="w-2 h-2 text-red-600" />
-                        ) : (
-                          <Minus className="w-2 h-2 text-gray-500" />
-                        )}
-                        <span className={`text-[10px] font-semibold ${
-                          indicadoresRecebimentos.variacaoTempoMesAnterior < 0 ? 'text-green-600' : 
-                          indicadoresRecebimentos.variacaoTempoMesAnterior > 0 ? 'text-red-600' : 'text-gray-500'
-                        }`}>
-                          {Math.abs(indicadoresRecebimentos.variacaoTempoMesAnterior).toFixed(1)}%
-                        </span>
-                        <span className="text-[10px]" style={{ color: theme.textMuted }}>
-                          vs mês ant.
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {indicadoresRecebimentos.variacaoTempoAnoAnterior < 0 ? (
-                          <ArrowDown className="w-2 h-2 text-green-600" />
-                        ) : indicadoresRecebimentos.variacaoTempoAnoAnterior > 0 ? (
-                          <ArrowUp className="w-2 h-2 text-red-600" />
-                        ) : (
-                          <Minus className="w-2 h-2 text-gray-500" />
-                        )}
-                        <span className={`text-[10px] font-semibold ${
-                          indicadoresRecebimentos.variacaoTempoAnoAnterior < 0 ? 'text-green-600' : 
-                          indicadoresRecebimentos.variacaoTempoAnoAnterior > 0 ? 'text-red-600' : 'text-gray-500'
-                        }`}>
-                          {Math.abs(indicadoresRecebimentos.variacaoTempoAnoAnterior).toFixed(1)}%
-                        </span>
-                        <span className="text-[10px]" style={{ color: theme.textMuted }}>
-                          vs ano ant.
-                        </span>
-                      </div>
+                  <div className="flex flex-col gap-0.5 mt-1">
+                    <div className="flex items-center gap-1">
+                      {indicadoresRecebimentos.variacaoTempoMesAnterior < 0 ? (
+                        <ArrowDown className="w-2 h-2 text-green-600" />
+                      ) : indicadoresRecebimentos.variacaoTempoMesAnterior > 0 ? (
+                        <ArrowUp className="w-2 h-2 text-red-600" />
+                      ) : (
+                        <Minus className="w-2 h-2 text-gray-500" />
+                      )}
+                      <span className={`text-[10px] font-semibold ${
+                        indicadoresRecebimentos.variacaoTempoMesAnterior < 0 ? 'text-green-600' : 
+                        indicadoresRecebimentos.variacaoTempoMesAnterior > 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresRecebimentos.variacaoTempoMesAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>
+                        vs mês ant. ({Math.floor(indicadoresRecebimentos.tempoMedioMesAnterior)}h {Math.round((indicadoresRecebimentos.tempoMedioMesAnterior % 1) * 60)}min)
+                      </span>
                     </div>
-                  )}
+                    <div className="flex items-center gap-1">
+                      {indicadoresRecebimentos.variacaoTempoAnoAnterior < 0 ? (
+                        <ArrowDown className="w-2 h-2 text-green-600" />
+                      ) : indicadoresRecebimentos.variacaoTempoAnoAnterior > 0 ? (
+                        <ArrowUp className="w-2 h-2 text-red-600" />
+                      ) : (
+                        <Minus className="w-2 h-2 text-gray-500" />
+                      )}
+                      <span className={`text-[10px] font-semibold ${
+                        indicadoresRecebimentos.variacaoTempoAnoAnterior < 0 ? 'text-green-600' : 
+                        indicadoresRecebimentos.variacaoTempoAnoAnterior > 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {Math.abs(indicadoresRecebimentos.variacaoTempoAnoAnterior).toFixed(1)}%
+                      </span>
+                      <span className="text-[10px]" style={{ color: theme.textMuted }}>
+                        vs ano ant. ({Math.floor(indicadoresRecebimentos.tempoMedioAnoAnterior)}h {Math.round((indicadoresRecebimentos.tempoMedioAnoAnterior % 1) * 60)}min)
+                      </span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
