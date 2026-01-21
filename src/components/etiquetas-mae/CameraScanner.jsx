@@ -63,13 +63,6 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
 
     try {
-      // Forçar câmera traseira especificamente para Android
-      const constraints = {
-        video: {
-          facingMode: { exact: facingMode }
-        }
-      };
-
       const qrScanner = new QrScanner(
         videoRef.current,
         async (result) => {
@@ -133,45 +126,36 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       setScanning(true);
       setCurrentFacingMode(facingMode);
 
-      // Forçar câmera traseira via MediaDevices API (para Android)
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { 
-            facingMode: { exact: facingMode },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          }
-        });
+      // Otimizar configurações da câmera APÓS o scanner iniciar
+      setTimeout(async () => {
+        try {
+          const videoTrack = videoRef.current?.srcObject?.getVideoTracks()[0];
+          if (videoTrack) {
+            const capabilities = videoTrack.getCapabilities();
+            const constraints = {};
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+            // Ativar foco contínuo se disponível
+            if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+              constraints.focusMode = 'continuous';
+            }
+
+            // Zoom ideal se disponível
+            if (capabilities.zoom) {
+              constraints.zoom = Math.max(capabilities.zoom.min, 1);
+            }
+
+            if (Object.keys(constraints).length > 0) {
+              await videoTrack.applyConstraints({
+                advanced: [{ ...constraints }]
+              });
+            }
+
+            console.log('📸 Scanner otimizado - Câmera:', facingMode);
+          }
+        } catch (error) {
+          console.log('Otimizações de câmera não aplicadas:', error.message);
         }
-
-        // Otimizar configurações da câmera para diferentes distâncias
-        const videoTrack = stream.getVideoTracks()[0];
-        if (videoTrack) {
-          const capabilities = videoTrack.getCapabilities();
-          const constraints = {};
-
-          // Ativar foco contínuo se disponível
-          if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-            constraints.focusMode = 'continuous';
-          }
-
-          // Zoom ideal se disponível
-          if (capabilities.zoom) {
-            constraints.zoom = Math.max(capabilities.zoom.min, 1);
-          }
-
-          await videoTrack.applyConstraints({
-            advanced: [{ ...constraints }]
-          });
-
-          console.log('📸 Scanner otimizado - Câmera:', facingMode);
-        }
-      } catch (error) {
-        console.log('Otimizações de câmera não aplicadas:', error.message);
-      }
+      }, 500);
 
       console.log('📸 Scanner QR iniciado com câmera:', facingMode);
     } catch (error) {
