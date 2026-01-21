@@ -40,7 +40,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [open, scanFeedback]);
+  }, [open, scanFeedback, manualInput]);
 
   // Auto-focus ao mudar para modo manual
   useEffect(() => {
@@ -165,13 +165,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     if (manualInput.trim()) {
       console.log('⌨️ MODO MANUAL - Código digitado:', manualInput.trim());
       
+      const codigoParaProcessar = manualInput.trim();
+      setManualInput(""); // Limpar imediatamente
       setScanFeedback('processing');
       
-      const result = await Promise.resolve(onScan(manualInput.trim()));
+      const result = await Promise.resolve(onScan(codigoParaProcessar));
       
       console.log('⌨️ MODO MANUAL - Resultado:', result);
-      
-      setManualInput("");
       
       // Aplicar feedback baseado no resultado
       if (result === 'success') {
@@ -187,7 +187,10 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       // Liberar para próximo scan e refocalizar
       setTimeout(() => {
         setScanFeedback(null);
-        inputRef.current?.focus();
+        // Garantir foco
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 50);
       }, 800);
     }
   };
