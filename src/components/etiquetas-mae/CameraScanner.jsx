@@ -396,9 +396,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
                   {/* Feedback Textual Central */}
                   {scanFeedback && scanFeedback !== 'processing' && (
-                    <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center justify-center px-4">
                       <div 
-                        className={`px-6 py-3 rounded-xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 ${
+                        className={`px-6 py-4 rounded-xl font-bold text-white shadow-2xl animate-in zoom-in-95 duration-200 text-center ${
                           scanFeedback === 'success' 
                             ? 'bg-green-600' 
                             : scanFeedback === 'duplicate'
@@ -407,12 +407,23 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                             ? 'bg-orange-600'
                             : 'bg-red-600'
                         }`}
-                        style={{ fontSize: '18px' }}
                       >
-                        {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
-                        {scanFeedback === 'duplicate' && '⚠ JÁ BIPADO'}
-                        {scanFeedback === 'not_found' && '⚠ VOLUME NÃO ENCONTRADO'}
-                        {scanFeedback === 'error' && '✗ ERRO'}
+                        <div style={{ fontSize: '20px', marginBottom: '4px' }}>
+                          {scanFeedback === 'success' && '✓ VOLUME ADICIONADO'}
+                          {scanFeedback === 'duplicate' && '⚠ JÁ ADICIONADO'}
+                          {scanFeedback === 'not_found' && '⚠ NÃO ENCONTRADO'}
+                          {scanFeedback === 'error' && '✗ ERRO'}
+                        </div>
+                        {scanFeedback === 'duplicate' && (
+                          <div style={{ fontSize: '13px', opacity: 0.95, fontWeight: 'normal' }}>
+                            Este volume já está na etiqueta
+                          </div>
+                        )}
+                        {scanFeedback === 'not_found' && (
+                          <div style={{ fontSize: '13px', opacity: 0.95, fontWeight: 'normal' }}>
+                            Volume não existe no sistema
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
