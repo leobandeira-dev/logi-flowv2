@@ -337,9 +337,6 @@ export default function EtiquetasMae() {
         data_vinculo_etiqueta_mae: new Date().toISOString()
       };
 
-      // Adicionar à ref imediatamente para prevenir duplicatas
-      volumesVinculadosIdsRef.current.add(volumeEncontrado.id);
-
       const user = await base44.auth.me();
 
       await base44.entities.Volume.update(volumeEncontrado.id, {
