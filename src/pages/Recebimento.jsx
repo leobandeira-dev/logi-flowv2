@@ -195,15 +195,29 @@ export default function Recebimento() {
     const valorTotal = recebimentosFiltrados.reduce((sum, r) => sum + (r.valor_total_consolidado || 0), 0);
     
     // Calcular tempo médio de recebimento (em horas)
-    // Usar data_solicitacao até created_date (quando foi criada no sistema)
-    const recebimentosComTempo = recebimentosFiltrados.filter(r => r.data_solicitacao && r.created_date);
-    const tempoMedioRecebimento = recebimentosComTempo.length > 0
-      ? recebimentosComTempo.reduce((sum, r) => {
-          const inicio = new Date(r.data_solicitacao);
-          const fim = new Date(r.created_date);
-          const horas = (fim - inicio) / (1000 * 60 * 60);
-          return sum + horas;
-        }, 0) / recebimentosComTempo.length
+    // Fórmula: (Último input do dia - Primeiro input do dia) / Quantidade de inputs no dia
+    const recebimentosPorDia = {};
+    recebimentosFiltrados.forEach(r => {
+      if (!r.created_date) return;
+      const dia = new Date(r.created_date).toLocaleDateString('pt-BR');
+      if (!recebimentosPorDia[dia]) {
+        recebimentosPorDia[dia] = [];
+      }
+      recebimentosPorDia[dia].push(new Date(r.created_date));
+    });
+    
+    const temposPorDia = Object.values(recebimentosPorDia)
+      .filter(datas => datas.length > 0)
+      .map(datas => {
+        const ordenadas = datas.sort((a, b) => a - b);
+        const primeiro = ordenadas[0];
+        const ultimo = ordenadas[ordenadas.length - 1];
+        const diferencaHoras = (ultimo - primeiro) / (1000 * 60 * 60);
+        return diferencaHoras / datas.length;
+      });
+    
+    const tempoMedioRecebimento = temposPorDia.length > 0
+      ? temposPorDia.reduce((sum, t) => sum + t, 0) / temposPorDia.length
       : 0;
     
     // Totais comparativos
@@ -218,25 +232,53 @@ export default function Recebimento() {
     const valorMesmoMesAnoAnterior = recebimentosMesmoMesAnoAnterior.reduce((sum, r) => sum + (r.valor_total_consolidado || 0), 0);
     
     // Tempo médio mês anterior
-    const recebimentosComTempoMesAnterior = recebimentosMesAnterior.filter(r => r.data_solicitacao && r.created_date);
-    const tempoMedioMesAnterior = recebimentosComTempoMesAnterior.length > 0
-      ? recebimentosComTempoMesAnterior.reduce((sum, r) => {
-          const inicio = new Date(r.data_solicitacao);
-          const fim = new Date(r.created_date);
-          const horas = (fim - inicio) / (1000 * 60 * 60);
-          return sum + horas;
-        }, 0) / recebimentosComTempoMesAnterior.length
+    const recebimentosPorDiaMesAnterior = {};
+    recebimentosMesAnterior.forEach(r => {
+      if (!r.created_date) return;
+      const dia = new Date(r.created_date).toLocaleDateString('pt-BR');
+      if (!recebimentosPorDiaMesAnterior[dia]) {
+        recebimentosPorDiaMesAnterior[dia] = [];
+      }
+      recebimentosPorDiaMesAnterior[dia].push(new Date(r.created_date));
+    });
+    
+    const temposPorDiaMesAnterior = Object.values(recebimentosPorDiaMesAnterior)
+      .filter(datas => datas.length > 0)
+      .map(datas => {
+        const ordenadas = datas.sort((a, b) => a - b);
+        const primeiro = ordenadas[0];
+        const ultimo = ordenadas[ordenadas.length - 1];
+        const diferencaHoras = (ultimo - primeiro) / (1000 * 60 * 60);
+        return diferencaHoras / datas.length;
+      });
+    
+    const tempoMedioMesAnterior = temposPorDiaMesAnterior.length > 0
+      ? temposPorDiaMesAnterior.reduce((sum, t) => sum + t, 0) / temposPorDiaMesAnterior.length
       : 0;
     
     // Tempo médio ano anterior
-    const recebimentosComTempoAnoAnterior = recebimentosMesmoMesAnoAnterior.filter(r => r.data_solicitacao && r.created_date);
-    const tempoMedioAnoAnterior = recebimentosComTempoAnoAnterior.length > 0
-      ? recebimentosComTempoAnoAnterior.reduce((sum, r) => {
-          const inicio = new Date(r.data_solicitacao);
-          const fim = new Date(r.created_date);
-          const horas = (fim - inicio) / (1000 * 60 * 60);
-          return sum + horas;
-        }, 0) / recebimentosComTempoAnoAnterior.length
+    const recebimentosPorDiaAnoAnterior = {};
+    recebimentosMesmoMesAnoAnterior.forEach(r => {
+      if (!r.created_date) return;
+      const dia = new Date(r.created_date).toLocaleDateString('pt-BR');
+      if (!recebimentosPorDiaAnoAnterior[dia]) {
+        recebimentosPorDiaAnoAnterior[dia] = [];
+      }
+      recebimentosPorDiaAnoAnterior[dia].push(new Date(r.created_date));
+    });
+    
+    const temposPorDiaAnoAnterior = Object.values(recebimentosPorDiaAnoAnterior)
+      .filter(datas => datas.length > 0)
+      .map(datas => {
+        const ordenadas = datas.sort((a, b) => a - b);
+        const primeiro = ordenadas[0];
+        const ultimo = ordenadas[ordenadas.length - 1];
+        const diferencaHoras = (ultimo - primeiro) / (1000 * 60 * 60);
+        return diferencaHoras / datas.length;
+      });
+    
+    const tempoMedioAnoAnterior = temposPorDiaAnoAnterior.length > 0
+      ? temposPorDiaAnoAnterior.reduce((sum, t) => sum + t, 0) / temposPorDiaAnoAnterior.length
       : 0;
     
     // Calcular variações percentuais
@@ -454,15 +496,29 @@ export default function Recebimento() {
     const valorHoje = notasHoje.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
     
     // Calcular tempo médio de recebimento (em horas)
-    // Usar data_hora_emissao até created_date (quando foi cadastrada no sistema = recebida)
-    const notasComTempo = notasFiltradas.filter(n => n.data_hora_emissao && n.created_date);
-    const tempoMedioRecebimento = notasComTempo.length > 0
-      ? notasComTempo.reduce((sum, n) => {
-          const inicio = new Date(n.data_hora_emissao);
-          const fim = new Date(n.created_date);
-          const horas = (fim - inicio) / (1000 * 60 * 60);
-          return sum + horas;
-        }, 0) / notasComTempo.length
+    // Fórmula: (Último input do dia - Primeiro input do dia) / Quantidade de inputs no dia
+    const notasPorDia = {};
+    notasFiltradas.forEach(n => {
+      if (!n.created_date) return;
+      const dia = new Date(n.created_date).toLocaleDateString('pt-BR');
+      if (!notasPorDia[dia]) {
+        notasPorDia[dia] = [];
+      }
+      notasPorDia[dia].push(new Date(n.created_date));
+    });
+    
+    const temposPorDia = Object.values(notasPorDia)
+      .filter(datas => datas.length > 0)
+      .map(datas => {
+        const ordenadas = datas.sort((a, b) => a - b);
+        const primeiro = ordenadas[0];
+        const ultimo = ordenadas[ordenadas.length - 1];
+        const diferencaHoras = (ultimo - primeiro) / (1000 * 60 * 60);
+        return diferencaHoras / datas.length;
+      });
+    
+    const tempoMedioRecebimento = temposPorDia.length > 0
+      ? temposPorDia.reduce((sum, t) => sum + t, 0) / temposPorDia.length
       : 0;
     
     // Totais comparativos
@@ -477,25 +533,53 @@ export default function Recebimento() {
     const valorMesmoMesAnoAnterior = notasMesmoMesAnoAnterior.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
     
     // Tempo médio mês anterior
-    const notasComTempoMesAnterior = notasMesAnterior.filter(n => n.data_hora_emissao && n.created_date);
-    const tempoMedioMesAnterior = notasComTempoMesAnterior.length > 0
-      ? notasComTempoMesAnterior.reduce((sum, n) => {
-          const inicio = new Date(n.data_hora_emissao);
-          const fim = new Date(n.created_date);
-          const horas = (fim - inicio) / (1000 * 60 * 60);
-          return sum + horas;
-        }, 0) / notasComTempoMesAnterior.length
+    const notasPorDiaMesAnterior = {};
+    notasMesAnterior.forEach(n => {
+      if (!n.created_date) return;
+      const dia = new Date(n.created_date).toLocaleDateString('pt-BR');
+      if (!notasPorDiaMesAnterior[dia]) {
+        notasPorDiaMesAnterior[dia] = [];
+      }
+      notasPorDiaMesAnterior[dia].push(new Date(n.created_date));
+    });
+    
+    const temposPorDiaMesAnterior = Object.values(notasPorDiaMesAnterior)
+      .filter(datas => datas.length > 0)
+      .map(datas => {
+        const ordenadas = datas.sort((a, b) => a - b);
+        const primeiro = ordenadas[0];
+        const ultimo = ordenadas[ordenadas.length - 1];
+        const diferencaHoras = (ultimo - primeiro) / (1000 * 60 * 60);
+        return diferencaHoras / datas.length;
+      });
+    
+    const tempoMedioMesAnterior = temposPorDiaMesAnterior.length > 0
+      ? temposPorDiaMesAnterior.reduce((sum, t) => sum + t, 0) / temposPorDiaMesAnterior.length
       : 0;
     
     // Tempo médio ano anterior
-    const notasComTempoAnoAnterior = notasMesmoMesAnoAnterior.filter(n => n.data_hora_emissao && n.created_date);
-    const tempoMedioAnoAnterior = notasComTempoAnoAnterior.length > 0
-      ? notasComTempoAnoAnterior.reduce((sum, n) => {
-          const inicio = new Date(n.data_hora_emissao);
-          const fim = new Date(n.created_date);
-          const horas = (fim - inicio) / (1000 * 60 * 60);
-          return sum + horas;
-        }, 0) / notasComTempoAnoAnterior.length
+    const notasPorDiaAnoAnterior = {};
+    notasMesmoMesAnoAnterior.forEach(n => {
+      if (!n.created_date) return;
+      const dia = new Date(n.created_date).toLocaleDateString('pt-BR');
+      if (!notasPorDiaAnoAnterior[dia]) {
+        notasPorDiaAnoAnterior[dia] = [];
+      }
+      notasPorDiaAnoAnterior[dia].push(new Date(n.created_date));
+    });
+    
+    const temposPorDiaAnoAnterior = Object.values(notasPorDiaAnoAnterior)
+      .filter(datas => datas.length > 0)
+      .map(datas => {
+        const ordenadas = datas.sort((a, b) => a - b);
+        const primeiro = ordenadas[0];
+        const ultimo = ordenadas[ordenadas.length - 1];
+        const diferencaHoras = (ultimo - primeiro) / (1000 * 60 * 60);
+        return diferencaHoras / datas.length;
+      });
+    
+    const tempoMedioAnoAnterior = temposPorDiaAnoAnterior.length > 0
+      ? temposPorDiaAnoAnterior.reduce((sum, t) => sum + t, 0) / temposPorDiaAnoAnterior.length
       : 0;
     
     // Calcular variações percentuais
