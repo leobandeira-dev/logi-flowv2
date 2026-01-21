@@ -89,6 +89,7 @@ export default function Recebimento() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [recebimentoParaCancelar, setRecebimentoParaCancelar] = useState(null);
   const [motivoCancelamento, setMotivoCancelamento] = useState("");
+  const [intervaloMinutos, setIntervaloMinutos] = useState(60); // Intervalo padrão de 60 minutos
 
   const [formData, setFormData] = useState({
     observacao_carga: "",
@@ -212,7 +213,9 @@ export default function Recebimento() {
         const ordenadas = datas.sort((a, b) => a - b);
         const primeiro = ordenadas[0];
         const ultimo = ordenadas[ordenadas.length - 1];
-        const diferencaHoras = (ultimo - primeiro) / (1000 * 60 * 60);
+        const diferencaMinutos = (ultimo - primeiro) / (1000 * 60);
+        const diferencaAjustada = Math.max(0, diferencaMinutos - intervaloMinutos);
+        const diferencaHoras = diferencaAjustada / 60;
         return diferencaHoras / datas.length;
       });
     
@@ -248,7 +251,9 @@ export default function Recebimento() {
         const ordenadas = datas.sort((a, b) => a - b);
         const primeiro = ordenadas[0];
         const ultimo = ordenadas[ordenadas.length - 1];
-        const diferencaHoras = (ultimo - primeiro) / (1000 * 60 * 60);
+        const diferencaMinutos = (ultimo - primeiro) / (1000 * 60);
+        const diferencaAjustada = Math.max(0, diferencaMinutos - intervaloMinutos);
+        const diferencaHoras = diferencaAjustada / 60;
         return diferencaHoras / datas.length;
       });
     
@@ -273,7 +278,9 @@ export default function Recebimento() {
         const ordenadas = datas.sort((a, b) => a - b);
         const primeiro = ordenadas[0];
         const ultimo = ordenadas[ordenadas.length - 1];
-        const diferencaHoras = (ultimo - primeiro) / (1000 * 60 * 60);
+        const diferencaMinutos = (ultimo - primeiro) / (1000 * 60);
+        const diferencaAjustada = Math.max(0, diferencaMinutos - intervaloMinutos);
+        const diferencaHoras = diferencaAjustada / 60;
         return diferencaHoras / datas.length;
       });
     
@@ -316,7 +323,7 @@ export default function Recebimento() {
       variacaoTempoMesAnterior: calcVariacao(tempoMedioRecebimento, tempoMedioMesAnterior),
       variacaoTempoAnoAnterior: calcVariacao(tempoMedioRecebimento, tempoMedioAnoAnterior),
     };
-  }, [recebimentos, filtroDataCompartilhado]);
+  }, [recebimentos, filtroDataCompartilhado, intervaloMinutos]);
 
   // Memoizar dados do gráfico de recebimentos
   const dadosGraficoRecebimentos = useMemo(() => {
@@ -620,7 +627,7 @@ export default function Recebimento() {
       variacaoTempoMesAnterior: calcVariacao(tempoMedioRecebimento, tempoMedioMesAnterior),
       variacaoTempoAnoAnterior: calcVariacao(tempoMedioRecebimento, tempoMedioAnoAnterior),
     };
-  }, [todasNotasFiscais, filtroDataCompartilhado]);
+  }, [todasNotasFiscais, filtroDataCompartilhado, intervaloMinutos]);
 
   // Memoizar filtros de recebimentos
   const recebimentosFiltrados = useMemo(() => {
@@ -1983,12 +1990,23 @@ export default function Recebimento() {
                 <CardContent>
                   <p className="text-2xl font-bold text-indigo-600">
                     {indicadoresNotas.tempoMedioRecebimento > 0 
-                      ? `${indicadoresNotas.tempoMedioRecebimento.toFixed(1)}h`
+                      ? `${Math.floor(indicadoresNotas.tempoMedioRecebimento)}h ${Math.round((indicadoresNotas.tempoMedioRecebimento % 1) * 60)}min`
                       : '—'}
                   </p>
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     Por nota fiscal
                   </p>
+                  <div className="mt-2 mb-2">
+                    <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Intervalo (min):</Label>
+                    <Input
+                      type="number"
+                      value={intervaloMinutos}
+                      onChange={(e) => setIntervaloMinutos(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="h-7 text-xs w-20"
+                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                      min="0"
+                    />
+                  </div>
                   {indicadoresNotas.tempoMedioRecebimento > 0 && (
                     <div className="flex flex-col gap-1 mt-2">
                       <div className="flex items-center gap-1">
@@ -2005,7 +2023,9 @@ export default function Recebimento() {
                         }`}>
                           {Math.abs(indicadoresNotas.variacaoTempoMesAnterior).toFixed(1)}%
                         </span>
-                        <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresNotas.tempoMedioMesAnterior.toFixed(1)}h)</span>
+                        <span className="text-xs" style={{ color: theme.textMuted }}>
+                          vs mês ant. ({Math.floor(indicadoresNotas.tempoMedioMesAnterior)}h {Math.round((indicadoresNotas.tempoMedioMesAnterior % 1) * 60)}min)
+                        </span>
                       </div>
                       <div className="flex items-center gap-1">
                         {indicadoresNotas.variacaoTempoAnoAnterior < 0 ? (
@@ -2021,7 +2041,9 @@ export default function Recebimento() {
                         }`}>
                           {Math.abs(indicadoresNotas.variacaoTempoAnoAnterior).toFixed(1)}%
                         </span>
-                        <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresNotas.tempoMedioAnoAnterior.toFixed(1)}h)</span>
+                        <span className="text-xs" style={{ color: theme.textMuted }}>
+                          vs ano ant. ({Math.floor(indicadoresNotas.tempoMedioAnoAnterior)}h {Math.round((indicadoresNotas.tempoMedioAnoAnterior % 1) * 60)}min)
+                        </span>
                       </div>
                     </div>
                   )}
@@ -2339,12 +2361,23 @@ export default function Recebimento() {
                 <CardContent>
                   <p className="text-2xl font-bold text-indigo-600">
                     {indicadoresRecebimentos.tempoMedioRecebimento > 0 
-                      ? `${indicadoresRecebimentos.tempoMedioRecebimento.toFixed(1)}h`
+                      ? `${Math.floor(indicadoresRecebimentos.tempoMedioRecebimento)}h ${Math.round((indicadoresRecebimentos.tempoMedioRecebimento % 1) * 60)}min`
                       : '—'}
                   </p>
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     Por ordem de recebimento
                   </p>
+                  <div className="mt-2 mb-2">
+                    <Label className="text-xs mb-1 block" style={{ color: theme.textMuted }}>Intervalo (min):</Label>
+                    <Input
+                      type="number"
+                      value={intervaloMinutos}
+                      onChange={(e) => setIntervaloMinutos(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="h-7 text-xs w-20"
+                      style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                      min="0"
+                    />
+                  </div>
                   {indicadoresRecebimentos.tempoMedioRecebimento > 0 && (
                     <div className="flex flex-col gap-1 mt-2">
                       <div className="flex items-center gap-1">
@@ -2361,7 +2394,9 @@ export default function Recebimento() {
                         }`}>
                           {Math.abs(indicadoresRecebimentos.variacaoTempoMesAnterior).toFixed(1)}%
                         </span>
-                        <span className="text-xs" style={{ color: theme.textMuted }}>vs mês ant. ({indicadoresRecebimentos.tempoMedioMesAnterior.toFixed(1)}h)</span>
+                        <span className="text-xs" style={{ color: theme.textMuted }}>
+                          vs mês ant. ({Math.floor(indicadoresRecebimentos.tempoMedioMesAnterior)}h {Math.round((indicadoresRecebimentos.tempoMedioMesAnterior % 1) * 60)}min)
+                        </span>
                       </div>
                       <div className="flex items-center gap-1">
                         {indicadoresRecebimentos.variacaoTempoAnoAnterior < 0 ? (
@@ -2377,7 +2412,9 @@ export default function Recebimento() {
                         }`}>
                           {Math.abs(indicadoresRecebimentos.variacaoTempoAnoAnterior).toFixed(1)}%
                         </span>
-                        <span className="text-xs" style={{ color: theme.textMuted }}>vs ano ant. ({indicadoresRecebimentos.tempoMedioAnoAnterior.toFixed(1)}h)</span>
+                        <span className="text-xs" style={{ color: theme.textMuted }}>
+                          vs ano ant. ({Math.floor(indicadoresRecebimentos.tempoMedioAnoAnterior)}h {Math.round((indicadoresRecebimentos.tempoMedioAnoAnterior % 1) * 60)}min)
+                        </span>
                       </div>
                     </div>
                   )}
