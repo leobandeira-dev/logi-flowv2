@@ -31,16 +31,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     };
   }, [open, useManualMode]);
 
-  // Auto-focus no input sempre que o modal abrir ou quando o scanFeedback voltar a null
+  // Auto-focus no input sempre que o modal abrir ou após processar
   useEffect(() => {
     if (open && inputRef.current) {
-      // Delay para garantir que o DOM está pronto
       const timer = setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [open, scanFeedback, manualInput]);
+  }, [open, scanFeedback]);
 
   // Auto-focus ao mudar para modo manual
   useEffect(() => {
@@ -51,6 +50,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       return () => clearTimeout(timer);
     }
   }, [useManualMode]);
+
+  // Manter foco no input sempre que não estiver processando
+  useEffect(() => {
+    if (open && !scanFeedback && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [open, scanFeedback]);
 
   const startScanner = async () => {
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
@@ -482,6 +488,14 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                     if (e.key === 'Enter' && manualInput.trim()) {
                       handleManualSubmit();
                     }
+                  }}
+                  onBlur={(e) => {
+                    // Re-focar imediatamente se perder foco
+                    setTimeout(() => {
+                      if (open && inputRef.current) {
+                        inputRef.current.focus();
+                      }
+                    }, 10);
                   }}
                   className="text-center font-mono text-lg h-12"
                   style={{ 
