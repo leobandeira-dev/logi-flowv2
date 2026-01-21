@@ -1493,7 +1493,7 @@ export default function Recebimento() {
 
           <TabsContent value="notas" className="mt-0">
             {/* Indicadores Memoizados */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
@@ -1520,6 +1520,23 @@ export default function Recebimento() {
                   <p className="text-2xl font-bold text-green-600">{indicadoresNotas.volumesTotal}</p>
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
                     {indicadoresNotas.volumesHoje} volumes hoje
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
+                    <TrendingUp className="w-4 h-4 text-orange-600" />
+                    Peso Total
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {indicadoresNotas.pesoTotal.toLocaleString('pt-BR')} kg
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                    {indicadoresNotas.totalMes} nota{indicadoresNotas.totalMes !== 1 ? 's' : ''}
                   </p>
                 </CardContent>
               </Card>
@@ -1633,7 +1650,7 @@ export default function Recebimento() {
 
           <TabsContent value="recebimentos" className="mt-0">
             {/* Indicadores e Gráficos */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
@@ -1665,7 +1682,24 @@ export default function Recebimento() {
                     {indicadoresRecebimentos.volumesTotal}
                   </p>
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
-                    {indicadoresRecebimentos.pesoTotal.toLocaleString()} kg
+                    {indicadoresRecebimentos.totalRecebimentos} recebimento{indicadoresRecebimentos.totalRecebimentos !== 1 ? 's' : ''}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
+                    <TrendingUp className="w-4 h-4 text-orange-600" />
+                    Peso Total
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {indicadoresRecebimentos.pesoTotal.toLocaleString('pt-BR')} kg
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                    {indicadoresNotas.totalMes} nota{indicadoresNotas.totalMes !== 1 ? 's' : ''}
                   </p>
                 </CardContent>
               </Card>
@@ -1674,15 +1708,17 @@ export default function Recebimento() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
                     <FileText className="w-4 h-4 text-purple-600" />
-                    Notas Fiscais
+                    Valor Total
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-purple-600">
-                    {indicadoresNotas.totalMes}
+                    R$ {indicadoresNotas.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                   <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
-                    R$ {indicadoresNotas.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    {filtroDataCompartilhado.dataInicio || filtroDataCompartilhado.dataFim 
+                      ? 'No período selecionado' 
+                      : 'Recebidos hoje'}
                   </p>
                 </CardContent>
               </Card>
