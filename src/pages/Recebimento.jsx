@@ -1930,18 +1930,18 @@ export default function Recebimento() {
               </Card>
 
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
-                    <TrendingUp className="w-4 h-4 text-purple-600" />
+                <CardHeader className="pb-1">
+                  <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
+                    <TrendingUp className="w-3 h-3 text-purple-600" />
                     Valor Total
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-purple-600">
+                <CardContent className="pb-2">
+                  <p className="text-base font-bold text-purple-600 leading-tight">
                     R$ {indicadoresNotas.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
-                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
-                    R$ {indicadoresNotas.valorHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} recebidos hoje
+                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
+                    Recebidos hoje
                   </p>
                   <div className="flex flex-col gap-1 mt-2">
                     <div className="flex items-center gap-1">
@@ -2299,19 +2299,19 @@ export default function Recebimento() {
               </Card>
 
               <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
-                    <FileText className="w-4 h-4 text-purple-600" />
+                <CardHeader className="pb-1">
+                  <CardTitle className="text-xs flex items-center gap-1" style={{ color: theme.text }}>
+                    <FileText className="w-3 h-3 text-purple-600" />
                     Valor Total
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-purple-600">
+                <CardContent className="pb-2">
+                  <p className="text-base font-bold text-purple-600 leading-tight">
                     R$ {indicadoresRecebimentos.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
-                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
+                  <p className="text-[10px] mt-0.5" style={{ color: theme.textMuted }}>
                     {filtroDataCompartilhado.dataInicio || filtroDataCompartilhado.dataFim 
-                      ? 'No período selecionado' 
+                      ? 'No período' 
                       : 'Recebidos hoje'}
                   </p>
                   <div className="flex flex-col gap-1 mt-2">
