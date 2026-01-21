@@ -259,6 +259,8 @@ export default function Recebimento() {
       volumesMesmoMesAnoAnterior,
       valorMesAnterior,
       valorMesmoMesAnoAnterior,
+      tempoMedioMesAnterior,
+      tempoMedioAnoAnterior,
       // Comparativos
       variacaoTotalMesAnterior: calcVariacao(recebimentosFiltrados.length, totalMesAnterior),
       variacaoTotalAnoAnterior: calcVariacao(recebimentosFiltrados.length, totalMesmoMesAnoAnterior),
@@ -518,6 +520,8 @@ export default function Recebimento() {
       volumesMesmoMesAnoAnterior,
       valorMesAnterior,
       valorMesmoMesAnoAnterior,
+      tempoMedioMesAnterior,
+      tempoMedioAnoAnterior,
       // Comparativos
       variacaoTotalMesAnterior: calcVariacao(notasFiltradas.length, totalMesAnterior),
       variacaoTotalAnoAnterior: calcVariacao(notasFiltradas.length, totalMesmoMesAnoAnterior),
