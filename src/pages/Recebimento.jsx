@@ -77,6 +77,8 @@ export default function Recebimento() {
   const [graficoExpandidoRecebimento, setGraficoExpandidoRecebimento] = useState(false);
   const [anoSelecionadoRecebimento, setAnoSelecionadoRecebimento] = useState(() => new Date().getFullYear());
   const [mesSelecionadoRecebimento, setMesSelecionadoRecebimento] = useState(() => new Date().getMonth() + 1);
+  const [anoSelecionadoNotas, setAnoSelecionadoNotas] = useState(() => new Date().getFullYear());
+  const [mesSelecionadoNotas, setMesSelecionadoNotas] = useState(() => new Date().getMonth() + 1);
   const [searchTermNotas, setSearchTermNotas] = useState("");
   const [searchInputNotas, setSearchInputNotas] = useState("");
   const [paginaAtualNotas, setPaginaAtualNotas] = useState(1);
@@ -252,31 +254,30 @@ export default function Recebimento() {
 
   // Memoizar indicadores de notas fiscais
   const indicadoresNotas = useMemo(() => {
-    const hoje = new Date();
-    const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    const [, mesHojeSP, anoHojeSP] = dataHojeSP.split('/');
-
-    const notasMes = todasNotasFiscais.filter(n => {
+    const notasPeriodoSelecionado = todasNotasFiscais.filter(n => {
       if (!n.created_date || n.status_nf === "cancelada") return false;
       const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
       const [, mesNota, anoNota] = dataNota.split('/');
-      return mesNota === mesHojeSP && anoNota === anoHojeSP;
+      return parseInt(mesNota) === mesSelecionadoNotas && parseInt(anoNota) === anoSelecionadoNotas;
     });
 
-    const notasHoje = todasNotasFiscais.filter(n => {
-      if (!n.created_date || n.status_nf === "cancelada") return false;
+    const hoje = new Date();
+    const dataHojeSP = hoje.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+
+    const notasHoje = notasPeriodoSelecionado.filter(n => {
+      if (!n.created_date) return false;
       const dataNota = new Date(n.created_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
       return dataNota === dataHojeSP;
     });
 
-    const volumesTotal = notasMes.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
+    const volumesTotal = notasPeriodoSelecionado.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
     const volumesHoje = notasHoje.reduce((sum, n) => sum + (n.quantidade_total_volumes_nf || 0), 0);
-    const pesoTotal = notasMes.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0);
-    const valorTotal = notasMes.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
+    const pesoTotal = notasPeriodoSelecionado.reduce((sum, n) => sum + (n.peso_total_nf || 0), 0);
+    const valorTotal = notasPeriodoSelecionado.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
     const valorHoje = notasHoje.reduce((sum, n) => sum + (n.valor_nota_fiscal || 0), 0);
 
     return {
-      totalMes: notasMes.length,
+      totalMes: notasPeriodoSelecionado.length,
       totalHoje: notasHoje.length,
       volumesTotal,
       volumesHoje,
@@ -284,7 +285,7 @@ export default function Recebimento() {
       valorTotal,
       valorHoje
     };
-  }, [todasNotasFiscais]);
+  }, [todasNotasFiscais, mesSelecionadoNotas, anoSelecionadoNotas]);
 
   // Memoizar filtros de recebimentos
   const recebimentosFiltrados = useMemo(() => {
@@ -1469,13 +1470,48 @@ export default function Recebimento() {
                   </Button>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <select
+                  value={mesSelecionadoNotas}
+                  onChange={(e) => {
+                    setMesSelecionadoNotas(parseInt(e.target.value));
+                    setPaginaAtualNotas(1);
+                  }}
+                  className="h-9 text-sm px-2 rounded-lg border"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                >
+                  <option value={1}>Janeiro</option>
+                  <option value={2}>Fevereiro</option>
+                  <option value={3}>Março</option>
+                  <option value={4}>Abril</option>
+                  <option value={5}>Maio</option>
+                  <option value={6}>Junho</option>
+                  <option value={7}>Julho</option>
+                  <option value={8}>Agosto</option>
+                  <option value={9}>Setembro</option>
+                  <option value={10}>Outubro</option>
+                  <option value={11}>Novembro</option>
+                  <option value={12}>Dezembro</option>
+                </select>
+                <select
+                  value={anoSelecionadoNotas}
+                  onChange={(e) => {
+                    setAnoSelecionadoNotas(parseInt(e.target.value));
+                    setPaginaAtualNotas(1);
+                  }}
+                  className="h-9 text-sm px-2 rounded-lg border"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                >
+                  {[2026, 2025, 2024, 2023, 2022, 2021].map(ano => (
+                    <option key={ano} value={ano}>{ano}</option>
+                  ))}
+                </select>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => carregarNotasFiscaisPaginadas(true)}
                   disabled={loadingNotas}
-                  className="h-8"
+                  className="h-9"
                   style={{ borderColor: theme.cardBorder, color: theme.text }}
                 >
                   <RefreshCw className={`w-3 h-3 ${loadingNotas ? 'animate-spin' : ''}`} />
