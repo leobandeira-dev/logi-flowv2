@@ -64,9 +64,14 @@ export default function Recebimento() {
   const [editandoRecebimento, setEditandoRecebimento] = useState(null);
   const [abaAtiva, setAbaAtiva] = useState("notas");
   const [showFiltersRecebimentos, setShowFiltersRecebimentos] = useState(false);
-  const [filtersRecebimentos, setFiltersRecebimentos] = useState({
+  
+  // Filtro de datas compartilhado entre as duas abas
+  const [filtroDataCompartilhado, setFiltroDataCompartilhado] = useState({
     dataInicio: "",
-    dataFim: "",
+    dataFim: ""
+  });
+  
+  const [filtersRecebimentos, setFiltersRecebimentos] = useState({
     fornecedor: "",
     conferente: ""
   });
@@ -93,28 +98,46 @@ export default function Recebimento() {
   // Calcular notas fiscais filtradas com useMemo no nível superior
   const notasFiscaisFiltradas = useMemo(() => {
     const filtered = todasNotasFiscais.filter(nf => {
-      if (!searchTermNotas) return true;
-      const search = searchTermNotas.toLowerCase();
-      return nf.numero_nota?.toLowerCase().includes(search) ||
-             nf.emitente_razao_social?.toLowerCase().includes(search) ||
-             nf.destinatario_razao_social?.toLowerCase().includes(search);
+      // Filtro de busca por texto
+      const matchesSearch = !searchTermNotas || (
+        nf.numero_nota?.toLowerCase().includes(searchTermNotas.toLowerCase()) ||
+        nf.emitente_razao_social?.toLowerCase().includes(searchTermNotas.toLowerCase()) ||
+        nf.destinatario_razao_social?.toLowerCase().includes(searchTermNotas.toLowerCase())
+      );
+      
+      // Filtro de data de emissão (compartilhado)
+      const matchesDataInicio = !filtroDataCompartilhado.dataInicio || 
+        (nf.data_hora_emissao && new Date(nf.data_hora_emissao) >= new Date(filtroDataCompartilhado.dataInicio));
+      
+      const matchesDataFim = !filtroDataCompartilhado.dataFim || 
+        (nf.data_hora_emissao && new Date(nf.data_hora_emissao) <= new Date(filtroDataCompartilhado.dataFim + 'T23:59:59'));
+      
+      return matchesSearch && matchesDataInicio && matchesDataFim;
     });
     const inicio = (paginaAtualNotas - 1) * limiteNotas;
     const fim = inicio + limiteNotas;
     return filtered.slice(inicio, fim);
-  }, [todasNotasFiscais, searchTermNotas, paginaAtualNotas, limiteNotas]);
+  }, [todasNotasFiscais, searchTermNotas, paginaAtualNotas, limiteNotas, filtroDataCompartilhado]);
 
   // Calcular total de registros filtrados
   const totalNotasFiltradas = useMemo(() => {
     const filtered = todasNotasFiscais.filter(nf => {
-      if (!searchTermNotas) return true;
-      const search = searchTermNotas.toLowerCase();
-      return nf.numero_nota?.toLowerCase().includes(search) ||
-             nf.emitente_razao_social?.toLowerCase().includes(search) ||
-             nf.destinatario_razao_social?.toLowerCase().includes(search);
+      const matchesSearch = !searchTermNotas || (
+        nf.numero_nota?.toLowerCase().includes(searchTermNotas.toLowerCase()) ||
+        nf.emitente_razao_social?.toLowerCase().includes(searchTermNotas.toLowerCase()) ||
+        nf.destinatario_razao_social?.toLowerCase().includes(searchTermNotas.toLowerCase())
+      );
+      
+      const matchesDataInicio = !filtroDataCompartilhado.dataInicio || 
+        (nf.data_hora_emissao && new Date(nf.data_hora_emissao) >= new Date(filtroDataCompartilhado.dataInicio));
+      
+      const matchesDataFim = !filtroDataCompartilhado.dataFim || 
+        (nf.data_hora_emissao && new Date(nf.data_hora_emissao) <= new Date(filtroDataCompartilhado.dataFim + 'T23:59:59'));
+      
+      return matchesSearch && matchesDataInicio && matchesDataFim;
     });
     return filtered.length;
-  }, [todasNotasFiscais, searchTermNotas]);
+  }, [todasNotasFiscais, searchTermNotas, filtroDataCompartilhado]);
 
   // Memoizar indicadores de recebimentos para evitar recalcular a cada digitação
   const indicadoresRecebimentos = useMemo(() => {
@@ -151,11 +174,12 @@ export default function Recebimento() {
       const matchesConferente = !filtersRecebimentos.conferente ||
         usuarios.find(u => u.id === rec.conferente_id)?.full_name?.toLowerCase().includes(filtersRecebimentos.conferente.toLowerCase());
       
-      const matchesDataInicio = !filtersRecebimentos.dataInicio || 
-        (rec.data_solicitacao && new Date(rec.data_solicitacao) >= new Date(filtersRecebimentos.dataInicio));
+      // Usar filtro de data compartilhado
+      const matchesDataInicio = !filtroDataCompartilhado.dataInicio || 
+        (rec.data_solicitacao && new Date(rec.data_solicitacao) >= new Date(filtroDataCompartilhado.dataInicio));
       
-      const matchesDataFim = !filtersRecebimentos.dataFim || 
-        (rec.data_solicitacao && new Date(rec.data_solicitacao) <= new Date(filtersRecebimentos.dataFim + 'T23:59:59'));
+      const matchesDataFim = !filtroDataCompartilhado.dataFim || 
+        (rec.data_solicitacao && new Date(rec.data_solicitacao) <= new Date(filtroDataCompartilhado.dataFim + 'T23:59:59'));
       
       return matchesSearch && matchesFornecedor && matchesConferente && matchesDataInicio && matchesDataFim;
     });
@@ -299,15 +323,16 @@ export default function Recebimento() {
       const matchesConferente = !filtersRecebimentos.conferente ||
         usuarios.find(u => u.id === rec.conferente_id)?.full_name?.toLowerCase().includes(filtersRecebimentos.conferente.toLowerCase());
       
-      const matchesDataInicio = !filtersRecebimentos.dataInicio || 
-        (rec.data_solicitacao && new Date(rec.data_solicitacao) >= new Date(filtersRecebimentos.dataInicio));
+      // Usar filtro de data compartilhado
+      const matchesDataInicio = !filtroDataCompartilhado.dataInicio || 
+        (rec.data_solicitacao && new Date(rec.data_solicitacao) >= new Date(filtroDataCompartilhado.dataInicio));
       
-      const matchesDataFim = !filtersRecebimentos.dataFim || 
-        (rec.data_solicitacao && new Date(rec.data_solicitacao) <= new Date(filtersRecebimentos.dataFim + 'T23:59:59'));
+      const matchesDataFim = !filtroDataCompartilhado.dataFim || 
+        (rec.data_solicitacao && new Date(rec.data_solicitacao) <= new Date(filtroDataCompartilhado.dataFim + 'T23:59:59'));
       
       return matchesSearch && matchesFornecedor && matchesConferente && matchesDataInicio && matchesDataFim;
     });
-  }, [recebimentos, searchTermRecebimentos, filtersRecebimentos, usuarios]);
+  }, [recebimentos, searchTermRecebimentos, filtersRecebimentos, usuarios, filtroDataCompartilhado]);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -1360,6 +1385,67 @@ export default function Recebimento() {
           </div>
         </div>
 
+        {/* Filtro de Datas Compartilhado - Acima das Abas */}
+        <Card className="mb-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-blue-600" />
+                <Label className="text-sm font-semibold" style={{ color: theme.text }}>
+                  Filtro de Período
+                </Label>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs whitespace-nowrap" style={{ color: theme.textMuted }}>De:</Label>
+                  <Input
+                    type="date"
+                    value={filtroDataCompartilhado.dataInicio}
+                    onChange={(e) => setFiltroDataCompartilhado(prev => ({ ...prev, dataInicio: e.target.value }))}
+                    className="h-8 text-xs w-full sm:w-36"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  />
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs whitespace-nowrap" style={{ color: theme.textMuted }}>Até:</Label>
+                  <Input
+                    type="date"
+                    value={filtroDataCompartilhado.dataFim}
+                    onChange={(e) => setFiltroDataCompartilhado(prev => ({ ...prev, dataFim: e.target.value }))}
+                    className="h-8 text-xs w-full sm:w-36"
+                    style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                  />
+                </div>
+                
+                {(filtroDataCompartilhado.dataInicio || filtroDataCompartilhado.dataFim) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFiltroDataCompartilhado({ dataInicio: "", dataFim: "" })}
+                    className="h-8 text-xs whitespace-nowrap"
+                    style={{ borderColor: theme.cardBorder, color: theme.text }}
+                  >
+                    <X className="w-3 h-3 sm:mr-1" />
+                    <span className="hidden sm:inline">Limpar</span>
+                  </Button>
+                )}
+              </div>
+            </div>
+            
+            {(filtroDataCompartilhado.dataInicio || filtroDataCompartilhado.dataFim) && (
+              <div className="mt-2 text-xs" style={{ color: theme.textMuted }}>
+                <span className="font-semibold">Filtro ativo:</span>
+                {' '}
+                {filtroDataCompartilhado.dataInicio && new Date(filtroDataCompartilhado.dataInicio).toLocaleDateString('pt-BR')}
+                {filtroDataCompartilhado.dataInicio && filtroDataCompartilhado.dataFim && ' até '}
+                {filtroDataCompartilhado.dataFim && new Date(filtroDataCompartilhado.dataFim).toLocaleDateString('pt-BR')}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="notas" className="text-xs sm:text-sm">
@@ -1747,9 +1833,12 @@ export default function Recebimento() {
               <div className="flex gap-2">
                 <FiltrosPredefinidos
                   rota="recebimentos"
-                  filtrosAtuais={filtersRecebimentos}
+                  filtrosAtuais={{ ...filtersRecebimentos, ...filtroDataCompartilhado }}
                   onAplicarFiltro={(novosFiltros) => {
-                    setFiltersRecebimentos(novosFiltros);
+                    // Separar filtros de data dos outros filtros
+                    const { dataInicio, dataFim, ...outrosFiltros } = novosFiltros;
+                    setFiltroDataCompartilhado({ dataInicio: dataInicio || "", dataFim: dataFim || "" });
+                    setFiltersRecebimentos(outrosFiltros);
                     setPaginaAtualRecebimentos(1);
                   }}
                 />
@@ -1780,7 +1869,7 @@ export default function Recebimento() {
             {showFiltersRecebimentos && (
               <Card className="mb-4" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
                 <CardContent className="pt-4 pb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Fornecedor</Label>
                       <Input
@@ -1802,36 +1891,12 @@ export default function Recebimento() {
                         style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
                       />
                     </div>
-
-                    <div>
-                      <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Data Início</Label>
-                      <Input
-                        type="date"
-                        value={filtersRecebimentos.dataInicio}
-                        onChange={(e) => setFiltersRecebimentos({...filtersRecebimentos, dataInicio: e.target.value})}
-                        className="h-8 text-sm"
-                        style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-xs mb-1" style={{ color: theme.textMuted }}>Data Fim</Label>
-                      <Input
-                        type="date"
-                        value={filtersRecebimentos.dataFim}
-                        onChange={(e) => setFiltersRecebimentos({...filtersRecebimentos, dataFim: e.target.value})}
-                        className="h-8 text-sm"
-                        style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
-                      />
-                    </div>
                   </div>
                   <div className="flex justify-end mt-3 gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setFiltersRecebimentos({
-                        dataInicio: "",
-                        dataFim: "",
                         fornecedor: "",
                         conferente: ""
                       })}
