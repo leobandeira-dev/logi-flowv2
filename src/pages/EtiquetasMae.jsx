@@ -2102,7 +2102,7 @@ export default function EtiquetasMae() {
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <Badge 
-                                      className={`text-[10px] px-2 py-0.5 font-bold ${
+                                      className={`text-xs px-2 py-0.5 font-bold ${
                                         completa 
                                           ? 'bg-green-600 text-white' 
                                           : (faltantes > 0 ? 'bg-orange-500 text-white' : 'bg-blue-600 text-white')
@@ -2110,13 +2110,14 @@ export default function EtiquetasMae() {
                                     >
                                       {volumesVinculadosNota.length}/{todosVolumesNota.length}
                                     </Badge>
-                                    {faltantes > 0 && (
-                                      <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200 text-[10px] px-2 py-0.5 font-bold">
-                                        {faltantes} faltando
+                                    {faltantes > 0 ? (
+                                      <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200 text-xs px-2 py-1 font-bold animate-pulse">
+                                        ⚠️ FALTAM {faltantes}
                                       </Badge>
-                                    )}
-                                    {completa && (
-                                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                    ) : (
+                                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200 text-xs px-2 py-1 font-bold">
+                                        ✓ COMPLETA
+                                      </Badge>
                                     )}
                                   </div>
                                 </div>
