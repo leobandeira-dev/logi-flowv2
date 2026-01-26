@@ -375,7 +375,11 @@ export default function EtiquetasMae() {
       // FASE 5: Recarregar etiqueta atualizada do banco
       const etiquetaFinal = await base44.entities.EtiquetaMae.get(etiquetaBanco.id);
 
-      // FASE 6: Atualizar estados locais com dados do banco
+      // FASE 6: Recarregar notas fiscais do banco
+      const notasAtualizadas = await base44.entities.NotaFiscal.list();
+      setNotas(notasAtualizadas);
+
+      // FASE 7: Atualizar estados locais com dados do banco
       setEtiquetaSelecionada(etiquetaFinal);
       setVolumesVinculados(volumesVinculadosAtualizados);
       setVolumes(volumesAtualizadosBanco);
@@ -387,7 +391,11 @@ export default function EtiquetasMae() {
       const etiquetasAtualizadas = await base44.entities.EtiquetaMae.list("-created_date");
       setEtiquetas(etiquetasAtualizadas);
 
-      const nota = notas.find(n => n.id === volumeEncontrado.nota_fiscal_id);
+      // Recarregar notas para garantir dados frescos
+      const notasAtualizadasBanco = await base44.entities.NotaFiscal.list();
+      setNotas(notasAtualizadasBanco);
+      
+      const nota = notasAtualizadasBanco.find(n => n.id === volumeEncontrado.nota_fiscal_id);
       const volumesNotaAtualizados = volumesVinculadosAtualizados.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
       const todosVolumesNota = volumesAtualizadosBanco.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
       const faltamNota = todosVolumesNota.length - volumesNotaAtualizados.length;
