@@ -388,6 +388,10 @@ export default function EtiquetasMae() {
       setVolumes(volumes.map(v => v.id === volumeEncontrado.id ? volumeAtualizado : v));
       setEtiquetas(etiquetas.map(e => e.id === etiquetaSelecionada.id ? etiquetaAtualizada : e));
 
+      // Recarregar volumes do banco para garantir sincronização completa
+      const volumesAtualizadosBanco = await base44.entities.Volume.list();
+      setVolumes(volumesAtualizadosBanco);
+
       const nota = notas.find(n => n.id === volumeEncontrado.nota_fiscal_id);
       const volumesNotaAtualizados = volumesAtualizados.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
       const todosVolumesNota = volumes.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
@@ -656,6 +660,10 @@ export default function EtiquetasMae() {
       const volumeAtualizado = { ...volume, etiqueta_mae_id: null, data_vinculo_etiqueta_mae: null };
       setVolumes(volumes.map(v => v.id === volume.id ? volumeAtualizado : v));
       setEtiquetas(etiquetas.map(e => e.id === etiquetaSelecionada.id ? etiquetaAtualizada : e));
+
+      // Recarregar volumes do banco para garantir sincronização completa
+      const volumesAtualizadosBanco = await base44.entities.Volume.list();
+      setVolumes(volumesAtualizadosBanco);
 
       toast.success("Volume desvinculado");
     } catch (error) {
