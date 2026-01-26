@@ -1965,22 +1965,22 @@ export default function EtiquetasMae() {
                     <p className="text-2xl font-bold text-blue-600">{volumesVinculados.length}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Peso Total</p>
-                    <p className="text-lg font-bold text-green-600">
+                    <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Peso</p>
+                    <p className="text-base font-bold text-green-600">
                       {volumesVinculados.reduce((sum, v) => sum + (v.peso_volume || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
                     </p>
                     <p className="text-[10px] text-green-600">kg</p>
                   </div>
                   <div className="text-center">
                     <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>M³</p>
-                    <p className="text-lg font-bold text-purple-600">
-                      {volumesVinculados.reduce((sum, v) => sum + (v.m3 || 0), 0).toFixed(3)}
+                    <p className="text-base font-bold text-purple-600">
+                      {volumesVinculados.reduce((sum, v) => sum + (v.m3 || 0), 0).toFixed(2)}
                     </p>
                   </div>
                   <div className="text-center">
                     <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Notas</p>
                     <p className="text-2xl font-bold text-orange-600">
-                      {[...new Set(volumesVinculados.map(v => v.nota_fiscal_id))].length}
+                      {[...new Set(volumesVinculados.map(v => v.nota_fiscal_id).filter(Boolean))].length}
                     </p>
                   </div>
                 </div>
