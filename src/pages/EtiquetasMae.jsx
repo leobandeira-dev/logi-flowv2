@@ -63,6 +63,7 @@ export default function EtiquetasMae() {
   const [origensVolumes, setOrigensVolumes] = useState({});
   const [historico, setHistorico] = useState([]);
   const [cameraScanFeedback, setCameraScanFeedback] = useState(null);
+  const [showDebug, setShowDebug] = useState(false);
   const volumesVinculadosIdsRef = React.useRef(new Set());
   
   const [novaEtiqueta, setNovaEtiqueta] = useState({
