@@ -205,21 +205,33 @@ export default function EtiquetasMae() {
     setShowDetailsModal(true);
   };
 
-  const handleIniciarUnitizacao = (etiqueta) => {
-    setEtiquetaSelecionada(etiqueta);
-    
-    if (etiqueta.volumes_ids && etiqueta.volumes_ids.length > 0) {
-      const vinculados = volumes.filter(v => etiqueta.volumes_ids.includes(v.id));
-      setVolumesVinculados(vinculados);
-      // Atualizar ref com IDs dos volumes já vinculados
-      volumesVinculadosIdsRef.current = new Set(etiqueta.volumes_ids);
-    } else {
-      setVolumesVinculados([]);
-      volumesVinculadosIdsRef.current = new Set();
+  const handleIniciarUnitizacao = async (etiqueta) => {
+    try {
+      // CRÍTICO: Recarregar etiqueta do banco para garantir dados atualizados
+      const etiquetaAtualizada = await base44.entities.EtiquetaMae.get(etiqueta.id);
+      
+      // Recarregar volumes do banco também
+      const volumesAtualizados = await base44.entities.Volume.list();
+      setVolumes(volumesAtualizados);
+      
+      setEtiquetaSelecionada(etiquetaAtualizada);
+      
+      if (etiquetaAtualizada.volumes_ids && etiquetaAtualizada.volumes_ids.length > 0) {
+        const vinculados = volumesAtualizados.filter(v => etiquetaAtualizada.volumes_ids.includes(v.id));
+        setVolumesVinculados(vinculados);
+        // Atualizar ref com IDs dos volumes já vinculados
+        volumesVinculadosIdsRef.current = new Set(etiquetaAtualizada.volumes_ids);
+      } else {
+        setVolumesVinculados([]);
+        volumesVinculadosIdsRef.current = new Set();
+      }
+      
+      setCodigoScanner("");
+      setShowUnitizacaoModal(true);
+    } catch (error) {
+      console.error("Erro ao carregar dados da etiqueta:", error);
+      toast.error("Erro ao carregar dados atualizados");
     }
-    
-    setCodigoScanner("");
-    setShowUnitizacaoModal(true);
   };
 
   const handleCameraScan = async (codigo) => {
