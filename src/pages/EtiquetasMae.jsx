@@ -2019,24 +2019,34 @@ export default function EtiquetasMae() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="p-3 pt-0">
+                      {/* Botão para mostrar/ocultar Debug */}
+                      <button
+                        onClick={() => setShowDebug(!showDebug)}
+                        className="mb-2 text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
+                      >
+                        {showDebug ? '▼' : '▶'} Debug
+                      </button>
+                      
                       {/* DEBUG INFO */}
-                      <div className="mb-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs">
-                        <p><strong>DEBUG:</strong></p>
-                        <p>• volumesVinculados: {volumesVinculados.length}</p>
-                        <p>• volumes totais: {volumes.length}</p>
-                        <p>• notas totais: {notas.length}</p>
-                        <p>• etiqueta.volumes_ids: {etiquetaSelecionada.volumes_ids?.length || 0}</p>
-                        <p>• etiqueta.notas_fiscais_ids: {etiquetaSelecionada.notas_fiscais_ids?.length || 0}</p>
-                        {volumesVinculados.length > 0 && (
-                          <>
-                            <p className="mt-1"><strong>Primeiro volume:</strong></p>
-                            <p>• ID: {volumesVinculados[0].id}</p>
-                            <p>• identificador: {volumesVinculados[0].identificador_unico}</p>
-                            <p>• nota_fiscal_id: {volumesVinculados[0].nota_fiscal_id}</p>
-                            <p>• etiqueta_mae_id: {volumesVinculados[0].etiqueta_mae_id}</p>
-                          </>
-                        )}
-                      </div>
+                      {showDebug && (
+                        <div className="mb-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs">
+                          <p><strong>DEBUG:</strong></p>
+                          <p>• volumesVinculados: {volumesVinculados.length}</p>
+                          <p>• volumes totais: {volumes.length}</p>
+                          <p>• notas totais: {notas.length}</p>
+                          <p>• etiqueta.volumes_ids: {etiquetaSelecionada.volumes_ids?.length || 0}</p>
+                          <p>• etiqueta.notas_fiscais_ids: {etiquetaSelecionada.notas_fiscais_ids?.length || 0}</p>
+                          {volumesVinculados.length > 0 && (
+                            <>
+                              <p className="mt-1"><strong>Primeiro volume:</strong></p>
+                              <p>• ID: {volumesVinculados[0].id}</p>
+                              <p>• identificador: {volumesVinculados[0].identificador_unico}</p>
+                              <p>• nota_fiscal_id: {volumesVinculados[0].nota_fiscal_id}</p>
+                              <p>• etiqueta_mae_id: {volumesVinculados[0].etiqueta_mae_id}</p>
+                            </>
+                          )}
+                        </div>
+                      )}
                       {/* Resumo por Nota Fiscal - Apontamento de Faltantes */}
                       <div className="mb-3 space-y-2">
                         {(() => {
