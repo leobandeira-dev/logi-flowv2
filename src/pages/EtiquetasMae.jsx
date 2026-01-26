@@ -316,11 +316,41 @@ export default function EtiquetasMae() {
 
       // CRÍTICO: Recarregar dados frescos do banco ANTES de processar
       const volumesBanco = await base44.entities.Volume.list();
-      const volumeEncontrado = volumesBanco.find(v => v.identificador_unico === codigoLimpo);
+      
+      // LOG DO CÓDIGO ESCANEADO
+      console.log("🔍 Código escaneado:", codigoLimpo);
+      console.log("📦 Total de volumes no banco:", volumesBanco.length);
+      
+      // Buscar volume com múltiplos critérios
+      let volumeEncontrado = volumesBanco.find(v => v.identificador_unico === codigoLimpo);
+      
+      // Se não encontrou exato, tentar buscar por partes do código
+      if (!volumeEncontrado) {
+        console.log("⚠️ Tentando busca alternativa...");
+        
+        // Tentar encontrar por partes do código (pode ser que o QR tenha formato diferente)
+        volumeEncontrado = volumesBanco.find(v => 
+          v.identificador_unico && (
+            v.identificador_unico.includes(codigoLimpo) ||
+            codigoLimpo.includes(v.identificador_unico) ||
+            // Tentar match por número de nota + sequencial (ex: "5835-1")
+            (v.identificador_unico.includes(codigoLimpo.replace(/^VOL-/, '')) ||
+             v.identificador_unico.includes(codigoLimpo.split('-').slice(0, 2).join('-')))
+          )
+        );
+        
+        if (volumeEncontrado) {
+          console.log("✅ Volume encontrado com busca alternativa:", volumeEncontrado.identificador_unico);
+          toast.info(`Volume encontrado: ${volumeEncontrado.identificador_unico}`);
+        }
+      }
 
       if (!volumeEncontrado) {
+        console.log("❌ Volume não encontrado. Código escaneado:", codigoLimpo);
+        console.log("📋 Primeiros 5 volumes no banco:", volumesBanco.slice(0, 5).map(v => v.identificador_unico));
+        
         playErrorBeep();
-        toast.error("Volume não encontrado no sistema");
+        toast.error(`Volume não encontrado no sistema\nCódigo: ${codigoLimpo}`);
         setCodigoScanner("");
         setProcessando(false);
         setCameraScanFeedback('not_found');
