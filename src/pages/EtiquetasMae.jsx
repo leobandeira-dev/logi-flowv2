@@ -1393,22 +1393,28 @@ export default function EtiquetasMae() {
                     </Badge>
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-2 py-2 border-t border-b my-2" style={{ borderColor: theme.cardBorder }}>
+                  <div className="grid grid-cols-4 gap-2 py-2 border-t border-b my-2" style={{ borderColor: theme.cardBorder }}>
                     <div className="text-center">
-                      <p className="text-[10px]" style={{ color: theme.textMuted }}>Volumes</p>
+                      <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Volumes</p>
                       <p className="text-sm font-bold" style={{ color: theme.text }}>
                         {etiqueta.quantidade_volumes || 0}
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-[10px]" style={{ color: theme.textMuted }}>Peso</p>
-                      <p className="text-sm font-bold" style={{ color: theme.text }}>
+                      <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Notas</p>
+                      <p className="text-sm font-bold text-orange-600">
+                        {(etiqueta.notas_fiscais_ids?.length || 0)}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Peso</p>
+                      <p className="text-sm font-bold text-green-600">
                         {etiqueta.peso_total?.toLocaleString('pt-BR', { minimumFractionDigits: 0 }) || '0'} kg
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-[10px]" style={{ color: theme.textMuted }}>M³</p>
-                      <p className="text-sm font-bold" style={{ color: theme.text }}>
+                      <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>M³</p>
+                      <p className="text-sm font-bold text-purple-600">
                         {etiqueta.m3_total?.toFixed(2) || '0.00'}
                       </p>
                     </div>
@@ -1499,6 +1505,7 @@ export default function EtiquetasMae() {
                     <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Descrição</th>
                     <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Status</th>
                     <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Volumes</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Notas</th>
                     <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Peso</th>
                     <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: theme.textMuted }}>M³</th>
                     <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: theme.textMuted }}>Criado</th>
@@ -1530,6 +1537,11 @@ export default function EtiquetasMae() {
                         <td className="px-3 py-2">
                           <span className="text-sm font-semibold" style={{ color: theme.text }}>
                             {etiqueta.quantidade_volumes || 0}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <span className="text-sm font-semibold text-orange-600">
+                            {(etiqueta.notas_fiscais_ids?.length || 0)}
                           </span>
                         </td>
                         <td className="px-3 py-2">
