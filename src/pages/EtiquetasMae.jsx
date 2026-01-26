@@ -510,9 +510,10 @@ export default function EtiquetasMae() {
       setNotas(notasAtualizadas);
       volumesVinculadosIdsRef.current = new Set(novosVolumesIds);
 
-      // FASE 7: Recarregar lista de etiquetas
-      const etiquetasAtualizadas = await base44.entities.EtiquetaMae.list("-created_date");
-      setEtiquetas(etiquetasAtualizadas);
+      // FASE 7: Atualizar lista local de etiquetas (sem recarregar)
+      setEtiquetas(prev => prev.map(e => 
+        e.id === etiquetaBanco.id ? etiquetaFinal : e
+      ));
 
       // FEEDBACK DETALHADO
       const nota = notasAtualizadas.find(n => n.id === volumeEncontrado.nota_fiscal_id);
@@ -1120,8 +1121,10 @@ export default function EtiquetasMae() {
       setOrigensVolumes(prev => ({ ...prev, ...novasOrigensVolumes }));
       volumesVinculadosIdsRef.current = new Set(novosVolumesIds);
 
-      const etiquetasAtualizadas = await base44.entities.EtiquetaMae.list("-created_date");
-      setEtiquetas(etiquetasAtualizadas);
+      // Atualizar lista local de etiquetas (sem recarregar)
+      setEtiquetas(prev => prev.map(e => 
+        e.id === etiquetaSelecionada.id ? etiquetaFinal : e
+      ));
 
       // FEEDBACK DETALHADO
       const todosVolumesNota = volumesConsolidados.filter(v => v.nota_fiscal_id === notaFiscal.id);
