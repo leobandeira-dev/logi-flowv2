@@ -298,14 +298,28 @@ export default function EtiquetasMae() {
   };
 
   const handleScanComFeedback = async (codigo) => {
-    if (!codigo || !codigo.trim() || !etiquetaSelecionada) return 'error';
+    // VALIDAÇÃO INICIAL
+    if (!codigo || !codigo.trim() || !etiquetaSelecionada) {
+      console.warn("⚠️ Scan cancelado: dados inválidos");
+      return 'error';
+    }
+
+    // PREVENIR SCANS DUPLICADOS
+    if (processando) {
+      console.warn("⚠️ Scan em andamento, ignorando nova requisição");
+      return 'processing';
+    }
 
     setProcessando(true);
+    setCameraScanFeedback('processing');
+    
     try {
       const codigoLimpo = codigo.trim();
+      console.log("🔍 Iniciando processamento:", codigoLimpo);
       
-      // Se for chave NF-e (44 dígitos), processar nota fiscal
+      // CHAVE NF-e (44 dígitos)
       if (codigoLimpo.length === 44 && /^\d+$/.test(codigoLimpo)) {
+        console.log("📄 Detectada chave NF-e");
         await handleScanChaveNFe(codigoLimpo);
         setCodigoScanner("");
         setProcessando(false);
@@ -314,82 +328,135 @@ export default function EtiquetasMae() {
         return 'success';
       }
 
-      // CRÍTICO: Recarregar dados frescos do banco ANTES de processar
+      // BUSCAR VOLUME NO BANCO
+      console.log("📦 Buscando volume...");
       const volumesBanco = await base44.entities.Volume.list();
+      console.log(`  • ${volumesBanco.length} volumes disponíveis`);
       
-      // LOG DO CÓDIGO ESCANEADO
-      console.log("🔍 Código escaneado:", codigoLimpo);
-      console.log("📦 Total de volumes no banco:", volumesBanco.length);
-      
-      // Buscar volume com múltiplos critérios
+      // BUSCA EXATA
       let volumeEncontrado = volumesBanco.find(v => v.identificador_unico === codigoLimpo);
       
-      // Se não encontrou exato, tentar buscar por partes do código
+      // BUSCA ALTERNATIVA (se não encontrou exato)
       if (!volumeEncontrado) {
-        console.log("⚠️ Tentando busca alternativa...");
+        console.log("⚠️ Busca exata falhou, tentando busca alternativa...");
         
-        // Tentar encontrar por partes do código (pode ser que o QR tenha formato diferente)
-        volumeEncontrado = volumesBanco.find(v => 
-          v.identificador_unico && (
-            v.identificador_unico.includes(codigoLimpo) ||
-            codigoLimpo.includes(v.identificador_unico) ||
-            // Tentar match por número de nota + sequencial (ex: "5835-1")
-            (v.identificador_unico.includes(codigoLimpo.replace(/^VOL-/, '')) ||
-             v.identificador_unico.includes(codigoLimpo.split('-').slice(0, 2).join('-')))
-          )
-        );
+        const partesCodigoEscaneado = codigoLimpo.split('-');
+        
+        volumeEncontrado = volumesBanco.find(v => {
+          if (!v.identificador_unico) return false;
+          
+          const idVolume = v.identificador_unico.toLowerCase();
+          const idCodigo = codigoLimpo.toLowerCase();
+          
+          // Match exato (case-insensitive)
+          if (idVolume === idCodigo) return true;
+          
+          // Match parcial (um contém o outro)
+          if (idVolume.includes(idCodigo) || idCodigo.includes(idVolume)) return true;
+          
+          // Match por componentes (remover prefixo VOL-)
+          const volumeSemPrefixo = idVolume.replace(/^vol-/i, '');
+          const codigoSemPrefixo = idCodigo.replace(/^vol-/i, '');
+          
+          if (volumeSemPrefixo === codigoSemPrefixo) return true;
+          if (volumeSemPrefixo.includes(codigoSemPrefixo) || codigoSemPrefixo.includes(volumeSemPrefixo)) return true;
+          
+          // Match por partes principais (nota-sequencial)
+          if (partesCodigoEscaneado.length >= 2) {
+            const keyParts = `${partesCodigoEscaneado[0]}-${partesCodigoEscaneado[1]}`;
+            if (idVolume.includes(keyParts.toLowerCase())) return true;
+          }
+          
+          return false;
+        });
         
         if (volumeEncontrado) {
-          console.log("✅ Volume encontrado com busca alternativa:", volumeEncontrado.identificador_unico);
-          toast.info(`Volume encontrado: ${volumeEncontrado.identificador_unico}`);
+          console.log(`✅ Volume encontrado com busca alternativa:`);
+          console.log(`  • Escaneado: ${codigoLimpo}`);
+          console.log(`  • Encontrado: ${volumeEncontrado.identificador_unico}`);
+          toast.info(`Volume: ${volumeEncontrado.identificador_unico}`, { duration: 2000 });
         }
       }
 
+      // VOLUME NÃO ENCONTRADO
       if (!volumeEncontrado) {
-        console.log("❌ Volume não encontrado. Código escaneado:", codigoLimpo);
-        console.log("📋 Primeiros 5 volumes no banco:", volumesBanco.slice(0, 5).map(v => v.identificador_unico));
+        console.error("❌ Volume não encontrado");
+        console.log(`  • Código escaneado: ${codigoLimpo}`);
+        console.log(`  • Exemplos no banco:`, volumesBanco.slice(0, 3).map(v => v.identificador_unico));
         
         playErrorBeep();
-        toast.error(`Volume não encontrado no sistema\nCódigo: ${codigoLimpo}`);
+        toast.error(`❌ Volume não encontrado\n\nCódigo: ${codigoLimpo.length > 30 ? codigoLimpo.substring(0, 30) + '...' : codigoLimpo}`, {
+          duration: 3000,
+          style: { whiteSpace: 'pre-line' }
+        });
+        
         setCodigoScanner("");
         setProcessando(false);
         setCameraScanFeedback('not_found');
-        setTimeout(() => setCameraScanFeedback(null), 1200);
+        setTimeout(() => setCameraScanFeedback(null), 1500);
         return 'not_found';
       }
 
-      // Recarregar etiqueta do banco para ter dados atualizados
+      console.log(`✅ Volume encontrado: ${volumeEncontrado.identificador_unico} (ID: ${volumeEncontrado.id})`);
+
+      // RECARREGAR ETIQUETA DO BANCO
+      console.log("🔄 Recarregando etiqueta do banco...");
       const etiquetaBanco = await base44.entities.EtiquetaMae.get(etiquetaSelecionada.id);
 
-      // Verificar se já está vinculado à MESMA etiqueta (no banco)
+      // VERIFICAR SE JÁ ESTÁ NA MESMA ETIQUETA
       if (volumeEncontrado.etiqueta_mae_id === etiquetaBanco.id) {
+        console.warn("⚠️ Volume já vinculado à esta etiqueta");
         playErrorBeep();
-        toast.warning("⚠️ Volume já adicionado nesta etiqueta");
+        toast.warning("⚠️ Volume já adicionado", { duration: 2000 });
+        
         setCodigoScanner("");
         setProcessando(false);
         setCameraScanFeedback('duplicate');
-        setTimeout(() => setCameraScanFeedback(null), 1200);
+        setTimeout(() => setCameraScanFeedback(null), 1500);
         return 'duplicate';
       }
 
-      // Verificar se está vinculado a OUTRA etiqueta
+      // VERIFICAR SE ESTÁ EM OUTRA ETIQUETA
       if (volumeEncontrado.etiqueta_mae_id && volumeEncontrado.etiqueta_mae_id !== etiquetaBanco.id) {
-        const etiquetaAnterior = await base44.entities.EtiquetaMae.get(volumeEncontrado.etiqueta_mae_id);
+        console.log(`⚠️ Volume vinculado à outra etiqueta: ${volumeEncontrado.etiqueta_mae_id}`);
         
-        if (etiquetaAnterior.status !== "cancelada") {
+        try {
+          const etiquetaAnterior = await base44.entities.EtiquetaMae.get(volumeEncontrado.etiqueta_mae_id);
+          
+          if (etiquetaAnterior.status !== "cancelada") {
+            console.error(`❌ Etiqueta anterior está ${etiquetaAnterior.status}`);
+            playErrorBeep();
+            toast.error(`❌ Volume em outra etiqueta\n\n${etiquetaAnterior.codigo} (${etiquetaAnterior.status})`, {
+              duration: 3000,
+              style: { whiteSpace: 'pre-line' }
+            });
+            
+            setCodigoScanner("");
+            setProcessando(false);
+            setCameraScanFeedback('error');
+            setTimeout(() => setCameraScanFeedback(null), 1500);
+            return 'error';
+          }
+          
+          console.log("✓ Etiqueta anterior cancelada, permitindo vínculo");
+        } catch (error) {
+          console.error("❌ Erro ao verificar etiqueta anterior:", error);
+          // Se falhou ao buscar etiqueta anterior, bloquear por segurança
           playErrorBeep();
-          toast.error(`Volume já está na etiqueta ${etiquetaAnterior.codigo}`);
+          toast.error("❌ Erro ao validar volume");
           setCodigoScanner("");
           setProcessando(false);
           setCameraScanFeedback('error');
-          setTimeout(() => setCameraScanFeedback(null), 1200);
+          setTimeout(() => setCameraScanFeedback(null), 1500);
           return 'error';
         }
       }
 
+      // VINCULAR VOLUME
+      console.log("✅ Iniciando vínculo do volume...");
       const user = await base44.auth.me();
 
-      // FASE 1: Atualizar volume no banco
+      // FASE 1: Atualizar volume
       await base44.entities.Volume.update(volumeEncontrado.id, {
         etiqueta_mae_id: etiquetaBanco.id,
         data_vinculo_etiqueta_mae: new Date().toISOString()
@@ -406,8 +473,13 @@ export default function EtiquetasMae() {
         usuario_nome: user.full_name
       });
 
-      // FASE 3: Recarregar TUDO do banco para calcular totais corretos
-      const volumesAtualizadosBanco = await base44.entities.Volume.list();
+      // FASE 3: Recarregar dados consolidados
+      console.log("🔄 Recarregando dados consolidados...");
+      const [volumesAtualizadosBanco, notasAtualizadas] = await Promise.all([
+        base44.entities.Volume.list(),
+        base44.entities.NotaFiscal.list()
+      ]);
+
       const volumesVinculadosAtualizados = volumesAtualizadosBanco.filter(v => 
         v.etiqueta_mae_id === etiquetaBanco.id
       );
@@ -417,7 +489,7 @@ export default function EtiquetasMae() {
       const m3Total = volumesVinculadosAtualizados.reduce((sum, v) => sum + (v.m3 || 0), 0);
       const notasIds = [...new Set(volumesVinculadosAtualizados.map(v => v.nota_fiscal_id).filter(Boolean))];
 
-      // FASE 4: Atualizar etiqueta com dados consolidados
+      // FASE 4: Atualizar etiqueta
       await base44.entities.EtiquetaMae.update(etiquetaBanco.id, {
         volumes_ids: novosVolumesIds,
         quantidade_volumes: novosVolumesIds.length,
@@ -427,46 +499,38 @@ export default function EtiquetasMae() {
         status: "em_unitizacao"
       });
 
-      // FASE 5: Recarregar etiqueta atualizada do banco
+      // FASE 5: Recarregar etiqueta final
       const etiquetaFinal = await base44.entities.EtiquetaMae.get(etiquetaBanco.id);
 
-      // FASE 6: Recarregar notas fiscais do banco
-      const notasAtualizadas = await base44.entities.NotaFiscal.list();
-      setNotas(notasAtualizadas);
-
-      // FASE 7: Atualizar estados locais com dados do banco
+      // FASE 6: Atualizar estados
       setEtiquetaSelecionada(etiquetaFinal);
       setVolumesVinculados(volumesVinculadosAtualizados);
       setVolumes(volumesAtualizadosBanco);
-      
-      // Atualizar ref
+      setNotas(notasAtualizadas);
       volumesVinculadosIdsRef.current = new Set(novosVolumesIds);
 
-      // Atualizar lista de etiquetas
+      // FASE 7: Recarregar lista de etiquetas
       const etiquetasAtualizadas = await base44.entities.EtiquetaMae.list("-created_date");
       setEtiquetas(etiquetasAtualizadas);
 
-      // Recarregar notas para garantir dados frescos
-      const notasAtualizadasBanco = await base44.entities.NotaFiscal.list();
-      setNotas(notasAtualizadasBanco);
-      
-      const nota = notasAtualizadasBanco.find(n => n.id === volumeEncontrado.nota_fiscal_id);
+      // FEEDBACK DETALHADO
+      const nota = notasAtualizadas.find(n => n.id === volumeEncontrado.nota_fiscal_id);
       const volumesNotaAtualizados = volumesVinculadosAtualizados.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
       const todosVolumesNota = volumesAtualizadosBanco.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
       const faltamNota = todosVolumesNota.length - volumesNotaAtualizados.length;
       
       playSuccessBeep();
       
-      const feedbackMsg = `✅ Volume ${volumesNotaAtualizados.length}/${todosVolumesNota.length} adicionado\n` +
+      const feedbackMsg = `✅ ${volumesNotaAtualizados.length}/${todosVolumesNota.length} volumes\n` +
         `📋 NF ${nota?.numero_nota || '-'}\n` +
-        (faltamNota > 0 ? `⏳ Faltam ${faltamNota} volume(s)\n` : `✓ NF COMPLETA!\n`) +
-        `📦 Total: ${volumesVinculadosAtualizados.length} vol. na etiqueta`;
+        (faltamNota > 0 ? `⏳ Faltam ${faltamNota}\n` : `✓ NF COMPLETA!\n`) +
+        `📦 Total: ${volumesVinculadosAtualizados.length}`;
       
       toast.success(feedbackMsg, { 
-        duration: faltamNota === 0 ? 4000 : 3000,
+        duration: faltamNota === 0 ? 4000 : 2500,
         style: { 
           whiteSpace: 'pre-line', 
-          fontSize: '12px', 
+          fontSize: '13px', 
           lineHeight: '1.4',
           fontWeight: faltamNota === 0 ? 'bold' : 'normal',
           background: faltamNota === 0 ? '#10b981' : undefined,
@@ -474,20 +538,30 @@ export default function EtiquetasMae() {
         }
       });
       
+      console.log("✅ Processamento concluído com sucesso");
+      
       setCodigoScanner("");
       setProcessando(false);
       setCameraScanFeedback('success');
       setTimeout(() => setCameraScanFeedback(null), 1000);
       
       return 'success';
+      
     } catch (error) {
-      console.error("Erro ao processar código:", error);
-      toast.error("Erro ao processar: " + error.message);
+      console.error("❌ ERRO CRÍTICO:", error);
+      console.error("  • Stack:", error.stack);
+      
       playErrorBeep();
+      toast.error(`❌ Erro ao processar\n\n${error.message}`, {
+        duration: 4000,
+        style: { whiteSpace: 'pre-line', fontSize: '12px' }
+      });
+      
       setCodigoScanner("");
       setProcessando(false);
       setCameraScanFeedback('error');
-      setTimeout(() => setCameraScanFeedback(null), 800);
+      setTimeout(() => setCameraScanFeedback(null), 1500);
+      
       return 'error';
     }
   };
