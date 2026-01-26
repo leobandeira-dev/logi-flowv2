@@ -567,67 +567,81 @@ export default function EtiquetasMae() {
   };
 
   const handleScan = async (codigo) => {
-    if (!codigo || !codigo.trim() || !etiquetaSelecionada) return;
+    // VALIDAÇÃO INICIAL
+    if (!codigo || !codigo.trim() || !etiquetaSelecionada) {
+      console.warn("⚠️ handleScan: dados inválidos");
+      return;
+    }
+
+    // PREVENIR DUPLICAÇÃO
+    if (processando) {
+      console.warn("⚠️ Processamento já em andamento");
+      return;
+    }
 
     setProcessando(true);
+    
     try {
       const codigoLimpo = codigo.trim();
+      console.log("🔍 [SCAN MANUAL] Código:", codigoLimpo);
       
-      // Se for chave NF-e (44 dígitos), processar nota fiscal
+      // CHAVE NF-e
       if (codigoLimpo.length === 44 && /^\d+$/.test(codigoLimpo)) {
+        console.log("📄 Chave NF-e detectada");
         await handleScanChaveNFe(codigoLimpo);
         setCodigoScanner("");
-        setProcessando(false);
         return;
       }
 
-      const volumeEncontrado = volumes.find(v => v.identificador_unico === codigoLimpo);
+      // BUSCAR VOLUME NO BANCO (SEMPRE FRESCO)
+      console.log("📦 Buscando volume no banco...");
+      const volumesBanco = await base44.entities.Volume.list();
+      const volumeEncontrado = volumesBanco.find(v => v.identificador_unico === codigoLimpo);
 
       if (!volumeEncontrado) {
+        console.error("❌ Volume não encontrado:", codigoLimpo);
         playErrorBeep();
-        toast.error("Volume não encontrado");
+        toast.error("❌ Volume não encontrado");
         setCodigoScanner("");
-        setProcessando(false);
         return;
       }
 
+      console.log(`✅ Volume: ${volumeEncontrado.identificador_unico}`);
+
+      // VERIFICAR VÍNCULO COM OUTRA ETIQUETA
       if (volumeEncontrado.etiqueta_mae_id && volumeEncontrado.etiqueta_mae_id !== etiquetaSelecionada.id) {
-        const etiquetaAnterior = await base44.entities.EtiquetaMae.get(volumeEncontrado.etiqueta_mae_id);
-        
-        // Se a etiqueta anterior está cancelada, permitir o vínculo com a nova
-        if (etiquetaAnterior.status === "cancelada") {
-          console.log(`Volume estava vinculado à etiqueta cancelada ${etiquetaAnterior.codigo}, permitindo novo vínculo`);
-          toast.info(`Volume estava em etiqueta cancelada, vinculando aqui...`);
-          // Continuar o processo normalmente - não retornar
-        } else {
+        try {
+          const etiquetaAnterior = await base44.entities.EtiquetaMae.get(volumeEncontrado.etiqueta_mae_id);
+          
+          if (etiquetaAnterior.status !== "cancelada") {
+            console.error(`❌ Volume já em etiqueta ${etiquetaAnterior.codigo}`);
+            playErrorBeep();
+            toast.error(`❌ Volume na etiqueta ${etiquetaAnterior.codigo}`);
+            setCodigoScanner("");
+            return;
+          }
+          
+          console.log("✓ Etiqueta anterior cancelada, permitindo vínculo");
+        } catch (error) {
+          console.error("❌ Erro ao verificar etiqueta anterior:", error);
           playErrorBeep();
-          toast.error(`Volume já vinculado à etiqueta ${etiquetaAnterior.codigo} (status: ${etiquetaAnterior.status})`);
+          toast.error("❌ Erro ao validar volume");
           setCodigoScanner("");
-          setProcessando(false);
           return;
         }
       }
 
-      if (volumesVinculados.some(v => v.id === volumeEncontrado.id)) {
+      // VERIFICAR SE JÁ ESTÁ NA MESMA ETIQUETA
+      if (volumeEncontrado.etiqueta_mae_id === etiquetaSelecionada.id) {
+        console.warn("⚠️ Volume já vinculado");
         playErrorBeep();
-        toast.warning("⚠️ Volume já bipado nesta etiqueta");
+        toast.warning("⚠️ Volume já adicionado");
         setCodigoScanner("");
-        setProcessando(false);
         return;
       }
 
-      // Marcar origem do volume se ainda não existir
-      if (!origensVolumes[volumeEncontrado.id]) {
-        setOrigensVolumes(prev => ({ ...prev, [volumeEncontrado.id]: "Base" }));
-      }
-
-      // Atualizar volume localmente
-      const volumeAtualizado = {
-        ...volumeEncontrado,
-        etiqueta_mae_id: etiquetaSelecionada.id,
-        data_vinculo_etiqueta_mae: new Date().toISOString()
-      };
-
+      // VINCULAR VOLUME
+      console.log("✅ Vinculando volume...");
       const user = await base44.auth.me();
 
       await base44.entities.Volume.update(volumeEncontrado.id, {
@@ -635,7 +649,6 @@ export default function EtiquetasMae() {
         data_vinculo_etiqueta_mae: new Date().toISOString()
       });
 
-      // Registrar histórico de adição
       await base44.entities.HistoricoEtiquetaMae.create({
         etiqueta_mae_id: etiquetaSelecionada.id,
         tipo_acao: "adicao_volume",
@@ -646,12 +659,21 @@ export default function EtiquetasMae() {
         usuario_nome: user.full_name
       });
 
-      const novosVolumesIds = [...(etiquetaSelecionada.volumes_ids || []), volumeEncontrado.id];
-      const volumesAtualizados = [...volumesVinculados, volumeAtualizado];
+      // RECARREGAR DADOS CONSOLIDADOS
+      console.log("🔄 Recarregando dados...");
+      const [volumesAtualizados, notasAtualizadas] = await Promise.all([
+        base44.entities.Volume.list(),
+        base44.entities.NotaFiscal.list()
+      ]);
 
-      const pesoTotal = volumesAtualizados.reduce((sum, v) => sum + (v.peso_volume || 0), 0);
-      const m3Total = volumesAtualizados.reduce((sum, v) => sum + (v.m3 || 0), 0);
-      const notasIds = [...new Set(volumesAtualizados.map(v => v.nota_fiscal_id).filter(Boolean))];
+      const volumesVinculadosAtualizados = volumesAtualizados.filter(v => 
+        v.etiqueta_mae_id === etiquetaSelecionada.id
+      );
+
+      const novosVolumesIds = volumesVinculadosAtualizados.map(v => v.id);
+      const pesoTotal = volumesVinculadosAtualizados.reduce((sum, v) => sum + (v.peso_volume || 0), 0);
+      const m3Total = volumesVinculadosAtualizados.reduce((sum, v) => sum + (v.m3 || 0), 0);
+      const notasIds = [...new Set(volumesVinculadosAtualizados.map(v => v.nota_fiscal_id).filter(Boolean))];
 
       await base44.entities.EtiquetaMae.update(etiquetaSelecionada.id, {
         volumes_ids: novosVolumesIds,
@@ -662,52 +684,46 @@ export default function EtiquetasMae() {
         status: "em_unitizacao"
       });
 
-      // Atualizar estados localmente sem recarregar
-      const etiquetaAtualizada = {
-        ...etiquetaSelecionada,
-        volumes_ids: novosVolumesIds,
-        quantidade_volumes: novosVolumesIds.length,
-        peso_total: pesoTotal,
-        m3_total: m3Total,
-        notas_fiscais_ids: notasIds,
-        status: "em_unitizacao"
-      };
+      const etiquetaFinal = await base44.entities.EtiquetaMae.get(etiquetaSelecionada.id);
 
-      setEtiquetaSelecionada(etiquetaAtualizada);
-      setVolumesVinculados(volumesAtualizados);
+      // ATUALIZAR ESTADOS
+      setEtiquetaSelecionada(etiquetaFinal);
+      setVolumesVinculados(volumesVinculadosAtualizados);
+      setVolumes(volumesAtualizados);
+      setNotas(notasAtualizadas);
+      volumesVinculadosIdsRef.current = new Set(novosVolumesIds);
 
-      // Atualizar arrays locais
-      setVolumes(volumes.map(v => v.id === volumeEncontrado.id ? volumeAtualizado : v));
-      setEtiquetas(etiquetas.map(e => e.id === etiquetaSelecionada.id ? etiquetaAtualizada : e));
+      const etiquetasAtualizadas = await base44.entities.EtiquetaMae.list("-created_date");
+      setEtiquetas(etiquetasAtualizadas);
 
-      // Feedback com informações do volume e progresso da nota
-      const nota = notas.find(n => n.id === volumeEncontrado.nota_fiscal_id);
-      const volumesNotaAtualizados = volumesAtualizados.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
-      const todosVolumesNota = volumes.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
-      const faltamNota = todosVolumesNota.length - volumesNotaAtualizados.length;
+      // FEEDBACK
+      const nota = notasAtualizadas.find(n => n.id === volumeEncontrado.nota_fiscal_id);
+      const volumesNotaVinculados = volumesVinculadosAtualizados.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
+      const todosVolumesNota = volumesAtualizados.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
+      const faltam = todosVolumesNota.length - volumesNotaVinculados.length;
       
       playSuccessBeep();
       
-      const feedbackMsg = `✅ Volume ${volumesNotaAtualizados.length}/${todosVolumesNota.length} adicionado\n` +
+      const feedbackMsg = `✅ ${volumesNotaVinculados.length}/${todosVolumesNota.length} volumes\n` +
         `📋 NF ${nota?.numero_nota || '-'}\n` +
-        (faltamNota > 0 ? `⏳ Faltam ${faltamNota} volume(s)\n` : `✓ NF COMPLETA!\n`) +
-        `📦 Total: ${volumesAtualizados.length} vol. na etiqueta`;
+        (faltam > 0 ? `⏳ Faltam ${faltam}\n` : `✓ NF COMPLETA!\n`) +
+        `📦 Total: ${volumesVinculadosAtualizados.length}`;
       
       toast.success(feedbackMsg, { 
-        duration: faltamNota === 0 ? 4000 : 3000,
+        duration: faltam === 0 ? 4000 : 2500,
         style: { 
           whiteSpace: 'pre-line', 
-          fontSize: '12px', 
+          fontSize: '13px', 
           lineHeight: '1.4',
-          fontWeight: faltamNota === 0 ? 'bold' : 'normal',
-          background: faltamNota === 0 ? '#10b981' : undefined,
-          color: faltamNota === 0 ? 'white' : undefined
+          fontWeight: faltam === 0 ? 'bold' : 'normal',
+          background: faltam === 0 ? '#10b981' : undefined,
+          color: faltam === 0 ? 'white' : undefined
         }
       });
       
       setCodigoScanner("");
+      console.log("✅ Scan manual concluído");
       
-      // Manter foco no campo para próxima leitura
       setTimeout(() => {
         const input = document.querySelector('input[placeholder*="Bipe volume ou chave NF-e"]');
         if (input) {
@@ -715,12 +731,13 @@ export default function EtiquetasMae() {
           input.select();
         }
       }, 100);
+      
     } catch (error) {
-      console.error("Erro ao processar código:", error);
-      toast.error("Erro ao processar");
-      
-      // Manter foco mesmo em caso de erro
+      console.error("❌ ERRO [SCAN MANUAL]:", error);
+      playErrorBeep();
+      toast.error(`❌ Erro: ${error.message}`);
       setCodigoScanner("");
+      
       setTimeout(() => {
         const input = document.querySelector('input[placeholder*="Bipe volume ou chave NF-e"]');
         if (input) {
@@ -728,22 +745,30 @@ export default function EtiquetasMae() {
           input.select();
         }
       }, 100);
+      
     } finally {
       setProcessando(false);
     }
   };
 
   const handleDesvincularVolume = async (volume) => {
-    if (!etiquetaSelecionada) return;
+    // VALIDAÇÃO
+    if (!etiquetaSelecionada || !volume) {
+      console.warn("⚠️ Desvinculação cancelada: dados inválidos");
+      return;
+    }
+
+    console.log(`🔓 Desvinculando volume: ${volume.identificador_unico}`);
 
     try {
       const user = await base44.auth.me();
 
-      // FASE 1: Atualizar volume no banco
+      // FASE 1: Desvincular volume no banco
       await base44.entities.Volume.update(volume.id, {
         etiqueta_mae_id: null,
         data_vinculo_etiqueta_mae: null
       });
+      console.log("  ✓ Volume desvinculado no banco");
 
       // FASE 2: Registrar histórico
       await base44.entities.HistoricoEtiquetaMae.create({
@@ -755,10 +780,12 @@ export default function EtiquetasMae() {
         usuario_id: user.id,
         usuario_nome: user.full_name
       });
+      console.log("  ✓ Histórico registrado");
 
-      // FASE 3: Recarregar volumes do banco
-      const volumesAtualizadosBanco = await base44.entities.Volume.list();
-      const volumesVinculadosAtualizados = volumesAtualizadosBanco.filter(v => 
+      // FASE 3: Recarregar dados consolidados
+      console.log("🔄 Recarregando dados...");
+      const volumesAtualizados = await base44.entities.Volume.list();
+      const volumesVinculadosAtualizados = volumesAtualizados.filter(v => 
         v.etiqueta_mae_id === etiquetaSelecionada.id
       );
 
@@ -776,26 +803,35 @@ export default function EtiquetasMae() {
         notas_fiscais_ids: notasIds,
         status: novosVolumesIds.length === 0 ? "criada" : "em_unitizacao"
       });
+      console.log("  ✓ Etiqueta atualizada");
 
-      // FASE 5: Recarregar etiqueta do banco
+      // FASE 5: Recarregar etiqueta final
       const etiquetaFinal = await base44.entities.EtiquetaMae.get(etiquetaSelecionada.id);
 
-      // FASE 6: Atualizar estados locais
+      // FASE 6: Atualizar estados
       setEtiquetaSelecionada(etiquetaFinal);
       setVolumesVinculados(volumesVinculadosAtualizados);
-      setVolumes(volumesAtualizadosBanco);
-      
-      // Atualizar ref
+      setVolumes(volumesAtualizados);
       volumesVinculadosIdsRef.current = new Set(novosVolumesIds);
 
-      // Atualizar lista de etiquetas
       const etiquetasAtualizadas = await base44.entities.EtiquetaMae.list("-created_date");
       setEtiquetas(etiquetasAtualizadas);
 
-      toast.success("Volume desvinculado");
+      playSuccessBeep();
+      toast.success(`✅ Volume removido\n📦 Restam ${novosVolumesIds.length} volumes`, {
+        duration: 2000,
+        style: { whiteSpace: 'pre-line', fontSize: '13px' }
+      });
+      
+      console.log("✅ Desvinculação concluída");
+      
     } catch (error) {
-      console.error("Erro ao desvincular:", error);
-      toast.error("Erro ao desvincular: " + error.message);
+      console.error("❌ ERRO ao desvincular:", error);
+      playErrorBeep();
+      toast.error(`❌ Erro ao desvincular\n${error.message}`, {
+        duration: 3000,
+        style: { whiteSpace: 'pre-line', fontSize: '12px' }
+      });
     }
   };
 
