@@ -289,7 +289,9 @@ export default function EtiquetasMae() {
         return 'success';
       }
 
-      const volumeEncontrado = volumes.find(v => v.identificador_unico === codigoLimpo);
+      // CRÍTICO: Recarregar dados frescos do banco ANTES de processar
+      const volumesBanco = await base44.entities.Volume.list();
+      const volumeEncontrado = volumesBanco.find(v => v.identificador_unico === codigoLimpo);
 
       if (!volumeEncontrado) {
         playErrorBeep();
@@ -301,19 +303,11 @@ export default function EtiquetasMae() {
         return 'not_found';
       }
 
-      // Verificação instantânea usando ref - PRIMEIRO
-      if (volumesVinculadosIdsRef.current.has(volumeEncontrado.id)) {
-        playErrorBeep();
-        toast.warning("⚠️ Volume já adicionado nesta etiqueta");
-        setCodigoScanner("");
-        setProcessando(false);
-        setCameraScanFeedback('duplicate');
-        setTimeout(() => setCameraScanFeedback(null), 1200);
-        return 'duplicate';
-      }
+      // Recarregar etiqueta do banco para ter dados atualizados
+      const etiquetaBanco = await base44.entities.EtiquetaMae.get(etiquetaSelecionada.id);
 
       // Verificar se já está vinculado à MESMA etiqueta (no banco)
-      if (volumeEncontrado.etiqueta_mae_id === etiquetaSelecionada.id) {
+      if (volumeEncontrado.etiqueta_mae_id === etiquetaBanco.id) {
         playErrorBeep();
         toast.warning("⚠️ Volume já adicionado nesta etiqueta");
         setCodigoScanner("");
@@ -324,7 +318,7 @@ export default function EtiquetasMae() {
       }
 
       // Verificar se está vinculado a OUTRA etiqueta
-      if (volumeEncontrado.etiqueta_mae_id && volumeEncontrado.etiqueta_mae_id !== etiquetaSelecionada.id) {
+      if (volumeEncontrado.etiqueta_mae_id && volumeEncontrado.etiqueta_mae_id !== etiquetaBanco.id) {
         const etiquetaAnterior = await base44.entities.EtiquetaMae.get(volumeEncontrado.etiqueta_mae_id);
         
         if (etiquetaAnterior.status !== "cancelada") {
@@ -338,26 +332,17 @@ export default function EtiquetasMae() {
         }
       }
 
-      // Marcar origem do volume se ainda não existir
-      if (!origensVolumes[volumeEncontrado.id]) {
-        setOrigensVolumes(prev => ({ ...prev, [volumeEncontrado.id]: "Base" }));
-      }
-
-      const volumeAtualizado = {
-        ...volumeEncontrado,
-        etiqueta_mae_id: etiquetaSelecionada.id,
-        data_vinculo_etiqueta_mae: new Date().toISOString()
-      };
-
       const user = await base44.auth.me();
 
+      // FASE 1: Atualizar volume no banco
       await base44.entities.Volume.update(volumeEncontrado.id, {
-        etiqueta_mae_id: etiquetaSelecionada.id,
+        etiqueta_mae_id: etiquetaBanco.id,
         data_vinculo_etiqueta_mae: new Date().toISOString()
       });
 
+      // FASE 2: Registrar histórico
       await base44.entities.HistoricoEtiquetaMae.create({
-        etiqueta_mae_id: etiquetaSelecionada.id,
+        etiqueta_mae_id: etiquetaBanco.id,
         tipo_acao: "adicao_volume",
         volume_id: volumeEncontrado.id,
         volume_identificador: volumeEncontrado.identificador_unico,
@@ -366,17 +351,19 @@ export default function EtiquetasMae() {
         usuario_nome: user.full_name
       });
 
-      const novosVolumesIds = [...(etiquetaSelecionada.volumes_ids || []), volumeEncontrado.id];
-      const volumesAtualizados = [...volumesVinculados, volumeAtualizado];
+      // FASE 3: Recarregar TUDO do banco para calcular totais corretos
+      const volumesAtualizadosBanco = await base44.entities.Volume.list();
+      const volumesVinculadosAtualizados = volumesAtualizadosBanco.filter(v => 
+        v.etiqueta_mae_id === etiquetaBanco.id
+      );
 
-      // Adicionar à ref APÓS sucesso no banco e ANTES de atualizar estado
-      volumesVinculadosIdsRef.current.add(volumeEncontrado.id);
+      const novosVolumesIds = volumesVinculadosAtualizados.map(v => v.id);
+      const pesoTotal = volumesVinculadosAtualizados.reduce((sum, v) => sum + (v.peso_volume || 0), 0);
+      const m3Total = volumesVinculadosAtualizados.reduce((sum, v) => sum + (v.m3 || 0), 0);
+      const notasIds = [...new Set(volumesVinculadosAtualizados.map(v => v.nota_fiscal_id).filter(Boolean))];
 
-      const pesoTotal = volumesAtualizados.reduce((sum, v) => sum + (v.peso_volume || 0), 0);
-      const m3Total = volumesAtualizados.reduce((sum, v) => sum + (v.m3 || 0), 0);
-      const notasIds = [...new Set(volumesAtualizados.map(v => v.nota_fiscal_id).filter(Boolean))];
-
-      await base44.entities.EtiquetaMae.update(etiquetaSelecionada.id, {
+      // FASE 4: Atualizar etiqueta com dados consolidados
+      await base44.entities.EtiquetaMae.update(etiquetaBanco.id, {
         volumes_ids: novosVolumesIds,
         quantidade_volumes: novosVolumesIds.length,
         peso_total: pesoTotal,
@@ -385,28 +372,24 @@ export default function EtiquetasMae() {
         status: "em_unitizacao"
       });
 
-      const etiquetaAtualizada = {
-        ...etiquetaSelecionada,
-        volumes_ids: novosVolumesIds,
-        quantidade_volumes: novosVolumesIds.length,
-        peso_total: pesoTotal,
-        m3_total: m3Total,
-        notas_fiscais_ids: notasIds,
-        status: "em_unitizacao"
-      };
+      // FASE 5: Recarregar etiqueta atualizada do banco
+      const etiquetaFinal = await base44.entities.EtiquetaMae.get(etiquetaBanco.id);
 
-      setEtiquetaSelecionada(etiquetaAtualizada);
-      setVolumesVinculados(volumesAtualizados);
-      setVolumes(volumes.map(v => v.id === volumeEncontrado.id ? volumeAtualizado : v));
-      setEtiquetas(etiquetas.map(e => e.id === etiquetaSelecionada.id ? etiquetaAtualizada : e));
-
-      // Recarregar volumes do banco para garantir sincronização completa
-      const volumesAtualizadosBanco = await base44.entities.Volume.list();
+      // FASE 6: Atualizar estados locais com dados do banco
+      setEtiquetaSelecionada(etiquetaFinal);
+      setVolumesVinculados(volumesVinculadosAtualizados);
       setVolumes(volumesAtualizadosBanco);
+      
+      // Atualizar ref
+      volumesVinculadosIdsRef.current = new Set(novosVolumesIds);
+
+      // Atualizar lista de etiquetas
+      const etiquetasAtualizadas = await base44.entities.EtiquetaMae.list("-created_date");
+      setEtiquetas(etiquetasAtualizadas);
 
       const nota = notas.find(n => n.id === volumeEncontrado.nota_fiscal_id);
-      const volumesNotaAtualizados = volumesAtualizados.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
-      const todosVolumesNota = volumes.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
+      const volumesNotaAtualizados = volumesVinculadosAtualizados.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
+      const todosVolumesNota = volumesAtualizadosBanco.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
       const faltamNota = todosVolumesNota.length - volumesNotaAtualizados.length;
       
       playSuccessBeep();
@@ -414,7 +397,7 @@ export default function EtiquetasMae() {
       const feedbackMsg = `✅ Volume ${volumesNotaAtualizados.length}/${todosVolumesNota.length} adicionado\n` +
         `📋 NF ${nota?.numero_nota || '-'}\n` +
         (faltamNota > 0 ? `⏳ Faltam ${faltamNota} volume(s)\n` : `✓ NF COMPLETA!\n`) +
-        `📦 Total: ${volumesAtualizados.length} vol. na etiqueta`;
+        `📦 Total: ${volumesVinculadosAtualizados.length} vol. na etiqueta`;
       
       toast.success(feedbackMsg, { 
         duration: faltamNota === 0 ? 4000 : 3000,
@@ -436,7 +419,7 @@ export default function EtiquetasMae() {
       return 'success';
     } catch (error) {
       console.error("Erro ao processar código:", error);
-      toast.error("Erro ao processar");
+      toast.error("Erro ao processar: " + error.message);
       playErrorBeep();
       setCodigoScanner("");
       setProcessando(false);
@@ -619,12 +602,13 @@ export default function EtiquetasMae() {
     try {
       const user = await base44.auth.me();
 
+      // FASE 1: Atualizar volume no banco
       await base44.entities.Volume.update(volume.id, {
         etiqueta_mae_id: null,
         data_vinculo_etiqueta_mae: null
       });
 
-      // Registrar histórico de remoção
+      // FASE 2: Registrar histórico
       await base44.entities.HistoricoEtiquetaMae.create({
         etiqueta_mae_id: etiquetaSelecionada.id,
         tipo_acao: "remocao_volume",
@@ -635,16 +619,18 @@ export default function EtiquetasMae() {
         usuario_nome: user.full_name
       });
 
-      const novosVolumesIds = (etiquetaSelecionada.volumes_ids || []).filter(id => id !== volume.id);
-      const volumesAtualizadosList = volumesVinculados.filter(v => v.id !== volume.id);
-      
-      // Remover da ref
-      volumesVinculadosIdsRef.current.delete(volume.id);
+      // FASE 3: Recarregar volumes do banco
+      const volumesAtualizadosBanco = await base44.entities.Volume.list();
+      const volumesVinculadosAtualizados = volumesAtualizadosBanco.filter(v => 
+        v.etiqueta_mae_id === etiquetaSelecionada.id
+      );
 
-      const pesoTotal = volumesAtualizadosList.reduce((sum, v) => sum + (v.peso_volume || 0), 0);
-      const m3Total = volumesAtualizadosList.reduce((sum, v) => sum + (v.m3 || 0), 0);
-      const notasIds = [...new Set(volumesAtualizadosList.map(v => v.nota_fiscal_id).filter(Boolean))];
+      const novosVolumesIds = volumesVinculadosAtualizados.map(v => v.id);
+      const pesoTotal = volumesVinculadosAtualizados.reduce((sum, v) => sum + (v.peso_volume || 0), 0);
+      const m3Total = volumesVinculadosAtualizados.reduce((sum, v) => sum + (v.m3 || 0), 0);
+      const notasIds = [...new Set(volumesVinculadosAtualizados.map(v => v.nota_fiscal_id).filter(Boolean))];
 
+      // FASE 4: Atualizar etiqueta no banco
       await base44.entities.EtiquetaMae.update(etiquetaSelecionada.id, {
         volumes_ids: novosVolumesIds,
         quantidade_volumes: novosVolumesIds.length,
@@ -654,33 +640,25 @@ export default function EtiquetasMae() {
         status: novosVolumesIds.length === 0 ? "criada" : "em_unitizacao"
       });
 
-      // Atualizar estados localmente sem recarregar
-      const etiquetaAtualizada = {
-        ...etiquetaSelecionada,
-        volumes_ids: novosVolumesIds,
-        quantidade_volumes: novosVolumesIds.length,
-        peso_total: pesoTotal,
-        m3_total: m3Total,
-        notas_fiscais_ids: notasIds,
-        status: novosVolumesIds.length === 0 ? "criada" : "em_unitizacao"
-      };
+      // FASE 5: Recarregar etiqueta do banco
+      const etiquetaFinal = await base44.entities.EtiquetaMae.get(etiquetaSelecionada.id);
 
-      setEtiquetaSelecionada(etiquetaAtualizada);
-      setVolumesVinculados(volumesAtualizadosList);
-
-      // Atualizar arrays locais
-      const volumeAtualizado = { ...volume, etiqueta_mae_id: null, data_vinculo_etiqueta_mae: null };
-      setVolumes(volumes.map(v => v.id === volume.id ? volumeAtualizado : v));
-      setEtiquetas(etiquetas.map(e => e.id === etiquetaSelecionada.id ? etiquetaAtualizada : e));
-
-      // Recarregar volumes do banco para garantir sincronização completa
-      const volumesAtualizadosBanco = await base44.entities.Volume.list();
+      // FASE 6: Atualizar estados locais
+      setEtiquetaSelecionada(etiquetaFinal);
+      setVolumesVinculados(volumesVinculadosAtualizados);
       setVolumes(volumesAtualizadosBanco);
+      
+      // Atualizar ref
+      volumesVinculadosIdsRef.current = new Set(novosVolumesIds);
+
+      // Atualizar lista de etiquetas
+      const etiquetasAtualizadas = await base44.entities.EtiquetaMae.list("-created_date");
+      setEtiquetas(etiquetasAtualizadas);
 
       toast.success("Volume desvinculado");
     } catch (error) {
       console.error("Erro ao desvincular:", error);
-      toast.error("Erro ao desvincular");
+      toast.error("Erro ao desvincular: " + error.message);
     }
   };
 
