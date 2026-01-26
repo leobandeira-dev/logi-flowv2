@@ -214,16 +214,41 @@ export default function EtiquetasMae() {
       const volumesAtualizados = await base44.entities.Volume.list();
       setVolumes(volumesAtualizados);
       
+      // Recarregar notas do banco
+      const notasAtualizadas = await base44.entities.NotaFiscal.list();
+      setNotas(notasAtualizadas);
+      
       setEtiquetaSelecionada(etiquetaAtualizada);
       
-      if (etiquetaAtualizada.volumes_ids && etiquetaAtualizada.volumes_ids.length > 0) {
-        const vinculados = volumesAtualizados.filter(v => etiquetaAtualizada.volumes_ids.includes(v.id));
-        setVolumesVinculados(vinculados);
-        // Atualizar ref com IDs dos volumes já vinculados
-        volumesVinculadosIdsRef.current = new Set(etiquetaAtualizada.volumes_ids);
-      } else {
-        setVolumesVinculados([]);
-        volumesVinculadosIdsRef.current = new Set();
+      // FILTRO DUPLO: volumes que estão no volumes_ids E que têm etiqueta_mae_id correto
+      const vinculados = volumesAtualizados.filter(v => 
+        v.etiqueta_mae_id === etiquetaAtualizada.id
+      );
+      
+      console.log("🔍 Volumes vinculados filtrados do banco:", vinculados.length);
+      console.log("📋 IDs na etiqueta.volumes_ids:", etiquetaAtualizada.volumes_ids);
+      
+      setVolumesVinculados(vinculados);
+      volumesVinculadosIdsRef.current = new Set(vinculados.map(v => v.id));
+      
+      // Se houver divergência, corrigir a etiqueta
+      if (vinculados.length !== (etiquetaAtualizada.volumes_ids?.length || 0)) {
+        console.warn("⚠️ Divergência detectada - corrigindo etiqueta...");
+        const volumesIdsCorretos = vinculados.map(v => v.id);
+        const pesoTotal = vinculados.reduce((sum, v) => sum + (v.peso_volume || 0), 0);
+        const m3Total = vinculados.reduce((sum, v) => sum + (v.m3 || 0), 0);
+        const notasIds = [...new Set(vinculados.map(v => v.nota_fiscal_id).filter(Boolean))];
+        
+        await base44.entities.EtiquetaMae.update(etiquetaAtualizada.id, {
+          volumes_ids: volumesIdsCorretos,
+          quantidade_volumes: volumesIdsCorretos.length,
+          peso_total: pesoTotal,
+          m3_total: m3Total,
+          notas_fiscais_ids: notasIds
+        });
+        
+        const etiquetaCorrigida = await base44.entities.EtiquetaMae.get(etiquetaAtualizada.id);
+        setEtiquetaSelecionada(etiquetaCorrigida);
       }
       
       setCodigoScanner("");
