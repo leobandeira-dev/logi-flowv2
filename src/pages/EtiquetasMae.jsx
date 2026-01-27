@@ -921,40 +921,42 @@ export default function EtiquetasMae() {
       toast.info("📄 Processando NF-e...", { duration: 2000 });
       
       // BUSCAR NOTA NO BANCO
-      const notasExistentes = await base44.entities.NotaFiscal.filter({ chave_nota_fiscal: chave });
-      
+      const notasExistentes = await base44.entities.NotaFiscal.filter({ chave_nota_fiscal: chave }, null, 100);
+
       let notaFiscal;
       let volumesDaNota = [];
       let volumesCriados = false;
-      
+
       if (notasExistentes.length > 0) {
         // NOTA JÁ EXISTE
         notaFiscal = notasExistentes[0];
         console.log(`  ✓ Nota encontrada: ${notaFiscal.numero_nota} (ID: ${notaFiscal.id})`);
-        
-        toast.info(`🔍 Carregando NF ${notaFiscal.numero_nota}...`);
-        
-        // BUSCAR VOLUMES DA NOTA (limite aumentado para 500)
+
+        toast.info(`🔍 Carregando NF ${notaFiscal.numero_nota}...`, { duration: 2000 });
+
+        // BUSCAR VOLUMES DA NOTA - SEMPRE DO BANCO (não do cache local)
+        console.log(`  📦 Buscando volumes da nota ${notaFiscal.id}...`);
         volumesDaNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaFiscal.id }, null, 500);
-        console.log(`  • ${volumesDaNota.length} volumes encontrados`);
-        
-        // FALLBACK: busca alternativa
+        console.log(`  • ${volumesDaNota.length} volumes retornados do banco`);
+
+        // FALLBACK: busca alternativa com lista completa
         if (volumesDaNota.length === 0) {
-          console.log("  ⚠️ Tentando busca alternativa...");
-          const todosVolumes = await base44.entities.Volume.list();
+          console.log("  ⚠️ Filter retornou vazio, tentando list completo...");
+          const todosVolumes = await base44.entities.Volume.list(null, 2000);
           volumesDaNota = todosVolumes.filter(v => v.nota_fiscal_id === notaFiscal.id);
-          console.log(`  • Busca alternativa: ${volumesDaNota.length} volumes`);
+          console.log(`  • Busca alternativa: ${volumesDaNota.length} volumes encontrados`);
         }
-        
+
         if (volumesDaNota.length === 0) {
-          console.error("  ❌ NF sem volumes");
+          console.error("  ❌ NF sem volumes cadastrados no banco");
           playErrorBeep();
-          toast.error(`❌ NF ${notaFiscal.numero_nota} sem volumes`);
+          toast.error(`❌ NF ${notaFiscal.numero_nota} sem volumes cadastrados`);
           return;
         }
-        
+
+        console.log(`  ✅ Total de volumes a vincular: ${volumesDaNota.length}`);
         toast.success(`✓ NF ${notaFiscal.numero_nota} (${volumesDaNota.length} vol.)`, { duration: 2000 });
-        
+
       } else {
         // IMPORTAR NOTA NOVA
         console.log("  📥 Importando nova nota...");
@@ -1142,16 +1144,20 @@ export default function EtiquetasMae() {
       console.log("  ✓ Vinculação completa");
       setVinculandoEmLote(false);
 
-      // RECARREGAR DADOS CONSOLIDADOS
-      console.log("🔄 Consolidando dados...");
-      const [volumesConsolidados, notasConsolidadas] = await Promise.all([
-        base44.entities.Volume.list(null, 2000),
-        base44.entities.NotaFiscal.list(null, 500)
-      ]);
+      // RECARREGAR DADOS CONSOLIDADOS DO BANCO
+      console.log("🔄 Recarregando do banco para garantir consistência...");
 
-      const volumesVinculadosAtualizados = volumesConsolidados.filter(v => 
-        v.etiqueta_mae_id === etiquetaSelecionada.id
+      // Buscar apenas volumes da etiqueta atual (mais eficiente)
+      const volumesVinculadosAtualizados = await base44.entities.Volume.filter(
+        { etiqueta_mae_id: etiquetaSelecionada.id }, 
+        null, 
+        1000
       );
+
+      console.log(`  ✅ ${volumesVinculadosAtualizados.length} volumes vinculados confirmados no banco`);
+
+      // Recarregar notas apenas se necessário
+      const notasConsolidadas = await base44.entities.NotaFiscal.list(null, 500);
 
       const novosVolumesIds = volumesVinculadosAtualizados.map(v => v.id);
       const pesoTotal = volumesVinculadosAtualizados.reduce((sum, v) => sum + (v.peso_volume || 0), 0);
