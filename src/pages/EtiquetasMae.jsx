@@ -1112,37 +1112,59 @@ export default function EtiquetasMae() {
         return;
       }
 
-      // VINCULAR EM LOTES COM PROGRESSO VISUAL
+      // VINCULAR EM LOTES COM PROGRESSO VISUAL E TIMEOUT
       console.log(`🔗 Vinculando ${volumesParaVincular.length} volumes...`);
       setVinculandoEmLote(true);
       setProgressoVinculacao({ atual: 0, total: volumesParaVincular.length });
 
       const TAMANHO_LOTE = 20; // Processar 20 volumes por vez
       const totalLotes = Math.ceil(volumesParaVincular.length / TAMANHO_LOTE);
+      const TIMEOUT_POR_LOTE = 30000; // 30 segundos por lote
 
-      for (let i = 0; i < totalLotes; i++) {
-        const inicio = i * TAMANHO_LOTE;
-        const fim = Math.min((i + 1) * TAMANHO_LOTE, volumesParaVincular.length);
-        const lote = volumesParaVincular.slice(inicio, fim);
-        const historicoLote = historicosParaCriar.slice(inicio, fim);
+      try {
+        for (let i = 0; i < totalLotes; i++) {
+          const inicio = i * TAMANHO_LOTE;
+          const fim = Math.min((i + 1) * TAMANHO_LOTE, volumesParaVincular.length);
+          const lote = volumesParaVincular.slice(inicio, fim);
+          const historicoLote = historicosParaCriar.slice(inicio, fim);
 
-        // Vincular lote em paralelo
-        await Promise.all([
-          ...lote.map(v => base44.entities.Volume.update(v.id, v.data)),
-          ...historicoLote.map(h => base44.entities.HistoricoEtiquetaMae.create(h))
-        ]);
+          console.log(`  📦 Lote ${i + 1}/${totalLotes}: vinculando ${lote.length} volumes...`);
 
-        // Atualizar progresso
-        setProgressoVinculacao({ atual: fim, total: volumesParaVincular.length });
+          // Vincular lote em paralelo com timeout
+          const lotePromise = Promise.all([
+            ...lote.map(v => base44.entities.Volume.update(v.id, v.data)),
+            ...historicoLote.map(h => base44.entities.HistoricoEtiquetaMae.create(h))
+          ]);
 
-        // Pequeno delay entre lotes para suavizar
-        if (i < totalLotes - 1) {
-          await new Promise(resolve => setTimeout(resolve, 150));
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error(`Timeout no lote ${i + 1}`)), TIMEOUT_POR_LOTE)
+          );
+
+          await Promise.race([lotePromise, timeoutPromise]);
+
+          // Atualizar progresso
+          setProgressoVinculacao({ atual: fim, total: volumesParaVincular.length });
+          console.log(`  ✅ Lote ${i + 1}/${totalLotes} concluído`);
+
+          // Pequeno delay entre lotes para suavizar
+          if (i < totalLotes - 1) {
+            await new Promise(resolve => setTimeout(resolve, 150));
+          }
         }
-      }
 
-      console.log("  ✓ Vinculação completa");
-      setVinculandoEmLote(false);
+        console.log("  ✓ Vinculação completa");
+      } catch (error) {
+        console.error("❌ Erro durante vinculação em lote:", error);
+        setVinculandoEmLote(false);
+        playErrorBeep();
+        toast.error(`❌ Erro ao vincular volumes\n\n${error.message}`, {
+          duration: 5000,
+          style: { whiteSpace: 'pre-line' }
+        });
+        throw error; // Re-throw para ser capturado pelo catch externo
+      } finally {
+        setVinculandoEmLote(false);
+      }
 
       // RECARREGAR DADOS CONSOLIDADOS DO BANCO
       console.log("🔄 Recarregando do banco para garantir consistência...");
@@ -2071,24 +2093,44 @@ export default function EtiquetasMae() {
                   <div className="sticky top-14 sm:relative sm:top-0 z-10 -mx-4 px-4 py-2 sm:mx-0 sm:px-0 sm:py-0 space-y-2" style={{ backgroundColor: theme.bg }}>
                     {/* Barra de Progresso de Vinculação em Lote */}
                     {vinculandoEmLote && (
-                      <div className="p-3 border-2 rounded-lg space-y-2" style={{ borderColor: '#10b981', backgroundColor: isDark ? '#064e3b33' : '#d1fae533' }}>
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-bold text-green-600">
-                            ⚡ Vinculando volumes...
+                      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-sm w-full shadow-2xl">
+                          <div className="flex items-center justify-center mb-4">
+                            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                              <Package className="w-6 h-6 text-green-600 animate-pulse" />
+                            </div>
+                          </div>
+                          <h3 className="text-lg font-bold text-center mb-2" style={{ color: theme.text }}>
+                            Vinculando Volumes
+                          </h3>
+                          <p className="text-center text-sm mb-4" style={{ color: theme.textMuted }}>
+                            Aguarde enquanto os volumes são vinculados...
                           </p>
-                          <p className="text-sm font-bold" style={{ color: theme.text }}>
-                            {progressoVinculacao.atual}/{progressoVinculacao.total}
-                          </p>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between text-sm">
+                              <span style={{ color: theme.textMuted }}>Progresso</span>
+                              <span className="font-bold text-green-600">
+                                {progressoVinculacao.atual}/{progressoVinculacao.total}
+                              </span>
+                            </div>
+                            <div className="relative">
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-300 ease-out"
+                                  style={{ width: `${(progressoVinculacao.atual / progressoVinculacao.total) * 100}%` }}
+                                />
+                              </div>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-xs font-bold text-white drop-shadow-lg">
+                                  {Math.round((progressoVinculacao.atual / progressoVinculacao.total) * 100)}%
+                                </span>
+                              </div>
+                            </div>
+                            <p className="text-xs text-center" style={{ color: theme.textMuted }}>
+                              Este processo pode levar alguns segundos
+                            </p>
+                          </div>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
-                          <div 
-                            className="h-full bg-green-600 transition-all duration-300 ease-out"
-                            style={{ width: `${(progressoVinculacao.atual / progressoVinculacao.total) * 100}%` }}
-                          />
-                        </div>
-                        <p className="text-xs text-center" style={{ color: theme.textMuted }}>
-                          {Math.round((progressoVinculacao.atual / progressoVinculacao.total) * 100)}% concluído
-                        </p>
                       </div>
                     )}
 
