@@ -28,6 +28,15 @@ import { ProcedimentoGestaoTransportes as ProcedimentoGestaoTransportesABNT } fr
 import { FormularioOrdemCarregamento as FormularioABNT } from "../components/procedimentos/FormularioABNT";
 import { InstrucaoFilaX } from "../components/procedimentos/FilaX";
 import { GuiaMotoristoFilaX } from "../components/procedimentos/GuiaMotoristoFilaX";
+import { ProcedimentoModuloArmazem } from "../components/procedimentos/ProcedimentoArmazem";
+import { 
+  InstrucaoRecebimento,
+  InstrucaoGestaoNotasFiscais,
+  InstrucaoGestaoCTe,
+  InstrucaoEtiquetasMae,
+  InstrucaoCarregamento,
+  InstrucaoOrdemEntrega
+} from "../components/procedimentos/InstrucoesArmazem";
 
 export default function Procedimentos() {
   const [user, setUser] = useState(null);
@@ -280,6 +289,104 @@ export default function Procedimentos() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card 
+              onClick={() => setProcedimentoSelecionado("armazem")}
+              className={`cursor-pointer transition-all ${procedimentoSelecionado === "armazem" ? 'ring-2 ring-blue-600' : ''}`}
+              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+            >
+              <CardContent className="p-4 flex items-center gap-3">
+                <Package className="w-8 h-8 text-purple-600" />
+                <div>
+                  <h3 className="font-bold text-sm" style={{ color: theme.text }}>Módulo Armazém</h3>
+                  <p className="text-xs" style={{ color: theme.textMuted }}>PO-LOG-002</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              onClick={() => setProcedimentoSelecionado("it_recebimento")}
+              className={`cursor-pointer transition-all ${procedimentoSelecionado === "it_recebimento" ? 'ring-2 ring-blue-600' : ''}`}
+              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+            >
+              <CardContent className="p-4 flex items-center gap-3">
+                <Package className="w-8 h-8 text-green-600" />
+                <div>
+                  <h3 className="font-bold text-sm" style={{ color: theme.text }}>IT - Recebimento</h3>
+                  <p className="text-xs" style={{ color: theme.textMuted }}>IT-ARM-001</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              onClick={() => setProcedimentoSelecionado("it_gestao_nf")}
+              className={`cursor-pointer transition-all ${procedimentoSelecionado === "it_gestao_nf" ? 'ring-2 ring-blue-600' : ''}`}
+              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+            >
+              <CardContent className="p-4 flex items-center gap-3">
+                <FileText className="w-8 h-8 text-blue-600" />
+                <div>
+                  <h3 className="font-bold text-sm" style={{ color: theme.text }}>IT - Gestão de NF-e</h3>
+                  <p className="text-xs" style={{ color: theme.textMuted }}>IT-ARM-002</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              onClick={() => setProcedimentoSelecionado("it_gestao_cte")}
+              className={`cursor-pointer transition-all ${procedimentoSelecionado === "it_gestao_cte" ? 'ring-2 ring-blue-600' : ''}`}
+              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+            >
+              <CardContent className="p-4 flex items-center gap-3">
+                <FileText className="w-8 h-8 text-indigo-600" />
+                <div>
+                  <h3 className="font-bold text-sm" style={{ color: theme.text }}>IT - Gestão de CT-e</h3>
+                  <p className="text-xs" style={{ color: theme.textMuted }}>IT-ARM-003</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              onClick={() => setProcedimentoSelecionado("it_etiqueta_mae")}
+              className={`cursor-pointer transition-all ${procedimentoSelecionado === "it_etiqueta_mae" ? 'ring-2 ring-blue-600' : ''}`}
+              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+            >
+              <CardContent className="p-4 flex items-center gap-3">
+                <Package className="w-8 h-8 text-purple-600" />
+                <div>
+                  <h3 className="font-bold text-sm" style={{ color: theme.text }}>IT - Etiqueta Mãe</h3>
+                  <p className="text-xs" style={{ color: theme.textMuted }}>IT-ARM-004</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              onClick={() => setProcedimentoSelecionado("it_carregamento")}
+              className={`cursor-pointer transition-all ${procedimentoSelecionado === "it_carregamento" ? 'ring-2 ring-blue-600' : ''}`}
+              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+            >
+              <CardContent className="p-4 flex items-center gap-3">
+                <Truck className="w-8 h-8 text-orange-600" />
+                <div>
+                  <h3 className="font-bold text-sm" style={{ color: theme.text }}>IT - Carregamento</h3>
+                  <p className="text-xs" style={{ color: theme.textMuted }}>IT-ARM-005</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              onClick={() => setProcedimentoSelecionado("it_ordem_entrega")}
+              className={`cursor-pointer transition-all ${procedimentoSelecionado === "it_ordem_entrega" ? 'ring-2 ring-blue-600' : ''}`}
+              style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
+            >
+              <CardContent className="p-4 flex items-center gap-3">
+                <CheckCircle className="w-8 h-8 text-cyan-600" />
+                <div>
+                  <h3 className="font-bold text-sm" style={{ color: theme.text }}>IT - Ordem de Entrega</h3>
+                  <p className="text-xs" style={{ color: theme.textMuted }}>IT-ARM-006</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -311,6 +418,27 @@ export default function Procedimentos() {
           )}
           {procedimentoSelecionado === "guia_motorista" && (
             <GuiaMotoristoFilaX theme={theme} isDark={isDark} />
+          )}
+          {procedimentoSelecionado === "armazem" && (
+            <ProcedimentoModuloArmazem theme={theme} isDark={isDark} />
+          )}
+          {procedimentoSelecionado === "it_recebimento" && (
+            <InstrucaoRecebimento theme={theme} isDark={isDark} />
+          )}
+          {procedimentoSelecionado === "it_gestao_nf" && (
+            <InstrucaoGestaoNotasFiscais theme={theme} isDark={isDark} />
+          )}
+          {procedimentoSelecionado === "it_gestao_cte" && (
+            <InstrucaoGestaoCTe theme={theme} isDark={isDark} />
+          )}
+          {procedimentoSelecionado === "it_etiqueta_mae" && (
+            <InstrucaoEtiquetasMae theme={theme} isDark={isDark} />
+          )}
+          {procedimentoSelecionado === "it_carregamento" && (
+            <InstrucaoCarregamento theme={theme} isDark={isDark} />
+          )}
+          {procedimentoSelecionado === "it_ordem_entrega" && (
+            <InstrucaoOrdemEntrega theme={theme} isDark={isDark} />
           )}
         </div>
       </div>
