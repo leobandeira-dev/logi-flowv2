@@ -521,7 +521,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
               <div className="flex gap-2">
                 <Input
                   ref={inputRef}
-                  placeholder="Digite ou cole o código..."
+                  placeholder="Pronto para bipar..."
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -529,7 +529,17 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                       handleManualSubmit();
                     }
                   }}
+                  readOnly
+                  onFocus={(e) => {
+                    e.target.readOnly = false;
+                    setTimeout(() => {
+                      if (document.activeElement === e.target) {
+                        e.target.setSelectionRange(e.target.value.length, e.target.value.length);
+                      }
+                    }, 0);
+                  }}
                   onBlur={(e) => {
+                    e.target.readOnly = true;
                     // Re-focar imediatamente se perder foco
                     setTimeout(() => {
                       if (open && inputRef.current) {
@@ -541,8 +551,13 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                   style={{ 
                     backgroundColor: isDark ? '#1e293b' : '#ffffff',
                     borderColor: isDark ? '#475569' : '#cbd5e1',
-                    color: isDark ? '#f1f5f9' : '#0f172a'
+                    color: isDark ? '#f1f5f9' : '#0f172a',
+                    caretColor: 'transparent'
                   }}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
                   autoFocus
                 />
                 <Button
