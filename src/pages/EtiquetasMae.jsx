@@ -607,7 +607,17 @@ export default function EtiquetasMae() {
       if (!volumeEncontrado) {
         console.error("❌ Volume não encontrado:", codigoLimpo);
         playErrorBeep();
-        toast.error("❌ Volume não encontrado");
+        toast.error(`❌ Volume não encontrado\n\nCódigo: ${codigoLimpo.substring(0, 30)}${codigoLimpo.length > 30 ? '...' : ''}`, {
+          duration: 4000,
+          style: {
+            whiteSpace: 'pre-line',
+            fontSize: '14px',
+            fontWeight: '600',
+            padding: '16px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+          }
+        });
         setCodigoScanner("");
         return;
       }
@@ -641,7 +651,16 @@ export default function EtiquetasMae() {
       if (volumeEncontrado.etiqueta_mae_id === etiquetaSelecionada.id) {
         console.warn("⚠️ Volume já vinculado");
         playErrorBeep();
-        toast.warning("⚠️ Volume já adicionado");
+        toast.warning("⚠️ Volume já está nesta etiqueta", {
+          duration: 3000,
+          style: {
+            fontSize: '14px',
+            fontWeight: '600',
+            padding: '16px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+          }
+        });
         setCodigoScanner("");
         return;
       }
@@ -2035,7 +2054,7 @@ export default function EtiquetasMae() {
                             handleScan(codigoScanner);
                           }
                         }}
-                        placeholder="🔍 Bipe volume ou chave NF-e..."
+                        placeholder="🔍 Pronto para bipar..."
                         className="h-14 text-base pr-12 font-mono"
                         style={{ 
                           backgroundColor: theme.inputBg, 
@@ -2043,7 +2062,18 @@ export default function EtiquetasMae() {
                           color: theme.text,
                           caretColor: 'transparent'
                         }}
-                        inputMode="none"
+                        readOnly
+                        onFocus={(e) => {
+                          e.target.readOnly = false;
+                          setTimeout(() => {
+                            if (document.activeElement === e.target) {
+                              e.target.setSelectionRange(e.target.value.length, e.target.value.length);
+                            }
+                          }, 0);
+                        }}
+                        onBlur={(e) => {
+                          e.target.readOnly = true;
+                        }}
                         autoComplete="off"
                         autoCorrect="off"
                         autoCapitalize="off"
