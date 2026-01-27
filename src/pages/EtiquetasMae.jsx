@@ -122,11 +122,11 @@ export default function EtiquetasMae() {
       }
 
       const [etiquetasData, volumesData, notasData, usuariosData, historicoData] = await Promise.all([
-        base44.entities.EtiquetaMae.list("-created_date"),
-        base44.entities.Volume.list(),
-        base44.entities.NotaFiscal.list(),
+        base44.entities.EtiquetaMae.list("-created_date", 500),
+        base44.entities.Volume.list(null, 2000),
+        base44.entities.NotaFiscal.list(null, 500),
         base44.entities.User.list().catch(() => []),
-        base44.entities.HistoricoEtiquetaMae.list("-created_date").catch(() => [])
+        base44.entities.HistoricoEtiquetaMae.list("-created_date", 500).catch(() => [])
       ]);
 
       setEtiquetas(etiquetasData);
@@ -687,8 +687,8 @@ export default function EtiquetasMae() {
       // RECARREGAR DADOS CONSOLIDADOS
       console.log("🔄 Recarregando dados...");
       const [volumesAtualizados, notasAtualizadas] = await Promise.all([
-        base44.entities.Volume.list(),
-        base44.entities.NotaFiscal.list()
+        base44.entities.Volume.list(null, 2000),
+        base44.entities.NotaFiscal.list(null, 500)
       ]);
 
       const volumesVinculadosAtualizados = volumesAtualizados.filter(v => 
@@ -1121,8 +1121,8 @@ export default function EtiquetasMae() {
       // RECARREGAR DADOS CONSOLIDADOS
       console.log("🔄 Consolidando dados...");
       const [volumesConsolidados, notasConsolidadas] = await Promise.all([
-        base44.entities.Volume.list(),
-        base44.entities.NotaFiscal.list()
+        base44.entities.Volume.list(null, 2000),
+        base44.entities.NotaFiscal.list(null, 500)
       ]);
 
       const volumesVinculadosAtualizados = volumesConsolidados.filter(v => 

@@ -3793,7 +3793,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                     toast.loading("Carregando volumes...", { id: 'load-volumes' });
 
                     try {
-                    const volumesNotaDB = await base44.entities.Volume.filter({ nota_fiscal_id: nota.id });
+                      const volumesNotaDB = await base44.entities.Volume.filter({ nota_fiscal_id: nota.id }, null, 500);
 
                     if (volumesNotaDB.length === 0) {
                     toast.error("❌ Nota sem volumes cadastrados!", { id: 'load-volumes', duration: 3000 });
