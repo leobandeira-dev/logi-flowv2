@@ -62,6 +62,16 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
     }
   }, [open, scanFeedback]);
 
+  // Processamento automático quando scanner preencher o campo
+  useEffect(() => {
+    if (manualInput.trim() && !scanFeedback) {
+      const timer = setTimeout(() => {
+        handleManualSubmit();
+      }, 100); // Pequeno delay para garantir que o código completo foi lido
+      return () => clearTimeout(timer);
+    }
+  }, [manualInput]);
+
   const startScanner = async (facingMode = currentFacingMode) => {
     if (qrScannerRef.current || useManualMode || !videoRef.current) return;
 
