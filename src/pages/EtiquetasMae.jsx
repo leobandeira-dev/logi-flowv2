@@ -88,6 +88,19 @@ export default function EtiquetasMae() {
     loadData();
   }, []);
 
+  // Auto-focar campo scanner quando modal abre
+  React.useEffect(() => {
+    if (showUnitizacaoModal && etiquetaSelecionada?.status !== "finalizada") {
+      const timer = setTimeout(() => {
+        const input = document.querySelector('input[placeholder*="Bipe volume"]');
+        if (input) {
+          input.focus();
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [showUnitizacaoModal, etiquetaSelecionada?.status]);
+
   const loadData = async () => {
     setLoading(true);
     try {
