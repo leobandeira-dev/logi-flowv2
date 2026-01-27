@@ -65,6 +65,8 @@ export default function EtiquetasMae() {
   const [cameraScanFeedback, setCameraScanFeedback] = useState(null);
   const [showDebug, setShowDebug] = useState(false);
   const volumesVinculadosIdsRef = React.useRef(new Set());
+  const [vinculandoEmLote, setVinculandoEmLote] = useState(false);
+  const [progressoVinculacao, setProgressoVinculacao] = useState({ atual: 0, total: 0 });
   
   const [novaEtiqueta, setNovaEtiqueta] = useState({
     codigo: "",
@@ -1058,13 +1060,13 @@ export default function EtiquetasMae() {
       const volumesParaVincular = [];
       const historicosParaCriar = [];
       const novasOrigensVolumes = {};
-      
+
       for (const volume of volumesDaNota) {
         try {
           // Verificar vinculação prévia
           if (volume.etiqueta_mae_id && volume.etiqueta_mae_id !== etiquetaSelecionada.id) {
             const etiquetaAnterior = await base44.entities.EtiquetaMae.get(volume.etiqueta_mae_id);
-            
+
             if (etiquetaAnterior.status !== "cancelada") {
               console.warn(`  ⚠️ ${volume.identificador_unico} já vinculado`);
               continue;
@@ -1078,7 +1080,7 @@ export default function EtiquetasMae() {
           }
 
           novasOrigensVolumes[volume.id] = volumesCriados ? "Importado" : "Base";
-          
+
           volumesParaVincular.push({
             id: volume.id,
             data: {
@@ -1108,15 +1110,37 @@ export default function EtiquetasMae() {
         return;
       }
 
-      // VINCULAR EM PARALELO
+      // VINCULAR EM LOTES COM PROGRESSO VISUAL
       console.log(`🔗 Vinculando ${volumesParaVincular.length} volumes...`);
-      toast.info(`🔗 Vinculando ${volumesParaVincular.length} vol...`, { duration: 2000 });
-      
-      await Promise.all([
-        ...volumesParaVincular.map(v => base44.entities.Volume.update(v.id, v.data)),
-        ...historicosParaCriar.map(h => base44.entities.HistoricoEtiquetaMae.create(h))
-      ]);
+      setVinculandoEmLote(true);
+      setProgressoVinculacao({ atual: 0, total: volumesParaVincular.length });
+
+      const TAMANHO_LOTE = 20; // Processar 20 volumes por vez
+      const totalLotes = Math.ceil(volumesParaVincular.length / TAMANHO_LOTE);
+
+      for (let i = 0; i < totalLotes; i++) {
+        const inicio = i * TAMANHO_LOTE;
+        const fim = Math.min((i + 1) * TAMANHO_LOTE, volumesParaVincular.length);
+        const lote = volumesParaVincular.slice(inicio, fim);
+        const historicoLote = historicosParaCriar.slice(inicio, fim);
+
+        // Vincular lote em paralelo
+        await Promise.all([
+          ...lote.map(v => base44.entities.Volume.update(v.id, v.data)),
+          ...historicoLote.map(h => base44.entities.HistoricoEtiquetaMae.create(h))
+        ]);
+
+        // Atualizar progresso
+        setProgressoVinculacao({ atual: fim, total: volumesParaVincular.length });
+
+        // Pequeno delay entre lotes para suavizar
+        if (i < totalLotes - 1) {
+          await new Promise(resolve => setTimeout(resolve, 150));
+        }
+      }
+
       console.log("  ✓ Vinculação completa");
+      setVinculandoEmLote(false);
 
       // RECARREGAR DADOS CONSOLIDADOS
       console.log("🔄 Consolidando dados...");
@@ -2039,6 +2063,29 @@ export default function EtiquetasMae() {
 
                 {etiquetaSelecionada.status !== "finalizada" && (
                   <div className="sticky top-14 sm:relative sm:top-0 z-10 -mx-4 px-4 py-2 sm:mx-0 sm:px-0 sm:py-0 space-y-2" style={{ backgroundColor: theme.bg }}>
+                    {/* Barra de Progresso de Vinculação em Lote */}
+                    {vinculandoEmLote && (
+                      <div className="p-3 border-2 rounded-lg space-y-2" style={{ borderColor: '#10b981', backgroundColor: isDark ? '#064e3b33' : '#d1fae533' }}>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-bold text-green-600">
+                            ⚡ Vinculando volumes...
+                          </p>
+                          <p className="text-sm font-bold" style={{ color: theme.text }}>
+                            {progressoVinculacao.atual}/{progressoVinculacao.total}
+                          </p>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                          <div 
+                            className="h-full bg-green-600 transition-all duration-300 ease-out"
+                            style={{ width: `${(progressoVinculacao.atual / progressoVinculacao.total) * 100}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-center" style={{ color: theme.textMuted }}>
+                          {Math.round((progressoVinculacao.atual / progressoVinculacao.total) * 100)}% concluído
+                        </p>
+                      </div>
+                    )}
+
                     <div className="relative">
                       <Input
                         ref={(el) => {
@@ -2065,21 +2112,21 @@ export default function EtiquetasMae() {
                         autoCorrect="off"
                         autoCapitalize="off"
                         spellCheck="false"
-                        disabled={processando}
+                        disabled={processando || vinculandoEmLote}
                         autoFocus
-                      />
-                      <Scan className="absolute right-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-600 pointer-events-none" />
+                        />
+                        <Scan className="absolute right-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-600 pointer-events-none" />
                     </div>
                     <Button
                       onClick={() => setShowVolumeCameraScanner(true)}
                       className="bg-green-600 hover:bg-green-700 w-full h-12 text-base font-bold"
-                      disabled={processando}
+                      disabled={processando || vinculandoEmLote}
                     >
                       <Camera className="w-5 h-5 mr-2" />
                       CÂMERA
                     </Button>
-                  </div>
-                )}
+                    </div>
+                    )}
 
                 {volumesVinculados.length > 0 && (
                   <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
