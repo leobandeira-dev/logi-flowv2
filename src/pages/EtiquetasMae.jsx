@@ -2054,31 +2054,19 @@ export default function EtiquetasMae() {
                             handleScan(codigoScanner);
                           }
                         }}
-                        placeholder="🔍 Pronto para bipar..."
-                        className="h-14 text-base pr-12 font-mono"
+                        placeholder="Bipe volume ou chave NF-e..."
+                        className="h-14 text-base pr-12"
                         style={{ 
                           backgroundColor: theme.inputBg, 
                           borderColor: theme.inputBorder, 
-                          color: theme.text,
-                          caretColor: 'transparent'
-                        }}
-                        readOnly
-                        onFocus={(e) => {
-                          e.target.readOnly = false;
-                          setTimeout(() => {
-                            if (document.activeElement === e.target) {
-                              e.target.setSelectionRange(e.target.value.length, e.target.value.length);
-                            }
-                          }, 0);
-                        }}
-                        onBlur={(e) => {
-                          e.target.readOnly = true;
+                          color: theme.text
                         }}
                         autoComplete="off"
                         autoCorrect="off"
                         autoCapitalize="off"
                         spellCheck="false"
                         disabled={processando}
+                        autoFocus
                       />
                       <Scan className="absolute right-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-600 pointer-events-none" />
                     </div>
