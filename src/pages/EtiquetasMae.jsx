@@ -352,8 +352,15 @@ export default function EtiquetasMae() {
         
         playErrorBeep();
         toast.error(`❌ Volume não encontrado\n\nCódigo: ${codigoLimpo.length > 30 ? codigoLimpo.substring(0, 30) + '...' : codigoLimpo}`, {
-          duration: 3000,
-          style: { whiteSpace: 'pre-line' }
+          duration: 4000,
+          style: { 
+            whiteSpace: 'pre-line',
+            fontSize: '14px',
+            fontWeight: '600',
+            padding: '16px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+          }
         });
         
         setCodigoScanner("");
@@ -373,7 +380,16 @@ export default function EtiquetasMae() {
       if (volumeEncontrado.etiqueta_mae_id === etiquetaBanco.id) {
         console.warn("⚠️ Volume já vinculado à esta etiqueta");
         playErrorBeep();
-        toast.warning("⚠️ Volume já adicionado", { duration: 2000 });
+        toast.warning("⚠️ Volume já adicionado", { 
+          duration: 3000,
+          style: {
+            fontSize: '14px',
+            fontWeight: '600',
+            padding: '16px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+          }
+        });
         
         setCodigoScanner("");
         setProcessando(false);
@@ -393,8 +409,15 @@ export default function EtiquetasMae() {
             console.error(`❌ Etiqueta anterior está ${etiquetaAnterior.status}`);
             playErrorBeep();
             toast.error(`❌ Volume em outra etiqueta\n\n${etiquetaAnterior.codigo} (${etiquetaAnterior.status})`, {
-              duration: 3000,
-              style: { whiteSpace: 'pre-line' }
+              duration: 4000,
+              style: { 
+                whiteSpace: 'pre-line',
+                fontSize: '14px',
+                fontWeight: '600',
+                padding: '16px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+              }
             });
             
             setCodigoScanner("");
@@ -487,21 +510,24 @@ export default function EtiquetasMae() {
       const faltamNota = todosVolumesNota.length - volumesNotaAtualizados.length;
       
       playSuccessBeep();
-      
+
       const feedbackMsg = `✅ ${volumesNotaAtualizados.length}/${todosVolumesNota.length} volumes\n` +
         `📋 NF ${nota?.numero_nota || '-'}\n` +
         (faltamNota > 0 ? `⏳ Faltam ${faltamNota}\n` : `✓ NF COMPLETA!\n`) +
         `📦 Total: ${volumesVinculadosAtualizados.length}`;
-      
+
       toast.success(feedbackMsg, { 
-        duration: faltamNota === 0 ? 4000 : 2500,
+        duration: faltamNota === 0 ? 5000 : 3500,
         style: { 
           whiteSpace: 'pre-line', 
-          fontSize: '13px', 
-          lineHeight: '1.4',
-          fontWeight: faltamNota === 0 ? 'bold' : 'normal',
+          fontSize: '14px', 
+          lineHeight: '1.5',
+          fontWeight: faltamNota === 0 ? 'bold' : '600',
           background: faltamNota === 0 ? '#10b981' : undefined,
-          color: faltamNota === 0 ? 'white' : undefined
+          color: faltamNota === 0 ? 'white' : undefined,
+          padding: '16px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
         }
       });
       
@@ -675,16 +701,19 @@ export default function EtiquetasMae() {
         `📋 NF ${nota?.numero_nota || '-'}\n` +
         (faltam > 0 ? `⏳ Faltam ${faltam}\n` : `✓ NF COMPLETA!\n`) +
         `📦 Total: ${volumesVinculadosAtualizados.length}`;
-      
+
       toast.success(feedbackMsg, { 
-        duration: faltam === 0 ? 4000 : 2500,
+        duration: faltam === 0 ? 5000 : 3500,
         style: { 
           whiteSpace: 'pre-line', 
-          fontSize: '13px', 
-          lineHeight: '1.4',
-          fontWeight: faltam === 0 ? 'bold' : 'normal',
+          fontSize: '14px', 
+          lineHeight: '1.5',
+          fontWeight: faltam === 0 ? 'bold' : '600',
           background: faltam === 0 ? '#10b981' : undefined,
-          color: faltam === 0 ? 'white' : undefined
+          color: faltam === 0 ? 'white' : undefined,
+          padding: '16px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
         }
       });
       
@@ -786,8 +815,15 @@ export default function EtiquetasMae() {
 
       playSuccessBeep();
       toast.success(`✅ Volume removido\n📦 Restam ${novosVolumesIds.length} volumes`, {
-        duration: 2000,
-        style: { whiteSpace: 'pre-line', fontSize: '13px' }
+        duration: 3000,
+        style: { 
+          whiteSpace: 'pre-line', 
+          fontSize: '14px',
+          fontWeight: '600',
+          padding: '16px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+        }
       });
       
       console.log("✅ Desvinculação concluída");
@@ -1102,16 +1138,19 @@ export default function EtiquetasMae() {
       const feedbackMsg = notaCompleta
         ? `✅ NF ${notaFiscal.numero_nota} COMPLETA!\n📦 ${todosVolumesNota.length}/${todosVolumesNota.length} volumes\n✓ Total: ${volumesVinculadosAtualizados.length}`
         : `✅ ${volumesParaVincular.length} volumes adicionados\n📋 NF ${notaFiscal.numero_nota}\n⏳ Faltam ${faltam} volume(s)\n📦 Total: ${volumesVinculadosAtualizados.length}`;
-      
+
       toast.success(feedbackMsg, { 
-        duration: notaCompleta ? 4000 : 3000,
+        duration: notaCompleta ? 5000 : 4000,
         style: { 
           whiteSpace: 'pre-line', 
-          fontSize: '13px', 
-          lineHeight: '1.4',
-          fontWeight: notaCompleta ? 'bold' : 'normal',
+          fontSize: '14px', 
+          lineHeight: '1.5',
+          fontWeight: notaCompleta ? 'bold' : '600',
           background: notaCompleta ? '#10b981' : undefined,
-          color: notaCompleta ? 'white' : undefined
+          color: notaCompleta ? 'white' : undefined,
+          padding: '16px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
         }
       });
       
