@@ -2006,14 +2006,46 @@ export default function EtiquetasMae() {
                 </div>
 
                 {etiquetaSelecionada.status !== "finalizada" && (
-                  <div className="sticky top-14 sm:relative sm:top-0 z-10 -mx-4 px-4 py-2 sm:mx-0 sm:px-0 sm:py-0" style={{ backgroundColor: theme.bg }}>
+                  <div className="sticky top-14 sm:relative sm:top-0 z-10 -mx-4 px-4 py-2 sm:mx-0 sm:px-0 sm:py-0 space-y-2" style={{ backgroundColor: theme.bg }}>
+                    <div className="relative">
+                      <Input
+                        ref={(el) => {
+                          if (el && showUnitizacaoModal && etiquetaSelecionada.status !== "finalizada") {
+                            el.focus();
+                          }
+                        }}
+                        value={codigoScanner}
+                        onChange={(e) => setCodigoScanner(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && codigoScanner.trim() && !processando) {
+                            e.preventDefault();
+                            handleScan(codigoScanner);
+                          }
+                        }}
+                        placeholder="🔍 Bipe volume ou chave NF-e..."
+                        className="h-14 text-base pr-12 font-mono"
+                        style={{ 
+                          backgroundColor: theme.inputBg, 
+                          borderColor: theme.inputBorder, 
+                          color: theme.text,
+                          caretColor: 'transparent'
+                        }}
+                        inputMode="none"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck="false"
+                        disabled={processando}
+                      />
+                      <Scan className="absolute right-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-600 pointer-events-none" />
+                    </div>
                     <Button
                       onClick={() => setShowVolumeCameraScanner(true)}
-                      className="bg-green-600 hover:bg-green-700 w-full h-14 text-base font-bold shadow-lg"
+                      className="bg-green-600 hover:bg-green-700 w-full h-12 text-base font-bold"
                       disabled={processando}
                     >
-                      <Camera className="w-6 h-6 mr-2" />
-                      ESCANEAR VOLUMES
+                      <Camera className="w-5 h-5 mr-2" />
+                      CÂMERA
                     </Button>
                   </div>
                 )}
