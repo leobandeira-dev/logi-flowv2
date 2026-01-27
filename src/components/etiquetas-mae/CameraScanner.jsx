@@ -19,6 +19,9 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
   const qrScannerRef = useRef(null);
   const [scanFeedback, setScanFeedback] = useState(null); // 'success' | 'duplicate' | 'error' | 'not_found' | 'processing' | null
   const [currentFacingMode, setCurrentFacingMode] = useState("environment"); // 'environment' ou 'user'
+  const lastScannedCodeRef = useRef(null);
+  const processingRef = useRef(false);
+  const cooldownRef = useRef(false);
 
   useEffect(() => {
     if (open && !useManualMode) {
@@ -66,23 +69,34 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       const qrScanner = new QrScanner(
         videoRef.current,
         async (result) => {
-          if (result?.data && !scanFeedback) {
-            const decodedText = result.data;
-            console.log('🔍 QR Code detectado:', decodedText);
+          // PREVENÇÃO CRÍTICA: Ignorar se já está processando ou em cooldown
+          if (!result?.data || processingRef.current || cooldownRef.current) {
+            return;
+          }
 
-            const cleaned = decodedText.replace(/\D/g, '');
-            const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
+          const decodedText = result.data;
+          const cleaned = decodedText.replace(/\D/g, '');
+          const finalCode = cleaned.length === 44 ? cleaned : decodedText.trim();
 
-            console.log('📦 Código processado:', finalCode);
+          // PREVENÇÃO DE DUPLICAÇÃO: Ignorar se é o mesmo código dos últimos 3 segundos
+          if (lastScannedCodeRef.current === finalCode) {
+            console.log('⏭️ Código já processado recentemente, ignorando');
+            return;
+          }
 
-            // Bloquear novos scans
-            setScanFeedback('processing');
+          console.log('🔍 Novo código detectado:', finalCode);
 
+          // BLOQUEAR novos scans imediatamente
+          processingRef.current = true;
+          cooldownRef.current = true;
+          lastScannedCodeRef.current = finalCode;
+          setScanFeedback('processing');
+
+          try {
             const scanResult = await Promise.resolve(onScan(finalCode));
+            console.log('✅ Resultado:', scanResult);
 
-            console.log('✅ Resultado do scan:', scanResult);
-
-            // Aplicar feedback baseado no resultado
+            // Aplicar feedback visual
             if (scanResult === 'success') {
               setScanFeedback('success');
             } else if (scanResult === 'duplicate') {
@@ -93,8 +107,26 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
               setScanFeedback('error');
             }
 
-            // Liberar para próximo scan
-            setTimeout(() => setScanFeedback(null), 800);
+            // Liberar após feedback visual
+            setTimeout(() => {
+              setScanFeedback(null);
+              processingRef.current = false;
+            }, 800);
+
+            // Cooldown para aceitar novo código (3 segundos)
+            setTimeout(() => {
+              cooldownRef.current = false;
+              lastScannedCodeRef.current = null;
+            }, 3000);
+            
+          } catch (error) {
+            console.error('❌ Erro no processamento:', error);
+            setScanFeedback('error');
+            setTimeout(() => {
+              setScanFeedback(null);
+              processingRef.current = false;
+              cooldownRef.current = false;
+            }, 800);
           }
         },
         {
@@ -102,7 +134,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
           highlightScanRegion: false,
           highlightCodeOutline: false,
           preferredCamera: facingMode,
-          maxScansPerSecond: 5,
+          maxScansPerSecond: 2,
           calculateScanRegion: (video) => {
             // Área de scan maior para capturar códigos de diferentes distâncias
             const smallestDimension = Math.min(video.videoWidth, video.videoHeight);
@@ -189,7 +221,11 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
       videoRef.current.srcObject = null;
     }
     
+    // Resetar estados
     setScanning(false);
+    processingRef.current = false;
+    cooldownRef.current = false;
+    lastScannedCodeRef.current = null;
   };
 
   const toggleCamera = async () => {
