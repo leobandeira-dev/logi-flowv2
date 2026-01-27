@@ -519,7 +519,17 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const getNotasFiscaisNaCelula = (linha, coluna) => {
     const volumesNaCelula = getVolumesNaCelula(linha, coluna);
     const notasIds = [...new Set(volumesNaCelula.map(v => v.nota_fiscal_id))];
-    return notasFiscaisLocal.filter(nf => notasIds.includes(nf.id));
+    const notasEncontradas = notasFiscaisLocal.filter(nf => notasIds.includes(nf.id));
+    
+    // GARANTIR NOTAS ÚNICAS (prevenir duplicatas)
+    const notasUnicas = notasEncontradas.reduce((acc, nota) => {
+      if (!acc.find(n => n.id === nota.id)) {
+        acc.push(nota);
+      }
+      return acc;
+    }, []);
+    
+    return notasUnicas;
   };
 
   const handleToggleVolume = (volumeId) => {
