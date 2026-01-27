@@ -932,8 +932,8 @@ export default function EtiquetasMae() {
         
         toast.info(`🔍 Carregando NF ${notaFiscal.numero_nota}...`);
         
-        // BUSCAR VOLUMES DA NOTA
-        volumesDaNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaFiscal.id });
+        // BUSCAR VOLUMES DA NOTA (limite aumentado para 500)
+        volumesDaNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaFiscal.id }, null, 500);
         console.log(`  • ${volumesDaNota.length} volumes encontrados`);
         
         // FALLBACK: busca alternativa

@@ -833,8 +833,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           return;
         }
         
-        // Buscar volumes ANTES de vincular
-        const volumesNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaExistente.id });
+        // Buscar volumes ANTES de vincular (limite aumentado para 500)
+        const volumesNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaExistente.id }, null, 500);
         
         // Atualizar estados locais
         setNotasFiscaisLocal(prev => [...prev, notaExistente]);
@@ -1740,8 +1740,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         const notaDoVolume = await base44.entities.NotaFiscal.get(volumeEncontrado.nota_fiscal_id);
         const notaJaVinculada = notasFiscaisLocal.some(nf => nf.id === notaDoVolume.id);
 
-        // SEMPRE buscar TODOS os volumes da nota do banco
-        const todosVolumesDaNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaDoVolume.id });
+        // SEMPRE buscar TODOS os volumes da nota do banco (limite aumentado para 500)
+        const todosVolumesDaNota = await base44.entities.Volume.filter({ nota_fiscal_id: notaDoVolume.id }, null, 500);
 
         if (!notaJaVinculada) {
           // Vincular a nota à ordem
@@ -2112,10 +2112,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
             }
           }
 
-          // Buscar TODOS os volumes da nota do banco
+          // Buscar TODOS os volumes da nota do banco (limite aumentado para 500)
           const todosVolumesNota = await base44.entities.Volume.filter({ 
             nota_fiscal_id: notaDoVolume.id 
-          });
+          }, null, 500);
 
           console.log('📦 Nova nota encontrada:', {
             nota: notaDoVolume.numero_nota,
