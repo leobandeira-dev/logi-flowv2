@@ -64,12 +64,15 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
 
   // Processamento automático quando scanner preencher o campo
   useEffect(() => {
-    if (manualInput.trim() && !scanFeedback) {
-      const timer = setTimeout(() => {
+    if (!manualInput.trim() || scanFeedback || processing) return;
+    
+    const timer = setTimeout(() => {
+      if (manualInput.trim() && !scanFeedback && !processing) {
         handleManualSubmit();
-      }, 100); // Pequeno delay para garantir que o código completo foi lido
-      return () => clearTimeout(timer);
-    }
+      }
+    }, 50);
+    
+    return () => clearTimeout(timer);
   }, [manualInput]);
 
   const startScanner = async (facingMode = currentFacingMode) => {
