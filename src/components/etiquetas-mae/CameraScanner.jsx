@@ -575,17 +575,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                       handleManualSubmit();
                     }
                   }}
-                  readOnly
-                  onFocus={(e) => {
-                    e.target.readOnly = false;
-                    setTimeout(() => {
-                      if (document.activeElement === e.target) {
-                        e.target.setSelectionRange(e.target.value.length, e.target.value.length);
-                      }
-                    }, 0);
-                  }}
                   onBlur={(e) => {
-                    e.target.readOnly = true;
                     // Re-focar imediatamente se perder foco
                     setTimeout(() => {
                       if (open && inputRef.current) {
@@ -600,6 +590,7 @@ export default function CameraScanner({ open, onClose, onScan, isDark, notaAtual
                     color: isDark ? '#f1f5f9' : '#0f172a',
                     caretColor: 'transparent'
                   }}
+                  inputMode="none"
                   autoComplete="off"
                   autoCorrect="off"
                   autoCapitalize="off"
