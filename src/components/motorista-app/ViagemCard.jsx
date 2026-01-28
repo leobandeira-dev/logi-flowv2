@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,8 @@ import {
   AlertTriangle,
   ArrowRight,
   Loader2,
-  MessageCircle
+  MessageCircle,
+  CheckCircle2
 } from "lucide-react";
 import { format, differenceInDays, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
