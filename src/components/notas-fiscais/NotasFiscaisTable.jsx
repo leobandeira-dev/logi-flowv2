@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, RefreshCw, Eye, Edit, Tag, Package, Download, Printer, FileStack, TrendingUp, Calendar, Clock, FileText, Layers, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import FormularioOcorrencia from "../ocorrencias/FormularioOcorrencia";
+import OcorrenciaDetalhes from "../ocorrencias/OcorrenciaDetalhes";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import {
   Dialog,
@@ -90,6 +91,8 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
   const [tiposOcorrencia, setTiposOcorrencia] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [departamentos, setDepartamentos] = useState([]);
+  const [showOcorrenciaDetalhes, setShowOcorrenciaDetalhes] = useState(false);
+  const [ocorrenciaSelecionada, setOcorrenciaSelecionada] = useState(null);
 
   // Carregar dados necessários para o formulário de ocorrências
   React.useEffect(() => {
@@ -831,8 +834,17 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
                       </td>
                       <td className="px-2 py-1.5">
                         {ocorrenciaAberta ? (
-                          <Badge className="bg-red-600 text-white text-[10px] px-1.5 py-0 font-mono">
-                            #{nota.ocorrencia_numero_ticket}
+                          <Badge className="bg-red-600 text-white text-[10px] px-1.5 py-0 font-mono cursor-pointer hover:bg-red-700"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOcorrenciaSelecionada(ocorrenciaAberta);
+                              setShowOcorrenciaDetalhes(true);
+                            }}
+                          >
+                            {(() => {
+                              const tipo = tiposOcorrencia.find(t => t.id === ocorrenciaAberta.tipo_ocorrencia_id);
+                              return tipo?.codigo || `#${nota.ocorrencia_numero_ticket}`;
+                            })()}
                           </Badge>
                         ) : (
                           <span className="text-xs" style={{ color: theme.textMuted }}>-</span>
@@ -897,15 +909,20 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setNotaParaOcorrencia(nota);
-                              setShowOcorrenciaModal(true);
+                              if (ocorrenciaAberta) {
+                                setOcorrenciaSelecionada(ocorrenciaAberta);
+                                setShowOcorrenciaDetalhes(true);
+                              } else {
+                                setNotaParaOcorrencia(nota);
+                                setShowOcorrenciaModal(true);
+                              }
                             }}
                             style={{ 
                               borderColor: ocorrenciaAberta ? '#dc2626' : '#f59e0b',
                               color: ocorrenciaAberta ? '#dc2626' : '#f59e0b',
                               backgroundColor: ocorrenciaAberta ? (isDark ? '#7f1d1d33' : '#fee2e233') : (isDark ? '#78350f33' : '#fef3c733')
                             }}
-                            title={ocorrenciaAberta ? `Ocorrência #${nota.ocorrencia_numero_ticket} aberta` : "Registrar problema"}
+                            title={ocorrenciaAberta ? `Ver ocorrência ${tiposOcorrencia.find(t => t.id === ocorrenciaAberta.tipo_ocorrencia_id)?.codigo || nota.ocorrencia_numero_ticket}` : "Registrar problema"}
                             className="h-6 w-6 p-0"
                           >
                             <AlertTriangle className="w-3 h-3" />
@@ -1111,6 +1128,22 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
           categoriaFixa="nota_fiscal"
           contexto="nota_fiscal"
           contextoDescricao={`Nota Fiscal: ${notaParaOcorrencia.numero_nota}`}
+        />
+      )}
+
+      {showOcorrenciaDetalhes && ocorrenciaSelecionada && (
+        <OcorrenciaDetalhes
+          open={showOcorrenciaDetalhes}
+          onClose={() => {
+            setShowOcorrenciaDetalhes(false);
+            setOcorrenciaSelecionada(null);
+          }}
+          ocorrencia={ocorrenciaSelecionada}
+          onUpdate={() => {
+            setShowOcorrenciaDetalhes(false);
+            setOcorrenciaSelecionada(null);
+            if (onRefresh) onRefresh();
+          }}
         />
       )}
 
