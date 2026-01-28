@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, RefreshCw, Eye, Edit, Tag, Package, Download, Printer, FileStack, TrendingUp, Calendar, Clock, FileText, Layers, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import OcorrenciaNotaFiscalModal from "./OcorrenciaNotaFiscalModal";
+import FormularioOcorrencia from "../ocorrencias/FormularioOcorrencia";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import {
   Dialog,

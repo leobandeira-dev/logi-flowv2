@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Search, RefreshCw, Eye, Package, Printer, Clock, MapPin, CheckCircle2, Edit, Download, Filter, Calendar, FileText, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import OcorrenciaNotaFiscalModal from "../components/notas-fiscais/OcorrenciaNotaFiscalModal";
+import FormularioOcorrencia from "../components/ocorrencias/FormularioOcorrencia";
 import {
   Dialog,
   DialogContent,
@@ -44,6 +44,9 @@ export default function GestaoDeNotasFiscais() {
   const [ocorrencias, setOcorrencias] = useState([]);
   const [showOcorrenciaModal, setShowOcorrenciaModal] = useState(false);
   const [notaParaOcorrencia, setNotaParaOcorrencia] = useState(null);
+  const [tiposOcorrencia, setTiposOcorrencia] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [departamentos, setDepartamentos] = useState([]);
   
   // Filtros adicionais
   const [filtroEmitente, setFiltroEmitente] = useState("");
@@ -76,14 +79,25 @@ export default function GestaoDeNotasFiscais() {
     try {
       const user = await base44.auth.me();
       
-      const [notasData, volumesData, empresaData, ordensData, ctesData, ocorrenciasData] = await Promise.all([
+      const [notasData, volumesData, empresaData, ordensData, ctesData, ocorrenciasData, tiposData, departamentosData] = await Promise.all([
         base44.entities.NotaFiscal.list("-created_date"),
         base44.entities.Volume.list(),
         user.empresa_id ? base44.entities.Empresa.get(user.empresa_id) : Promise.resolve(null),
         base44.entities.OrdemDeCarregamento.list(),
         base44.entities.CTe.list(),
-        base44.entities.Ocorrencia.list()
+        base44.entities.Ocorrencia.list(),
+        base44.entities.TipoOcorrencia.list(),
+        base44.entities.Departamento.list()
       ]);
+
+      // Carregar usuários via backend
+      let usuariosData = [];
+      try {
+        const response = await base44.functions.invoke('listarUsuariosEmpresa', {});
+        usuariosData = response.data || [];
+      } catch (error) {
+        console.log("Não foi possível carregar lista de usuários:", error);
+      }
       
       setNotasFiscais(notasData);
       setVolumes(volumesData);
@@ -91,6 +105,9 @@ export default function GestaoDeNotasFiscais() {
       setOrdens(ordensData);
       setCtes(ctesData);
       setOcorrencias(ocorrenciasData);
+      setTiposOcorrencia(tiposData);
+      setUsuarios(usuariosData);
+      setDepartamentos(departamentosData);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
@@ -844,19 +861,69 @@ export default function GestaoDeNotasFiscais() {
         )}
 
         {showOcorrenciaModal && notaParaOcorrencia && (
-          <OcorrenciaNotaFiscalModal
+          <FormularioOcorrencia
             open={showOcorrenciaModal}
             onClose={() => {
               setShowOcorrenciaModal(false);
               setNotaParaOcorrencia(null);
             }}
-            nota={notaParaOcorrencia}
-            onSuccess={() => {
-              setShowOcorrenciaModal(false);
-              setNotaParaOcorrencia(null);
-              loadData();
+            onSubmit={async (dataOcorrencia) => {
+              try {
+                const currentUser = await base44.auth.me();
+                const ticketNumber = `${new Date().getFullYear().toString().slice(-2)}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${new Date().getDate().toString().padStart(2, '0')}${new Date().getHours().toString().padStart(2, '0')}${new Date().getMinutes().toString().padStart(2, '0')}${new Date().getSeconds().toString().padStart(2, '0')}`;
+                
+                const ocorrencia = await base44.entities.Ocorrencia.create({
+                  ...dataOcorrencia,
+                  numero_ticket: ticketNumber,
+                  registrado_por: currentUser.id
+                });
+
+                await base44.entities.NotaFiscal.update(notaParaOcorrencia.id, {
+                  ocorrencia_id: ocorrencia.id,
+                  ocorrencia_numero_ticket: ticketNumber
+                });
+
+                // Enviar email se houver responsável
+                if (dataOcorrencia.responsavel_id) {
+                  const responsavel = usuarios.find(u => u.id === dataOcorrencia.responsavel_id);
+                  if (responsavel?.email) {
+                    const tipo = tiposOcorrencia.find(t => t.id === dataOcorrencia.tipo_ocorrencia_id);
+                    const prazoMinutos = tipo?.prazo_sla_minutos || (tipo?.prazo_sla_horas ? tipo.prazo_sla_horas * 60 : null);
+                    const dataPrazo = prazoMinutos ? new Date(Date.now() + prazoMinutos * 60000) : null;
+
+                    await base44.integrations.Core.SendEmail({
+                      to: responsavel.email,
+                      subject: `🔔 Ocorrência #${ticketNumber} - NF ${notaParaOcorrencia.numero_nota}`,
+                      body: `
+                        <h2>Nova Ocorrência Atribuída - Nota Fiscal</h2>
+                        <p><strong>Ticket:</strong> #${ticketNumber}</p>
+                        <p><strong>Nota Fiscal:</strong> ${notaParaOcorrencia.numero_nota}</p>
+                        <p><strong>Tipo:</strong> ${tipo?.nome || 'Não especificado'}</p>
+                        <p><strong>Gravidade:</strong> ${dataOcorrencia.gravidade}</p>
+                        <p><strong>Descrição:</strong> ${dataOcorrencia.observacoes}</p>
+                        ${dataPrazo ? `<p><strong>Prazo:</strong> ${dataPrazo.toLocaleString('pt-BR')}</p>` : ''}
+                        <p>Acesse o sistema para tratar esta ocorrência.</p>
+                      `
+                    });
+                  }
+                }
+
+                toast.success("Ocorrência registrada com sucesso!");
+                setShowOcorrenciaModal(false);
+                setNotaParaOcorrencia(null);
+                loadData();
+              } catch (error) {
+                console.error("Erro ao registrar ocorrência:", error);
+                toast.error("Erro ao registrar ocorrência");
+              }
             }}
-            isDark={isDark}
+            tiposOcorrencia={tiposOcorrencia}
+            usuarios={usuarios}
+            departamentos={departamentos}
+            titulo="Registrar Problema - Nota Fiscal"
+            categoriaFixa="nota_fiscal"
+            contexto="nota_fiscal"
+            contextoDescricao={`Nota Fiscal: ${notaParaOcorrencia.numero_nota}`}
           />
         )}
       </div>
