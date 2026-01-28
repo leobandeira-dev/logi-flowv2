@@ -786,10 +786,18 @@ export default function OcorrenciasGestao() {
 
   const ocorrenciasSemTicket = ocorrencias.filter(o => !o.numero_ticket).length;
 
-  const tiposFiltradosPorCategoria = tiposOcorrencia.filter(tipo => {
-    if (categoriaTipoFilter === "todos") return true;
-    return tipo.categoria === categoriaTipoFilter;
-  });
+  const tiposFiltradosPorCategoria = tiposOcorrencia
+    .filter(tipo => {
+      if (categoriaTipoFilter === "todos") return true;
+      return tipo.categoria === categoriaTipoFilter;
+    })
+    .sort((a, b) => {
+      // Ordenar por categoria primeiro, depois por nome
+      if (a.categoria !== b.categoria) {
+        return a.categoria.localeCompare(b.categoria);
+      }
+      return a.nome.localeCompare(b.nome);
+    });
 
   return (
     <div className="min-h-screen transition-colors p-6" style={{ backgroundColor: theme.bg }}>
