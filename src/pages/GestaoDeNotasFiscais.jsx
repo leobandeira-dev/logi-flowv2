@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Search, RefreshCw, Eye, Package, Printer, Clock, MapPin, CheckCircle2, Edit, Download, Filter, Calendar, FileText } from "lucide-react";
+import { Search, RefreshCw, Eye, Package, Printer, Clock, MapPin, CheckCircle2, Edit, Download, Filter, Calendar, FileText, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import OcorrenciaNotaFiscalModal from "../components/notas-fiscais/OcorrenciaNotaFiscalModal";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,9 @@ export default function GestaoDeNotasFiscais() {
   const [notaParaEditar, setNotaParaEditar] = useState(null);
   const [ordens, setOrdens] = useState([]);
   const [ctes, setCtes] = useState([]);
+  const [ocorrencias, setOcorrencias] = useState([]);
+  const [showOcorrenciaModal, setShowOcorrenciaModal] = useState(false);
+  const [notaParaOcorrencia, setNotaParaOcorrencia] = useState(null);
   
   // Filtros adicionais
   const [filtroEmitente, setFiltroEmitente] = useState("");
@@ -72,12 +76,13 @@ export default function GestaoDeNotasFiscais() {
     try {
       const user = await base44.auth.me();
       
-      const [notasData, volumesData, empresaData, ordensData, ctesData] = await Promise.all([
+      const [notasData, volumesData, empresaData, ordensData, ctesData, ocorrenciasData] = await Promise.all([
         base44.entities.NotaFiscal.list("-created_date"),
         base44.entities.Volume.list(),
         user.empresa_id ? base44.entities.Empresa.get(user.empresa_id) : Promise.resolve(null),
         base44.entities.OrdemDeCarregamento.list(),
-        base44.entities.CTe.list()
+        base44.entities.CTe.list(),
+        base44.entities.Ocorrencia.list()
       ]);
       
       setNotasFiscais(notasData);
@@ -85,6 +90,7 @@ export default function GestaoDeNotasFiscais() {
       setEmpresa(empresaData);
       setOrdens(ordensData);
       setCtes(ctesData);
+      setOcorrencias(ocorrenciasData);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
@@ -548,6 +554,7 @@ export default function GestaoDeNotasFiscais() {
                     <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Emitente</th>
                     <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Destinatário</th>
                     <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Status</th>
+                    <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Ocorr.</th>
                     <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Receb.</th>
                     <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Prev. Entr.</th>
                     <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Vol.</th>
@@ -564,6 +571,7 @@ export default function GestaoDeNotasFiscais() {
                     const ctesVinculados = ctes.filter(cte => 
                       cte.notas_fiscais_ids?.includes(nota.id)
                     );
+                    const ocorrenciaAberta = nota.ocorrencia_id ? ocorrencias.find(o => o.id === nota.ocorrencia_id && o.status !== "resolvida") : null;
                     return (
                       <tr key={nota.id} className="border-b hover:bg-opacity-50" style={{ borderColor: theme.cardBorder }}>
                         <td className="px-2 py-1.5">
@@ -590,6 +598,15 @@ export default function GestaoDeNotasFiscais() {
                           <Badge className={`${statusInfo.color} text-white text-[10px] px-1.5 py-0`}>
                             {statusInfo.label}
                           </Badge>
+                        </td>
+                        <td className="px-2 py-1.5">
+                          {ocorrenciaAberta ? (
+                            <Badge className="bg-red-600 text-white text-[10px] px-1.5 py-0 font-mono">
+                              #{nota.ocorrencia_numero_ticket}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs" style={{ color: theme.textMuted }}>-</span>
+                          )}
                         </td>
                         <td className="px-2 py-1.5">
                           <span className="text-xs whitespace-nowrap" style={{ color: theme.text }}>
@@ -622,6 +639,23 @@ export default function GestaoDeNotasFiscais() {
                         </td>
                         <td className="px-2 py-1.5">
                           <div className="flex gap-0.5">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setNotaParaOcorrencia(nota);
+                                setShowOcorrenciaModal(true);
+                              }}
+                              style={{ 
+                                borderColor: ocorrenciaAberta ? '#dc2626' : '#f59e0b',
+                                color: ocorrenciaAberta ? '#dc2626' : '#f59e0b',
+                                backgroundColor: ocorrenciaAberta ? (isDark ? '#7f1d1d33' : '#fee2e233') : (isDark ? '#78350f33' : '#fef3c733')
+                              }}
+                              title={ocorrenciaAberta ? `Ocorrência #${nota.ocorrencia_numero_ticket} aberta` : "Registrar problema"}
+                              className="h-6 w-6 p-0"
+                            >
+                              <AlertTriangle className="w-3 h-3" />
+                            </Button>
                             {ctesVinculados.length > 0 && (
                               <Popover>
                                 <PopoverTrigger asChild>

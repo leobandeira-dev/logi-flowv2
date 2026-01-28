@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, RefreshCw, Eye, Edit, Tag, Package, Download, Printer, FileStack, TrendingUp, Calendar, Clock, FileText, Layers } from "lucide-react";
+import { Search, RefreshCw, Eye, Edit, Tag, Package, Download, Printer, FileStack, TrendingUp, Calendar, Clock, FileText, Layers, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import OcorrenciaNotaFiscalModal from "./OcorrenciaNotaFiscalModal";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import {
   Dialog,
@@ -62,7 +63,8 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
   empresa = null,
   onRefresh,
   isDark = false,
-  showFilters = true
+  showFilters = true,
+  ocorrencias = []
 }) {
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -83,6 +85,8 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
   const [graficoExpandido, setGraficoExpandido] = useState(false);
   const [anoSelecionado, setAnoSelecionado] = useState(() => new Date().getFullYear());
   const [mesSelecionado, setMesSelecionado] = useState(() => new Date().getMonth() + 1);
+  const [showOcorrenciaModal, setShowOcorrenciaModal] = useState(false);
+  const [notaParaOcorrencia, setNotaParaOcorrencia] = useState(null);
 
   const handleViewDetails = (nota) => {
     setSelectedNota(nota);
@@ -741,6 +745,7 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
                   <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Pedido</th>
                   <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Emitente</th>
                   <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Status</th>
+                  <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Ocorr.</th>
                   <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Receb.</th>
                   <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Venc.</th>
                   <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Vol.</th>
@@ -763,6 +768,8 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
                   const dataVenc = nota.data_vencimento ? new Date(nota.data_vencimento) : null;
                   if (dataVenc) dataVenc.setHours(0, 0, 0, 0);
                   const notaVencida = dataVenc && dataVenc < hoje;
+
+                  const ocorrenciaAberta = nota.ocorrencia_id ? ocorrencias.find(o => o.id === nota.ocorrencia_id && o.status !== "resolvida") : null;
 
                   return (
                     <tr key={nota.id} className="border-b hover:bg-opacity-50" style={{ borderColor: theme.cardBorder }}>
@@ -790,6 +797,15 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
                         <Badge className={`${statusInfo.color} text-white text-[10px] px-1.5 py-0`}>
                           {statusInfo.label}
                         </Badge>
+                      </td>
+                      <td className="px-2 py-1.5">
+                        {ocorrenciaAberta ? (
+                          <Badge className="bg-red-600 text-white text-[10px] px-1.5 py-0 font-mono">
+                            #{nota.ocorrencia_numero_ticket}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs" style={{ color: theme.textMuted }}>-</span>
+                        )}
                       </td>
                       <td className="px-2 py-1.5">
                         <span className="text-xs whitespace-nowrap leading-tight" style={{ color: theme.text }}>
@@ -846,6 +862,23 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
                       </td>
                       <td className="px-2 py-1.5">
                         <div className="flex gap-0.5">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setNotaParaOcorrencia(nota);
+                              setShowOcorrenciaModal(true);
+                            }}
+                            style={{ 
+                              borderColor: ocorrenciaAberta ? '#dc2626' : '#f59e0b',
+                              color: ocorrenciaAberta ? '#dc2626' : '#f59e0b',
+                              backgroundColor: ocorrenciaAberta ? (isDark ? '#7f1d1d33' : '#fee2e233') : (isDark ? '#78350f33' : '#fef3c733')
+                            }}
+                            title={ocorrenciaAberta ? `Ocorrência #${nota.ocorrencia_numero_ticket} aberta` : "Registrar problema"}
+                            className="h-6 w-6 p-0"
+                          >
+                            <AlertTriangle className="w-3 h-3" />
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
@@ -979,6 +1012,19 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
           nota={notaParaEditarVolumes}
           volumes={volumesParaEditar}
           onSave={handleSaveVolumes}
+          isDark={isDark}
+        />
+      )}
+
+      {showOcorrenciaModal && notaParaOcorrencia && (
+        <OcorrenciaNotaFiscalModal
+          open={showOcorrenciaModal}
+          onClose={() => {
+            setShowOcorrenciaModal(false);
+            setNotaParaOcorrencia(null);
+          }}
+          nota={notaParaOcorrencia}
+          onSuccess={onRefresh}
           isDark={isDark}
         />
       )}
