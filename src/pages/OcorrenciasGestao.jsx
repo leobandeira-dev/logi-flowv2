@@ -1524,96 +1524,121 @@ export default function OcorrenciasGestao() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {loadingTipos ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="w-5 h-5 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
                   <p className="text-sm ml-2" style={{ color: theme.textMuted }}>Carregando tipos...</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {tiposFiltradosPorCategoria.map((tipo) => (
-                    <div
-                      key={tipo.id}
-                      className="p-4 rounded-lg border-2 hover:shadow-lg transition-shadow cursor-pointer group relative"
-                      style={{ 
-                        backgroundColor: theme.cardBg,
-                        borderColor: tipo.cor || theme.cardBorder
-                      }}
-                      onClick={() => {
-                        setEditingTipo(tipo);
-                        setShowTipoForm(true);
-                      }}
-                    >
-                      {/* Botão de ações no canto superior direito */}
-                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={(e) => e.stopPropagation()}
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Nome</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Código</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Categoria</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Descrição</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Gravidade</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>SLA</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Status</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tiposFiltradosPorCategoria.map((tipo) => (
+                        <tr
+                          key={tipo.id}
+                          className="border-b hover:bg-opacity-50 cursor-pointer transition-colors group"
+                          style={{ borderColor: theme.cardBorder }}
+                          onClick={() => {
+                            setEditingTipo(tipo);
+                            setShowTipoForm(true);
+                          }}
+                        >
+                          <td className="px-2 py-1">
+                            <div className="flex items-center gap-1.5">
+                              <div 
+                                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: tipo.cor }}
+                              />
+                              <span className="text-[11px] font-semibold leading-tight line-clamp-1" style={{ color: theme.text }}>
+                                {tipo.nome}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-2 py-1">
+                            <span className="text-[11px] font-mono leading-tight" style={{ color: theme.textMuted }}>
+                              {tipo.codigo || '-'}
+                            </span>
+                          </td>
+                          <td className="px-2 py-1">
+                            <Badge className={`text-[10px] px-1.5 py-0 h-4 leading-none ${categoriaColors[tipo.categoria]}`}>
+                              {tipo.categoria === "nota_fiscal" ? "NF" : tipo.categoria}
+                            </Badge>
+                          </td>
+                          <td className="px-2 py-1 max-w-[200px]">
+                            <div 
+                              className="text-[11px] line-clamp-2 leading-tight" 
                               style={{ color: theme.textMuted }}
+                              title={tipo.descricao}
                             >
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                            <DropdownMenuItem
-                              onClick={(e) => handleDuplicateTipo(tipo, e)}
-                              style={{ color: theme.text }}
-                            >
-                              <Copy className="w-4 h-4 mr-2" />
-                              Duplicar
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator style={{ backgroundColor: theme.cardBorder }} />
-                            <DropdownMenuItem
-                              onClick={(e) => handleDeleteTipo(tipo, e)}
-                              className="text-red-600 dark:text-red-400"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
-                      <div className="flex items-start justify-between mb-3 pr-8">
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: tipo.cor }}
-                          />
-                          <h3 className="font-bold" style={{ color: theme.text }}>{tipo.nome}</h3>
-                        </div>
-                        <Badge className={categoriaColors[tipo.categoria]}>
-                          {tipo.categoria}
-                        </Badge>
-                      </div>
-                      {tipo.descricao && (
-                        <p className="text-sm mb-3" style={{ color: theme.textMuted }}>{tipo.descricao}</p>
-                      )}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant="outline" className={`text-xs border ${gravidadeColors[tipo.gravidade_padrao]}`}>
-                          {tipo.gravidade_padrao}
-                        </Badge>
-                        {(tipo.prazo_sla_horas || tipo.prazo_sla_minutos) && (
-                          <Badge variant="outline" className="text-xs">
-                            SLA: {tipo.prazo_sla_minutos ? `${tipo.prazo_sla_minutos}min` : `${tipo.prazo_sla_horas}h`}
-                          </Badge>
-                        )}
-                        <Badge variant="outline" className={`text-xs ${tipo.ativo ? 'bg-green-50 text-green-700 border-green-300' : 'bg-gray-50 text-gray-700 border-gray-300'}`}>
-                          {tipo.ativo ? 'Ativo' : 'Inativo'}
-                        </Badge>
-                        {tipo.categoria === "tarefa" && (
-                          <Badge variant="outline" className="text-xs bg-teal-50 text-teal-700 border-teal-300">
-                            Não impacta SLA
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                              {tipo.descricao || '-'}
+                            </div>
+                          </td>
+                          <td className="px-2 py-1">
+                            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 leading-none border ${gravidadeColors[tipo.gravidade_padrao]}`}>
+                              {tipo.gravidade_padrao}
+                            </Badge>
+                          </td>
+                          <td className="px-2 py-1">
+                            <span className="text-[11px] font-medium leading-tight" style={{ color: theme.text }}>
+                              {tipo.prazo_sla_minutos ? `${tipo.prazo_sla_minutos}min` : tipo.prazo_sla_horas ? `${tipo.prazo_sla_horas}h` : '-'}
+                            </span>
+                          </td>
+                          <td className="px-2 py-1">
+                            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 leading-none ${tipo.ativo ? 'bg-green-50 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-50 text-gray-700 border-gray-300 dark:bg-gray-700/20 dark:text-gray-400'}`}>
+                              {tipo.ativo ? 'Ativo' : 'Inativo'}
+                            </Badge>
+                          </td>
+                          <td className="px-2 py-1">
+                            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    onClick={(e) => e.stopPropagation()}
+                                    style={{ color: theme.textMuted }}
+                                  >
+                                    <MoreVertical className="w-3 h-3" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                                  <DropdownMenuItem
+                                    onClick={(e) => handleDuplicateTipo(tipo, e)}
+                                    style={{ color: theme.text }}
+                                  >
+                                    <Copy className="w-4 h-4 mr-2" />
+                                    Duplicar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator style={{ backgroundColor: theme.cardBorder }} />
+                                  <DropdownMenuItem
+                                    onClick={(e) => handleDeleteTipo(tipo, e)}
+                                    className="text-red-600 dark:text-red-400"
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Excluir
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
 
