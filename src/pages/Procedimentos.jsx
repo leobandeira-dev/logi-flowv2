@@ -381,7 +381,7 @@ export default function Procedimentos() {
               style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
             >
               <CardContent className="p-4 flex items-center gap-3">
-                <CheckCircle className="w-8 h-8 text-cyan-600" />
+                <CheckCircle2 className="w-8 h-8 text-cyan-600" />
                 <div>
                   <h3 className="font-bold text-sm" style={{ color: theme.text }}>IT - Ordem de Entrega</h3>
                   <p className="text-xs" style={{ color: theme.textMuted }}>IT-ARM-006</p>
