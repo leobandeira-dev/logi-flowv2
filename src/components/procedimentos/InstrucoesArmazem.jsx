@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Package, FileText, Tag, Truck, CheckCircle, Ruler, AlertCircle } from "lucide-react";
+import { Package, FileText, Tag, Truck, CheckCircle2, Ruler, AlertCircle } from "lucide-react";
 
 // IT-ARM-001: Recebimento de Mercadorias
 export function InstrucaoRecebimento({ theme, isDark }) {
