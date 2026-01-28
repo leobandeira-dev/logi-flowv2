@@ -1552,9 +1552,9 @@ export default function OcorrenciasGestao() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Categoria</th>
                         <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Nome</th>
                         <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Código</th>
-                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Categoria</th>
                         <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Descrição</th>
                         <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Gravidade</th>
                         <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>SLA</th>
@@ -1574,6 +1574,11 @@ export default function OcorrenciasGestao() {
                           }}
                         >
                           <td className="px-2 py-1.5">
+                            <Badge className={`text-xs px-2 py-0.5 ${categoriaColors[tipo.categoria]}`}>
+                              {tipo.categoria === "nota_fiscal" ? "NF" : tipo.categoria}
+                            </Badge>
+                          </td>
+                          <td className="px-2 py-1.5">
                             <div className="flex items-center gap-2">
                               <div 
                                 className="w-3 h-3 rounded-full flex-shrink-0"
@@ -1588,11 +1593,6 @@ export default function OcorrenciasGestao() {
                             <span className="text-xs font-mono leading-tight" style={{ color: theme.textMuted }}>
                               {tipo.codigo || '-'}
                             </span>
-                          </td>
-                          <td className="px-2 py-1.5">
-                            <Badge className={`text-xs px-2 py-0.5 ${categoriaColors[tipo.categoria]}`}>
-                              {tipo.categoria === "nota_fiscal" ? "NF" : tipo.categoria}
-                            </Badge>
                           </td>
                           <td className="px-2 py-1.5 max-w-[200px]">
                             <div 
