@@ -837,227 +837,27 @@ export default function GestaoDeNotasFiscais() {
               </DialogHeader>
 
               <Tabs defaultValue="detalhes" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
-                  <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="detalhes" className="space-y-4 mt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-xs font-semibold" style={{ color: theme.textMuted }}>Chave de Acesso</Label>
-                      <p className="text-sm font-mono" style={{ color: theme.text }}>{selectedNota.chave_nota_fiscal}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs font-semibold" style={{ color: theme.textMuted }}>Status</Label>
-                      <Badge className={`${statusConfig[calcularStatusDinamico(selectedNota)]?.color} text-white`}>
-                        {statusConfig[calcularStatusDinamico(selectedNota)]?.label}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-xs font-semibold" style={{ color: theme.textMuted }}>Emitente</Label>
-                      <p className="text-sm" style={{ color: theme.text }}>{selectedNota.emitente_razao_social}</p>
-                      <p className="text-xs" style={{ color: theme.textMuted }}>{selectedNota.emitente_cnpj}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs font-semibold" style={{ color: theme.textMuted }}>Destinatário</Label>
-                      <p className="text-sm" style={{ color: theme.text }}>{selectedNota.destinatario_razao_social}</p>
-                      <p className="text-xs" style={{ color: theme.textMuted }}>{selectedNota.destinatario_cnpj}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <Label className="text-xs font-semibold" style={{ color: theme.textMuted }}>Peso Total</Label>
-                      <p className="text-sm" style={{ color: theme.text }}>{selectedNota.peso_total_nf?.toLocaleString()} kg</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs font-semibold" style={{ color: theme.textMuted }}>Valor</Label>
-                      <p className="text-sm" style={{ color: theme.text }}>
-                        R$ {selectedNota.valor_nota_fiscal?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-xs font-semibold" style={{ color: theme.textMuted }}>Volumes</Label>
-                      <p className="text-sm" style={{ color: theme.text }}>{selectedNota.quantidade_total_volumes_nf}</p>
-                    </div>
-                  </div>
-
-                  {selectedNota.localizacao_atual && (
-                    <div>
-                      <Label className="text-xs font-semibold" style={{ color: theme.textMuted }}>Localização Atual</Label>
-                      <p className="text-sm" style={{ color: theme.text }}>{selectedNota.localizacao_atual}</p>
-                    </div>
-                  )}
-
-                  <div>
-                    <Label className="text-sm font-semibold mb-2 block" style={{ color: theme.text }}>
-                      Volumes ({notaVolumes.length})
-                    </Label>
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {notaVolumes.map((volume) => {
-                        const volStatus = statusVolumeConfig[volume.status_volume] || statusVolumeConfig.criado;
-                        return (
-                          <div key={volume.id} className="p-3 border rounded-lg" style={{ borderColor: theme.cardBorder }}>
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="text-sm font-mono font-semibold" style={{ color: theme.text }}>
-                                  {volume.identificador_unico}
-                                </p>
-                                <p className="text-xs" style={{ color: theme.textMuted }}>
-                                  Volume {volume.numero_sequencial} | {volume.peso_volume?.toLocaleString()} kg
-                                </p>
-                                {volume.localizacao_atual && (
-                                  <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
-                                    📍 {volume.localizacao_atual}
-                                  </p>
-                                )}
-                              </div>
-                              <Badge className={`${volStatus.color} text-white text-xs`}>
-                                {volStatus.label}
-                              </Badge>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="timeline" className="mt-4">
-                  <div className="space-y-4">
-                    {selectedNota.data_coleta_solicitada && (
-                      <div className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                            <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                          </div>
-                          <div className="w-0.5 h-full bg-gray-300 dark:bg-gray-600 mt-2"></div>
-                        </div>
-                        <div className="flex-1 pb-6">
-                          <p className="font-semibold text-sm" style={{ color: theme.text }}>Coleta Solicitada</p>
-                          <p className="text-xs" style={{ color: theme.textMuted }}>
-                            {new Date(selectedNota.data_coleta_solicitada).toLocaleString('pt-BR')}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedNota.data_coletado && (
-                      <div className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                            <CheckCircle2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div className="w-0.5 h-full bg-gray-300 dark:bg-gray-600 mt-2"></div>
-                        </div>
-                        <div className="flex-1 pb-6">
-                          <p className="font-semibold text-sm" style={{ color: theme.text }}>Coletado</p>
-                          <p className="text-xs" style={{ color: theme.textMuted }}>
-                            {new Date(selectedNota.data_coletado).toLocaleString('pt-BR')}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedNota.data_chegada_filial && (
-                      <div className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                            <MapPin className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                          </div>
-                          <div className="w-0.5 h-full bg-gray-300 dark:bg-gray-600 mt-2"></div>
-                        </div>
-                        <div className="flex-1 pb-6">
-                          <p className="font-semibold text-sm" style={{ color: theme.text }}>Chegada na Filial</p>
-                          <p className="text-xs" style={{ color: theme.textMuted }}>
-                            {new Date(selectedNota.data_chegada_filial).toLocaleString('pt-BR')}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedNota.data_saida_para_viagem && (
-                      <div className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                            <MapPin className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                          </div>
-                          <div className="w-0.5 h-full bg-gray-300 dark:bg-gray-600 mt-2"></div>
-                        </div>
-                        <div className="flex-1 pb-6">
-                          <p className="font-semibold text-sm" style={{ color: theme.text }}>Saída para Viagem</p>
-                          <p className="text-xs" style={{ color: theme.textMuted }}>
-                            {new Date(selectedNota.data_saida_para_viagem).toLocaleString('pt-BR')}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedNota.data_chegada_destino_final && (
-                      <div className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center">
-                            <MapPin className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-                          </div>
-                          <div className="w-0.5 h-full bg-gray-300 dark:bg-gray-600 mt-2"></div>
-                        </div>
-                        <div className="flex-1 pb-6">
-                          <p className="font-semibold text-sm" style={{ color: theme.text }}>Chegada ao Destino Final</p>
-                          <p className="text-xs" style={{ color: theme.textMuted }}>
-                            {new Date(selectedNota.data_chegada_destino_final).toLocaleString('pt-BR')}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedNota.data_saida_para_entrega && (
-                      <div className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="w-10 h-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-                            <MapPin className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-                          </div>
-                          <div className="w-0.5 h-full bg-gray-300 dark:bg-gray-600 mt-2"></div>
-                        </div>
-                        <div className="flex-1 pb-6">
-                          <p className="font-semibold text-sm" style={{ color: theme.text }}>Saída para Entrega</p>
-                          <p className="text-xs" style={{ color: theme.textMuted }}>
-                            {new Date(selectedNota.data_saida_para_entrega).toLocaleString('pt-BR')}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedNota.data_entregue && (
-                      <div className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                            <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-sm" style={{ color: theme.text }}>Entregue</p>
-                          <p className="text-xs" style={{ color: theme.textMuted }}>
-                            {new Date(selectedNota.data_entregue).toLocaleString('pt-BR')}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {!selectedNota.data_coleta_solicitada && !selectedNota.data_coletado && !selectedNota.data_entregue && (
-                      <div className="text-center py-8" style={{ color: theme.textMuted }}>
-                        <Clock className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                        <p>Nenhum evento registrado no timeline ainda</p>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
+...
               </Tabs>
             </DialogContent>
           </Dialog>
+        )}
+
+        {showOcorrenciaModal && notaParaOcorrencia && (
+          <OcorrenciaNotaFiscalModal
+            open={showOcorrenciaModal}
+            onClose={() => {
+              setShowOcorrenciaModal(false);
+              setNotaParaOcorrencia(null);
+            }}
+            nota={notaParaOcorrencia}
+            onSuccess={() => {
+              setShowOcorrenciaModal(false);
+              setNotaParaOcorrencia(null);
+              loadData();
+            }}
+            isDark={isDark}
+          />
         )}
       </div>
     </div>
