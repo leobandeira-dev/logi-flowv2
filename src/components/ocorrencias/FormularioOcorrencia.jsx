@@ -170,8 +170,20 @@ export default function FormularioOcorrencia({
                 setFormData({ 
                   ...formData, 
                   tipo_ocorrencia_id: value,
-                  gravidade: tipo?.gravidade_padrao || formData.gravidade
+                  gravidade: tipo?.gravidade_padrao || formData.gravidade,
+                  responsavel_id: tipo?.responsavel_padrao_id || formData.responsavel_id,
+                  departamento_responsavel_id: tipo?.departamento_responsavel_id || formData.departamento_responsavel_id,
+                  tipoResponsavel: tipo?.responsavel_padrao_id ? "usuario" : tipo?.departamento_responsavel_id ? "departamento" : formData.tipoResponsavel
                 });
+                // Atualizar campo de busca se houver responsável padrão
+                if (tipo?.responsavel_padrao_id) {
+                  const usr = usuarios.find(u => u.id === tipo.responsavel_padrao_id);
+                  if (usr) setUsuarioBusca(usr.full_name);
+                }
+                if (tipo?.departamento_responsavel_id) {
+                  const dept = departamentos.find(d => d.id === tipo.departamento_responsavel_id);
+                  if (dept) setDepartamentoBusca(dept.nome);
+                }
               }}
             >
               <SelectTrigger id="tipo_ocorrencia_id">
