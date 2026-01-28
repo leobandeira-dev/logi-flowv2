@@ -153,6 +153,7 @@ export default function TipoOcorrenciaForm({ open, onClose, onSubmit, editingTip
                 <SelectItem value="fluxo">Fluxo (Processos)</SelectItem>
                 <SelectItem value="tarefa">Tarefa (Não impacta SLA)</SelectItem>
                 <SelectItem value="diaria">Diária (Cobrança)</SelectItem>
+                <SelectItem value="nota_fiscal">Nota Fiscal</SelectItem>
               </SelectContent>
             </Select>
           </div>
