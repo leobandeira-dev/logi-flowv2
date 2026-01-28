@@ -102,8 +102,8 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
 
         let usuariosData = [];
         try {
-          const response = await base44.functions.invoke('listarUsuariosEmpresa', {});
-          usuariosData = response.data || [];
+          const { data } = await base44.functions.invoke('listarUsuariosEmpresa', {});
+          usuariosData = Array.isArray(data) ? data : [];
         } catch (error) {
           console.log("Não foi possível carregar lista de usuários:", error);
         }
