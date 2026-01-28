@@ -777,109 +777,45 @@ export default function GestaoDiariasModal({ open, onClose, onUpdate }) {
           )}
 
           {/* Ações em Massa - Pendentes de Valor */}
-          {selectedDiarias.length > 0 && abaAtiva === "pendentes_valor" && (
+          {(abaAtiva === "pendentes_valor" && diariasFiltradas.length > 0) && (
             <div className="flex items-center gap-3 p-4 rounded-lg border-2 mb-4" 
                  style={{ 
-                   backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
+                   backgroundColor: selectedDiarias.length > 0 
+                     ? (isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)')
+                     : 'transparent',
                    borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)'
                  }}>
-              <Badge className="bg-blue-600 text-white font-semibold">
-                {selectedDiarias.length} selecionada(s)
-              </Badge>
-              <div className="flex gap-2 ml-auto">
-                <Button
-                  onClick={() => setShowDefinirValorModal(true)}
-                  className="bg-blue-600 hover:bg-blue-700"
-                  size="sm"
-                >
-                  <DollarSign className="w-4 h-4 mr-2" />
-                  Definir Valor em Lote
-                </Button>
-                <Button
-                  onClick={() => setSelectedDiarias([])}
-                  variant="outline"
-                  size="sm"
-                  style={{ borderColor: theme.inputBorder, color: theme.text }}
-                >
-                  Limpar Seleção
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Ações em Massa - Pendentes de Autorização */}
-          {selectedDiarias.length > 0 && abaAtiva === "pendentes_autorizacao" && (
-            <div className="flex items-center gap-3 p-4 rounded-lg border-2 mb-4"
-                 style={{ 
-                   backgroundColor: isDark ? 'rgba(34, 197, 94, 0.1)' : 'rgba(34, 197, 94, 0.05)',
-                   borderColor: isDark ? 'rgba(34, 197, 94, 0.3)' : 'rgba(34, 197, 94, 0.2)'
-                 }}>
-              <Badge className="bg-green-600 text-white font-semibold">
-                {selectedDiarias.length} selecionada(s)
-              </Badge>
-              <span className="text-sm font-semibold" style={{ color: theme.text }}>
-                Total: R$ {valorTotalSelecionadas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </span>
-              <div className="flex gap-2 ml-auto">
-                <Button
-                  onClick={() => {
-                    setAutorizacaoData({ 
-                      numero_autorizacao: "", 
-                      valor_total: valorTotalSelecionadas 
-                    });
-                    setShowAutorizacaoModal(true);
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedDiarias.length === diariasFiltradas.length && diariasFiltradas.length > 0}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedDiarias(diariasFiltradas.map(d => d.id));
+                    } else {
+                      setSelectedDiarias([]);
+                    }
                   }}
-                  className="bg-green-600 hover:bg-green-700"
-                  size="sm"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Autorizar Selecionadas
-                </Button>
-                <Button
-                  onClick={() => setShowAbonoModal(true)}
-                  className="bg-orange-600 hover:bg-orange-700"
-                  size="sm"
-                >
-                  <XCircle className="w-4 h-4 mr-2" />
-                  Abonar Selecionadas
-                </Button>
+                />
+                <span className="text-sm font-medium" style={{ color: theme.text }}>
+                  Selecionar todos
+                </span>
               </div>
-            </div>
-          )}
-
-          {/* Aba Gerar Diárias */}
-          {abaAtiva === "gerar" && (
-            <>
-              {ordensParaGerar.length > 0 && (
-                <div className="flex items-center gap-3 p-4 rounded-lg border-2 mb-4"
-                     style={{ 
-                       backgroundColor: isDark ? 'rgba(168, 85, 247, 0.1)' : 'rgba(168, 85, 247, 0.05)',
-                       borderColor: isDark ? 'rgba(168, 85, 247, 0.3)' : 'rgba(168, 85, 247, 0.2)'
-                     }}>
-                  <Badge className="bg-purple-600 text-white font-semibold">
-                    {ordensParaGerar.length} diária(s) para gerar
+              {selectedDiarias.length > 0 && (
+                <>
+                  <Badge className="bg-blue-600 text-white font-semibold">
+                    {selectedDiarias.length} selecionada(s)
                   </Badge>
                   <div className="flex gap-2 ml-auto">
                     <Button
-                      onClick={handleGerarDiariasSelecionadas}
-                      disabled={gerandoOcorrencias}
-                      className="bg-purple-600 hover:bg-purple-700"
+                      onClick={() => setShowDefinirValorModal(true)}
+                      className="bg-blue-600 hover:bg-blue-700"
                       size="sm"
                     >
-                      {gerandoOcorrencias ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                          Gerando...
-                        </>
-                      ) : (
-                        <>
-                          <Zap className="w-4 h-4 mr-2" />
-                          Gerar Ocorrências
-                        </>
-                      )}
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      Definir Valor em Lote
                     </Button>
                     <Button
-                      onClick={() => setOrdensParaGerar([])}
+                      onClick={() => setSelectedDiarias([])}
                       variant="outline"
                       size="sm"
                       style={{ borderColor: theme.inputBorder, color: theme.text }}
@@ -887,6 +823,139 @@ export default function GestaoDiariasModal({ open, onClose, onUpdate }) {
                       Limpar Seleção
                     </Button>
                   </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Ações em Massa - Pendentes de Autorização */}
+          {(abaAtiva === "pendentes_autorizacao" && diariasFiltradas.length > 0) && (
+            <div className="flex items-center gap-3 p-4 rounded-lg border-2 mb-4"
+                 style={{ 
+                   backgroundColor: selectedDiarias.length > 0
+                     ? (isDark ? 'rgba(34, 197, 94, 0.1)' : 'rgba(34, 197, 94, 0.05)')
+                     : 'transparent',
+                   borderColor: isDark ? 'rgba(34, 197, 94, 0.3)' : 'rgba(34, 197, 94, 0.2)'
+                 }}>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedDiarias.length === diariasFiltradas.length && diariasFiltradas.length > 0}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedDiarias(diariasFiltradas.map(d => d.id));
+                    } else {
+                      setSelectedDiarias([]);
+                    }
+                  }}
+                />
+                <span className="text-sm font-medium" style={{ color: theme.text }}>
+                  Selecionar todos
+                </span>
+              </div>
+              {selectedDiarias.length > 0 && (
+                <>
+                  <Badge className="bg-green-600 text-white font-semibold">
+                    {selectedDiarias.length} selecionada(s)
+                  </Badge>
+                  <span className="text-sm font-semibold" style={{ color: theme.text }}>
+                    Total: R$ {valorTotalSelecionadas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                  <div className="flex gap-2 ml-auto">
+                    <Button
+                      onClick={() => {
+                        setAutorizacaoData({ 
+                          numero_autorizacao: "", 
+                          valor_total: valorTotalSelecionadas 
+                        });
+                        setShowAutorizacaoModal(true);
+                      }}
+                      className="bg-green-600 hover:bg-green-700"
+                      size="sm"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Autorizar Selecionadas
+                    </Button>
+                    <Button
+                      onClick={() => setShowAbonoModal(true)}
+                      className="bg-orange-600 hover:bg-orange-700"
+                      size="sm"
+                    >
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Abonar Selecionadas
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Aba Gerar Diárias */}
+          {abaAtiva === "gerar" && (
+            <>
+              {ordensPendentesGeracao.length > 0 && (
+                <div className="flex items-center gap-3 p-4 rounded-lg border-2 mb-4"
+                     style={{ 
+                       backgroundColor: ordensParaGerar.length > 0
+                         ? (isDark ? 'rgba(168, 85, 247, 0.1)' : 'rgba(168, 85, 247, 0.05)')
+                         : 'transparent',
+                       borderColor: isDark ? 'rgba(168, 85, 247, 0.3)' : 'rgba(168, 85, 247, 0.2)'
+                     }}>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={ordensParaGerar.length === ordensPendentesGeracao.reduce((sum, op) => sum + op.pendencias.length, 0) && ordensPendentesGeracao.length > 0}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          const todasOrdens = [];
+                          ordensPendentesGeracao.forEach(item => {
+                            item.pendencias.forEach(pendencia => {
+                              todasOrdens.push(`${item.ordem.id}|${pendencia.tipo}`);
+                            });
+                          });
+                          setOrdensParaGerar(todasOrdens);
+                        } else {
+                          setOrdensParaGerar([]);
+                        }
+                      }}
+                    />
+                    <span className="text-sm font-medium" style={{ color: theme.text }}>
+                      Selecionar todos
+                    </span>
+                  </div>
+                  {ordensParaGerar.length > 0 && (
+                    <>
+                      <Badge className="bg-purple-600 text-white font-semibold">
+                        {ordensParaGerar.length} diária(s) para gerar
+                      </Badge>
+                      <div className="flex gap-2 ml-auto">
+                        <Button
+                          onClick={handleGerarDiariasSelecionadas}
+                          disabled={gerandoOcorrencias}
+                          className="bg-purple-600 hover:bg-purple-700"
+                          size="sm"
+                        >
+                          {gerandoOcorrencias ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                              Gerando...
+                            </>
+                          ) : (
+                            <>
+                              <Zap className="w-4 h-4 mr-2" />
+                              Gerar Ocorrências
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={() => setOrdensParaGerar([])}
+                          variant="outline"
+                          size="sm"
+                          style={{ borderColor: theme.inputBorder, color: theme.text }}
+                        >
+                          Limpar Seleção
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
