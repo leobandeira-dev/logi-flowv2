@@ -1139,19 +1139,19 @@ export default function OcorrenciasGestao() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Ticket</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Tipo</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Resp.</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Categoria</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Etapa</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Nº Pedido</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Observações</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Gravidade</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Status</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Data Início</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Tempo</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Prazo SLA</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Ações</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Ticket</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Tipo</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Resp.</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Categoria</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Etapa</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Nº Pedido</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Observações</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Gravidade</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Status</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Data Início</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Tempo</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Prazo SLA</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Ações</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1171,25 +1171,42 @@ export default function OcorrenciasGestao() {
                             style={{ borderColor: theme.cardBorder }}
                             onClick={() => setSelectedOcorrencia(ocorrencia)}
                           >
-                            <td className="px-2 py-1">
-                              <span className="text-[11px] font-mono font-bold text-orange-600 block leading-tight">
+                            <td className="px-2 py-1.5">
+                              <span className="text-xs font-mono font-bold text-orange-600 block leading-tight">
                                 {ocorrencia.numero_ticket || "-"}
                               </span>
                             </td>
-                            <td className="px-2 py-1">
+                            <td className="px-2 py-1.5">
                               <div className="flex flex-col gap-0.5">
-                                <span className="text-[11px] font-medium leading-tight line-clamp-1" style={{ color: theme.text }}>
+                                <span className="text-xs font-medium leading-tight line-clamp-1" style={{ color: theme.text }}>
                                   {tipo?.nome || ocorrencia.tipo}
                                 </span>
                                 {isAvulsa && (
-                                  <Badge className="text-[9px] w-fit bg-green-600 text-white px-1 py-0 h-4 leading-none">
+                                  <Badge className="text-[10px] w-fit bg-green-600 text-white px-1.5 py-0 h-4 leading-none">
+                                    AVULSA
+                                  </Badge>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <span className="text-sm font-mono font-bold text-orange-600 block leading-tight">
+                                {ocorrencia.numero_ticket || "-"}
+                              </span>
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-sm font-medium leading-tight line-clamp-1" style={{ color: theme.text }}>
+                                  {tipo?.nome || ocorrencia.tipo}
+                                </span>
+                                {isAvulsa && (
+                                  <Badge className="text-xs w-fit bg-green-600 text-white px-1.5 py-0.5 h-5 leading-none">
                                     AVULSA
                                   </Badge>
                                 )}
                               </div>
                             </td>
                             <td 
-                              className="px-2 py-1 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
+                              className="px-2 py-1.5 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setOcorrenciaParaResponsavel(ocorrencia);
@@ -1198,9 +1215,9 @@ export default function OcorrenciasGestao() {
                               }}
                             >
                               {responsavel ? (
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-2">
                                   <div 
-                                    className="w-6 h-6 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border"
+                                    className="w-7 h-7 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border"
                                     style={{
                                       backgroundColor: responsavel.foto_url ? 'transparent' : (isDark ? '#1e3a8a' : '#dbeafe'),
                                       borderColor: isDark ? '#3b82f6' : '#93c5fd'
@@ -1213,60 +1230,60 @@ export default function OcorrenciasGestao() {
                                         className="w-full h-full object-cover"
                                       />
                                     ) : (
-                                      <User className="w-3 h-3" style={{ color: isDark ? '#60a5fa' : '#1d4ed8' }} />
+                                      <User className="w-3.5 h-3.5" style={{ color: isDark ? '#60a5fa' : '#1d4ed8' }} />
                                     )}
                                   </div>
-                                  <span className="text-[11px] font-medium leading-tight" style={{ color: theme.text }}>
+                                  <span className="text-sm font-medium leading-tight" style={{ color: theme.text }}>
                                     {responsavel.full_name?.split(' ')[0]}
                                   </span>
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-1 text-blue-600 hover:text-blue-700">
-                                  <User className="w-3 h-3" />
-                                  <span className="text-[10px] font-medium">Atribuir</span>
+                                <div className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700">
+                                  <User className="w-3.5 h-3.5" />
+                                  <span className="text-xs font-medium">Atribuir</span>
                                 </div>
                               )}
                             </td>
-                            <td className="px-2 py-1">
-                              <Badge className={`text-[10px] px-1.5 py-0 h-4 leading-none ${categoriaColors[ocorrencia.categoria]}`}>
+                            <td className="px-2 py-1.5">
+                              <Badge className={`text-xs px-2 py-0.5 ${categoriaColors[ocorrencia.categoria]}`}>
                                 {ocorrencia.categoria === "nota_fiscal" ? "NF" : ocorrencia.categoria === "em_andamento" ? "andamento" : ocorrencia.categoria}
                               </Badge>
                             </td>
-                            <td className="px-2 py-1">
+                            <td className="px-2 py-1.5">
                               {etapaNome ? (
-                                <span className="text-[11px] font-medium text-purple-600 dark:text-purple-400 line-clamp-1 leading-tight">
+                                <span className="text-xs font-medium text-purple-600 dark:text-purple-400 line-clamp-1 leading-tight">
                                   {etapaNome}
                                 </span>
                               ) : (
-                                <span className="text-[11px]" style={{ color: theme.textMuted }}>-</span>
+                                <span className="text-xs" style={{ color: theme.textMuted }}>-</span>
                               )}
                             </td>
-                            <td className="px-2 py-1">
-                              <span className="text-[11px] font-mono leading-tight" style={{ color: theme.text }}>
+                            <td className="px-2 py-1.5">
+                              <span className="text-xs font-mono leading-tight" style={{ color: theme.text }}>
                                 {ordem?.viagem_pedido || "-"}
                               </span>
                             </td>
-                            <td className="px-2 py-1 max-w-[180px]">
+                            <td className="px-2 py-1.5 max-w-[180px]">
                               <div 
-                                className="text-[11px] line-clamp-2 leading-tight" 
+                                className="text-xs line-clamp-2 leading-tight" 
                                 style={{ color: theme.textMuted }}
                                 title={ocorrencia.observacoes}
                               >
                                 {ocorrencia.observacoes}
                               </div>
                             </td>
-                            <td className="px-2 py-1">
-                              <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 leading-none border ${gravidadeColors[ocorrencia.gravidade]}`}>
+                            <td className="px-2 py-1.5">
+                              <Badge variant="outline" className={`text-xs px-2 py-0.5 border ${gravidadeColors[ocorrencia.gravidade]}`}>
                                 {ocorrencia.gravidade}
                               </Badge>
                             </td>
-                            <td className="px-2 py-1">
-                              <Badge className={`text-[10px] px-1.5 py-0 h-4 leading-none ${statusColors[getStatusFromOcorrencia(ocorrencia)]}`}>
+                            <td className="px-2 py-1.5">
+                              <Badge className={`text-xs px-2 py-0.5 ${statusColors[getStatusFromOcorrencia(ocorrencia)]}`}>
                                 {getStatusFromOcorrencia(ocorrencia) === "em_andamento" ? "andamento" : getStatusFromOcorrencia(ocorrencia)}
                               </Badge>
                             </td>
-                            <td className="px-2 py-1">
-                              <span className="text-[11px] whitespace-nowrap leading-tight" style={{ color: theme.textMuted }}>
+                            <td className="px-2 py-1.5">
+                              <span className="text-xs whitespace-nowrap leading-tight" style={{ color: theme.textMuted }}>
                                 {ocorrencia.data_inicio ? (
                                   <>
                                     {new Date(ocorrencia.data_inicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
@@ -1276,18 +1293,18 @@ export default function OcorrenciasGestao() {
                                 ) : '-'}
                               </span>
                             </td>
-                            <td className="px-2 py-1">
-                              <span className="text-[11px] font-medium leading-tight" style={{ color: theme.text }}>
+                            <td className="px-2 py-1.5">
+                              <span className="text-xs font-medium leading-tight" style={{ color: theme.text }}>
                                 {formatElapsedTime(tempoDecorrido)}
                               </span>
                             </td>
-                            <td className="px-2 py-1">
+                            <td className="px-2 py-1.5">
                               {timeRemaining ? (
-                                <div className="flex items-center gap-1">
-                                  <span className={`text-[11px] font-medium leading-tight ${getTimeRemainingColor(timeRemaining)}`}>
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`text-xs font-medium leading-tight ${getTimeRemainingColor(timeRemaining)}`}>
                                     {formatTimeRemaining(timeRemaining)}
                                   </span>
-                                  <div className="w-12 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
+                                  <div className="w-14 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
                                     <div
                                       className={`h-full transition-all ${
                                         timeRemaining.atrasado 
@@ -1303,12 +1320,12 @@ export default function OcorrenciasGestao() {
                                   </div>
                                 </div>
                               ) : (
-                                <span className="text-[11px] leading-tight" style={{ color: theme.textMuted }}>
+                                <span className="text-xs leading-tight" style={{ color: theme.textMuted }}>
                                   {ocorrencia.status === "aberta" ? "Sem prazo" : "-"}
                                 </span>
                               )}
                             </td>
-                            <td className="px-2 py-1">
+                            <td className="px-2 py-1.5">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -1317,7 +1334,7 @@ export default function OcorrenciasGestao() {
                                   setSelectedOcorrencia(ocorrencia);
                                 }}
                                 style={{ borderColor: theme.inputBorder }}
-                                className="h-6 text-[10px] px-2"
+                                className="h-7 text-xs px-2"
                               >
                                 Ver
                               </Button>
@@ -1535,14 +1552,14 @@ export default function OcorrenciasGestao() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Nome</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Código</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Categoria</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Descrição</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Gravidade</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>SLA</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Status</th>
-                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Ações</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Nome</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Código</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Categoria</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Descrição</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Gravidade</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>SLA</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Status</th>
+                        <th className="text-left px-2 py-2 text-sm font-semibold" style={{ color: theme.textMuted }}>Ações</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1556,52 +1573,52 @@ export default function OcorrenciasGestao() {
                             setShowTipoForm(true);
                           }}
                         >
-                          <td className="px-2 py-1">
-                            <div className="flex items-center gap-1.5">
+                          <td className="px-2 py-1.5">
+                            <div className="flex items-center gap-2">
                               <div 
-                                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                className="w-3 h-3 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: tipo.cor }}
                               />
-                              <span className="text-[11px] font-semibold leading-tight line-clamp-1" style={{ color: theme.text }}>
+                              <span className="text-sm font-semibold leading-tight line-clamp-1" style={{ color: theme.text }}>
                                 {tipo.nome}
                               </span>
                             </div>
                           </td>
-                          <td className="px-2 py-1">
-                            <span className="text-[11px] font-mono leading-tight" style={{ color: theme.textMuted }}>
+                          <td className="px-2 py-1.5">
+                            <span className="text-xs font-mono leading-tight" style={{ color: theme.textMuted }}>
                               {tipo.codigo || '-'}
                             </span>
                           </td>
-                          <td className="px-2 py-1">
-                            <Badge className={`text-[10px] px-1.5 py-0 h-4 leading-none ${categoriaColors[tipo.categoria]}`}>
+                          <td className="px-2 py-1.5">
+                            <Badge className={`text-xs px-2 py-0.5 ${categoriaColors[tipo.categoria]}`}>
                               {tipo.categoria === "nota_fiscal" ? "NF" : tipo.categoria}
                             </Badge>
                           </td>
-                          <td className="px-2 py-1 max-w-[200px]">
+                          <td className="px-2 py-1.5 max-w-[200px]">
                             <div 
-                              className="text-[11px] line-clamp-2 leading-tight" 
+                              className="text-xs line-clamp-2 leading-tight" 
                               style={{ color: theme.textMuted }}
                               title={tipo.descricao}
                             >
                               {tipo.descricao || '-'}
                             </div>
                           </td>
-                          <td className="px-2 py-1">
-                            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 leading-none border ${gravidadeColors[tipo.gravidade_padrao]}`}>
+                          <td className="px-2 py-1.5">
+                            <Badge variant="outline" className={`text-xs px-2 py-0.5 border ${gravidadeColors[tipo.gravidade_padrao]}`}>
                               {tipo.gravidade_padrao}
                             </Badge>
                           </td>
-                          <td className="px-2 py-1">
-                            <span className="text-[11px] font-medium leading-tight" style={{ color: theme.text }}>
+                          <td className="px-2 py-1.5">
+                            <span className="text-xs font-medium leading-tight" style={{ color: theme.text }}>
                               {tipo.prazo_sla_minutos ? `${tipo.prazo_sla_minutos}min` : tipo.prazo_sla_horas ? `${tipo.prazo_sla_horas}h` : '-'}
                             </span>
                           </td>
-                          <td className="px-2 py-1">
-                            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 leading-none ${tipo.ativo ? 'bg-green-50 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-50 text-gray-700 border-gray-300 dark:bg-gray-700/20 dark:text-gray-400'}`}>
+                          <td className="px-2 py-1.5">
+                            <Badge variant="outline" className={`text-xs px-2 py-0.5 ${tipo.ativo ? 'bg-green-50 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-50 text-gray-700 border-gray-300 dark:bg-gray-700/20 dark:text-gray-400'}`}>
                               {tipo.ativo ? 'Ativo' : 'Inativo'}
                             </Badge>
                           </td>
-                          <td className="px-2 py-1">
+                          <td className="px-2 py-1.5">
                             <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
