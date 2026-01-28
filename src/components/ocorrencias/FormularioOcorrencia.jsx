@@ -54,6 +54,8 @@ export default function FormularioOcorrencia({
   const [saving, setSaving] = useState(false);
   const [usuarioBusca, setUsuarioBusca] = useState("");
   const [departamentoBusca, setDepartamentoBusca] = useState("");
+  const [showUsuarioDropdown, setShowUsuarioDropdown] = useState(false);
+  const [showDepartamentoDropdown, setShowDepartamentoDropdown] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -293,13 +295,16 @@ export default function FormularioOcorrencia({
                     onChange={(e) => {
                       setUsuarioBusca(e.target.value);
                       setFormData({ ...formData, responsavel_id: "" });
+                      setShowUsuarioDropdown(true);
                     }}
+                    onFocus={() => setShowUsuarioDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowUsuarioDropdown(false), 200)}
                     placeholder="Digite o nome do usuário..."
                     className="w-full"
                   />
-                  {usuarioBusca && !formData.responsavel_id && (
+                  {showUsuarioDropdown && !formData.responsavel_id && (
                     <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-auto">
-                      {usuarios.filter(u => u.full_name.toLowerCase().includes(usuarioBusca.toLowerCase())).length === 0 ? (
+                      {usuarios.filter(u => !usuarioBusca || u.full_name.toLowerCase().includes(usuarioBusca.toLowerCase())).length === 0 ? (
                         <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                           Nenhum usuário encontrado
                         </div>
@@ -310,12 +315,13 @@ export default function FormularioOcorrencia({
                             onClick={() => {
                               setFormData({ ...formData, responsavel_id: "" });
                               setUsuarioBusca("");
+                              setShowUsuarioDropdown(false);
                             }}
                           >
                             <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum usuário</p>
                           </div>
                           {usuarios
-                            .filter(u => u.full_name.toLowerCase().includes(usuarioBusca.toLowerCase()))
+                            .filter(u => !usuarioBusca || u.full_name.toLowerCase().includes(usuarioBusca.toLowerCase()))
                             .slice(0, 10)
                             .map((usuario) => (
                               <div
@@ -324,6 +330,7 @@ export default function FormularioOcorrencia({
                                 onClick={() => {
                                   setFormData({ ...formData, responsavel_id: usuario.id });
                                   setUsuarioBusca("");
+                                  setShowUsuarioDropdown(false);
                                 }}
                               >
                                 <div className="flex items-center gap-3">
@@ -363,14 +370,17 @@ export default function FormularioOcorrencia({
                     onChange={(e) => {
                       setDepartamentoBusca(e.target.value);
                       setFormData({ ...formData, departamento_responsavel_id: "" });
+                      setShowDepartamentoDropdown(true);
                     }}
+                    onFocus={() => setShowDepartamentoDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowDepartamentoDropdown(false), 200)}
                     placeholder="Digite o nome do departamento..."
                     className="w-full"
                   />
-                  {departamentoBusca && !formData.departamento_responsavel_id && (
+                  {showDepartamentoDropdown && !formData.departamento_responsavel_id && (
                     <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-auto">
                       {departamentos
-                        .filter(d => d.ativo && d.nome.toLowerCase().includes(departamentoBusca.toLowerCase()))
+                        .filter(d => d.ativo && (!departamentoBusca || d.nome.toLowerCase().includes(departamentoBusca.toLowerCase())))
                         .length === 0 ? (
                         <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                           Nenhum departamento encontrado
@@ -382,12 +392,13 @@ export default function FormularioOcorrencia({
                             onClick={() => {
                               setFormData({ ...formData, departamento_responsavel_id: "" });
                               setDepartamentoBusca("");
+                              setShowDepartamentoDropdown(false);
                             }}
                           >
                             <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum departamento</p>
                           </div>
                           {departamentos
-                            .filter(d => d.ativo && d.nome.toLowerCase().includes(departamentoBusca.toLowerCase()))
+                            .filter(d => d.ativo && (!departamentoBusca || d.nome.toLowerCase().includes(departamentoBusca.toLowerCase())))
                             .slice(0, 10)
                             .map((departamento) => (
                               <div
@@ -396,6 +407,7 @@ export default function FormularioOcorrencia({
                                 onClick={() => {
                                   setFormData({ ...formData, departamento_responsavel_id: departamento.id });
                                   setDepartamentoBusca("");
+                                  setShowDepartamentoDropdown(false);
                                 }}
                               >
                                 <div className="flex items-center gap-3">
