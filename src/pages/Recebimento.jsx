@@ -57,6 +57,7 @@ export default function Recebimento() {
   const [todasNotasFiscais, setTodasNotasFiscais] = useState([]);
   const [todosVolumes, setTodosVolumes] = useState([]);
   const [todasOrdens, setTodasOrdens] = useState([]);
+  const [ocorrencias, setOcorrencias] = useState([]);
   const [totalNotasFiscais, setTotalNotasFiscais] = useState(0);
   const [loadingNotas, setLoadingNotas] = useState(false);
   const [notasCarregadas, setNotasCarregadas] = useState(false);
@@ -762,14 +763,18 @@ export default function Recebimento() {
       }
       
       // Carregar apenas recebimentos (sem limit para ter dados completos)
-      const ordensData = await base44.entities.OrdemDeCarregamento.filter(
-        { tipo_registro: "recebimento" }, 
-        "-data_solicitacao"
-      );
+      const [ordensData, ocorrenciasData] = await Promise.all([
+        base44.entities.OrdemDeCarregamento.filter(
+          { tipo_registro: "recebimento" }, 
+          "-data_solicitacao"
+        ),
+        base44.entities.Ocorrencia.list()
+      ]);
       
       setRecebimentos(ordensData);
       setTodasOrdens(ordensData);
       setUsuarios(usuariosData);
+      setOcorrencias(ocorrenciasData);
       
       // Notas e volumes carregados sob demanda
     } catch (error) {
@@ -2162,6 +2167,7 @@ export default function Recebimento() {
                 isDark={isDark}
                 showFilters={false}
                 loading={loadingNotas}
+                ocorrencias={ocorrencias}
               />
             )}
           </TabsContent>
