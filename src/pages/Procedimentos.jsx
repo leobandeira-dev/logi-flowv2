@@ -13,7 +13,8 @@ import {
   Package,
   Truck,
   FileSpreadsheet,
-  User
+  User,
+  CheckCircle2
 } from "lucide-react";
 import { 
   InstrucaoOrdensCarregamentoDetalhada, 
