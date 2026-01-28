@@ -1619,7 +1619,7 @@ export default function OcorrenciasGestao() {
                             </Badge>
                           </td>
                           <td className="px-2 py-1.5">
-                            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button
