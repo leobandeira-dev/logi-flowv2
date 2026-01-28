@@ -71,7 +71,8 @@ const categoriaColors = {
   tracking: "bg-blue-600 text-white",
   fluxo: "bg-purple-600 text-white",
   tarefa: "bg-teal-600 text-white",
-  diaria: "bg-green-600 text-white"
+  diaria: "bg-green-600 text-white",
+  nota_fiscal: "bg-violet-600 text-white"
 };
 
 // Função para gerar número de ticket - ATUALIZADA COM SEGUNDOS
@@ -697,11 +698,12 @@ export default function OcorrenciasGestao() {
     const tracking = todasOcorrenciasFiltradas.filter(o => o.categoria === "tracking").length;
     const fluxo = todasOcorrenciasFiltradas.filter(o => o.categoria === "fluxo").length;
     const tarefa = todasOcorrenciasFiltradas.filter(o => o.categoria === "tarefa").length;
+    const notasFiscais = todasOcorrenciasFiltradas.filter(o => o.categoria === "nota_fiscal").length;
     const avulsas = todasOcorrenciasFiltradas.filter(o => !o.ordem_id).length;
     const diarias = todasOcorrenciasFiltradas.filter(o => o.categoria === "diaria").length;
     const diariasPendentes = todasOcorrenciasFiltradas.filter(o => o.categoria === "diaria" && (o.status_cobranca === "pendente_valor" || o.status_cobranca === "pendente_autorizacao")).length;
 
-    return { total, abertas, emAndamento, resolvidas, criticas, atrasadas, tracking, fluxo, tarefa, avulsas, diarias, diariasPendentes };
+    return { total, abertas, emAndamento, resolvidas, criticas, atrasadas, tracking, fluxo, tarefa, notasFiscais, avulsas, diarias, diariasPendentes };
   };
 
   const handleAtribuirResponsavel = async () => {
@@ -1060,6 +1062,27 @@ export default function OcorrenciasGestao() {
               <span className="text-2xl font-bold text-teal-600">{metrics.tarefa}</span>
             </div>
             <p className="text-xs font-medium" style={{ color: theme.textMuted }}>Tarefa</p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          style={{ 
+            backgroundColor: filters.categoria === "nota_fiscal" ? (isDark ? '#1e293b' : '#ede9fe') : theme.cardBg, 
+            borderColor: filters.categoria === "nota_fiscal" ? '#8b5cf6' : theme.cardBorder,
+            cursor: 'pointer'
+          }}
+          className="hover:shadow-lg transition-shadow"
+          onClick={() => {
+            setFilters({ ...filters, categoria: filters.categoria === "nota_fiscal" ? "" : "nota_fiscal" });
+            setPaginaAtual(1);
+          }}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <FileText className="w-5 h-5 text-violet-600" />
+              <span className="text-2xl font-bold text-violet-600">{metrics.notasFiscais}</span>
+            </div>
+            <p className="text-xs font-medium" style={{ color: theme.textMuted }}>Notas Fiscais</p>
           </CardContent>
         </Card>
 
@@ -1496,6 +1519,14 @@ export default function OcorrenciasGestao() {
                   className={categoriaTipoFilter === "diaria" ? "bg-green-600 text-white" : ""}
                 >
                   Diária ({tiposOcorrencia.filter(t => t.categoria === "diaria").length})
+                </Button>
+                <Button
+                  variant={categoriaTipoFilter === "nota_fiscal" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCategoriaTipoFilter("nota_fiscal")}
+                  className={categoriaTipoFilter === "nota_fiscal" ? "bg-violet-600 text-white" : ""}
+                >
+                  Nota Fiscal ({tiposOcorrencia.filter(t => t.categoria === "nota_fiscal").length})
                 </Button>
               </div>
             </CardHeader>

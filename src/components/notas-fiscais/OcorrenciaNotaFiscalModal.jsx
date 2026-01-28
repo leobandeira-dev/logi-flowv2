@@ -75,7 +75,7 @@ export default function OcorrenciaNotaFiscalModal({ open, onClose, nota, onSucce
   const loadData = async () => {
     try {
       const [tiposData, usuariosData] = await Promise.all([
-        base44.entities.TipoOcorrencia.filter({ categoria: "fluxo", ativo: true }),
+        base44.entities.TipoOcorrencia.filter({ categoria: "nota_fiscal", ativo: true }),
         base44.functions.invoke('listarUsuariosEmpresa', {}).then(r => r.data || [])
       ]);
       
@@ -111,7 +111,7 @@ export default function OcorrenciaNotaFiscalModal({ open, onClose, nota, onSucce
         tipo_ocorrencia_id: tipoSelecionado || null,
         tipo: tipoOcorrencia?.nome || "Nota Fiscal",
         descricao_tipo: tipoOcorrencia?.descricao || null,
-        categoria: "fluxo",
+        categoria: "nota_fiscal",
         observacoes: observacoes.trim(),
         gravidade: gravidade,
         status: "aberta",
