@@ -220,47 +220,22 @@ export default function FormularioOcorrencia({
             )}
           </div>
 
-          {/* Gravidade */}
-          <div>
-            <Label htmlFor="gravidade" className="font-bold">
-              Gravidade *
-            </Label>
-            <Select 
-              value={formData.gravidade}
-              onValueChange={(value) => setFormData({ ...formData, gravidade: value })}
-              required
-            >
-              <SelectTrigger id="gravidade">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="baixa">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-500" />
-                    Baixa
-                  </div>
-                </SelectItem>
-                <SelectItem value="media">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                    Média
-                  </div>
-                </SelectItem>
-                <SelectItem value="alta">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-orange-500" />
-                    Alta
-                  </div>
-                </SelectItem>
-                <SelectItem value="critica">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-600" />
-                    Crítica
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Gravidade - somente exibição */}
+          {tipoSelecionado && (
+            <div>
+              <Label className="font-bold">
+                Gravidade
+              </Label>
+              <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border-2 border-gray-200 dark:border-gray-700">
+                <Badge variant="outline" className={`text-sm border ${gravidadeColors[formData.gravidade]}`}>
+                  {formData.gravidade.charAt(0).toUpperCase() + formData.gravidade.slice(1)}
+                </Badge>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Gravidade definida automaticamente pelo tipo de ocorrência selecionado
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Responsável */}
           <div>
