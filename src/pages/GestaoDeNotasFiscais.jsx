@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, RefreshCw, Eye, Package, Printer, Clock, MapPin, CheckCircle2, Edit, Download, Filter, Calendar, FileText, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import FormularioOcorrencia from "../components/ocorrencias/FormularioOcorrencia";
+import OcorrenciaDetalhes from "../components/ocorrencias/OcorrenciaDetalhes";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +48,8 @@ export default function GestaoDeNotasFiscais() {
   const [tiposOcorrencia, setTiposOcorrencia] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [departamentos, setDepartamentos] = useState([]);
+  const [showOcorrenciaDetalhes, setShowOcorrenciaDetalhes] = useState(false);
+  const [ocorrenciaSelecionada, setOcorrenciaSelecionada] = useState(null);
   
   // Filtros adicionais
   const [filtroEmitente, setFiltroEmitente] = useState("");
@@ -618,8 +621,17 @@ export default function GestaoDeNotasFiscais() {
                         </td>
                         <td className="px-2 py-1.5">
                           {ocorrenciaAberta ? (
-                            <Badge className="bg-red-600 text-white text-[10px] px-1.5 py-0 font-mono">
-                              #{nota.ocorrencia_numero_ticket}
+                            <Badge className="bg-red-600 text-white text-[10px] px-1.5 py-0 font-mono cursor-pointer hover:bg-red-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOcorrenciaSelecionada(ocorrenciaAberta);
+                                setShowOcorrenciaDetalhes(true);
+                              }}
+                            >
+                              {(() => {
+                                const tipo = tiposOcorrencia.find(t => t.id === ocorrenciaAberta.tipo_ocorrencia_id);
+                                return tipo?.codigo || `#${nota.ocorrencia_numero_ticket}`;
+                              })()}
                             </Badge>
                           ) : (
                             <span className="text-xs" style={{ color: theme.textMuted }}>-</span>
@@ -660,15 +672,20 @@ export default function GestaoDeNotasFiscais() {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                setNotaParaOcorrencia(nota);
-                                setShowOcorrenciaModal(true);
+                                if (ocorrenciaAberta) {
+                                  setOcorrenciaSelecionada(ocorrenciaAberta);
+                                  setShowOcorrenciaDetalhes(true);
+                                } else {
+                                  setNotaParaOcorrencia(nota);
+                                  setShowOcorrenciaModal(true);
+                                }
                               }}
                               style={{ 
                                 borderColor: ocorrenciaAberta ? '#dc2626' : '#f59e0b',
                                 color: ocorrenciaAberta ? '#dc2626' : '#f59e0b',
                                 backgroundColor: ocorrenciaAberta ? (isDark ? '#7f1d1d33' : '#fee2e233') : (isDark ? '#78350f33' : '#fef3c733')
                               }}
-                              title={ocorrenciaAberta ? `Ocorrência #${nota.ocorrencia_numero_ticket} aberta` : "Registrar problema"}
+                              title={ocorrenciaAberta ? `Ver ocorrência ${tiposOcorrencia.find(t => t.id === ocorrenciaAberta.tipo_ocorrencia_id)?.codigo || nota.ocorrencia_numero_ticket}` : "Registrar problema"}
                               className="h-6 w-6 p-0"
                             >
                               <AlertTriangle className="w-3 h-3" />
@@ -924,6 +941,22 @@ export default function GestaoDeNotasFiscais() {
             categoriaFixa="nota_fiscal"
             contexto="nota_fiscal"
             contextoDescricao={`Nota Fiscal: ${notaParaOcorrencia.numero_nota}`}
+          />
+        )}
+
+        {showOcorrenciaDetalhes && ocorrenciaSelecionada && (
+          <OcorrenciaDetalhes
+            open={showOcorrenciaDetalhes}
+            onClose={() => {
+              setShowOcorrenciaDetalhes(false);
+              setOcorrenciaSelecionada(null);
+            }}
+            ocorrencia={ocorrenciaSelecionada}
+            onUpdate={() => {
+              setShowOcorrenciaDetalhes(false);
+              setOcorrenciaSelecionada(null);
+              loadData();
+            }}
           />
         )}
       </div>
