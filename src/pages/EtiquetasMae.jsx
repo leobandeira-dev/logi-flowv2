@@ -67,6 +67,8 @@ export default function EtiquetasMae() {
   const volumesVinculadosIdsRef = React.useRef(new Set());
   const [vinculandoEmLote, setVinculandoEmLote] = useState(false);
   const [progressoVinculacao, setProgressoVinculacao] = useState({ atual: 0, total: 0 });
+  const [notaAtualScanner, setNotaAtualScanner] = useState(null);
+  const [progressoNotaScanner, setProgressoNotaScanner] = useState(null);
   
   const [novaEtiqueta, setNovaEtiqueta] = useState({
     codigo: "",
@@ -523,6 +525,14 @@ export default function EtiquetasMae() {
       const volumesNotaAtualizados = volumesVinculadosAtualizados.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
       const todosVolumesNota = volumesAtualizadosBanco.filter(v => v.nota_fiscal_id === volumeEncontrado.nota_fiscal_id);
       const faltamNota = todosVolumesNota.length - volumesNotaAtualizados.length;
+      
+      // ATUALIZAR PROGRESSO DA NOTA NO SCANNER
+      setNotaAtualScanner(nota);
+      setProgressoNotaScanner({
+        embarcados: volumesNotaAtualizados.length,
+        total: todosVolumesNota.length,
+        faltam: faltamNota
+      });
       
       playSuccessBeep();
 
@@ -2418,10 +2428,16 @@ export default function EtiquetasMae() {
         {showVolumeCameraScanner && (
           <CameraScanner
             open={showVolumeCameraScanner}
-            onClose={() => setShowVolumeCameraScanner(false)}
+            onClose={() => {
+              setShowVolumeCameraScanner(false);
+              setNotaAtualScanner(null);
+              setProgressoNotaScanner(null);
+            }}
             onScan={handleVolumeCameraScan}
             isDark={isDark}
             externalFeedback={cameraScanFeedback}
+            notaAtual={notaAtualScanner}
+            progressoAtual={progressoNotaScanner}
           />
         )}
       </div>
