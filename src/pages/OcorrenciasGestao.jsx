@@ -1139,20 +1139,19 @@ export default function OcorrenciasGestao() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b" style={{ borderColor: theme.cardBorder }}>
-                        <th className="text-left p-3 text-sm font-semibold" style={{ color: theme.textMuted }}>Ticket</th>
-                        <th className="text-left p-3 text-sm font-semibold" style={{ color: theme.textMuted }}>Tipo</th>
-                        <th className="text-left p-3 text-sm font-semibold" style={{ color: theme.textMuted }}>Resp.</th>
-                        <th className="text-left p-3 text-sm font-semibold" style={{ color: theme.textMuted }}>Categoria</th>
-                        <th className="text-left p-3 text-sm font-semibold" style={{ color: theme.textMuted }}>Etapa</th>
-                        <th className="text-left p-3 text-sm font-semibold" style={{ color: theme.textMuted }}>Ordem</th>
-                        <th className="text-left p-3 text-sm font-semibold" style={{ color: theme.textMuted }}>Nº Pedido</th>
-                        <th className="text-left p-3 text-sm font-semibold min-w-[200px]" style={{ color: theme.textMuted }}>Observações</th>
-                        <th className="text-left p-3 text-sm font-semibold" style={{ color: theme.textMuted }}>Gravidade</th>
-                        <th className="text-left p-3 text-sm font-semibold" style={{ color: theme.textMuted }}>Status</th>
-                        <th className="text-left p-3 text-sm font-semibold" style={{ color: theme.textMuted }}>Data Início</th>
-                        <th className="text-left p-3 text-sm font-semibold" style={{ color: theme.textMuted }}>Tempo</th>
-                        <th className="text-left p-3 text-sm font-semibold" style={{ color: theme.textMuted }}>Prazo SLA</th>
-                        <th className="text-left p-3 text-sm font-semibold" style={{ color: theme.textMuted }}>Ações</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Ticket</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Tipo</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Resp.</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Categoria</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Etapa</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Nº Pedido</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Observações</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Gravidade</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Status</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Data Início</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Tempo</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Prazo SLA</th>
+                        <th className="text-left px-2 py-1.5 text-xs font-semibold" style={{ color: theme.textMuted }}>Ações</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1172,28 +1171,25 @@ export default function OcorrenciasGestao() {
                             style={{ borderColor: theme.cardBorder }}
                             onClick={() => setSelectedOcorrencia(ocorrencia)}
                           >
-                            <td className="p-3">
-                              <div className="flex items-center gap-2">
-                                <Ticket className="w-4 h-4 text-orange-600" />
-                                <span className="text-sm font-mono font-bold text-orange-600">
-                                  {ocorrencia.numero_ticket || "-"}
-                                </span>
-                              </div>
+                            <td className="px-2 py-1">
+                              <span className="text-[11px] font-mono font-bold text-orange-600 block leading-tight">
+                                {ocorrencia.numero_ticket || "-"}
+                              </span>
                             </td>
-                            <td className="p-3">
-                              <div className="flex flex-col gap-1">
-                                <span className="text-sm font-medium" style={{ color: theme.text }}>
+                            <td className="px-2 py-1">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-[11px] font-medium leading-tight line-clamp-1" style={{ color: theme.text }}>
                                   {tipo?.nome || ocorrencia.tipo}
                                 </span>
                                 {isAvulsa && (
-                                  <Badge className="text-xs w-fit bg-green-600 text-white border-2 border-green-700 font-bold">
+                                  <Badge className="text-[9px] w-fit bg-green-600 text-white px-1 py-0 h-4 leading-none">
                                     AVULSA
                                   </Badge>
                                 )}
                               </div>
                             </td>
                             <td 
-                              className="p-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
+                              className="px-2 py-1 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setOcorrenciaParaResponsavel(ocorrencia);
@@ -1202,9 +1198,9 @@ export default function OcorrenciasGestao() {
                               }}
                             >
                               {responsavel ? (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1.5">
                                   <div 
-                                    className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border-2"
+                                    className="w-6 h-6 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 border"
                                     style={{
                                       backgroundColor: responsavel.foto_url ? 'transparent' : (isDark ? '#1e3a8a' : '#dbeafe'),
                                       borderColor: isDark ? '#3b82f6' : '#93c5fd'
@@ -1217,84 +1213,81 @@ export default function OcorrenciasGestao() {
                                         className="w-full h-full object-cover"
                                       />
                                     ) : (
-                                      <User className="w-4 h-4" style={{ color: isDark ? '#60a5fa' : '#1d4ed8' }} />
+                                      <User className="w-3 h-3" style={{ color: isDark ? '#60a5fa' : '#1d4ed8' }} />
                                     )}
                                   </div>
-                                  <span className="text-sm font-medium" style={{ color: theme.text }}>
+                                  <span className="text-[11px] font-medium leading-tight" style={{ color: theme.text }}>
                                     {responsavel.full_name?.split(' ')[0]}
                                   </span>
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-2 text-blue-600 hover:text-blue-700">
-                                  <User className="w-4 h-4" />
-                                  <span className="text-xs font-medium">Atribuir</span>
+                                <div className="flex items-center gap-1 text-blue-600 hover:text-blue-700">
+                                  <User className="w-3 h-3" />
+                                  <span className="text-[10px] font-medium">Atribuir</span>
                                 </div>
                               )}
                             </td>
-                            <td className="p-3">
-                              <Badge className={`text-xs ${categoriaColors[ocorrencia.categoria]}`}>
-                                {ocorrencia.categoria}
+                            <td className="px-2 py-1">
+                              <Badge className={`text-[10px] px-1.5 py-0 h-4 leading-none ${categoriaColors[ocorrencia.categoria]}`}>
+                                {ocorrencia.categoria === "nota_fiscal" ? "NF" : ocorrencia.categoria === "em_andamento" ? "andamento" : ocorrencia.categoria}
                               </Badge>
                             </td>
-                            <td className="p-3">
+                            <td className="px-2 py-1">
                               {etapaNome ? (
-                                <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                                <span className="text-[11px] font-medium text-purple-600 dark:text-purple-400 line-clamp-1 leading-tight">
                                   {etapaNome}
                                 </span>
                               ) : (
-                                <span className="text-sm" style={{ color: theme.textMuted }}>-</span>
+                                <span className="text-[11px]" style={{ color: theme.textMuted }}>-</span>
                               )}
                             </td>
-                            <td className="p-3">
-                              {ordem ? (
-                                <span className="text-sm font-medium text-blue-600">
-                                  {ordem.numero_carga || `#${ocorrencia.ordem_id?.slice(-6)}`}
-                                </span>
-                              ) : (
-                                <span className="text-sm" style={{ color: theme.textMuted }}>-</span>
-                              )}
-                            </td>
-                            <td className="p-3">
-                              <span className="text-sm font-medium" style={{ color: theme.text }}>
+                            <td className="px-2 py-1">
+                              <span className="text-[11px] font-mono leading-tight" style={{ color: theme.text }}>
                                 {ordem?.viagem_pedido || "-"}
                               </span>
                             </td>
-                            <td className="p-3 max-w-xs">
+                            <td className="px-2 py-1 max-w-[180px]">
                               <div 
-                                className="text-sm" 
+                                className="text-[11px] line-clamp-2 leading-tight" 
                                 style={{ color: theme.textMuted }}
                                 title={ocorrencia.observacoes}
                               >
-                                {truncateText(ocorrencia.observacoes, 60)}
+                                {ocorrencia.observacoes}
                               </div>
                             </td>
-                            <td className="p-3">
-                              <Badge variant="outline" className={`text-xs border ${gravidadeColors[ocorrencia.gravidade]}`}>
+                            <td className="px-2 py-1">
+                              <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 leading-none border ${gravidadeColors[ocorrencia.gravidade]}`}>
                                 {ocorrencia.gravidade}
                               </Badge>
                             </td>
-                            <td className="p-3">
-                              <Badge className={`text-xs ${statusColors[getStatusFromOcorrencia(ocorrencia)]}`}>
-                                {getStatusFromOcorrencia(ocorrencia) === "em_andamento" ? "em andamento" : getStatusFromOcorrencia(ocorrencia)}
+                            <td className="px-2 py-1">
+                              <Badge className={`text-[10px] px-1.5 py-0 h-4 leading-none ${statusColors[getStatusFromOcorrencia(ocorrencia)]}`}>
+                                {getStatusFromOcorrencia(ocorrencia) === "em_andamento" ? "andamento" : getStatusFromOcorrencia(ocorrencia)}
                               </Badge>
                             </td>
-                            <td className="p-3">
-                              <span className="text-sm" style={{ color: theme.textMuted }}>
-                                {formatDateTime(ocorrencia.data_inicio)}
+                            <td className="px-2 py-1">
+                              <span className="text-[11px] whitespace-nowrap leading-tight" style={{ color: theme.textMuted }}>
+                                {ocorrencia.data_inicio ? (
+                                  <>
+                                    {new Date(ocorrencia.data_inicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                                    {' '}
+                                    {new Date(ocorrencia.data_inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                  </>
+                                ) : '-'}
                               </span>
                             </td>
-                            <td className="p-3">
-                              <span className="text-sm font-medium" style={{ color: theme.text }}>
+                            <td className="px-2 py-1">
+                              <span className="text-[11px] font-medium leading-tight" style={{ color: theme.text }}>
                                 {formatElapsedTime(tempoDecorrido)}
                               </span>
                             </td>
-                            <td className="p-3">
+                            <td className="px-2 py-1">
                               {timeRemaining ? (
-                                <div className="flex flex-col gap-1">
-                                  <span className={`text-sm font-medium ${getTimeRemainingColor(timeRemaining)}`}>
+                                <div className="flex items-center gap-1">
+                                  <span className={`text-[11px] font-medium leading-tight ${getTimeRemainingColor(timeRemaining)}`}>
                                     {formatTimeRemaining(timeRemaining)}
                                   </span>
-                                  <div className="w-20 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                  <div className="w-12 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
                                     <div
                                       className={`h-full transition-all ${
                                         timeRemaining.atrasado 
@@ -1310,12 +1303,12 @@ export default function OcorrenciasGestao() {
                                   </div>
                                 </div>
                               ) : (
-                                <span className="text-sm" style={{ color: theme.textMuted }}>
+                                <span className="text-[11px] leading-tight" style={{ color: theme.textMuted }}>
                                   {ocorrencia.status === "aberta" ? "Sem prazo" : "-"}
                                 </span>
                               )}
                             </td>
-                            <td className="p-3">
+                            <td className="px-2 py-1">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -1324,6 +1317,7 @@ export default function OcorrenciasGestao() {
                                   setSelectedOcorrencia(ocorrencia);
                                 }}
                                 style={{ borderColor: theme.inputBorder }}
+                                className="h-6 text-[10px] px-2"
                               >
                                 Ver
                               </Button>
