@@ -87,6 +87,37 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
   const [mesSelecionado, setMesSelecionado] = useState(() => new Date().getMonth() + 1);
   const [showOcorrenciaModal, setShowOcorrenciaModal] = useState(false);
   const [notaParaOcorrencia, setNotaParaOcorrencia] = useState(null);
+  const [tiposOcorrencia, setTiposOcorrencia] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [departamentos, setDepartamentos] = useState([]);
+
+  // Carregar dados necessários para o formulário de ocorrências
+  React.useEffect(() => {
+    const loadDadosOcorrencia = async () => {
+      try {
+        const [tiposData, departamentosData] = await Promise.all([
+          base44.entities.TipoOcorrencia.list(),
+          base44.entities.Departamento.list()
+        ]);
+
+        let usuariosData = [];
+        try {
+          const response = await base44.functions.invoke('listarUsuariosEmpresa', {});
+          usuariosData = response.data || [];
+        } catch (error) {
+          console.log("Não foi possível carregar lista de usuários:", error);
+        }
+
+        setTiposOcorrencia(tiposData);
+        setUsuarios(usuariosData);
+        setDepartamentos(departamentosData);
+      } catch (error) {
+        console.error("Erro ao carregar dados de ocorrências:", error);
+      }
+    };
+
+    loadDadosOcorrencia();
+  }, []);
 
   const handleViewDetails = (nota) => {
     setSelectedNota(nota);
@@ -1017,15 +1048,69 @@ const NotasFiscaisTable = React.memo(function NotasFiscaisTable({
       )}
 
       {showOcorrenciaModal && notaParaOcorrencia && (
-        <OcorrenciaNotaFiscalModal
+        <FormularioOcorrencia
           open={showOcorrenciaModal}
           onClose={() => {
             setShowOcorrenciaModal(false);
             setNotaParaOcorrencia(null);
           }}
-          nota={notaParaOcorrencia}
-          onSuccess={onRefresh}
-          isDark={isDark}
+          onSubmit={async (dataOcorrencia) => {
+            try {
+              const currentUser = await base44.auth.me();
+              const ticketNumber = `${new Date().getFullYear().toString().slice(-2)}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${new Date().getDate().toString().padStart(2, '0')}${new Date().getHours().toString().padStart(2, '0')}${new Date().getMinutes().toString().padStart(2, '0')}${new Date().getSeconds().toString().padStart(2, '0')}`;
+              
+              const ocorrencia = await base44.entities.Ocorrencia.create({
+                ...dataOcorrencia,
+                numero_ticket: ticketNumber,
+                registrado_por: currentUser.id
+              });
+
+              await base44.entities.NotaFiscal.update(notaParaOcorrencia.id, {
+                ocorrencia_id: ocorrencia.id,
+                ocorrencia_numero_ticket: ticketNumber
+              });
+
+              // Enviar email se houver responsável
+              if (dataOcorrencia.responsavel_id) {
+                const responsavel = usuarios.find(u => u.id === dataOcorrencia.responsavel_id);
+                if (responsavel?.email) {
+                  const tipo = tiposOcorrencia.find(t => t.id === dataOcorrencia.tipo_ocorrencia_id);
+                  const prazoMinutos = tipo?.prazo_sla_minutos || (tipo?.prazo_sla_horas ? tipo.prazo_sla_horas * 60 : null);
+                  const dataPrazo = prazoMinutos ? new Date(Date.now() + prazoMinutos * 60000) : null;
+
+                  await base44.integrations.Core.SendEmail({
+                    to: responsavel.email,
+                    subject: `🔔 Ocorrência #${ticketNumber} - NF ${notaParaOcorrencia.numero_nota}`,
+                    body: `
+                      <h2>Nova Ocorrência Atribuída - Nota Fiscal</h2>
+                      <p><strong>Ticket:</strong> #${ticketNumber}</p>
+                      <p><strong>Nota Fiscal:</strong> ${notaParaOcorrencia.numero_nota}</p>
+                      <p><strong>Tipo:</strong> ${tipo?.nome || 'Não especificado'}</p>
+                      <p><strong>Gravidade:</strong> ${dataOcorrencia.gravidade}</p>
+                      <p><strong>Descrição:</strong> ${dataOcorrencia.observacoes}</p>
+                      ${dataPrazo ? `<p><strong>Prazo:</strong> ${dataPrazo.toLocaleString('pt-BR')}</p>` : ''}
+                      <p>Acesse o sistema para tratar esta ocorrência.</p>
+                    `
+                  });
+                }
+              }
+
+              toast.success("Ocorrência registrada com sucesso!");
+              setShowOcorrenciaModal(false);
+              setNotaParaOcorrencia(null);
+              if (onRefresh) onRefresh();
+            } catch (error) {
+              console.error("Erro ao registrar ocorrência:", error);
+              toast.error("Erro ao registrar ocorrência");
+            }
+          }}
+          tiposOcorrencia={tiposOcorrencia}
+          usuarios={usuarios}
+          departamentos={departamentos}
+          titulo="Registrar Problema - Nota Fiscal"
+          categoriaFixa="nota_fiscal"
+          contexto="nota_fiscal"
+          contextoDescricao={`Nota Fiscal: ${notaParaOcorrencia.numero_nota}`}
         />
       )}
 
