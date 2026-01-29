@@ -2273,7 +2273,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     try {
       const user = await base44.auth.me();
       let empresa = null;
+      let motorista = null;
+      let cavalo = null;
+      let implementos = [];
 
+      // Buscar dados da empresa
       if (user.empresa_id) {
         try {
           empresa = await base44.entities.Empresa.get(user.empresa_id);
@@ -2282,8 +2286,39 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         }
       }
 
+      // Buscar motorista
+      if (ordemAtual.motorista_id) {
+        try {
+          const motoristas = await base44.entities.Motorista.filter({ id: ordemAtual.motorista_id });
+          motorista = motoristas[0];
+        } catch (error) {
+          console.log("Erro ao buscar motorista:", error);
+        }
+      }
+
+      // Buscar cavalo
+      if (ordemAtual.cavalo_id) {
+        try {
+          const veiculos = await base44.entities.Veiculo.filter({ id: ordemAtual.cavalo_id });
+          cavalo = veiculos[0];
+        } catch (error) {
+          console.log("Erro ao buscar cavalo:", error);
+        }
+      }
+
+      // Buscar implementos
+      const implementoIds = [ordemAtual.implemento1_id, ordemAtual.implemento2_id, ordemAtual.implemento3_id].filter(Boolean);
+      if (implementoIds.length > 0) {
+        try {
+          const veiculos = await base44.entities.Veiculo.list();
+          implementos = veiculos.filter(v => implementoIds.includes(v.id));
+        } catch (error) {
+          console.log("Erro ao buscar implementos:", error);
+        }
+      }
+
       const printWindow = window.open('', '_blank');
-      const htmlContent = gerarPDFListaNotas(user, empresa);
+      const htmlContent = gerarPDFListaNotas(user, empresa, motorista, cavalo, implementos);
       printWindow.document.write(htmlContent);
       printWindow.document.close();
       printWindow.print();
@@ -2489,8 +2524,33 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     }
   };
 
-  const gerarPDFListaNotas = (user, empresa) => {
+  const gerarPDFListaNotas = (user, empresa, motorista, cavalo, implementos) => {
     const dataAtual = new Date().toLocaleString('pt-BR');
+
+    // Montar lista de placas
+    const placasCavalo = cavalo?.placa || ordemAtual.cavalo_placa_temp || '';
+    const placasImplementos = [];
+    
+    if (ordemAtual.implemento1_id && implementos.find(i => i.id === ordemAtual.implemento1_id)) {
+      placasImplementos.push(implementos.find(i => i.id === ordemAtual.implemento1_id).placa);
+    } else if (ordemAtual.implemento1_placa_temp) {
+      placasImplementos.push(ordemAtual.implemento1_placa_temp);
+    }
+    
+    if (ordemAtual.implemento2_id && implementos.find(i => i.id === ordemAtual.implemento2_id)) {
+      placasImplementos.push(implementos.find(i => i.id === ordemAtual.implemento2_id).placa);
+    } else if (ordemAtual.implemento2_placa_temp) {
+      placasImplementos.push(ordemAtual.implemento2_placa_temp);
+    }
+    
+    if (ordemAtual.implemento3_id && implementos.find(i => i.id === ordemAtual.implemento3_id)) {
+      placasImplementos.push(implementos.find(i => i.id === ordemAtual.implemento3_id).placa);
+    } else if (ordemAtual.implemento3_placa_temp) {
+      placasImplementos.push(ordemAtual.implemento3_placa_temp);
+    }
+    
+    const placas = [placasCavalo, ...placasImplementos].filter(Boolean).join(' / ');
+    const motoristaInfo = motorista?.nome || ordemAtual.motorista_nome_temp || '-';
 
     let html = `
       <html>
@@ -2538,7 +2598,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           ` : ''}
 
           <div class="ordem-info">
-            <p><strong>Cliente:</strong> ${ordem.cliente || '-'} | <strong>Destino:</strong> ${ordem.destino_cidade || ordem.destino || '-'}</p>
+            <p><strong>Cliente:</strong> ${ordemAtual.cliente || '-'} | <strong>Destino:</strong> ${ordemAtual.destino_cidade || ordemAtual.destino || '-'}</p>
+            <p><strong>Motorista:</strong> ${motoristaInfo} | <strong>Placas:</strong> ${placas || 'Não informadas'}</p>
           </div>
 
           <table>
