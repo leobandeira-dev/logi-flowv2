@@ -74,7 +74,47 @@ export default function DespesasExtras() {
         base44.entities.TipoDespesaExtra.list(),
         base44.entities.StatusDespesaExtra.filter({ ativo: true }, "ordem")
       ]);
-      setDespesas(despesasData);
+
+      // Verificar e migrar despesas órfãs (sem status válido)
+      const statusCodigos = new Set(statusData.map(s => s.codigo));
+      const despesasOrfas = despesasData.filter(d => d.status && !statusCodigos.has(d.status));
+
+      if (despesasOrfas.length > 0) {
+        console.log(`🔍 Encontradas ${despesasOrfas.length} despesas com status inválido, migrando...`);
+        
+        // Buscar ou criar status padrão
+        let statusPadrao = statusData.find(s => s.padrao);
+        
+        if (!statusPadrao) {
+          // Criar status padrão "Aprovar"
+          const novoStatus = await base44.entities.StatusDespesaExtra.create({
+            nome: "Aprovar",
+            codigo: "aprovar",
+            cor: "#FFA500",
+            ordem: 1,
+            ativo: true,
+            padrao: true
+          });
+          statusData.push(novoStatus);
+          statusPadrao = novoStatus;
+        }
+
+        // Migrar despesas órfãs para o status padrão
+        await Promise.all(
+          despesasOrfas.map(d => 
+            base44.entities.DespesaExtra.update(d.id, { status: statusPadrao.codigo })
+          )
+        );
+
+        toast.success(`${despesasOrfas.length} despesas migradas para o status ${statusPadrao.nome}`);
+        
+        // Recarregar despesas atualizadas
+        const despesasAtualizadas = await base44.entities.DespesaExtra.list("-created_date", 200);
+        setDespesas(despesasAtualizadas);
+      } else {
+        setDespesas(despesasData);
+      }
+
       setTiposDespesa(tiposData);
       setStatusDespesa(statusData);
       
