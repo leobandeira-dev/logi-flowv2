@@ -25,6 +25,7 @@ export default function DespesasExtras() {
   const [isDark, setIsDark] = useState(false);
   const [despesas, setDespesas] = useState([]);
   const [tiposDespesa, setTiposDespesa] = useState([]);
+  const [notasFiscaisMap, setNotasFiscaisMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("todos");
@@ -55,6 +56,17 @@ export default function DespesasExtras() {
       ]);
       setDespesas(despesasData);
       setTiposDespesa(tiposData);
+      
+      // Carregar notas fiscais vinculadas
+      const notasIds = [...new Set(despesasData.map(d => d.nota_fiscal_id).filter(Boolean))];
+      if (notasIds.length > 0) {
+        const notas = await base44.entities.NotaFiscal.filter({ id: { $in: notasIds } });
+        const notasMap = {};
+        notas.forEach(nf => {
+          notasMap[nf.id] = nf;
+        });
+        setNotasFiscaisMap(notasMap);
+      }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       toast.error("Erro ao carregar dados");
@@ -253,9 +265,26 @@ export default function DespesasExtras() {
                             </span>
                           </td>
                           <td className="p-2">
-                            <span className="text-sm font-mono" style={{ color: theme.textMuted }}>
-                              {despesa.nota_fiscal_id ? 'NF vinculada' : '-'}
-                            </span>
+                            {despesa.nota_fiscal_id ? (
+                              notasFiscaisMap[despesa.nota_fiscal_id] ? (
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="text-sm font-medium" style={{ color: theme.text }}>
+                                    NF {notasFiscaisMap[despesa.nota_fiscal_id].numero_nota}
+                                  </span>
+                                  <span className="text-xs" style={{ color: theme.textMuted }}>
+                                    {notasFiscaisMap[despesa.nota_fiscal_id].emitente_razao_social}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-xs" style={{ color: theme.textMuted }}>
+                                  NF vinculada
+                                </span>
+                              )
+                            ) : (
+                              <span className="text-sm" style={{ color: theme.textMuted }}>
+                                -
+                              </span>
+                            )}
                           </td>
                           <td className="p-2">
                             <span className="text-xs truncate max-w-xs block" style={{ color: theme.textMuted }}>
