@@ -410,132 +410,165 @@ export default function DespesasExtras() {
                       </div>
                     </div>
 
-                    {/* Linhas de Dados - Estilo Monday.com */}
-                    {despesasFiltradas.map((despesa, index) => {
-                      const statusColor = getStatusColor(despesa.status, theme);
-                      const notaFiscal = notasFiscaisMap[despesa.nota_fiscal_id];
-                      return (
-                        <div
-                          key={despesa.id}
-                          className="grid grid-cols-12 gap-3 px-6 py-4 border-b group transition-all duration-200"
-                          style={{
-                            backgroundColor: index % 2 === 0 ? theme.cardBg : (isDark ? '#151d2b' : '#fafbfc'),
-                            borderColor: isDark ? '#2d3748' : '#e2e8f0',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f1f5f9';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = index % 2 === 0 ? theme.cardBg : (isDark ? '#151d2b' : '#fafbfc');
-                          }}
-                        >
-                          <div className="col-span-1 flex items-center">
-                            <span className="font-mono text-sm font-bold" style={{ color: theme.text }}>
-                              {despesa.numero_despesa}
-                            </span>
-                          </div>
-
-                          <div className="col-span-2 flex items-center gap-2">
+                    {/* Agrupamento por Status - Estilo Monday.com */}
+                    {Object.entries(despesasAgrupadas).map(([status, despesasDoStatus]) => 
+                      despesasDoStatus.length > 0 && (
+                        <div key={status} className="mb-1">
+                          {/* Header do Grupo */}
+                          <div 
+                            className="px-6 py-3 flex items-center gap-3 sticky top-[49px] z-[9]"
+                            style={{
+                              backgroundColor: isDark ? '#1a2332' : '#f7f8fa',
+                              borderBottom: `2px solid ${getStatusColor(status, theme).bg}`
+                            }}
+                          >
                             <div 
-                              className="w-1 h-10 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: statusColor.bg }}
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: getStatusColor(status, theme).bg }}
                             />
-                            <span className="text-sm font-medium" style={{ color: theme.text }}>
-                              {despesa.tipo_despesa_nome}
+                            <span className="text-sm font-bold uppercase tracking-wide" style={{ color: theme.text }}>
+                              {statusLabels[status]}
                             </span>
-                          </div>
-
-                          <div className="col-span-3 flex items-center">
-                            {despesa.nota_fiscal_id && notaFiscal ? (
-                              <div className="flex flex-col gap-0.5">
-                                <span className="text-sm font-medium" style={{ color: theme.text }}>
-                                  NF {notaFiscal.numero_nota}
-                                </span>
-                                <span className="text-xs truncate max-w-[220px]" style={{ color: theme.textMuted }}>
-                                  {notaFiscal.emitente_razao_social}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-sm" style={{ color: theme.textMuted }}>
-                                -
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="col-span-2 flex items-center">
-                            {despesa.descricao ? (
-                              <span className="text-sm truncate" style={{ color: theme.textMuted }}>
-                                {despesa.descricao}
-                              </span>
-                            ) : (
-                              <span className="text-sm" style={{ color: theme.textMuted }}>-</span>
-                            )}
-                          </div>
-
-                          <div className="col-span-1 flex items-center justify-center">
-                            <Badge
-                              className="text-xs font-semibold px-3 py-1 rounded-full border-0"
+                            <Badge 
+                              className="text-xs font-bold px-2 py-0.5 rounded-full"
                               style={{
-                                backgroundColor: statusColor.bg,
-                                color: statusColor.text
+                                backgroundColor: getStatusColor(status, theme).bg,
+                                color: getStatusColor(status, theme).text
                               }}
                             >
-                              {statusLabels[despesa.status]}
+                              {despesasDoStatus.length}
                             </Badge>
                           </div>
 
-                          <div className="col-span-2 flex items-center justify-end">
-                            <div className="text-right">
-                              <p className="font-bold text-base" style={{ color: theme.text }}>
-                                R$ {(despesa.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                              </p>
-                              <p className="text-xs" style={{ color: theme.textMuted }}>
-                                {despesa.quantidade} {despesa.unidade_cobranca}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="col-span-1 flex items-center justify-center">
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                              {despesa.status === "pendente" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleAprovar(despesa)}
-                                  className="h-8 w-8 p-0 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg"
-                                  title="Aprovar"
-                                >
-                                  <CheckCircle className="w-4 h-4 text-green-600" />
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setDespesaEdit(despesa);
-                                  setShowDespesaForm(true);
+                          {/* Linhas do Grupo */}
+                          {despesasDoStatus.map((despesa, index) => {
+                            const statusColor = getStatusColor(despesa.status, theme);
+                            const notaFiscal = notasFiscaisMap[despesa.nota_fiscal_id];
+                            return (
+                              <div
+                                key={despesa.id}
+                                className="grid grid-cols-12 gap-3 px-6 py-4 border-b group transition-all duration-200"
+                                style={{
+                                  backgroundColor: index % 2 === 0 ? theme.cardBg : (isDark ? '#151d2b' : '#fafbfc'),
+                                  borderColor: isDark ? '#2d3748' : '#e2e8f0',
                                 }}
-                                className="h-8 w-8 p-0 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
-                                title={despesa.status === "aprovada" || despesa.status === "faturada" ? "Visualizar" : "Editar"}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f1f5f9';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = index % 2 === 0 ? theme.cardBg : (isDark ? '#151d2b' : '#fafbfc');
+                                }}
                               >
-                                <Edit className="w-4 h-4 text-blue-600" />
-                              </Button>
-                              {despesa.status === "pendente" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleCancelar(despesa)}
-                                  className="h-8 w-8 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
-                                  title="Cancelar"
-                                >
-                                  <XCircle className="w-4 h-4 text-red-600" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
+                                <div className="col-span-1 flex items-center">
+                                  <span className="font-mono text-sm font-bold" style={{ color: theme.text }}>
+                                    {despesa.numero_despesa}
+                                  </span>
+                                </div>
+
+                                <div className="col-span-2 flex items-center gap-2">
+                                  <div 
+                                    className="w-1 h-10 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: statusColor.bg }}
+                                  />
+                                  <span className="text-sm font-medium" style={{ color: theme.text }}>
+                                    {despesa.tipo_despesa_nome}
+                                  </span>
+                                </div>
+
+                                <div className="col-span-3 flex items-center">
+                                  {despesa.nota_fiscal_id && notaFiscal ? (
+                                    <div className="flex flex-col gap-0.5">
+                                      <span className="text-sm font-medium" style={{ color: theme.text }}>
+                                        NF {notaFiscal.numero_nota}
+                                      </span>
+                                      <span className="text-xs truncate max-w-[220px]" style={{ color: theme.textMuted }}>
+                                        {notaFiscal.emitente_razao_social}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-sm" style={{ color: theme.textMuted }}>
+                                      -
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="col-span-2 flex items-center">
+                                  {despesa.descricao ? (
+                                    <span className="text-sm truncate" style={{ color: theme.textMuted }}>
+                                      {despesa.descricao}
+                                    </span>
+                                  ) : (
+                                    <span className="text-sm" style={{ color: theme.textMuted }}>-</span>
+                                  )}
+                                </div>
+
+                                <div className="col-span-1 flex items-center justify-center">
+                                  <Badge
+                                    className="text-xs font-semibold px-3 py-1 rounded-full border-0"
+                                    style={{
+                                      backgroundColor: statusColor.bg,
+                                      color: statusColor.text
+                                    }}
+                                  >
+                                    {statusLabels[despesa.status]}
+                                  </Badge>
+                                </div>
+
+                                <div className="col-span-2 flex items-center justify-end">
+                                  <div className="text-right">
+                                    <p className="font-bold text-base" style={{ color: theme.text }}>
+                                      R$ {(despesa.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </p>
+                                    <p className="text-xs" style={{ color: theme.textMuted }}>
+                                      {despesa.quantidade} {despesa.unidade_cobranca}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="col-span-1 flex items-center justify-center">
+                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    {despesa.status === "pendente" && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleAprovar(despesa)}
+                                        className="h-8 w-8 p-0 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg"
+                                        title="Aprovar"
+                                      >
+                                        <CheckCircle className="w-4 h-4 text-green-600" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setDespesaEdit(despesa);
+                                        setShowDespesaForm(true);
+                                      }}
+                                      className="h-8 w-8 p-0 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+                                      title={despesa.status === "aprovada" || despesa.status === "faturada" ? "Visualizar" : "Editar"}
+                                    >
+                                      <Edit className="w-4 h-4 text-blue-600" />
+                                    </Button>
+                                    {despesa.status === "pendente" && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleCancelar(despesa)}
+                                        className="h-8 w-8 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                                        title="Cancelar"
+                                      >
+                                        <XCircle className="w-4 h-4 text-red-600" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
+                      )
+                    )}
 
                     {despesasFiltradas.length === 0 && (
                       <div 
