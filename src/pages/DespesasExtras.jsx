@@ -134,6 +134,36 @@ export default function DespesasExtras() {
 
     if (!despesa || despesa.status === newStatus) return;
 
+    // Verificar se está tentando mover para "faturada"
+    if (newStatus === "faturada") {
+      try {
+        // Verificar se a despesa tem nota fiscal vinculada
+        if (!despesa.nota_fiscal_id) {
+          toast.error("Esta despesa precisa estar vinculada a uma Nota Fiscal");
+          return;
+        }
+
+        // Buscar a nota fiscal para verificar se tem CT-e vinculado
+        const notaFiscal = await base44.entities.NotaFiscal.get(despesa.nota_fiscal_id);
+        
+        if (!notaFiscal.cte_id) {
+          toast.error("A Nota Fiscal vinculada precisa estar associada a um CT-e", {
+            description: "Acesse Gestão de CT-e para vincular um CT-e à NF " + notaFiscal.numero_nota,
+            duration: 5000,
+            action: {
+              label: "Ir para CT-e",
+              onClick: () => window.location.href = "/GestaoDeCTe"
+            }
+          });
+          return;
+        }
+      } catch (error) {
+        console.error("Erro ao verificar vinculação:", error);
+        toast.error("Erro ao verificar vinculação com CT-e");
+        return;
+      }
+    }
+
     try {
       const user = await base44.auth.me();
       const updateData = { status: newStatus };
