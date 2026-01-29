@@ -2287,21 +2287,71 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     }
   };
 
-  const handleAbrirEditarOrdem = () => {
-    setDadosOrdemEdit({
-      cliente: ordem.cliente || "",
-      origem: ordem.origem || "",
-      origem_cidade: ordem.origem_cidade || "",
-      destino: ordem.destino || "",
-      destino_cidade: ordem.destino_cidade || "",
-      produto: ordem.produto || "",
-      motorista_nome_temp: ordem.motorista_nome_temp || "",
-      cavalo_placa_temp: ordem.cavalo_placa_temp || "",
-      implemento1_placa_temp: ordem.implemento1_placa_temp || "",
-      implemento2_placa_temp: ordem.implemento2_placa_temp || "",
-      implemento3_placa_temp: ordem.implemento3_placa_temp || ""
-    });
-    setShowEditarOrdemModal(true);
+  const handleAbrirEditarOrdem = async () => {
+    try {
+      let motoristaNome = ordem.motorista_nome_temp || "";
+      let cavaloPlaca = ordem.cavalo_placa_temp || "";
+      let impl1Placa = ordem.implemento1_placa_temp || "";
+      let impl2Placa = ordem.implemento2_placa_temp || "";
+      let impl3Placa = ordem.implemento3_placa_temp || "";
+
+      // Buscar motorista se houver ID
+      if (ordem.motorista_id) {
+        try {
+          const motoristas = await base44.entities.Motorista.filter({ id: ordem.motorista_id });
+          if (motoristas[0]) motoristaNome = motoristas[0].nome;
+        } catch (error) {
+          console.log("Erro ao buscar motorista:", error);
+        }
+      }
+
+      // Buscar cavalo se houver ID
+      if (ordem.cavalo_id) {
+        try {
+          const veiculos = await base44.entities.Veiculo.filter({ id: ordem.cavalo_id });
+          if (veiculos[0]) cavaloPlaca = veiculos[0].placa;
+        } catch (error) {
+          console.log("Erro ao buscar cavalo:", error);
+        }
+      }
+
+      // Buscar implementos
+      const implementoIds = [ordem.implemento1_id, ordem.implemento2_id, ordem.implemento3_id].filter(Boolean);
+      if (implementoIds.length > 0) {
+        try {
+          const veiculos = await base44.entities.Veiculo.list();
+          const implementos = veiculos.filter(v => implementoIds.includes(v.id));
+          
+          const impl1 = implementos.find(i => i.id === ordem.implemento1_id);
+          const impl2 = implementos.find(i => i.id === ordem.implemento2_id);
+          const impl3 = implementos.find(i => i.id === ordem.implemento3_id);
+          
+          if (impl1) impl1Placa = impl1.placa;
+          if (impl2) impl2Placa = impl2.placa;
+          if (impl3) impl3Placa = impl3.placa;
+        } catch (error) {
+          console.log("Erro ao buscar implementos:", error);
+        }
+      }
+
+      setDadosOrdemEdit({
+        cliente: ordem.cliente || "",
+        origem: ordem.origem || "",
+        origem_cidade: ordem.origem_cidade || "",
+        destino: ordem.destino || "",
+        destino_cidade: ordem.destino_cidade || "",
+        produto: ordem.produto || "",
+        motorista_nome_temp: motoristaNome,
+        cavalo_placa_temp: cavaloPlaca,
+        implemento1_placa_temp: impl1Placa,
+        implemento2_placa_temp: impl2Placa,
+        implemento3_placa_temp: impl3Placa
+      });
+      setShowEditarOrdemModal(true);
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+      toast.error("Erro ao carregar dados da ordem");
+    }
   };
 
   const handleSalvarEdicaoOrdem = async () => {
