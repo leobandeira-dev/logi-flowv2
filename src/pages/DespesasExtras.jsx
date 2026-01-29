@@ -128,7 +128,9 @@ export default function DespesasExtras() {
         await base44.entities.StatusDespesaExtra.update(statusEdit.id, statusData);
         toast.success("Status atualizado!");
       } else {
-        await base44.entities.StatusDespesaExtra.create(statusData);
+        // Definir ordem automaticamente como último
+        const maxOrdem = Math.max(...statusDespesa.map(s => s.ordem || 0), 0);
+        await base44.entities.StatusDespesaExtra.create({ ...statusData, ordem: maxOrdem + 1 });
         toast.success("Status criado!");
       }
       setShowStatusForm(false);
@@ -137,6 +139,31 @@ export default function DespesasExtras() {
     } catch (error) {
       console.error("Erro ao salvar status:", error);
       toast.error("Erro ao salvar status");
+    }
+  };
+
+  const handleStatusDragEnd = async (result) => {
+    if (!result.destination) return;
+    
+    const items = Array.from(statusDespesa);
+    const [reordered] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reordered);
+    
+    // Atualizar ordem localmente primeiro
+    setStatusDespesa(items);
+    
+    // Atualizar ordem no backend
+    try {
+      await Promise.all(
+        items.map((status, index) =>
+          base44.entities.StatusDespesaExtra.update(status.id, { ordem: index + 1 })
+        )
+      );
+      toast.success("Ordem atualizada!");
+    } catch (error) {
+      console.error("Erro ao reordenar:", error);
+      toast.error("Erro ao atualizar ordem");
+      loadData(); // Recarregar em caso de erro
     }
   };
 
@@ -1174,7 +1201,7 @@ export default function DespesasExtras() {
                   <div>
                     <CardTitle style={{ color: theme.text }}>Status de Despesas</CardTitle>
                     <p className="text-sm mt-1" style={{ color: theme.textMuted }}>
-                      Personalize os status e suas cores
+                      Arraste para reordenar os status
                     </p>
                   </div>
                   <Button
@@ -1190,69 +1217,101 @@ export default function DespesasExtras() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {statusDespesa.map((status) => (
-                    <div
-                      key={status.id}
-                      className="flex items-center justify-between p-4 rounded-lg border transition-all hover:shadow-md"
-                      style={{
-                        backgroundColor: theme.cardBg,
-                        borderColor: theme.cardBorder
-                      }}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div
-                          className="w-4 h-4 rounded-full"
-                          style={{ backgroundColor: status.cor }}
-                        />
-                        <div>
-                          <p className="font-semibold" style={{ color: theme.text }}>
-                            {status.nome}
-                          </p>
-                          <div className="flex items-center gap-3 mt-1">
-                            <p className="text-xs font-mono" style={{ color: theme.textMuted }}>
-                              {status.codigo}
-                            </p>
-                            {status.padrao && (
-                              <Badge className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                                Padrão
-                              </Badge>
+                <DragDropContext onDragEnd={handleStatusDragEnd}>
+                  <Droppable droppableId="status-list">
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className="space-y-3"
+                      >
+                        {statusDespesa.map((status, index) => (
+                          <Draggable key={status.id} draggableId={status.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className="flex items-center justify-between p-4 rounded-lg border transition-all"
+                                style={{
+                                  ...provided.draggableProps.style,
+                                  backgroundColor: snapshot.isDragging 
+                                    ? (isDark ? '#334155' : '#f1f5f9')
+                                    : theme.cardBg,
+                                  borderColor: theme.cardBorder,
+                                  cursor: 'grab',
+                                  boxShadow: snapshot.isDragging ? '0 4px 12px rgba(0,0,0,0.15)' : 'none'
+                                }}
+                              >
+                                <div className="flex items-center gap-4">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold" style={{ color: theme.textMuted }}>
+                                      {index + 1}
+                                    </span>
+                                    <div
+                                      className="w-1 h-8 rounded-full"
+                                      style={{ backgroundColor: status.cor }}
+                                    />
+                                  </div>
+                                  <div
+                                    className="w-4 h-4 rounded-full"
+                                    style={{ backgroundColor: status.cor }}
+                                  />
+                                  <div>
+                                    <p className="font-semibold" style={{ color: theme.text }}>
+                                      {status.nome}
+                                    </p>
+                                    <div className="flex items-center gap-3 mt-1">
+                                      <p className="text-xs font-mono" style={{ color: theme.textMuted }}>
+                                        {status.codigo}
+                                      </p>
+                                      {status.padrao && (
+                                        <Badge className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                          Padrão
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge
+                                    className="text-xs font-semibold px-3 py-1"
+                                    style={{
+                                      backgroundColor: status.cor,
+                                      color: '#ffffff'
+                                    }}
+                                  >
+                                    Preview
+                                  </Badge>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setStatusEdit(status);
+                                      setShowStatusForm(true);
+                                    }}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
                             )}
-                          </div>
-                        </div>
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          className="text-xs font-semibold px-3 py-1"
-                          style={{
-                            backgroundColor: status.cor,
-                            color: '#ffffff'
-                          }}
-                        >
-                          Preview
-                        </Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setStatusEdit(status);
-                            setShowStatusForm(true);
-                          }}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                  {statusDespesa.length === 0 && (
-                    <div className="text-center py-12" style={{ color: theme.textMuted }}>
-                      <p>Nenhum status cadastrado</p>
-                      <p className="text-sm mt-2">
-                        Clique em "Novo Status" para começar
-                      </p>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+                {statusDespesa.length === 0 && (
+                  <div className="text-center py-12" style={{ color: theme.textMuted }}>
+                    <p>Nenhum status cadastrado</p>
+                    <p className="text-sm mt-2">
+                      Clique em "Novo Status" para começar
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
