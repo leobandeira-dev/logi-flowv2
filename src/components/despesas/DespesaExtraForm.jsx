@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { base44 } from "@/api/base44Client";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Search } from "lucide-react";
 import { toast } from "sonner";
 
 export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, ordem, onSuccess }) {
@@ -181,11 +181,22 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
             <div>
               <Label>Nota Fiscal (opcional)</Label>
               <div className="space-y-2">
-                <Input
-                  placeholder="Buscar por número, emitente, destinatário ou chave..."
-                  value={searchNota}
-                  onChange={(e) => setSearchNota(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Buscar por número, emitente, destinatário ou chave..."
+                    value={searchNota}
+                    onChange={(e) => setSearchNota(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {}}
+                    className="px-3"
+                  >
+                    <Search className="w-4 h-4" />
+                  </Button>
+                </div>
                 <Select
                   value={formData.nota_fiscal_id}
                   onValueChange={(value) => setFormData({ ...formData, nota_fiscal_id: value })}
