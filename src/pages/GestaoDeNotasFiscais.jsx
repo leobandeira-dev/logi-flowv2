@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Search, RefreshCw, Eye, Package, Printer, Clock, MapPin, CheckCircle2, Edit, Download, Filter, Calendar, FileText, AlertTriangle } from "lucide-react";
+import { Search, RefreshCw, Eye, Package, Printer, Clock, MapPin, CheckCircle2, Edit, Download, Filter, Calendar, FileText, AlertTriangle, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import FormularioOcorrencia from "../components/ocorrencias/FormularioOcorrencia";
 import OcorrenciaDetalhes from "../components/ocorrencias/OcorrenciaDetalhes";
@@ -23,6 +23,7 @@ import ImpressaoEtiquetas from "../components/notas-fiscais/ImpressaoEtiquetas";
 import NotaFiscalForm from "../components/notas-fiscais/NotaFiscalForm";
 import FiltrosPredefinidos from "../components/filtros/FiltrosPredefinidos";
 import PaginacaoControles from "../components/filtros/PaginacaoControles";
+import DespesaExtraForm from "../components/despesas/DespesaExtraForm";
 
 export default function GestaoDeNotasFiscais() {
   const [notasFiscais, setNotasFiscais] = useState([]);
@@ -50,6 +51,8 @@ export default function GestaoDeNotasFiscais() {
   const [departamentos, setDepartamentos] = useState([]);
   const [showOcorrenciaDetalhes, setShowOcorrenciaDetalhes] = useState(false);
   const [ocorrenciaSelecionada, setOcorrenciaSelecionada] = useState(null);
+  const [showDespesaModal, setShowDespesaModal] = useState(false);
+  const [notaParaDespesa, setNotaParaDespesa] = useState(null);
   
   // Filtros adicionais
   const [filtroEmitente, setFiltroEmitente] = useState("");
@@ -802,19 +805,36 @@ export default function GestaoDeNotasFiscais() {
                               <Printer className="w-3 h-3" />
                             </Button>
                             <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDownloadXML(nota)}
-                              style={{ 
-                                borderColor: nota.xml_content ? '#3b82f6' : theme.inputBorder,
-                                color: nota.xml_content ? '#3b82f6' : theme.textMuted,
-                                backgroundColor: nota.xml_content ? (isDark ? '#1e3a8a33' : '#dbeafe33') : 'transparent'
-                              }}
-                              title={nota.xml_content ? "Download XML" : "XML não disponível"}
-                              className="h-6 w-6 p-0"
-                              disabled={!nota.xml_content}
+                             variant="outline"
+                             size="sm"
+                             onClick={() => handleDownloadXML(nota)}
+                             style={{ 
+                               borderColor: nota.xml_content ? '#3b82f6' : theme.inputBorder,
+                               color: nota.xml_content ? '#3b82f6' : theme.textMuted,
+                               backgroundColor: nota.xml_content ? (isDark ? '#1e3a8a33' : '#dbeafe33') : 'transparent'
+                             }}
+                             title={nota.xml_content ? "Download XML" : "XML não disponível"}
+                             className="h-6 w-6 p-0"
+                             disabled={!nota.xml_content}
                             >
-                              <Download className="w-3 h-3" />
+                             <Download className="w-3 h-3" />
+                            </Button>
+                            <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => {
+                               setNotaParaDespesa(nota);
+                               setShowDespesaModal(true);
+                             }}
+                             style={{ 
+                               borderColor: '#8b5cf6',
+                               color: '#8b5cf6',
+                               backgroundColor: isDark ? '#4c1d9533' : '#ede9fe33'
+                             }}
+                             title="Adicionar despesa extra"
+                             className="h-6 w-6 p-0"
+                            >
+                             <DollarSign className="w-3 h-3" />
                             </Button>
                           </div>
                         </td>
@@ -956,6 +976,22 @@ export default function GestaoDeNotasFiscais() {
               setShowOcorrenciaDetalhes(false);
               setOcorrenciaSelecionada(null);
               loadData();
+            }}
+          />
+        )}
+
+        {showDespesaModal && notaParaDespesa && (
+          <DespesaExtraForm
+            open={showDespesaModal}
+            onClose={() => {
+              setShowDespesaModal(false);
+              setNotaParaDespesa(null);
+            }}
+            notaFiscal={notaParaDespesa}
+            onSuccess={() => {
+              setShowDespesaModal(false);
+              setNotaParaDespesa(null);
+              toast.success("Despesa extra criada com sucesso!");
             }}
           />
         )}
