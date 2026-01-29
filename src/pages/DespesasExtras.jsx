@@ -429,7 +429,7 @@ export default function DespesasExtras() {
                                                   setShowDespesaForm(true);
                                                 }}
                                                 className="h-7 w-7 p-0"
-                                                title="Editar"
+                                                title={despesa.status === "aprovada" || despesa.status === "faturada" ? "Visualizar" : "Editar"}
                                               >
                                                 <Edit className="w-4 h-4 text-blue-600" />
                                               </Button>

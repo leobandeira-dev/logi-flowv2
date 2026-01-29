@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, ordem, onSuccess }) {
+  const despesaBloqueada = despesa && (despesa.status === "aprovada" || despesa.status === "faturada");
   const [formData, setFormData] = useState({
     tipo_despesa_id: "",
     tipo_despesa_nome: "",
@@ -180,6 +181,13 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
               NF {notaFiscal.numero_nota} - {notaFiscal.emitente_razao_social}
             </p>
           )}
+          {despesaBloqueada && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mt-2">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                ⚠️ Esta despesa já foi {despesa.status === "faturada" ? "faturada" : "aprovada"} e não pode ser alterada.
+              </p>
+            </div>
+          )}
         </DialogHeader>
         <div className="space-y-4 py-4">
           {!notaFiscal && (
@@ -254,6 +262,7 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
             <Select
               value={formData.tipo_despesa_id}
               onValueChange={handleTipoChange}
+              disabled={despesaBloqueada}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o tipo..." />
@@ -274,6 +283,7 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
               value={formData.numero_movimento_erp}
               onChange={(e) => setFormData({ ...formData, numero_movimento_erp: e.target.value })}
               placeholder="Número do movimento no ERP..."
+              disabled={despesaBloqueada}
             />
           </div>
 
@@ -284,6 +294,7 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
               onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
               placeholder="Detalhe a despesa..."
               rows={3}
+              disabled={despesaBloqueada}
             />
           </div>
 
@@ -295,6 +306,7 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
                 step="0.01"
                 value={formData.quantidade}
                 onChange={(e) => setFormData({ ...formData, quantidade: parseFloat(e.target.value) || 1 })}
+                disabled={despesaBloqueada}
               />
             </div>
             <div>
@@ -304,6 +316,7 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
                 step="0.01"
                 value={formData.valor_unitario}
                 onChange={(e) => setFormData({ ...formData, valor_unitario: parseFloat(e.target.value) || 0 })}
+                disabled={despesaBloqueada}
               />
             </div>
             <div>
@@ -323,6 +336,7 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
               <Select
                 value={formData.unidade_cobranca}
                 onValueChange={(value) => setFormData({ ...formData, unidade_cobranca: value })}
+                disabled={despesaBloqueada}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -342,6 +356,7 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
                 type="datetime-local"
                 value={formData.data_despesa}
                 onChange={(e) => setFormData({ ...formData, data_despesa: e.target.value })}
+                disabled={despesaBloqueada}
               />
             </div>
           </div>
@@ -353,6 +368,7 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
               onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
               placeholder="Informações adicionais..."
               rows={2}
+              disabled={despesaBloqueada}
             />
           </div>
 
@@ -362,7 +378,7 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
               <Input
                 type="file"
                 onChange={handleUploadComprovante}
-                disabled={uploading}
+                disabled={uploading || despesaBloqueada}
                 className="flex-1"
               />
               {formData.comprovante_url && (
@@ -389,10 +405,14 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700">
-            {despesa ? "Atualizar" : "Registrar"} Despesa
+          <Button variant="outline" onClick={onClose}>
+            {despesaBloqueada ? "Fechar" : "Cancelar"}
           </Button>
+          {!despesaBloqueada && (
+            <Button onClick={handleSubmit} className="bg-blue-600 hover:bg-blue-700">
+              {despesa ? "Atualizar" : "Registrar"} Despesa
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
