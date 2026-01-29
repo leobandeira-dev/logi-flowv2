@@ -68,6 +68,7 @@ const getNavigationItems = (userProfile, userRole, ocorrenciasCount, etapasCount
           { title: "Tracking", url: createPageUrl("Tracking"), icon: MapPin },
           { title: "Fluxo", url: createPageUrl("Fluxo"), icon: Workflow, badge: etapasCount },
           { title: "Ordens", url: createPageUrl("OrdensCarregamento"), icon: FileText },
+          { title: "Despesas Extras", url: createPageUrl("DespesasExtras"), icon: DollarSign },
           { title: "Fila X", url: createPageUrl("FilaX"), icon: Truck },
         ]
       },
