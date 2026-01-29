@@ -18,9 +18,11 @@ import {
   Grid3x3,
   CheckCircle,
   Camera,
-  Edit
+  Edit,
+  DollarSign
 } from "lucide-react";
 import CameraScanner from "../etiquetas-mae/CameraScanner";
+import DespesaPosicaoModal from "./DespesaPosicaoModal";
 import {
   Dialog,
   DialogContent,
@@ -184,6 +186,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const [showEditarOrdemModal, setShowEditarOrdemModal] = useState(false);
   const [dadosOrdemEdit, setDadosOrdemEdit] = useState({});
   const [ordemAtual, setOrdemAtual] = useState(ordem);
+  const [showDespesaModal, setShowDespesaModal] = useState(false);
+  const [despesaContext, setDespesaContext] = useState(null);
+  const [despesasExtras, setDespesasExtras] = useState([]);
 
   // Sincronizar ordemAtual quando prop ordem mudar
   useEffect(() => {
@@ -212,6 +217,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
   useEffect(() => {
     inicializarDados();
+    loadDespesasExtras();
   }, [notasFiscais, volumes]);
 
   const inicializarDados = async () => {
@@ -436,6 +442,15 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     }
   }, [ordem.tipo_veiculo]);
 
+  const loadDespesasExtras = async () => {
+    try {
+      const despesas = await base44.entities.DespesaExtra.list("-created_date", 500);
+      setDespesasExtras(despesas);
+    } catch (error) {
+      console.error("Erro ao carregar despesas:", error);
+    }
+  };
+
   const loadEnderecamentos = async () => {
     setLoading(true);
     try {
@@ -539,6 +554,31 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     }, []);
     
     return notasUnicas;
+  };
+
+  const getDespesasPaletePorNotaPosicao = (notaId, linha, coluna) => {
+    return despesasExtras.filter(d => {
+      if (d.nota_fiscal_id !== notaId) return false;
+      // Verificar se a observação contém a posição
+      const temPosicao = d.observacoes?.includes(`Posição: ${linha}-${coluna}`);
+      // Verificar se é tipo palete (nome do tipo contém "palete")
+      const ehPalete = d.tipo_despesa_nome?.toLowerCase().includes('palete');
+      return temPosicao && ehPalete;
+    });
+  };
+
+  const handleAbrirDespesaPosicao = (nota, linha, coluna, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDespesaContext({ nota, linha, coluna });
+    setShowDespesaModal(true);
+  };
+
+  const handleDespesaSuccess = async () => {
+    await loadDespesasExtras();
+    setShowDespesaModal(false);
+    setDespesaContext(null);
+    toast.success("Despesa registrada com sucesso!");
   };
 
   const handleToggleVolume = (volumeId) => {
@@ -5230,7 +5270,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                 return (
                                   <div key={nota.id} className="space-y-0.5">
                                     <Draggable draggableId={`nota-${nota.id}-${linha}-${coluna}`} index={notaIndex}>
-                                      {(provided, snapshot) => (
+                                      {(provided, snapshot) => {
+                                        const despesasPalete = getDespesasPaletePorNotaPosicao(nota.id, linha, coluna);
+                                        const qtdPaletes = despesasPalete.reduce((sum, d) => sum + (d.quantidade || 0), 0);
+
+                                        return (
                                         <div
                                          ref={provided.innerRef}
                                          {...provided.draggableProps}
@@ -5239,6 +5283,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                            e.stopPropagation();
                                            toggleNotaExpandida(nota.id, linha, coluna);
                                          }}
+                                         onContextMenu={(e) => handleAbrirDespesaPosicao(nota, linha, coluna, e)}
                                          className="flex items-center justify-between gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[9px] sm:text-[11px] leading-tight cursor-pointer"
                                          style={{
                                           ...provided.draggableProps.style,
@@ -5257,6 +5302,18 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                          <span className="flex-1 truncate text-center px-0.5 sm:px-1 uppercase text-[8px] sm:text-[9px]" title={nota.emitente_razao_social}>
                                           {fornecedorAbreviado}
                                          </span>
+                                         {qtdPaletes > 0 && (
+                                           <div 
+                                             className="flex items-center gap-0.5 px-1 py-0.5 rounded"
+                                             style={{ backgroundColor: 'rgba(255, 165, 0, 0.2)' }}
+                                             title={`${qtdPaletes} palete(s)`}
+                                           >
+                                             <Package className="w-2.5 h-2.5" style={{ color: '#f59e0b' }} />
+                                             <span className="text-[8px] font-bold" style={{ color: '#f59e0b' }}>
+                                               {qtdPaletes}
+                                             </span>
+                                           </div>
+                                         )}
                                          <span className="font-bold shrink-0 w-4 sm:w-6 text-right text-[9px] sm:text-[10px]">
                                           {volumesNota.length}
                                          </span>
@@ -5272,9 +5329,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                          >
                                            <Trash2 className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-red-600" />
                                          </Button>
-                                        </div>
-                                      )}
-                                    </Draggable>
+                                         </div>
+                                         );
+                                         }}
+                                         </Draggable>
                                     
                                     {/* Volumes individuais - mostrar apenas quando expandido */}
                                     <AnimatePresence>
@@ -6032,6 +6090,21 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Despesa Extra Posição */}
+      {showDespesaModal && despesaContext && (
+        <DespesaPosicaoModal
+          open={showDespesaModal}
+          onClose={() => {
+            setShowDespesaModal(false);
+            setDespesaContext(null);
+          }}
+          notaFiscal={despesaContext.nota}
+          linha={despesaContext.linha}
+          coluna={despesaContext.coluna}
+          onSuccess={handleDespesaSuccess}
+        />
+      )}
 
       {/* Modal Finalizar Carregamento Desktop */}
       <Dialog open={showFinalizarModal} onOpenChange={setShowFinalizarModal}>
