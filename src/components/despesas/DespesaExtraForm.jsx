@@ -182,7 +182,7 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
               <Label>Nota Fiscal (opcional)</Label>
               <div className="space-y-2">
                 <Input
-                  placeholder="Buscar por número ou emitente..."
+                  placeholder="Buscar por número, emitente, destinatário ou chave..."
                   value={searchNota}
                   onChange={(e) => setSearchNota(e.target.value)}
                 />
@@ -199,7 +199,9 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
                       .filter(nf => 
                         !searchNota || 
                         nf.numero_nota?.toLowerCase().includes(searchNota.toLowerCase()) ||
-                        nf.emitente_razao_social?.toLowerCase().includes(searchNota.toLowerCase())
+                        nf.emitente_razao_social?.toLowerCase().includes(searchNota.toLowerCase()) ||
+                        nf.destinatario_razao_social?.toLowerCase().includes(searchNota.toLowerCase()) ||
+                        nf.chave_acesso?.toLowerCase().includes(searchNota.toLowerCase())
                       )
                       .map(nf => (
                         <SelectItem key={nf.id} value={nf.id}>
