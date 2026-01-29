@@ -561,8 +561,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       if (d.nota_fiscal_id !== notaId) return false;
       // Verificar se a observação contém a posição
       const temPosicao = d.observacoes?.includes(`Posição: ${linha}-${coluna}`);
-      // Verificar se é tipo palete (nome do tipo contém "palete")
-      const ehPalete = d.tipo_despesa_nome?.toLowerCase().includes('palete');
+      // Verificar se é tipo palete/paletização (aceitar variações)
+      const tipoLower = d.tipo_despesa_nome?.toLowerCase() || '';
+      const ehPalete = tipoLower.includes('palete') || tipoLower.includes('paletiza');
       return temPosicao && ehPalete;
     });
   };
@@ -3346,16 +3347,29 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                         {nota?.emitente_razao_social?.substring(0, 15)}
                                       </p>
                                     </div>
+                                    {qtdPaleteTotal > 0 && (
+                                       <div 
+                                         className="flex items-center gap-0.5 px-1.5 py-0.5 rounded mr-1"
+                                         style={{ backgroundColor: 'rgba(255, 165, 0, 0.2)' }}
+                                         title={`${qtdPaleteTotal} palete(s)`}
+                                       >
+                                         <Package className="w-3 h-3" style={{ color: '#f59e0b' }} />
+                                         <span className="text-[9px] font-bold" style={{ color: '#f59e0b' }}>
+                                           {qtdPaleteTotal}
+                                         </span>
+                                       </div>
+                                     )}
                                     <Badge 
-                                      className={`${snapshot.isDragging ? 'bg-white/20' : (volumes.length > 0 ? 'bg-orange-600' : 'bg-green-600')} text-white text-[10px] h-5 px-2 select-none`}
-                                      style={{ pointerEvents: 'none' }}
+                                     className={`${snapshot.isDragging ? 'bg-white/20' : (volumes.length > 0 ? 'bg-orange-600' : 'bg-green-600')} text-white text-[10px] h-5 px-2 select-none`}
+                                     style={{ pointerEvents: 'none' }}
                                     >
-                                      {volumes.length}/{volumesLocal.filter(v => v.nota_fiscal_id === notaId).length}
+                                     {volumes.length}/{volumesLocal.filter(v => v.nota_fiscal_id === notaId).length}
                                     </Badge>
-                                  </div>
-                                </div>
-                              )}
-                            </Draggable>
+                                    </div>
+                                    </div>
+                                    );
+                                    }}
+                                    </Draggable>
 
                             {/* Lista de Volumes - com expand/collapse */}
                             <AnimatePresence>
@@ -4839,7 +4853,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                             <div key={notaId} className="border rounded" style={{ borderColor: theme.cardBorder }}>
                               {/* Header da Nota Fiscal - arrastável */}
                               <Draggable draggableId={`nota-sidebar-${notaId}`} index={Object.keys(volumesPorNota).indexOf(notaId)}>
-                                {(provided, snapshot) => (
+                                {(provided, snapshot) => {
+                                  // Calcular despesas palete de TODAS as posições desta nota
+                                  const todasDespesasPalete = despesasExtras.filter(d => {
+                                    if (d.nota_fiscal_id !== notaId) return false;
+                                    const tipoLower = d.tipo_despesa_nome?.toLowerCase() || '';
+                                    return tipoLower.includes('palete') || tipoLower.includes('paletiza');
+                                  });
+                                  const qtdPaleteTotal = todasDespesasPalete.reduce((sum, d) => sum + (d.quantidade || 0), 0);
+
+                                  return (
                                   <div
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
@@ -4904,6 +4927,18 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                             {nota?.emitente_razao_social}
                                           </p>
                                         </div>
+                                        {qtdPaleteTotal > 0 && (
+                                          <div 
+                                            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded mr-1"
+                                            style={{ backgroundColor: 'rgba(255, 165, 0, 0.2)' }}
+                                            title={`${qtdPaleteTotal} palete(s)`}
+                                          >
+                                            <Package className="w-3 h-3" style={{ color: '#f59e0b' }} />
+                                            <span className="text-[9px] font-bold" style={{ color: '#f59e0b' }}>
+                                              {qtdPaleteTotal}
+                                            </span>
+                                          </div>
+                                        )}
                                         <Badge 
                                           className={`${snapshot.isDragging ? 'bg-white/20' : (volumesFaltam > 0 ? 'bg-orange-600' : 'bg-green-600')} text-white text-xs h-6 px-2 select-none`}
                                           style={{ pointerEvents: 'none' }}
@@ -4923,7 +4958,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                         </span>
                                       </div>
                                     </div>
-                                  )}
+                                  );
+                                }}
                                 </Draggable>
 
                               {/* Lista de Volumes da Nota - com expand/collapse */}
