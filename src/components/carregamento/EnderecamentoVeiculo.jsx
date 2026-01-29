@@ -185,6 +185,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const [dadosOrdemEdit, setDadosOrdemEdit] = useState({});
   const [ordemAtual, setOrdemAtual] = useState(ordem);
 
+  // Sincronizar ordemAtual quando prop ordem mudar
+  useEffect(() => {
+    setOrdemAtual(ordem);
+  }, [ordem]);
+
   useEffect(() => {
     const checkDarkMode = () => {
       setIsDark(document.documentElement.classList.contains('dark'));
@@ -2357,10 +2362,15 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
   const handleSalvarEdicaoOrdem = async () => {
     try {
+      // Salvar no banco
       await base44.entities.OrdemDeCarregamento.update(ordem.id, dadosOrdemEdit);
       
-      // Atualizar estado local com os novos dados
-      setOrdemAtual({ ...ordemAtual, ...dadosOrdemEdit });
+      // Buscar ordem atualizada do banco para garantir sincronização
+      const ordemAtualizada = await base44.entities.OrdemDeCarregamento.get(ordem.id);
+      setOrdemAtual(ordemAtualizada);
+      
+      // Atualizar prop ordem também
+      Object.assign(ordem, ordemAtualizada);
       
       toast.success("Dados da ordem atualizados!");
       setShowEditarOrdemModal(false);
