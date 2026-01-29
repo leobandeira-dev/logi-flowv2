@@ -20,13 +20,19 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
     unidade_cobranca: "unidade",
     data_despesa: new Date().toISOString().slice(0, 16),
     observacoes: "",
-    comprovante_url: ""
+    comprovante_url: "",
+    nota_fiscal_id: ""
   });
   const [tiposDespesa, setTiposDespesa] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [notasFiscais, setNotasFiscais] = useState([]);
+  const [searchNota, setSearchNota] = useState("");
 
   useEffect(() => {
     loadTiposDespesa();
+    if (!notaFiscal) {
+      loadNotasFiscais();
+    }
     if (despesa) {
       setFormData({
         tipo_despesa_id: despesa.tipo_despesa_id || "",
@@ -38,7 +44,8 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
         unidade_cobranca: despesa.unidade_cobranca || "unidade",
         data_despesa: despesa.data_despesa ? new Date(despesa.data_despesa).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
         observacoes: despesa.observacoes || "",
-        comprovante_url: despesa.comprovante_url || ""
+        comprovante_url: despesa.comprovante_url || "",
+        nota_fiscal_id: despesa.nota_fiscal_id || ""
       });
     }
   }, [despesa]);
@@ -49,6 +56,15 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
       setTiposDespesa(tipos);
     } catch (error) {
       console.error("Erro ao carregar tipos:", error);
+    }
+  };
+
+  const loadNotasFiscais = async () => {
+    try {
+      const notas = await base44.entities.NotaFiscal.list("-created_date", 200);
+      setNotasFiscais(notas);
+    } catch (error) {
+      console.error("Erro ao carregar notas fiscais:", error);
     }
   };
 
@@ -129,7 +145,7 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
         ...formData,
         numero_despesa: numeroDespesa,
         ordem_id: ordem?.id || null,
-        nota_fiscal_id: notaFiscal?.id || null,
+        nota_fiscal_id: formData.nota_fiscal_id || notaFiscal?.id || null,
         registrado_por: user.id,
         data_despesa: new Date(formData.data_despesa).toISOString()
       };
@@ -161,6 +177,41 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
           )}
         </DialogHeader>
         <div className="space-y-4 py-4">
+          {!notaFiscal && (
+            <div>
+              <Label>Nota Fiscal (opcional)</Label>
+              <div className="space-y-2">
+                <Input
+                  placeholder="Buscar por número ou emitente..."
+                  value={searchNota}
+                  onChange={(e) => setSearchNota(e.target.value)}
+                />
+                <Select
+                  value={formData.nota_fiscal_id}
+                  onValueChange={(value) => setFormData({ ...formData, nota_fiscal_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a nota fiscal..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>Sem nota fiscal</SelectItem>
+                    {notasFiscais
+                      .filter(nf => 
+                        !searchNota || 
+                        nf.numero_nota?.toLowerCase().includes(searchNota.toLowerCase()) ||
+                        nf.emitente_razao_social?.toLowerCase().includes(searchNota.toLowerCase())
+                      )
+                      .map(nf => (
+                        <SelectItem key={nf.id} value={nf.id}>
+                          NF {nf.numero_nota} - {nf.emitente_razao_social}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          
           <div>
             <Label>Tipo de Despesa *</Label>
             <Select
