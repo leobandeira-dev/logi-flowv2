@@ -2988,9 +2988,17 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           notasNaCelula.forEach(nota => {
             const volumesNota = getVolumesNaCelula(linha, coluna).filter(v => v.nota_fiscal_id === nota.id);
             const fornecedorAbreviado = (nota.emitente_razao_social?.split(' ').slice(0, 2).join(' ').substring(0, 18) || 'N/A').toUpperCase();
+            
+            // Calcular despesas palete desta posição
+            const despesasPalete = getDespesasPaletePorNotaPosicao(nota.id, linha, coluna);
+            const qtdPaletes = despesasPalete.reduce((sum, d) => sum + (d.quantidade || 0), 0);
+            
             html += `<div class="nota-item">`;
             html += `<span class="nota-num">${nota.numero_nota}</span>`;
             html += `<span class="nota-forn" title="${nota.emitente_razao_social}">${fornecedorAbreviado}</span>`;
+            if (qtdPaletes > 0) {
+              html += `<span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 1px 4px; border-radius: 3px; font-size: 8px; font-weight: bold; margin: 0 2px;">📦${qtdPaletes}</span>`;
+            }
             html += `<span class="nota-qtd">${volumesNota.length}</span>`;
             html += `</div>`;
           });
@@ -3064,8 +3072,17 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         
         notasNaCelula.forEach(nota => {
           const volumesNota = getVolumesNaCelula(linha, coluna).filter(v => v.nota_fiscal_id === nota.id);
+          
+          // Calcular despesas palete desta posição
+          const despesasPalete = getDespesasPaletePorNotaPosicao(nota.id, linha, coluna);
+          const qtdPaletes = despesasPalete.reduce((sum, d) => sum + (d.quantidade || 0), 0);
+          
           html += `<div class="nota-group">`;
-          html += `<div class="nota-label">NF ${nota.numero_nota} (${volumesNota.length} vol.)</div>`;
+          html += `<div class="nota-label">NF ${nota.numero_nota} (${volumesNota.length} vol.)`;
+          if (qtdPaletes > 0) {
+            html += ` <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 1px 4px; border-radius: 3px; font-size: 8px; font-weight: bold;">📦${qtdPaletes} palete(s)</span>`;
+          }
+          html += `</div>`;
           volumesNota.forEach(vol => {
             html += `<div class="volume-item">${vol.identificador_unico}</div>`;
           });
