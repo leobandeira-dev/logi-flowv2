@@ -2300,14 +2300,15 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       setOrdemAtual(ordemFresca);
       Object.assign(ordem, ordemFresca);
 
+      // PRIORIZAR campos _temp (editáveis) - só buscar cadastro se _temp estiver vazio
       let motoristaNome = ordemFresca.motorista_nome_temp || "";
       let cavaloPlaca = ordemFresca.cavalo_placa_temp || "";
       let impl1Placa = ordemFresca.implemento1_placa_temp || "";
       let impl2Placa = ordemFresca.implemento2_placa_temp || "";
       let impl3Placa = ordemFresca.implemento3_placa_temp || "";
 
-      // Buscar motorista se houver ID (prioridade sobre _temp)
-      if (ordemFresca.motorista_id) {
+      // Buscar motorista APENAS se _temp estiver vazio
+      if (!motoristaNome && ordemFresca.motorista_id) {
         try {
           const motoristas = await base44.entities.Motorista.filter({ id: ordemFresca.motorista_id });
           if (motoristas[0]) motoristaNome = motoristas[0].nome;
@@ -2316,8 +2317,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         }
       }
 
-      // Buscar cavalo se houver ID (prioridade sobre _temp)
-      if (ordemFresca.cavalo_id) {
+      // Buscar cavalo APENAS se _temp estiver vazio
+      if (!cavaloPlaca && ordemFresca.cavalo_id) {
         try {
           const veiculos = await base44.entities.Veiculo.filter({ id: ordemFresca.cavalo_id });
           if (veiculos[0]) cavaloPlaca = veiculos[0].placa;
@@ -2326,24 +2327,41 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
         }
       }
 
-      // Buscar implementos (prioridade sobre _temp)
-      const implementoIds = [ordemFresca.implemento1_id, ordemFresca.implemento2_id, ordemFresca.implemento3_id].filter(Boolean);
-      if (implementoIds.length > 0) {
+      // Buscar implementos APENAS se _temp estiver vazio
+      if ((!impl1Placa && ordemFresca.implemento1_id) || 
+          (!impl2Placa && ordemFresca.implemento2_id) || 
+          (!impl3Placa && ordemFresca.implemento3_id)) {
         try {
+          const implementoIds = [ordemFresca.implemento1_id, ordemFresca.implemento2_id, ordemFresca.implemento3_id].filter(Boolean);
           const veiculos = await base44.entities.Veiculo.list();
           const implementos = veiculos.filter(v => implementoIds.includes(v.id));
           
-          const impl1 = implementos.find(i => i.id === ordemFresca.implemento1_id);
-          const impl2 = implementos.find(i => i.id === ordemFresca.implemento2_id);
-          const impl3 = implementos.find(i => i.id === ordemFresca.implemento3_id);
+          if (!impl1Placa) {
+            const impl1 = implementos.find(i => i.id === ordemFresca.implemento1_id);
+            if (impl1) impl1Placa = impl1.placa;
+          }
           
-          if (impl1) impl1Placa = impl1.placa;
-          if (impl2) impl2Placa = impl2.placa;
-          if (impl3) impl3Placa = impl3.placa;
+          if (!impl2Placa) {
+            const impl2 = implementos.find(i => i.id === ordemFresca.implemento2_id);
+            if (impl2) impl2Placa = impl2.placa;
+          }
+          
+          if (!impl3Placa) {
+            const impl3 = implementos.find(i => i.id === ordemFresca.implemento3_id);
+            if (impl3) impl3Placa = impl3.placa;
+          }
         } catch (error) {
           console.log("Erro ao buscar implementos:", error);
         }
       }
+
+      console.log("📝 Valores carregados para edição:", {
+        motorista: motoristaNome,
+        cavalo: cavaloPlaca,
+        impl1: impl1Placa,
+        impl2: impl2Placa,
+        impl3: impl3Placa
+      });
 
       setDadosOrdemEdit({
         cliente: ordemFresca.cliente || "",
