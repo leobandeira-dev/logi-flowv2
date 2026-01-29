@@ -2710,13 +2710,30 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       minute: '2-digit'
     });
 
-    const placas = [
-      cavalo?.placa || ordemAtual.cavalo_placa_temp,
-      ...implementos.map(i => i.placa),
-      ordemAtual.implemento1_placa_temp,
-      ordemAtual.implemento2_placa_temp,
-      ordemAtual.implemento3_placa_temp
-    ].filter(Boolean).join(' / ');
+    // Montar lista de placas sem duplicação
+    const placasCavalo = cavalo?.placa || ordemAtual.cavalo_placa_temp;
+    const placasImplementos = [];
+    
+    // Priorizar placas dos veículos cadastrados se houver IDs
+    if (ordemAtual.implemento1_id && implementos.find(i => i.id === ordemAtual.implemento1_id)) {
+      placasImplementos.push(implementos.find(i => i.id === ordemAtual.implemento1_id).placa);
+    } else if (ordemAtual.implemento1_placa_temp) {
+      placasImplementos.push(ordemAtual.implemento1_placa_temp);
+    }
+    
+    if (ordemAtual.implemento2_id && implementos.find(i => i.id === ordemAtual.implemento2_id)) {
+      placasImplementos.push(implementos.find(i => i.id === ordemAtual.implemento2_id).placa);
+    } else if (ordemAtual.implemento2_placa_temp) {
+      placasImplementos.push(ordemAtual.implemento2_placa_temp);
+    }
+    
+    if (ordemAtual.implemento3_id && implementos.find(i => i.id === ordemAtual.implemento3_id)) {
+      placasImplementos.push(implementos.find(i => i.id === ordemAtual.implemento3_id).placa);
+    } else if (ordemAtual.implemento3_placa_temp) {
+      placasImplementos.push(ordemAtual.implemento3_placa_temp);
+    }
+    
+    const placas = [placasCavalo, ...placasImplementos].filter(Boolean).join(' / ');
 
     const motoristaInfo = motorista?.nome || ordemAtual.motorista_nome_temp || 'Não alocado';
 
