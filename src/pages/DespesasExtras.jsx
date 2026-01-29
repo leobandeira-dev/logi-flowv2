@@ -544,7 +544,7 @@ export default function DespesasExtras() {
                                   )}
                                 </div>
 
-                                <div className="col-span-1 flex items-center justify-center">
+                                <div className="flex items-center justify-center">
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <button
