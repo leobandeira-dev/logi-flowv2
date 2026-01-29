@@ -375,43 +375,48 @@ export default function DespesasExtras() {
                     <div>
                     {/* Header da Tabela - Estilo Monday.com */}
                     <div 
-                      className="grid grid-cols-12 gap-3 px-6 py-3 border-b sticky top-0 z-10"
+                      className="grid grid-cols-[auto_1.5fr_2fr_1fr_1.5fr_1fr_1fr_1fr] gap-3 px-6 py-3 border-b sticky top-0 z-10"
                       style={{
                         backgroundColor: isDark ? '#1a2332' : '#f7f8fa',
                         borderColor: theme.cardBorder
                       }}
                     >
-                      <div className="col-span-1 flex items-center">
+                      <div className="flex items-center">
                         <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
                           Nº Despesa
                         </span>
                       </div>
-                      <div className="col-span-2 flex items-center">
+                      <div className="flex items-center">
                         <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
                           Tipo
                         </span>
                       </div>
-                      <div className="col-span-3 flex items-center">
+                      <div className="flex items-center">
                         <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
                           Nota Fiscal
                         </span>
                       </div>
-                      <div className="col-span-2 flex items-center">
+                      <div className="flex items-center">
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
+                          Movimento ERP
+                        </span>
+                      </div>
+                      <div className="flex items-center">
                         <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
                           Descrição
                         </span>
                       </div>
-                      <div className="col-span-1 flex items-center justify-center">
+                      <div className="flex items-center justify-center">
                         <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
                           Status
                         </span>
                       </div>
-                      <div className="col-span-2 flex items-center justify-end">
+                      <div className="flex items-center justify-end">
                         <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
                           Valor
                         </span>
                       </div>
-                      <div className="col-span-1 flex items-center justify-center">
+                      <div className="flex items-center justify-center">
                         <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
                           Ações
                         </span>
@@ -465,7 +470,7 @@ export default function DespesasExtras() {
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
                                     {...provided.dragHandleProps}
-                                    className="grid grid-cols-12 gap-3 px-6 py-4 border-b group transition-all duration-200"
+                                    className="grid grid-cols-[auto_1.5fr_2fr_1fr_1.5fr_1fr_1fr_1fr] gap-3 px-6 py-4 border-b group transition-all duration-200"
                                     style={{
                                       ...provided.draggableProps.style,
                                       backgroundColor: snapshot.isDragging 
@@ -486,13 +491,13 @@ export default function DespesasExtras() {
                                       }
                                     }}
                                   >
-                                <div className="col-span-1 flex items-center">
+                                <div className="flex items-center">
                                   <span className="font-mono text-sm font-bold" style={{ color: theme.text }}>
                                     {despesa.numero_despesa}
                                   </span>
                                 </div>
 
-                                <div className="col-span-2 flex items-center gap-2">
+                                <div className="flex items-center gap-2">
                                   <div 
                                     className="w-1 h-10 rounded-full flex-shrink-0"
                                     style={{ backgroundColor: statusColor.bg }}
@@ -502,7 +507,7 @@ export default function DespesasExtras() {
                                   </span>
                                 </div>
 
-                                <div className="col-span-3 flex items-center">
+                                <div className="flex items-center">
                                   {despesa.nota_fiscal_id && notaFiscal ? (
                                     <div className="flex flex-col gap-0.5">
                                       <span className="text-sm font-medium" style={{ color: theme.text }}>
@@ -519,7 +524,17 @@ export default function DespesasExtras() {
                                   )}
                                 </div>
 
-                                <div className="col-span-2 flex items-center">
+                                <div className="flex items-center">
+                                  {despesa.numero_movimento_erp ? (
+                                    <span className="text-sm font-mono" style={{ color: theme.text }}>
+                                      {despesa.numero_movimento_erp}
+                                    </span>
+                                  ) : (
+                                    <span className="text-sm" style={{ color: theme.textMuted }}>-</span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center">
                                   {despesa.descricao ? (
                                     <span className="text-sm truncate" style={{ color: theme.textMuted }}>
                                       {despesa.descricao}
@@ -591,7 +606,7 @@ export default function DespesasExtras() {
                                   </DropdownMenu>
                                 </div>
 
-                                <div className="col-span-2 flex items-center justify-end">
+                                <div className="flex items-center justify-end">
                                   <div className="text-right">
                                     <p className="font-bold text-base" style={{ color: theme.text }}>
                                       R$ {(despesa.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -602,7 +617,7 @@ export default function DespesasExtras() {
                                   </div>
                                 </div>
 
-                                <div className="col-span-1 flex items-center justify-center">
+                                <div className="flex items-center justify-center">
                                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                     {despesa.status === "pendente" && (
                                       <Button
