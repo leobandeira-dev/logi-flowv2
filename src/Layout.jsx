@@ -105,6 +105,7 @@ const getNavigationItems = (userProfile, userRole, ocorrenciasCount, etapasCount
           { title: "Parceiros", url: createPageUrl("Parceiros"), icon: Users },
           { title: "Operações", url: createPageUrl("Operacoes"), icon: Settings },
           { title: "Tabelas de Frete", url: createPageUrl("Tabelas"), icon: FileText },
+          { title: "Despesas Extras", url: createPageUrl("DespesasExtras"), icon: DollarSign },
           { title: "Gestão de Usuários", url: createPageUrl("Usuarios"), icon: UserCog },
           { title: "Aprovações Pendentes", url: createPageUrl("Usuarios"), icon: UserCog, badge: aprovacoesCount },
         ]
@@ -254,6 +255,7 @@ const getNavigationItems = (userProfile, userRole, ocorrenciasCount, etapasCount
           { title: "Veículos", url: createPageUrl("Veiculos"), icon: Truck },
           { title: "Operações", url: createPageUrl("Operacoes"), icon: Settings },
           { title: "Tabelas de Preços", url: createPageUrl("Tabelas"), icon: FileText },
+          { title: "Despesas Extras", url: createPageUrl("DespesasExtras"), icon: DollarSign },
         ]
       },
       { 
