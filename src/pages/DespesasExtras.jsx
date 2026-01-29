@@ -7,6 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Plus,
   Search,
   FileText,
@@ -18,7 +24,8 @@ import {
   Trash2,
   Download,
   List,
-  LayoutGrid
+  LayoutGrid,
+  ChevronDown
 } from "lucide-react";
 import DespesaExtraForm from "../components/despesas/DespesaExtraForm";
 import TipoDespesaForm from "../components/despesas/TipoDespesaForm";
@@ -364,7 +371,8 @@ export default function DespesasExtras() {
               </CardHeader>
               <CardContent className="p-0">
                 {visualizacao === "lista" ? (
-                  <div>
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <div>
                     {/* Header da Tabela - Estilo Monday.com */}
                     <div 
                       className="grid grid-cols-12 gap-3 px-6 py-3 border-b sticky top-0 z-10"
@@ -413,7 +421,13 @@ export default function DespesasExtras() {
                     {/* Agrupamento por Status - Estilo Monday.com */}
                     {Object.entries(despesasAgrupadas).map(([status, despesasDoStatus]) => 
                       despesasDoStatus.length > 0 && (
-                        <div key={status} className="mb-1">
+                        <Droppable key={status} droppableId={status}>
+                          {(provided) => (
+                            <div 
+                              ref={provided.innerRef}
+                              {...provided.droppableProps}
+                              className="mb-1"
+                            >
                           {/* Header do Grupo */}
                           <div 
                             className="px-6 py-3 flex items-center gap-3 sticky top-[49px] z-[9]"
@@ -445,20 +459,33 @@ export default function DespesasExtras() {
                             const statusColor = getStatusColor(despesa.status, theme);
                             const notaFiscal = notasFiscaisMap[despesa.nota_fiscal_id];
                             return (
-                              <div
-                                key={despesa.id}
-                                className="grid grid-cols-12 gap-3 px-6 py-4 border-b group transition-all duration-200"
-                                style={{
-                                  backgroundColor: index % 2 === 0 ? theme.cardBg : (isDark ? '#151d2b' : '#fafbfc'),
-                                  borderColor: isDark ? '#2d3748' : '#e2e8f0',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f1f5f9';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.backgroundColor = index % 2 === 0 ? theme.cardBg : (isDark ? '#151d2b' : '#fafbfc');
-                                }}
-                              >
+                              <Draggable key={despesa.id} draggableId={despesa.id} index={index}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    className="grid grid-cols-12 gap-3 px-6 py-4 border-b group transition-all duration-200"
+                                    style={{
+                                      ...provided.draggableProps.style,
+                                      backgroundColor: snapshot.isDragging 
+                                        ? (isDark ? '#334155' : '#e2e8f0')
+                                        : (index % 2 === 0 ? theme.cardBg : (isDark ? '#151d2b' : '#fafbfc')),
+                                      borderColor: isDark ? '#2d3748' : '#e2e8f0',
+                                      cursor: snapshot.isDragging ? 'grabbing' : 'grab',
+                                      opacity: snapshot.isDragging ? 0.9 : 1
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      if (!snapshot.isDragging) {
+                                        e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f1f5f9';
+                                      }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      if (!snapshot.isDragging) {
+                                        e.currentTarget.style.backgroundColor = index % 2 === 0 ? theme.cardBg : (isDark ? '#151d2b' : '#fafbfc');
+                                      }
+                                    }}
+                                  >
                                 <div className="col-span-1 flex items-center">
                                   <span className="font-mono text-sm font-bold" style={{ color: theme.text }}>
                                     {despesa.numero_despesa}
@@ -503,15 +530,65 @@ export default function DespesasExtras() {
                                 </div>
 
                                 <div className="col-span-1 flex items-center justify-center">
-                                  <Badge
-                                    className="text-xs font-semibold px-3 py-1 rounded-full border-0"
-                                    style={{
-                                      backgroundColor: statusColor.bg,
-                                      color: statusColor.text
-                                    }}
-                                  >
-                                    {statusLabels[despesa.status]}
-                                  </Badge>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <button
+                                        className="flex items-center gap-1 px-3 py-1 rounded-full border-0 text-xs font-semibold transition-all hover:opacity-80 cursor-pointer"
+                                        style={{
+                                          backgroundColor: statusColor.bg,
+                                          color: statusColor.text
+                                        }}
+                                      >
+                                        {statusLabels[despesa.status]}
+                                        <ChevronDown className="w-3 h-3" />
+                                      </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="center">
+                                      {Object.entries(statusLabels).map(([key, label]) => {
+                                        const itemColor = getStatusColor(key, theme);
+                                        return (
+                                          <DropdownMenuItem
+                                            key={key}
+                                            onClick={async () => {
+                                              if (key === despesa.status) return;
+                                              
+                                              // Verificar se está tentando mover para "faturada"
+                                              if (key === "faturada") {
+                                                if (!despesa.nota_fiscal_id) {
+                                                  toast.error("Esta despesa precisa estar vinculada a uma Nota Fiscal");
+                                                  return;
+                                                }
+                                                const notaFiscal = await base44.entities.NotaFiscal.get(despesa.nota_fiscal_id);
+                                                if (!notaFiscal.cte_id) {
+                                                  setNotaFiscalParaVincular(notaFiscal);
+                                                  setDespesaPendente({ despesa, newStatus: key });
+                                                  setShowVincularCTe(true);
+                                                  return;
+                                                }
+                                              }
+                                              
+                                              const user = await base44.auth.me();
+                                              const updateData = { status: key };
+                                              if (key === "aprovada") {
+                                                updateData.aprovado_por = user.id;
+                                                updateData.data_aprovacao = new Date().toISOString();
+                                              }
+                                              await base44.entities.DespesaExtra.update(despesa.id, updateData);
+                                              toast.success(`Status atualizado para ${label}`);
+                                              loadData();
+                                            }}
+                                            className="flex items-center gap-2"
+                                          >
+                                            <div 
+                                              className="w-2 h-2 rounded-full"
+                                              style={{ backgroundColor: itemColor.bg }}
+                                            />
+                                            {label}
+                                          </DropdownMenuItem>
+                                        );
+                                      })}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
                                 </div>
 
                                 <div className="col-span-2 flex items-center justify-end">
@@ -564,11 +641,16 @@ export default function DespesasExtras() {
                                   </div>
                                 </div>
                               </div>
-                            );
-                          })}
-                        </div>
-                      )
-                    )}
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              )
+            )}
 
                     {despesasFiltradas.length === 0 && (
                       <div 
@@ -580,6 +662,7 @@ export default function DespesasExtras() {
                       </div>
                     )}
                   </div>
+                  </DragDropContext>
                 ) : (
                   <DragDropContext onDragEnd={handleDragEnd}>
                     <div className="grid grid-cols-4 gap-4">
