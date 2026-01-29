@@ -17,7 +17,8 @@ import {
   FileText,
   Grid3x3,
   CheckCircle,
-  Camera
+  Camera,
+  Edit
 } from "lucide-react";
 import CameraScanner from "../etiquetas-mae/CameraScanner";
 import {
@@ -180,6 +181,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const [showCameraNotaFiscal, setShowCameraNotaFiscal] = useState(false);
   const [feedbackNota, setFeedbackNota] = useState(null); // 'success' | 'duplicate' | 'error'
   const [feedbackMensagem, setFeedbackMensagem] = useState("");
+  const [showEditarOrdemModal, setShowEditarOrdemModal] = useState(false);
+  const [dadosOrdemEdit, setDadosOrdemEdit] = useState({});
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -2284,6 +2287,38 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     }
   };
 
+  const handleAbrirEditarOrdem = () => {
+    setDadosOrdemEdit({
+      cliente: ordem.cliente || "",
+      origem: ordem.origem || "",
+      origem_cidade: ordem.origem_cidade || "",
+      destino: ordem.destino || "",
+      destino_cidade: ordem.destino_cidade || "",
+      produto: ordem.produto || "",
+      motorista_nome_temp: ordem.motorista_nome_temp || "",
+      cavalo_placa_temp: ordem.cavalo_placa_temp || "",
+      implemento1_placa_temp: ordem.implemento1_placa_temp || "",
+      implemento2_placa_temp: ordem.implemento2_placa_temp || "",
+      implemento3_placa_temp: ordem.implemento3_placa_temp || ""
+    });
+    setShowEditarOrdemModal(true);
+  };
+
+  const handleSalvarEdicaoOrdem = async () => {
+    try {
+      await base44.entities.OrdemDeCarregamento.update(ordem.id, dadosOrdemEdit);
+      
+      // Atualizar objeto ordem local para refletir mudanças imediatamente
+      Object.assign(ordem, dadosOrdemEdit);
+      
+      toast.success("Dados da ordem atualizados!");
+      setShowEditarOrdemModal(false);
+    } catch (error) {
+      console.error("Erro ao atualizar ordem:", error);
+      toast.error("Erro ao atualizar dados da ordem");
+    }
+  };
+
   const handleGerarArquivoChaves = async () => {
     try {
       const user = await base44.auth.me();
@@ -4167,6 +4202,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               <span className="hidden sm:inline">Chaves</span>
             </Button>
             <Button
+              variant="outline"
+              onClick={handleAbrirEditarOrdem}
+              size="sm"
+              className="h-7 sm:h-9 px-2 sm:px-4"
+              style={{ borderColor: theme.cardBorder, color: theme.text }}
+            >
+              <Edit className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Editar Ordem</span>
+            </Button>
+            <Button
               onClick={handleSalvarProgresso}
               disabled={saving}
               variant="outline"
@@ -5663,6 +5708,146 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
               className="bg-blue-600 hover:bg-blue-700"
             >
               {saving ? "Movimentando..." : "Confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Editar Ordem */}
+      <Dialog open={showEditarOrdemModal} onOpenChange={setShowEditarOrdemModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <DialogHeader>
+            <DialogTitle style={{ color: theme.text }}>Editar Dados da Ordem</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label style={{ color: theme.text }}>Cliente</Label>
+                <Input
+                  value={dadosOrdemEdit.cliente || ""}
+                  onChange={(e) => setDadosOrdemEdit({ ...dadosOrdemEdit, cliente: e.target.value })}
+                  className="mt-1"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                />
+              </div>
+              <div>
+                <Label style={{ color: theme.text }}>Produto</Label>
+                <Input
+                  value={dadosOrdemEdit.produto || ""}
+                  onChange={(e) => setDadosOrdemEdit({ ...dadosOrdemEdit, produto: e.target.value })}
+                  className="mt-1"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label style={{ color: theme.text }}>Origem</Label>
+                <Input
+                  value={dadosOrdemEdit.origem || ""}
+                  onChange={(e) => setDadosOrdemEdit({ ...dadosOrdemEdit, origem: e.target.value })}
+                  className="mt-1"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                />
+              </div>
+              <div>
+                <Label style={{ color: theme.text }}>Cidade Origem</Label>
+                <Input
+                  value={dadosOrdemEdit.origem_cidade || ""}
+                  onChange={(e) => setDadosOrdemEdit({ ...dadosOrdemEdit, origem_cidade: e.target.value })}
+                  className="mt-1"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label style={{ color: theme.text }}>Destino</Label>
+                <Input
+                  value={dadosOrdemEdit.destino || ""}
+                  onChange={(e) => setDadosOrdemEdit({ ...dadosOrdemEdit, destino: e.target.value })}
+                  className="mt-1"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                />
+              </div>
+              <div>
+                <Label style={{ color: theme.text }}>Cidade Destino</Label>
+                <Input
+                  value={dadosOrdemEdit.destino_cidade || ""}
+                  onChange={(e) => setDadosOrdemEdit({ ...dadosOrdemEdit, destino_cidade: e.target.value })}
+                  className="mt-1"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label style={{ color: theme.text }}>Motorista</Label>
+              <Input
+                value={dadosOrdemEdit.motorista_nome_temp || ""}
+                onChange={(e) => setDadosOrdemEdit({ ...dadosOrdemEdit, motorista_nome_temp: e.target.value })}
+                className="mt-1"
+                style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label style={{ color: theme.text }}>Placa Cavalo</Label>
+                <Input
+                  value={dadosOrdemEdit.cavalo_placa_temp || ""}
+                  onChange={(e) => setDadosOrdemEdit({ ...dadosOrdemEdit, cavalo_placa_temp: e.target.value })}
+                  className="mt-1"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                />
+              </div>
+              <div>
+                <Label style={{ color: theme.text }}>Placa Implemento 1</Label>
+                <Input
+                  value={dadosOrdemEdit.implemento1_placa_temp || ""}
+                  onChange={(e) => setDadosOrdemEdit({ ...dadosOrdemEdit, implemento1_placa_temp: e.target.value })}
+                  className="mt-1"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label style={{ color: theme.text }}>Placa Implemento 2</Label>
+                <Input
+                  value={dadosOrdemEdit.implemento2_placa_temp || ""}
+                  onChange={(e) => setDadosOrdemEdit({ ...dadosOrdemEdit, implemento2_placa_temp: e.target.value })}
+                  className="mt-1"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                />
+              </div>
+              <div>
+                <Label style={{ color: theme.text }}>Placa Implemento 3</Label>
+                <Input
+                  value={dadosOrdemEdit.implemento3_placa_temp || ""}
+                  onChange={(e) => setDadosOrdemEdit({ ...dadosOrdemEdit, implemento3_placa_temp: e.target.value })}
+                  className="mt-1"
+                  style={{ backgroundColor: theme.inputBg, borderColor: theme.inputBorder, color: theme.text }}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowEditarOrdemModal(false)}
+              style={{ borderColor: theme.cardBorder, color: theme.text }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSalvarEdicaoOrdem}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Salvar Alterações
             </Button>
           </DialogFooter>
         </DialogContent>
