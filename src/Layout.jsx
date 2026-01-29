@@ -34,7 +34,8 @@ import {
   Clock,
   ChevronRight,
   Tag,
-  Ruler
+  Ruler,
+  DollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
