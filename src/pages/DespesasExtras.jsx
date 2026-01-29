@@ -550,92 +550,120 @@ export default function DespesasExtras() {
                 ) : (
                   <DragDropContext onDragEnd={handleDragEnd}>
                     <div className="grid grid-cols-4 gap-4">
-                      {Object.entries(despesasAgrupadas).map(([status, despesasDoStatus]) => (
-                        <Droppable key={status} droppableId={status}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.droppableProps}
-                              className="border rounded-lg p-4"
-                              style={{
-                                borderColor: theme.cardBorder,
-                                backgroundColor: snapshot.isDraggingOver ? (isDark ? '#1e293b' : '#f1f5f9') : 'transparent',
-                                minHeight: '500px'
-                              }}
-                            >
-                              <div className="flex items-center justify-between mb-4">
-                                <Badge className={statusColors[status]}>
-                                  {status}
-                                </Badge>
-                                <span className="text-xs font-bold" style={{ color: theme.textMuted }}>
-                                  {despesasDoStatus.length}
-                                </span>
-                              </div>
-                              <div className="space-y-3">
-                                {despesasDoStatus.map((despesa, index) => (
-                                  <Draggable key={despesa.id} draggableId={despesa.id} index={index}>
-                                    {(provided, snapshot) => (
-                                      <div
-                                        ref={provided.innerRef}
-                                        {...provided.draggableProps}
-                                        {...provided.dragHandleProps}
-                                        className="p-3 border rounded-lg"
-                                        style={{
-                                          ...provided.draggableProps.style,
-                                          borderColor: theme.cardBorder,
-                                          backgroundColor: snapshot.isDragging ? (isDark ? '#334155' : '#ffffff') : theme.cardBg,
-                                          cursor: 'grab'
-                                        }}
-                                      >
-                                        <div className="flex items-start justify-between mb-2">
-                                          <span className="font-mono text-xs font-bold" style={{ color: theme.text }}>
-                                            {despesa.numero_despesa}
-                                          </span>
-                                          <div className="flex gap-1">
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              onClick={() => {
-                                                setDespesaEdit(despesa);
-                                                setShowDespesaForm(true);
-                                              }}
-                                              className="h-6 w-6 p-0"
-                                            >
-                                              <Edit className="w-3 h-3 text-blue-600" />
-                                            </Button>
+                      {Object.entries(despesasAgrupadas).map(([status, despesasDoStatus]) => {
+                        const statusColor = getStatusColor(status, theme);
+                        return (
+                          <Droppable key={status} droppableId={status}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.droppableProps}
+                                className="rounded-lg p-4 transition-all duration-200"
+                                style={{
+                                  backgroundColor: snapshot.isDraggingOver ? (isDark ? '#1e293b' : '#f1f5f9') : (isDark ? '#151d2b' : '#fafbfc'),
+                                  border: `2px solid ${snapshot.isDraggingOver ? statusColor.bg : (isDark ? '#2d3748' : '#e2e8f0')}`,
+                                  minHeight: '500px'
+                                }}
+                              >
+                                <div className="flex items-center justify-between mb-4 pb-3 border-b" style={{ borderColor: theme.cardBorder }}>
+                                  <div className="flex items-center gap-2">
+                                    <div 
+                                      className="w-3 h-3 rounded-full"
+                                      style={{ backgroundColor: statusColor.bg }}
+                                    />
+                                    <span className="text-sm font-bold uppercase tracking-wide" style={{ color: theme.text }}>
+                                      {statusLabels[status]}
+                                    </span>
+                                  </div>
+                                  <Badge 
+                                    className="text-xs font-bold px-2.5 py-0.5 rounded-full"
+                                    style={{
+                                      backgroundColor: statusColor.bg,
+                                      color: statusColor.text
+                                    }}
+                                  >
+                                    {despesasDoStatus.length}
+                                  </Badge>
+                                </div>
+                                <div className="space-y-3">
+                                  {despesasDoStatus.map((despesa, index) => {
+                                    const notaFiscal = notasFiscaisMap[despesa.nota_fiscal_id];
+                                    return (
+                                      <Draggable key={despesa.id} draggableId={despesa.id} index={index}>
+                                        {(provided, snapshot) => (
+                                          <div
+                                            ref={provided.innerRef}
+                                            {...provided.draggableProps}
+                                            {...provided.dragHandleProps}
+                                            className="rounded-lg shadow-sm hover:shadow-md transition-all duration-200 group overflow-hidden"
+                                            style={{
+                                              ...provided.draggableProps.style,
+                                              backgroundColor: snapshot.isDragging ? (isDark ? '#334155' : '#ffffff') : theme.cardBg,
+                                              border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                                              cursor: 'grab'
+                                            }}
+                                          >
+                                            <div 
+                                              className="h-1 w-full"
+                                              style={{ backgroundColor: statusColor.bg }}
+                                            />
+                                            <div className="p-3">
+                                              <div className="flex items-start justify-between mb-2">
+                                                <span className="font-mono text-xs font-bold" style={{ color: theme.text }}>
+                                                  {despesa.numero_despesa}
+                                                </span>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setDespesaEdit(despesa);
+                                                    setShowDespesaForm(true);
+                                                  }}
+                                                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                                >
+                                                  <Edit className="w-3 h-3 text-blue-600" />
+                                                </Button>
+                                              </div>
+                                              <p className="text-sm font-semibold mb-2 leading-tight" style={{ color: theme.text }}>
+                                                {despesa.tipo_despesa_nome}
+                                              </p>
+                                              {despesa.nota_fiscal_id && notaFiscal && (
+                                                <div className="mb-2 p-2 rounded" style={{ backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }}>
+                                                  <p className="text-xs font-medium" style={{ color: theme.text }}>
+                                                    NF {notaFiscal.numero_nota}
+                                                  </p>
+                                                  <p className="text-xs truncate" style={{ color: theme.textMuted }}>
+                                                    {notaFiscal.emitente_razao_social}
+                                                  </p>
+                                                </div>
+                                              )}
+                                              {despesa.descricao && (
+                                                <p className="text-xs mb-3 line-clamp-2 leading-relaxed" style={{ color: theme.textMuted }}>
+                                                  {despesa.descricao}
+                                                </p>
+                                              )}
+                                              <div className="flex items-center justify-between pt-3 border-t" style={{ borderColor: theme.cardBorder }}>
+                                                <span className="text-xs font-medium" style={{ color: theme.textMuted }}>
+                                                  {despesa.quantidade} {despesa.unidade_cobranca}
+                                                </span>
+                                                <span className="font-bold text-base" style={{ color: theme.text }}>
+                                                  R$ {(despesa.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                </span>
+                                              </div>
+                                            </div>
                                           </div>
-                                        </div>
-                                        <p className="text-sm font-medium mb-1" style={{ color: theme.text }}>
-                                          {despesa.tipo_despesa_nome}
-                                        </p>
-                                        {despesa.nota_fiscal_id && notasFiscaisMap[despesa.nota_fiscal_id] && (
-                                          <p className="text-xs mb-2" style={{ color: theme.textMuted }}>
-                                            NF {notasFiscaisMap[despesa.nota_fiscal_id].numero_nota}
-                                          </p>
                                         )}
-                                        {despesa.descricao && (
-                                          <p className="text-xs mb-2 line-clamp-2" style={{ color: theme.textMuted }}>
-                                            {despesa.descricao}
-                                          </p>
-                                        )}
-                                        <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: theme.cardBorder }}>
-                                          <span className="text-xs" style={{ color: theme.textMuted }}>
-                                            {despesa.quantidade} {despesa.unidade_cobranca}
-                                          </span>
-                                          <span className="font-bold text-sm" style={{ color: theme.text }}>
-                                            R$ {(despesa.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </Draggable>
-                                ))}
-                                {provided.placeholder}
+                                      </Draggable>
+                                    );
+                                  })}
+                                  {provided.placeholder}
+                                </div>
                               </div>
-                            </div>
-                          )}
-                        </Droppable>
-                      ))}
+                            )}
+                          </Droppable>
+                        );
+                      })}
                     </div>
                   </DragDropContext>
                 )}
