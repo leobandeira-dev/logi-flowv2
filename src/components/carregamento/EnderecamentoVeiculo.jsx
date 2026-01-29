@@ -2362,11 +2362,24 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
   const handleSalvarEdicaoOrdem = async () => {
     try {
+      console.log("💾 Salvando dados:", dadosOrdemEdit);
+      
       // Salvar no banco
       await base44.entities.OrdemDeCarregamento.update(ordem.id, dadosOrdemEdit);
       
       // Buscar ordem atualizada do banco para garantir sincronização
       const ordemAtualizada = await base44.entities.OrdemDeCarregamento.get(ordem.id);
+      console.log("✅ Ordem atualizada do banco:", {
+        cliente: ordemAtualizada.cliente,
+        origem: ordemAtualizada.origem,
+        destino: ordemAtualizada.destino,
+        motorista: ordemAtualizada.motorista_nome_temp,
+        cavalo: ordemAtualizada.cavalo_placa_temp,
+        impl1: ordemAtualizada.implemento1_placa_temp,
+        impl2: ordemAtualizada.implemento2_placa_temp,
+        impl3: ordemAtualizada.implemento3_placa_temp
+      });
+      
       setOrdemAtual(ordemAtualizada);
       
       // Atualizar prop ordem também
