@@ -238,6 +238,23 @@ export default function DespesasExtras() {
     cancelada: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
   };
 
+  const statusLabels = {
+    pendente: "Pendente",
+    aprovada: "Aprovada",
+    faturada: "Faturada",
+    cancelada: "Cancelada"
+  };
+
+  const getStatusColor = (status, theme) => {
+    const colors = {
+      pendente: { bg: '#fbbf24', text: '#ffffff' },
+      aprovada: { bg: '#10b981', text: '#ffffff' },
+      faturada: { bg: '#3b82f6', text: '#ffffff' },
+      cancelada: { bg: '#ef4444', text: '#ffffff' }
+    };
+    return colors[status] || { bg: theme.textMuted, text: '#ffffff' };
+  };
+
   const theme = {
     bg: isDark ? '#0f172a' : '#f9fafb',
     cardBg: isDark ? '#1e293b' : '#ffffff',
@@ -345,120 +362,191 @@ export default function DespesasExtras() {
                   </select>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 {visualizacao === "lista" ? (
-                  <DragDropContext onDragEnd={handleDragEnd}>
-                    {Object.entries(despesasAgrupadas).map(([status, despesasDoStatus]) => (
-                      despesasDoStatus.length > 0 && (
-                        <div key={status} className="mb-6">
-                          <div className="flex items-center gap-2 mb-3">
-                            <Badge className={statusColors[status]}>
-                              {status}
-                            </Badge>
-                            <span className="text-sm" style={{ color: theme.textMuted }}>
-                              {despesasDoStatus.length} {despesasDoStatus.length === 1 ? 'despesa' : 'despesas'}
+                  <div>
+                    {/* Header da Tabela - Estilo Monday.com */}
+                    <div 
+                      className="grid grid-cols-12 gap-3 px-6 py-3 border-b sticky top-0 z-10"
+                      style={{
+                        backgroundColor: isDark ? '#1a2332' : '#f7f8fa',
+                        borderColor: theme.cardBorder
+                      }}
+                    >
+                      <div className="col-span-1 flex items-center">
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
+                          Nº Despesa
+                        </span>
+                      </div>
+                      <div className="col-span-2 flex items-center">
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
+                          Tipo
+                        </span>
+                      </div>
+                      <div className="col-span-3 flex items-center">
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
+                          Nota Fiscal
+                        </span>
+                      </div>
+                      <div className="col-span-2 flex items-center">
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
+                          Descrição
+                        </span>
+                      </div>
+                      <div className="col-span-1 flex items-center justify-center">
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
+                          Status
+                        </span>
+                      </div>
+                      <div className="col-span-2 flex items-center justify-end">
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
+                          Valor
+                        </span>
+                      </div>
+                      <div className="col-span-1 flex items-center justify-center">
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.textMuted }}>
+                          Ações
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Linhas de Dados - Estilo Monday.com */}
+                    {despesasFiltradas.map((despesa, index) => {
+                      const statusColor = getStatusColor(despesa.status, theme);
+                      const notaFiscal = notasFiscaisMap[despesa.nota_fiscal_id];
+                      return (
+                        <div
+                          key={despesa.id}
+                          className="grid grid-cols-12 gap-3 px-6 py-4 border-b group transition-all duration-200"
+                          style={{
+                            backgroundColor: index % 2 === 0 ? theme.cardBg : (isDark ? '#151d2b' : '#fafbfc'),
+                            borderColor: isDark ? '#2d3748' : '#e2e8f0',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = isDark ? '#1e293b' : '#f1f5f9';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = index % 2 === 0 ? theme.cardBg : (isDark ? '#151d2b' : '#fafbfc');
+                          }}
+                        >
+                          <div className="col-span-1 flex items-center">
+                            <span className="font-mono text-sm font-bold" style={{ color: theme.text }}>
+                              {despesa.numero_despesa}
                             </span>
                           </div>
-                          <Droppable droppableId={status}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.droppableProps}
-                                className="space-y-2"
-                              >
-                                {despesasDoStatus.map((despesa, index) => (
-                                  <Draggable key={despesa.id} draggableId={despesa.id} index={index}>
-                                    {(provided, snapshot) => (
-                                      <div
-                                        ref={provided.innerRef}
-                                        {...provided.draggableProps}
-                                        {...provided.dragHandleProps}
-                                        className="p-3 border rounded-lg"
-                                        style={{
-                                          ...provided.draggableProps.style,
-                                          borderColor: theme.cardBorder,
-                                          backgroundColor: snapshot.isDragging ? (isDark ? '#334155' : '#f1f5f9') : theme.cardBg,
-                                          opacity: snapshot.isDragging ? 0.9 : 1
-                                        }}
-                                      >
-                                        <div className="flex items-center justify-between gap-3">
-                                          <div className="flex items-center gap-4 flex-1">
-                                            <span className="font-mono text-sm font-bold" style={{ color: theme.text }}>
-                                              {despesa.numero_despesa}
-                                            </span>
-                                            <span className="text-sm" style={{ color: theme.text }}>
-                                              {despesa.tipo_despesa_nome}
-                                            </span>
-                                            {despesa.nota_fiscal_id && notasFiscaisMap[despesa.nota_fiscal_id] && (
-                                              <span className="text-xs" style={{ color: theme.textMuted }}>
-                                                NF {notasFiscaisMap[despesa.nota_fiscal_id].numero_nota} • {notasFiscaisMap[despesa.nota_fiscal_id].emitente_razao_social}
-                                              </span>
-                                            )}
-                                            {despesa.descricao && (
-                                              <span className="text-xs truncate max-w-xs" style={{ color: theme.textMuted }}>
-                                                {despesa.descricao}
-                                              </span>
-                                            )}
-                                          </div>
-                                          <div className="flex items-center gap-3">
-                                            <div className="text-right">
-                                              <p className="font-bold text-sm" style={{ color: theme.text }}>
-                                                R$ {(despesa.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                              </p>
-                                              <p className="text-xs" style={{ color: theme.textMuted }}>
-                                                {despesa.quantidade} {despesa.unidade_cobranca}
-                                              </p>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                              {despesa.status === "pendente" && (
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() => handleAprovar(despesa)}
-                                                  className="h-7 w-7 p-0"
-                                                  title="Aprovar"
-                                                >
-                                                  <CheckCircle className="w-4 h-4 text-green-600" />
-                                                </Button>
-                                              )}
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => {
-                                                  setDespesaEdit(despesa);
-                                                  setShowDespesaForm(true);
-                                                }}
-                                                className="h-7 w-7 p-0"
-                                                title={despesa.status === "aprovada" || despesa.status === "faturada" ? "Visualizar" : "Editar"}
-                                              >
-                                                <Edit className="w-4 h-4 text-blue-600" />
-                                              </Button>
-                                              {despesa.status === "pendente" && (
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() => handleCancelar(despesa)}
-                                                  className="h-7 w-7 p-0"
-                                                  title="Cancelar"
-                                                >
-                                                  <XCircle className="w-4 h-4 text-red-600" />
-                                                </Button>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </Draggable>
-                                ))}
-                                {provided.placeholder}
+
+                          <div className="col-span-2 flex items-center gap-2">
+                            <div 
+                              className="w-1 h-10 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: statusColor.bg }}
+                            />
+                            <span className="text-sm font-medium" style={{ color: theme.text }}>
+                              {despesa.tipo_despesa_nome}
+                            </span>
+                          </div>
+
+                          <div className="col-span-3 flex items-center">
+                            {despesa.nota_fiscal_id && notaFiscal ? (
+                              <div className="flex flex-col gap-0.5">
+                                <span className="text-sm font-medium" style={{ color: theme.text }}>
+                                  NF {notaFiscal.numero_nota}
+                                </span>
+                                <span className="text-xs truncate max-w-[220px]" style={{ color: theme.textMuted }}>
+                                  {notaFiscal.emitente_razao_social}
+                                </span>
                               </div>
+                            ) : (
+                              <span className="text-sm" style={{ color: theme.textMuted }}>
+                                -
+                              </span>
                             )}
-                          </Droppable>
+                          </div>
+
+                          <div className="col-span-2 flex items-center">
+                            {despesa.descricao ? (
+                              <span className="text-sm truncate" style={{ color: theme.textMuted }}>
+                                {despesa.descricao}
+                              </span>
+                            ) : (
+                              <span className="text-sm" style={{ color: theme.textMuted }}>-</span>
+                            )}
+                          </div>
+
+                          <div className="col-span-1 flex items-center justify-center">
+                            <Badge
+                              className="text-xs font-semibold px-3 py-1 rounded-full border-0"
+                              style={{
+                                backgroundColor: statusColor.bg,
+                                color: statusColor.text
+                              }}
+                            >
+                              {statusLabels[despesa.status]}
+                            </Badge>
+                          </div>
+
+                          <div className="col-span-2 flex items-center justify-end">
+                            <div className="text-right">
+                              <p className="font-bold text-base" style={{ color: theme.text }}>
+                                R$ {(despesa.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </p>
+                              <p className="text-xs" style={{ color: theme.textMuted }}>
+                                {despesa.quantidade} {despesa.unidade_cobranca}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="col-span-1 flex items-center justify-center">
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              {despesa.status === "pendente" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleAprovar(despesa)}
+                                  className="h-8 w-8 p-0 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg"
+                                  title="Aprovar"
+                                >
+                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setDespesaEdit(despesa);
+                                  setShowDespesaForm(true);
+                                }}
+                                className="h-8 w-8 p-0 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+                                title={despesa.status === "aprovada" || despesa.status === "faturada" ? "Visualizar" : "Editar"}
+                              >
+                                <Edit className="w-4 h-4 text-blue-600" />
+                              </Button>
+                              {despesa.status === "pendente" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleCancelar(despesa)}
+                                  className="h-8 w-8 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                                  title="Cancelar"
+                                >
+                                  <XCircle className="w-4 h-4 text-red-600" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      )
-                    ))}
-                  </DragDropContext>
+                      );
+                    })}
+
+                    {despesasFiltradas.length === 0 && (
+                      <div 
+                        className="flex flex-col items-center justify-center py-16"
+                        style={{ color: theme.textMuted }}
+                      >
+                        <DollarSign className="w-12 h-12 opacity-20 mb-3" />
+                        <p className="text-sm">Nenhuma despesa encontrada</p>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <DragDropContext onDragEnd={handleDragEnd}>
                     <div className="grid grid-cols-4 gap-4">
