@@ -183,6 +183,7 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const [feedbackMensagem, setFeedbackMensagem] = useState("");
   const [showEditarOrdemModal, setShowEditarOrdemModal] = useState(false);
   const [dadosOrdemEdit, setDadosOrdemEdit] = useState({});
+  const [ordemAtual, setOrdemAtual] = useState(ordem);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -2289,16 +2290,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
   const handleAbrirEditarOrdem = async () => {
     try {
-      let motoristaNome = ordem.motorista_nome_temp || "";
-      let cavaloPlaca = ordem.cavalo_placa_temp || "";
-      let impl1Placa = ordem.implemento1_placa_temp || "";
-      let impl2Placa = ordem.implemento2_placa_temp || "";
-      let impl3Placa = ordem.implemento3_placa_temp || "";
+      let motoristaNome = ordemAtual.motorista_nome_temp || "";
+      let cavaloPlaca = ordemAtual.cavalo_placa_temp || "";
+      let impl1Placa = ordemAtual.implemento1_placa_temp || "";
+      let impl2Placa = ordemAtual.implemento2_placa_temp || "";
+      let impl3Placa = ordemAtual.implemento3_placa_temp || "";
 
       // Buscar motorista se houver ID
-      if (ordem.motorista_id) {
+      if (ordemAtual.motorista_id) {
         try {
-          const motoristas = await base44.entities.Motorista.filter({ id: ordem.motorista_id });
+          const motoristas = await base44.entities.Motorista.filter({ id: ordemAtual.motorista_id });
           if (motoristas[0]) motoristaNome = motoristas[0].nome;
         } catch (error) {
           console.log("Erro ao buscar motorista:", error);
@@ -2306,9 +2307,9 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       }
 
       // Buscar cavalo se houver ID
-      if (ordem.cavalo_id) {
+      if (ordemAtual.cavalo_id) {
         try {
-          const veiculos = await base44.entities.Veiculo.filter({ id: ordem.cavalo_id });
+          const veiculos = await base44.entities.Veiculo.filter({ id: ordemAtual.cavalo_id });
           if (veiculos[0]) cavaloPlaca = veiculos[0].placa;
         } catch (error) {
           console.log("Erro ao buscar cavalo:", error);
@@ -2316,15 +2317,15 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       }
 
       // Buscar implementos
-      const implementoIds = [ordem.implemento1_id, ordem.implemento2_id, ordem.implemento3_id].filter(Boolean);
+      const implementoIds = [ordemAtual.implemento1_id, ordemAtual.implemento2_id, ordemAtual.implemento3_id].filter(Boolean);
       if (implementoIds.length > 0) {
         try {
           const veiculos = await base44.entities.Veiculo.list();
           const implementos = veiculos.filter(v => implementoIds.includes(v.id));
           
-          const impl1 = implementos.find(i => i.id === ordem.implemento1_id);
-          const impl2 = implementos.find(i => i.id === ordem.implemento2_id);
-          const impl3 = implementos.find(i => i.id === ordem.implemento3_id);
+          const impl1 = implementos.find(i => i.id === ordemAtual.implemento1_id);
+          const impl2 = implementos.find(i => i.id === ordemAtual.implemento2_id);
+          const impl3 = implementos.find(i => i.id === ordemAtual.implemento3_id);
           
           if (impl1) impl1Placa = impl1.placa;
           if (impl2) impl2Placa = impl2.placa;
@@ -2335,12 +2336,12 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       }
 
       setDadosOrdemEdit({
-        cliente: ordem.cliente || "",
-        origem: ordem.origem || "",
-        origem_cidade: ordem.origem_cidade || "",
-        destino: ordem.destino || "",
-        destino_cidade: ordem.destino_cidade || "",
-        produto: ordem.produto || "",
+        cliente: ordemAtual.cliente || "",
+        origem: ordemAtual.origem || "",
+        origem_cidade: ordemAtual.origem_cidade || "",
+        destino: ordemAtual.destino || "",
+        destino_cidade: ordemAtual.destino_cidade || "",
+        produto: ordemAtual.produto || "",
         motorista_nome_temp: motoristaNome,
         cavalo_placa_temp: cavaloPlaca,
         implemento1_placa_temp: impl1Placa,
@@ -2358,8 +2359,8 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     try {
       await base44.entities.OrdemDeCarregamento.update(ordem.id, dadosOrdemEdit);
       
-      // Atualizar objeto ordem local para refletir mudanças imediatamente
-      Object.assign(ordem, dadosOrdemEdit);
+      // Atualizar estado local com os novos dados
+      setOrdemAtual({ ...ordemAtual, ...dadosOrdemEdit });
       
       toast.success("Dados da ordem atualizados!");
       setShowEditarOrdemModal(false);
@@ -2710,14 +2711,14 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     });
 
     const placas = [
-      cavalo?.placa || ordem.cavalo_placa_temp,
+      cavalo?.placa || ordemAtual.cavalo_placa_temp,
       ...implementos.map(i => i.placa),
-      ordem.implemento1_placa_temp,
-      ordem.implemento2_placa_temp,
-      ordem.implemento3_placa_temp
+      ordemAtual.implemento1_placa_temp,
+      ordemAtual.implemento2_placa_temp,
+      ordemAtual.implemento3_placa_temp
     ].filter(Boolean).join(' / ');
 
-    const motoristaInfo = motorista?.nome || ordem.motorista_nome_temp || 'Não alocado';
+    const motoristaInfo = motorista?.nome || ordemAtual.motorista_nome_temp || 'Não alocado';
 
     let html = `
       <html>
@@ -2781,10 +2782,10 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
           <div class="info-grid">
             <div class="info-section">
               <h3>📦 DADOS DA CARGA</h3>
-              <div class="info-line"><strong>Cliente:</strong> ${ordem.cliente || '-'}</div>
-              <div class="info-line"><strong>Origem:</strong> ${ordem.origem_cidade || ordem.origem || '-'}</div>
-              <div class="info-line"><strong>Destino:</strong> ${ordem.destino_cidade || ordem.destino || '-'}</div>
-              <div class="info-line"><strong>Produto:</strong> ${ordem.produto || '-'}</div>
+              <div class="info-line"><strong>Cliente:</strong> ${ordemAtual.cliente || '-'}</div>
+              <div class="info-line"><strong>Origem:</strong> ${ordemAtual.origem_cidade || ordemAtual.origem || '-'}</div>
+              <div class="info-line"><strong>Destino:</strong> ${ordemAtual.destino_cidade || ordemAtual.destino || '-'}</div>
+              <div class="info-line"><strong>Produto:</strong> ${ordemAtual.produto || '-'}</div>
             </div>
             
             <div class="info-section">
