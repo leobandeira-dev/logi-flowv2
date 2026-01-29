@@ -5,9 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { base44 } from "@/api/base44Client";
-import { Upload, X, Search } from "lucide-react";
+import { Upload, X, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, ordem, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -26,7 +29,7 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
   const [tiposDespesa, setTiposDespesa] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [notasFiscais, setNotasFiscais] = useState([]);
-  const [searchNota, setSearchNota] = useState("");
+  const [openNotaCombobox, setOpenNotaCombobox] = useState(false);
 
   useEffect(() => {
     loadTiposDespesa();
@@ -180,48 +183,67 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
           {!notaFiscal && (
             <div>
               <Label>Nota Fiscal (opcional)</Label>
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Buscar por número, emitente, destinatário ou chave..."
-                    value={searchNota}
-                    onChange={(e) => setSearchNota(e.target.value)}
-                    className="flex-1"
-                  />
+              <Popover open={openNotaCombobox} onOpenChange={setOpenNotaCombobox}>
+                <PopoverTrigger asChild>
                   <Button
-                    type="button"
                     variant="outline"
-                    onClick={() => {}}
-                    className="px-3"
+                    role="combobox"
+                    aria-expanded={openNotaCombobox}
+                    className="w-full justify-between"
                   >
-                    <Search className="w-4 h-4" />
+                    {formData.nota_fiscal_id
+                      ? (() => {
+                          const nf = notasFiscais.find(n => n.id === formData.nota_fiscal_id);
+                          return nf ? `NF ${nf.numero_nota} - ${nf.emitente_razao_social}` : "Sem nota fiscal";
+                        })()
+                      : "Selecione a nota fiscal..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
-                </div>
-                <Select
-                  value={formData.nota_fiscal_id}
-                  onValueChange={(value) => setFormData({ ...formData, nota_fiscal_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a nota fiscal..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={null}>Sem nota fiscal</SelectItem>
-                    {notasFiscais
-                      .filter(nf => 
-                        !searchNota || 
-                        nf.numero_nota?.toLowerCase().includes(searchNota.toLowerCase()) ||
-                        nf.emitente_razao_social?.toLowerCase().includes(searchNota.toLowerCase()) ||
-                        nf.destinatario_razao_social?.toLowerCase().includes(searchNota.toLowerCase()) ||
-                        nf.chave_acesso?.toLowerCase().includes(searchNota.toLowerCase())
-                      )
-                      .map(nf => (
-                        <SelectItem key={nf.id} value={nf.id}>
-                          NF {nf.numero_nota} - {nf.emitente_razao_social}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-[500px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Buscar por número, emitente, destinatário ou chave..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhuma nota fiscal encontrada.</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          value="sem-nota"
+                          onSelect={() => {
+                            setFormData({ ...formData, nota_fiscal_id: "" });
+                            setOpenNotaCombobox(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              !formData.nota_fiscal_id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          Sem nota fiscal
+                        </CommandItem>
+                        {notasFiscais.map((nf) => (
+                          <CommandItem
+                            key={nf.id}
+                            value={`${nf.numero_nota} ${nf.emitente_razao_social} ${nf.destinatario_razao_social || ""} ${nf.chave_acesso || ""}`}
+                            onSelect={() => {
+                              setFormData({ ...formData, nota_fiscal_id: nf.id });
+                              setOpenNotaCombobox(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.nota_fiscal_id === nf.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            NF {nf.numero_nota} - {nf.emitente_razao_social}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           )}
           
