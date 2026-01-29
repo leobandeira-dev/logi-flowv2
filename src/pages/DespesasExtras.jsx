@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import DespesaExtraForm from "../components/despesas/DespesaExtraForm";
 import TipoDespesaForm from "../components/despesas/TipoDespesaForm";
+import VincularCTeModal from "../components/despesas/VincularCTeModal";
 import { toast } from "sonner";
 
 export default function DespesasExtras() {
@@ -38,6 +39,9 @@ export default function DespesasExtras() {
   const [tipoEdit, setTipoEdit] = useState(null);
   const [abaAtiva, setAbaAtiva] = useState("despesas");
   const [visualizacao, setVisualizacao] = useState("lista");
+  const [showVincularCTe, setShowVincularCTe] = useState(false);
+  const [notaFiscalParaVincular, setNotaFiscalParaVincular] = useState(null);
+  const [despesaPendente, setDespesaPendente] = useState(null);
 
   useEffect(() => {
     const checkDarkMode = () => setIsDark(document.documentElement.classList.contains('dark'));
@@ -147,14 +151,10 @@ export default function DespesasExtras() {
         const notaFiscal = await base44.entities.NotaFiscal.get(despesa.nota_fiscal_id);
         
         if (!notaFiscal.cte_id) {
-          toast.error("A Nota Fiscal vinculada precisa estar associada a um CT-e", {
-            description: "Acesse Gestão de CT-e para vincular um CT-e à NF " + notaFiscal.numero_nota,
-            duration: 5000,
-            action: {
-              label: "Ir para CT-e",
-              onClick: () => window.location.href = "/GestaoDeCTe"
-            }
-          });
+          // Abrir modal para vincular CT-e
+          setNotaFiscalParaVincular(notaFiscal);
+          setDespesaPendente({ despesa, newStatus });
+          setShowVincularCTe(true);
           return;
         }
       } catch (error) {
@@ -180,6 +180,27 @@ export default function DespesasExtras() {
       console.error("Erro ao atualizar status:", error);
       toast.error("Erro ao atualizar status");
     }
+  };
+
+  const handleVincularCTeSuccess = async () => {
+    setShowVincularCTe(false);
+    
+    if (despesaPendente) {
+      try {
+        const user = await base44.auth.me();
+        await base44.entities.DespesaExtra.update(despesaPendente.despesa.id, {
+          status: despesaPendente.newStatus
+        });
+        toast.success("Despesa faturada com sucesso!");
+        loadData();
+      } catch (error) {
+        console.error("Erro ao atualizar despesa:", error);
+        toast.error("Erro ao faturar despesa");
+      }
+    }
+    
+    setDespesaPendente(null);
+    setNotaFiscalParaVincular(null);
   };
 
   const handleExcluirTipo = async (tipo) => {
@@ -833,6 +854,19 @@ export default function DespesasExtras() {
           }}
           tipo={tipoEdit}
           onSuccess={handleSalvarTipo}
+        />
+      )}
+
+      {showVincularCTe && notaFiscalParaVincular && (
+        <VincularCTeModal
+          open={showVincularCTe}
+          onClose={() => {
+            setShowVincularCTe(false);
+            setNotaFiscalParaVincular(null);
+            setDespesaPendente(null);
+          }}
+          notaFiscal={notaFiscalParaVincular}
+          onSuccess={handleVincularCTeSuccess}
         />
       )}
     </div>
