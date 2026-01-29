@@ -16,6 +16,7 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
   const [formData, setFormData] = useState({
     tipo_despesa_id: "",
     tipo_despesa_nome: "",
+    numero_movimento_erp: "",
     descricao: "",
     quantidade: 1,
     valor_unitario: 0,
@@ -40,6 +41,7 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
       setFormData({
         tipo_despesa_id: despesa.tipo_despesa_id || "",
         tipo_despesa_nome: despesa.tipo_despesa_nome || "",
+        numero_movimento_erp: despesa.numero_movimento_erp || "",
         descricao: despesa.descricao || "",
         quantidade: despesa.quantidade || 1,
         valor_unitario: despesa.valor_unitario || 0,
@@ -264,6 +266,15 @@ export default function DespesaExtraForm({ open, onClose, despesa, notaFiscal, o
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label>Número Movimento ERP</Label>
+            <Input
+              value={formData.numero_movimento_erp}
+              onChange={(e) => setFormData({ ...formData, numero_movimento_erp: e.target.value })}
+              placeholder="Número do movimento no ERP..."
+            />
           </div>
 
           <div>
