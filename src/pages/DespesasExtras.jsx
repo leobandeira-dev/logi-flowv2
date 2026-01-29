@@ -37,14 +37,17 @@ export default function DespesasExtras() {
   const [isDark, setIsDark] = useState(false);
   const [despesas, setDespesas] = useState([]);
   const [tiposDespesa, setTiposDespesa] = useState([]);
+  const [statusDespesa, setStatusDespesa] = useState([]);
   const [notasFiscaisMap, setNotasFiscaisMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [showDespesaForm, setShowDespesaForm] = useState(false);
   const [showTipoForm, setShowTipoForm] = useState(false);
+  const [showStatusForm, setShowStatusForm] = useState(false);
   const [despesaEdit, setDespesaEdit] = useState(null);
   const [tipoEdit, setTipoEdit] = useState(null);
+  const [statusEdit, setStatusEdit] = useState(null);
   const [abaAtiva, setAbaAtiva] = useState("despesas");
   const [visualizacao, setVisualizacao] = useState("lista");
   const [showVincularCTe, setShowVincularCTe] = useState(false);
@@ -66,12 +69,14 @@ export default function DespesasExtras() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [despesasData, tiposData] = await Promise.all([
+      const [despesasData, tiposData, statusData] = await Promise.all([
         base44.entities.DespesaExtra.list("-created_date", 200),
-        base44.entities.TipoDespesaExtra.list()
+        base44.entities.TipoDespesaExtra.list(),
+        base44.entities.StatusDespesaExtra.filter({ ativo: true }, "ordem")
       ]);
       setDespesas(despesasData);
       setTiposDespesa(tiposData);
+      setStatusDespesa(statusData);
       
       // Carregar notas fiscais vinculadas
       const notasIds = [...new Set(despesasData.map(d => d.nota_fiscal_id).filter(Boolean))];
@@ -106,6 +111,32 @@ export default function DespesasExtras() {
     } catch (error) {
       console.error("Erro ao salvar tipo:", error);
       toast.error("Erro ao salvar tipo de despesa");
+    }
+  };
+
+  const handleStatusSuccess = async (statusData) => {
+    try {
+      // Se for status padrão, remover padrão de outros
+      if (statusData.padrao) {
+        const outrosStatus = await base44.entities.StatusDespesaExtra.filter({ padrao: true });
+        await Promise.all(
+          outrosStatus.map(s => base44.entities.StatusDespesaExtra.update(s.id, { padrao: false }))
+        );
+      }
+
+      if (statusEdit) {
+        await base44.entities.StatusDespesaExtra.update(statusEdit.id, statusData);
+        toast.success("Status atualizado!");
+      } else {
+        await base44.entities.StatusDespesaExtra.create(statusData);
+        toast.success("Status criado!");
+      }
+      setShowStatusForm(false);
+      setStatusEdit(null);
+      loadData();
+    } catch (error) {
+      console.error("Erro ao salvar status:", error);
+      toast.error("Erro ao salvar status");
     }
   };
 
@@ -232,12 +263,14 @@ export default function DespesasExtras() {
     return matchStatus && matchSearch;
   });
 
-  const despesasAgrupadas = {
-    pendente: despesasFiltradas.filter(d => d.status === "pendente"),
-    aprovada: despesasFiltradas.filter(d => d.status === "aprovada"),
-    faturada: despesasFiltradas.filter(d => d.status === "faturada"),
-    cancelada: despesasFiltradas.filter(d => d.status === "cancelada")
-  };
+  // Agrupar dinamicamente por status cadastrados
+  const despesasAgrupadas = React.useMemo(() => {
+    const agrupadas = {};
+    statusDespesa.forEach(status => {
+      agrupadas[status.codigo] = despesasFiltradas.filter(d => d.status === status.codigo);
+    });
+    return agrupadas;
+  }, [despesasFiltradas, statusDespesa]);
 
   const statusColors = {
     pendente: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
@@ -246,21 +279,21 @@ export default function DespesasExtras() {
     cancelada: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
   };
 
-  const statusLabels = {
-    pendente: "Pendente",
-    aprovada: "Aprovada",
-    faturada: "Faturada",
-    cancelada: "Cancelada"
-  };
+  // Gerar labels e cores dinamicamente dos status cadastrados
+  const statusLabels = React.useMemo(() => {
+    const labels = {};
+    statusDespesa.forEach(s => {
+      labels[s.codigo] = s.nome;
+    });
+    return labels;
+  }, [statusDespesa]);
 
-  const getStatusColor = (status, theme) => {
-    const colors = {
-      pendente: { bg: '#fbbf24', text: '#ffffff' },
-      aprovada: { bg: '#10b981', text: '#ffffff' },
-      faturada: { bg: '#3b82f6', text: '#ffffff' },
-      cancelada: { bg: '#ef4444', text: '#ffffff' }
-    };
-    return colors[status] || { bg: theme.textMuted, text: '#ffffff' };
+  const getStatusColor = (statusCode, theme) => {
+    const statusObj = statusDespesa.find(s => s.codigo === statusCode);
+    if (statusObj) {
+      return { bg: statusObj.cor, text: '#ffffff' };
+    }
+    return { bg: '#94a3b8', text: '#ffffff' };
   };
 
   const theme = {
@@ -294,7 +327,7 @@ export default function DespesasExtras() {
         </div>
 
         <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3 mb-6">
             <TabsTrigger value="despesas">
               <DollarSign className="w-4 h-4 mr-2" />
               Despesas
@@ -302,6 +335,9 @@ export default function DespesasExtras() {
             <TabsTrigger value="tipos">
               <Settings className="w-4 h-4 mr-2" />
               Tipos de Despesa
+            </TabsTrigger>
+            <TabsTrigger value="status">
+              🎨 Status
             </TabsTrigger>
           </TabsList>
 
@@ -363,10 +399,11 @@ export default function DespesasExtras() {
                     }}
                   >
                     <option value="todos">Todos Status</option>
-                    <option value="pendente">Pendente</option>
-                    <option value="aprovada">Aprovada</option>
-                    <option value="faturada">Faturada</option>
-                    <option value="cancelada">Cancelada</option>
+                    {statusDespesa.map(status => (
+                      <option key={status.codigo} value={status.codigo}>
+                        {status.nome}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </CardHeader>
@@ -1128,6 +1165,97 @@ export default function DespesasExtras() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Aba Status */}
+          <TabsContent value="status">
+            <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle style={{ color: theme.text }}>Status de Despesas</CardTitle>
+                    <p className="text-sm mt-1" style={{ color: theme.textMuted }}>
+                      Personalize os status e suas cores
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setStatusEdit(null);
+                      setShowStatusForm(true);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Novo Status
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {statusDespesa.map((status) => (
+                    <div
+                      key={status.id}
+                      className="flex items-center justify-between p-4 rounded-lg border transition-all hover:shadow-md"
+                      style={{
+                        backgroundColor: theme.cardBg,
+                        borderColor: theme.cardBorder
+                      }}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: status.cor }}
+                        />
+                        <div>
+                          <p className="font-semibold" style={{ color: theme.text }}>
+                            {status.nome}
+                          </p>
+                          <div className="flex items-center gap-3 mt-1">
+                            <p className="text-xs font-mono" style={{ color: theme.textMuted }}>
+                              {status.codigo}
+                            </p>
+                            {status.padrao && (
+                              <Badge className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                Padrão
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          className="text-xs font-semibold px-3 py-1"
+                          style={{
+                            backgroundColor: status.cor,
+                            color: '#ffffff'
+                          }}
+                        >
+                          Preview
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setStatusEdit(status);
+                            setShowStatusForm(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {statusDespesa.length === 0 && (
+                    <div className="text-center py-12" style={{ color: theme.textMuted }}>
+                      <p>Nenhum status cadastrado</p>
+                      <p className="text-sm mt-2">
+                        Clique em "Novo Status" para começar
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -1169,6 +1297,18 @@ export default function DespesasExtras() {
           }}
           notaFiscal={notaFiscalParaVincular}
           onSuccess={handleVincularCTeSuccess}
+        />
+      )}
+
+      {showStatusForm && (
+        <StatusDespesaForm
+          open={showStatusForm}
+          onClose={() => {
+            setShowStatusForm(false);
+            setStatusEdit(null);
+          }}
+          status={statusEdit}
+          onSuccess={handleStatusSuccess}
         />
       )}
     </div>
