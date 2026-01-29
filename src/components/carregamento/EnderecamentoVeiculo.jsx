@@ -2295,42 +2295,47 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
   const handleAbrirEditarOrdem = async () => {
     try {
-      let motoristaNome = ordemAtual.motorista_nome_temp || "";
-      let cavaloPlaca = ordemAtual.cavalo_placa_temp || "";
-      let impl1Placa = ordemAtual.implemento1_placa_temp || "";
-      let impl2Placa = ordemAtual.implemento2_placa_temp || "";
-      let impl3Placa = ordemAtual.implemento3_placa_temp || "";
+      // SEMPRE buscar dados mais atualizados do banco PRIMEIRO
+      const ordemFresca = await base44.entities.OrdemDeCarregamento.get(ordem.id);
+      setOrdemAtual(ordemFresca);
+      Object.assign(ordem, ordemFresca);
 
-      // Buscar motorista se houver ID
-      if (ordemAtual.motorista_id) {
+      let motoristaNome = ordemFresca.motorista_nome_temp || "";
+      let cavaloPlaca = ordemFresca.cavalo_placa_temp || "";
+      let impl1Placa = ordemFresca.implemento1_placa_temp || "";
+      let impl2Placa = ordemFresca.implemento2_placa_temp || "";
+      let impl3Placa = ordemFresca.implemento3_placa_temp || "";
+
+      // Buscar motorista se houver ID (prioridade sobre _temp)
+      if (ordemFresca.motorista_id) {
         try {
-          const motoristas = await base44.entities.Motorista.filter({ id: ordemAtual.motorista_id });
+          const motoristas = await base44.entities.Motorista.filter({ id: ordemFresca.motorista_id });
           if (motoristas[0]) motoristaNome = motoristas[0].nome;
         } catch (error) {
           console.log("Erro ao buscar motorista:", error);
         }
       }
 
-      // Buscar cavalo se houver ID
-      if (ordemAtual.cavalo_id) {
+      // Buscar cavalo se houver ID (prioridade sobre _temp)
+      if (ordemFresca.cavalo_id) {
         try {
-          const veiculos = await base44.entities.Veiculo.filter({ id: ordemAtual.cavalo_id });
+          const veiculos = await base44.entities.Veiculo.filter({ id: ordemFresca.cavalo_id });
           if (veiculos[0]) cavaloPlaca = veiculos[0].placa;
         } catch (error) {
           console.log("Erro ao buscar cavalo:", error);
         }
       }
 
-      // Buscar implementos
-      const implementoIds = [ordemAtual.implemento1_id, ordemAtual.implemento2_id, ordemAtual.implemento3_id].filter(Boolean);
+      // Buscar implementos (prioridade sobre _temp)
+      const implementoIds = [ordemFresca.implemento1_id, ordemFresca.implemento2_id, ordemFresca.implemento3_id].filter(Boolean);
       if (implementoIds.length > 0) {
         try {
           const veiculos = await base44.entities.Veiculo.list();
           const implementos = veiculos.filter(v => implementoIds.includes(v.id));
           
-          const impl1 = implementos.find(i => i.id === ordemAtual.implemento1_id);
-          const impl2 = implementos.find(i => i.id === ordemAtual.implemento2_id);
-          const impl3 = implementos.find(i => i.id === ordemAtual.implemento3_id);
+          const impl1 = implementos.find(i => i.id === ordemFresca.implemento1_id);
+          const impl2 = implementos.find(i => i.id === ordemFresca.implemento2_id);
+          const impl3 = implementos.find(i => i.id === ordemFresca.implemento3_id);
           
           if (impl1) impl1Placa = impl1.placa;
           if (impl2) impl2Placa = impl2.placa;
@@ -2341,12 +2346,12 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       }
 
       setDadosOrdemEdit({
-        cliente: ordemAtual.cliente || "",
-        origem: ordemAtual.origem || "",
-        origem_cidade: ordemAtual.origem_cidade || "",
-        destino: ordemAtual.destino || "",
-        destino_cidade: ordemAtual.destino_cidade || "",
-        produto: ordemAtual.produto || "",
+        cliente: ordemFresca.cliente || "",
+        origem: ordemFresca.origem || "",
+        origem_cidade: ordemFresca.origem_cidade || "",
+        destino: ordemFresca.destino || "",
+        destino_cidade: ordemFresca.destino_cidade || "",
+        produto: ordemFresca.produto || "",
         motorista_nome_temp: motoristaNome,
         cavalo_placa_temp: cavaloPlaca,
         implemento1_placa_temp: impl1Placa,
