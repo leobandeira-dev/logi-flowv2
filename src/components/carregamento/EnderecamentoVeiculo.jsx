@@ -2527,30 +2527,33 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
   const gerarPDFListaNotas = (user, empresa, motorista, cavalo, implementos) => {
     const dataAtual = new Date().toLocaleString('pt-BR');
 
-    // Montar lista de placas
-    const placasCavalo = cavalo?.placa || ordemAtual.cavalo_placa_temp || '';
+    // PRIORIZAR campos _temp (editáveis) sobre cadastro
+    const placasCavalo = ordemAtual.cavalo_placa_temp || cavalo?.placa || '';
     const placasImplementos = [];
     
-    if (ordemAtual.implemento1_id && implementos.find(i => i.id === ordemAtual.implemento1_id)) {
-      placasImplementos.push(implementos.find(i => i.id === ordemAtual.implemento1_id).placa);
-    } else if (ordemAtual.implemento1_placa_temp) {
+    // Implemento 1: priorizar _temp
+    if (ordemAtual.implemento1_placa_temp) {
       placasImplementos.push(ordemAtual.implemento1_placa_temp);
+    } else if (ordemAtual.implemento1_id && implementos.find(i => i.id === ordemAtual.implemento1_id)) {
+      placasImplementos.push(implementos.find(i => i.id === ordemAtual.implemento1_id).placa);
     }
     
-    if (ordemAtual.implemento2_id && implementos.find(i => i.id === ordemAtual.implemento2_id)) {
-      placasImplementos.push(implementos.find(i => i.id === ordemAtual.implemento2_id).placa);
-    } else if (ordemAtual.implemento2_placa_temp) {
+    // Implemento 2: priorizar _temp
+    if (ordemAtual.implemento2_placa_temp) {
       placasImplementos.push(ordemAtual.implemento2_placa_temp);
+    } else if (ordemAtual.implemento2_id && implementos.find(i => i.id === ordemAtual.implemento2_id)) {
+      placasImplementos.push(implementos.find(i => i.id === ordemAtual.implemento2_id).placa);
     }
     
-    if (ordemAtual.implemento3_id && implementos.find(i => i.id === ordemAtual.implemento3_id)) {
-      placasImplementos.push(implementos.find(i => i.id === ordemAtual.implemento3_id).placa);
-    } else if (ordemAtual.implemento3_placa_temp) {
+    // Implemento 3: priorizar _temp
+    if (ordemAtual.implemento3_placa_temp) {
       placasImplementos.push(ordemAtual.implemento3_placa_temp);
+    } else if (ordemAtual.implemento3_id && implementos.find(i => i.id === ordemAtual.implemento3_id)) {
+      placasImplementos.push(implementos.find(i => i.id === ordemAtual.implemento3_id).placa);
     }
     
     const placas = [placasCavalo, ...placasImplementos].filter(Boolean).join(' / ');
-    const motoristaInfo = motorista?.nome || ordemAtual.motorista_nome_temp || '-';
+    const motoristaInfo = ordemAtual.motorista_nome_temp || motorista?.nome || '-';
 
     let html = `
       <html>
