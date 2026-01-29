@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import DespesaExtraForm from "../components/despesas/DespesaExtraForm";
 import TipoDespesaForm from "../components/despesas/TipoDespesaForm";
+import StatusDespesaForm from "../components/despesas/StatusDespesaForm";
 import VincularCTeModal from "../components/despesas/VincularCTeModal";
 import { toast } from "sonner";
 
