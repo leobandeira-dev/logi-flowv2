@@ -3300,7 +3300,16 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                           <div key={notaId} className="border rounded" style={{ borderColor: theme.cardBorder }}>
                             {/* Header da Nota - arrastável */}
                             <Draggable draggableId={`nota-sidebar-mobile-${notaId}`} index={Object.keys(volumesPorNota).indexOf(notaId)}>
-                              {(provided, snapshot) => (
+                              {(provided, snapshot) => {
+                                // Calcular despesas palete de TODAS as posições desta nota
+                                const todasDespesasPalete = despesasExtras.filter(d => {
+                                  if (d.nota_fiscal_id !== notaId) return false;
+                                  const tipoLower = d.tipo_despesa_nome?.toLowerCase() || '';
+                                  return tipoLower.includes('palete') || tipoLower.includes('paletiza');
+                                });
+                                const qtdPaleteTotal = todasDespesasPalete.reduce((sum, d) => sum + (d.quantidade || 0), 0);
+
+                                return (
                                 <div
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
@@ -3365,11 +3374,11 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
                                     >
                                      {volumes.length}/{volumesLocal.filter(v => v.nota_fiscal_id === notaId).length}
                                     </Badge>
-                                    </div>
-                                    </div>
-                                    );
-                                    }}
-                                    </Draggable>
+                                  </div>
+                                </div>
+                                );
+                              }}
+                            </Draggable>
 
                             {/* Lista de Volumes - com expand/collapse */}
                             <AnimatePresence>
