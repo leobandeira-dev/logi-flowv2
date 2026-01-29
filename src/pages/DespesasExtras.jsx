@@ -373,7 +373,7 @@ export default function DespesasExtras() {
                                         ref={provided.innerRef}
                                         {...provided.draggableProps}
                                         {...provided.dragHandleProps}
-                                        className="p-4 border rounded-lg"
+                                        className="p-3 border rounded-lg"
                                         style={{
                                           ...provided.draggableProps.style,
                                           borderColor: theme.cardBorder,
@@ -381,47 +381,27 @@ export default function DespesasExtras() {
                                           opacity: snapshot.isDragging ? 0.9 : 1
                                         }}
                                       >
-                                        <div className="flex items-start justify-between gap-4">
-                                          <div className="flex-1 grid grid-cols-6 gap-4">
-                                            <div>
-                                              <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Nº Despesa</p>
-                                              <p className="font-mono text-sm font-bold" style={{ color: theme.text }}>
-                                                {despesa.numero_despesa}
-                                              </p>
-                                            </div>
-                                            <div>
-                                              <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Tipo</p>
-                                              <p className="text-sm" style={{ color: theme.text }}>
-                                                {despesa.tipo_despesa_nome}
-                                              </p>
-                                            </div>
-                                            <div>
-                                              <p className="text-xs mb-1" style={{ color: theme.textMuted }}>NF</p>
-                                              {despesa.nota_fiscal_id ? (
-                                                notasFiscaisMap[despesa.nota_fiscal_id] ? (
-                                                  <div>
-                                                    <p className="text-sm font-medium" style={{ color: theme.text }}>
-                                                      NF {notasFiscaisMap[despesa.nota_fiscal_id].numero_nota}
-                                                    </p>
-                                                    <p className="text-xs" style={{ color: theme.textMuted }}>
-                                                      {notasFiscaisMap[despesa.nota_fiscal_id].emitente_razao_social}
-                                                    </p>
-                                                  </div>
-                                                ) : (
-                                                  <p className="text-xs" style={{ color: theme.textMuted }}>NF vinculada</p>
-                                                )
-                                              ) : (
-                                                <p className="text-sm" style={{ color: theme.textMuted }}>-</p>
-                                              )}
-                                            </div>
-                                            <div className="col-span-2">
-                                              <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Descrição</p>
-                                              <p className="text-xs truncate" style={{ color: theme.text }}>
-                                                {despesa.descricao || '-'}
-                                              </p>
-                                            </div>
+                                        <div className="flex items-center justify-between gap-3">
+                                          <div className="flex items-center gap-4 flex-1">
+                                            <span className="font-mono text-sm font-bold" style={{ color: theme.text }}>
+                                              {despesa.numero_despesa}
+                                            </span>
+                                            <span className="text-sm" style={{ color: theme.text }}>
+                                              {despesa.tipo_despesa_nome}
+                                            </span>
+                                            {despesa.nota_fiscal_id && notasFiscaisMap[despesa.nota_fiscal_id] && (
+                                              <span className="text-xs" style={{ color: theme.textMuted }}>
+                                                NF {notasFiscaisMap[despesa.nota_fiscal_id].numero_nota} • {notasFiscaisMap[despesa.nota_fiscal_id].emitente_razao_social}
+                                              </span>
+                                            )}
+                                            {despesa.descricao && (
+                                              <span className="text-xs truncate max-w-xs" style={{ color: theme.textMuted }}>
+                                                {despesa.descricao}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <div className="flex items-center gap-3">
                                             <div className="text-right">
-                                              <p className="text-xs mb-1" style={{ color: theme.textMuted }}>Valor</p>
                                               <p className="font-bold text-sm" style={{ color: theme.text }}>
                                                 R$ {(despesa.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                               </p>
@@ -429,42 +409,42 @@ export default function DespesasExtras() {
                                                 {despesa.quantidade} {despesa.unidade_cobranca}
                                               </p>
                                             </div>
-                                          </div>
-                                          <div className="flex items-center gap-1">
-                                            {despesa.status === "pendente" && (
+                                            <div className="flex items-center gap-1">
+                                              {despesa.status === "pendente" && (
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={() => handleAprovar(despesa)}
+                                                  className="h-7 w-7 p-0"
+                                                  title="Aprovar"
+                                                >
+                                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                                </Button>
+                                              )}
                                               <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => handleAprovar(despesa)}
+                                                onClick={() => {
+                                                  setDespesaEdit(despesa);
+                                                  setShowDespesaForm(true);
+                                                }}
                                                 className="h-7 w-7 p-0"
-                                                title="Aprovar"
+                                                title="Editar"
                                               >
-                                                <CheckCircle className="w-4 h-4 text-green-600" />
+                                                <Edit className="w-4 h-4 text-blue-600" />
                                               </Button>
-                                            )}
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              onClick={() => {
-                                                setDespesaEdit(despesa);
-                                                setShowDespesaForm(true);
-                                              }}
-                                              className="h-7 w-7 p-0"
-                                              title="Editar"
-                                            >
-                                              <Edit className="w-4 h-4 text-blue-600" />
-                                            </Button>
-                                            {despesa.status === "pendente" && (
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleCancelar(despesa)}
-                                                className="h-7 w-7 p-0"
-                                                title="Cancelar"
-                                              >
-                                                <XCircle className="w-4 h-4 text-red-600" />
-                                              </Button>
-                                            )}
+                                              {despesa.status === "pendente" && (
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={() => handleCancelar(despesa)}
+                                                  className="h-7 w-7 p-0"
+                                                  title="Cancelar"
+                                                >
+                                                  <XCircle className="w-4 h-4 text-red-600" />
+                                                </Button>
+                                              )}
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
