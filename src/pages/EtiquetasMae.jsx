@@ -273,10 +273,18 @@ export default function EtiquetasMae() {
   const handleVolumeCameraScan = async (codigo) => {
     if (!codigo || !codigo.trim()) return;
     
-    setCodigoScanner(codigo.trim());
+    console.log("🎥 CAMERA SCAN:");
+    console.log(`  • Código recebido: "${codigo}"`);
+    console.log(`  • Tamanho: ${codigo.length}`);
+    
+    const codigoLimpo = codigo.trim();
+    console.log(`  • Código após trim: "${codigoLimpo}"`);
+    console.log(`  • Tamanho após trim: ${codigoLimpo.length}`);
+    
+    setCodigoScanner(codigoLimpo);
     
     // Processar o scan e retornar resultado para feedback visual
-    const resultado = await handleScanComFeedback(codigo.trim());
+    const resultado = await handleScanComFeedback(codigoLimpo);
     return resultado;
   };
 
@@ -313,7 +321,10 @@ export default function EtiquetasMae() {
 
       // VERIFICAR SE É UMA ETIQUETA MÃE (Vinculação em lote)
       console.log("🏷️ Verificando se é etiqueta mãe...");
+      console.log(`  • Código: "${codigoLimpo}"`);
+      console.log(`  • Total etiquetas: ${etiquetas.length}`);
       const etiquetaMaeEncontrada = etiquetas.find(e => e.codigo === codigoLimpo);
+      console.log(`  • Etiqueta mãe encontrada: ${etiquetaMaeEncontrada ? 'SIM' : 'NÃO'}`);
       
       if (etiquetaMaeEncontrada && etiquetaMaeEncontrada.id !== etiquetaSelecionada.id) {
         console.log(`✅ Etiqueta mãe encontrada: ${etiquetaMaeEncontrada.codigo}`);
@@ -468,26 +479,29 @@ export default function EtiquetasMae() {
 
       // BUSCAR VOLUME NO BANCO
       console.log("📦 Buscando volume...");
-      console.log(`  • Código escaneado: "${codigoLimpo}"`);
+      console.log(`  • Código escaneado RAW: "${codigo}"`);
+      console.log(`  • Código após trim: "${codigoLimpo}"`);
       console.log(`  • Tamanho: ${codigoLimpo.length} caracteres`);
+      console.log(`  • Bytes: ${[...codigoLimpo].map(c => c.charCodeAt(0)).join(',')}`);
       
       const volumesBanco = await base44.entities.Volume.list();
       console.log(`  • ${volumesBanco.length} volumes disponíveis no banco`);
-      console.log(`  • Primeiros 5 volumes do banco:`);
-      volumesBanco.slice(0, 5).forEach((v, idx) => {
-        console.log(`    ${idx + 1}. "${v.identificador_unico}"`);
-      });
       
-      // BUSCA EXATA pelo identificador_unico (sem variações)
+      // BUSCA EXATA pelo identificador_unico
       let volumeEncontrado = volumesBanco.find(v => v.identificador_unico === codigoLimpo);
       
       if (volumeEncontrado) {
-        console.log(`✅ Volume encontrado (busca exata): ${volumeEncontrado.identificador_unico}`);
+        console.log(`✅ Volume encontrado: ${volumeEncontrado.identificador_unico}`);
       } else {
-        console.log(`❌ Volume NÃO encontrado`);
-        console.log(`  • Código buscado: "${codigoLimpo}"`);
-        console.log(`  • Formato esperado: VOL-{nota}-{seq}-{timestamp}`);
-        console.log(`  • Exemplo válido: VOL-21906-1-270126101218`);
+        console.log(`❌ Volume NÃO encontrado - Código buscado: "${codigoLimpo}"`);
+        console.log(`  • Testando busca nos primeiros 20 volumes:`);
+        volumesBanco.slice(0, 20).forEach((v, idx) => {
+          const match = v.identificador_unico === codigoLimpo;
+          console.log(`    ${idx + 1}. "${v.identificador_unico}" -> Match: ${match}`);
+          if (v.identificador_unico && v.identificador_unico.includes(codigoLimpo.substring(0, 10))) {
+            console.log(`       ⚠️ MATCH PARCIAL encontrado!`);
+          }
+        });
       }
       
       // BUSCA ALTERNATIVA (se não encontrou exato)
