@@ -344,10 +344,21 @@ export default function EtiquetasMae() {
           if (volumeSemPrefixo === codigoSemPrefixo) return true;
           if (volumeSemPrefixo.includes(codigoSemPrefixo) || codigoSemPrefixo.includes(volumeSemPrefixo)) return true;
           
-          // Match por partes principais (nota-sequencial)
-          if (partesCodigoEscaneado.length >= 2) {
-            const keyParts = `${partesCodigoEscaneado[0]}-${partesCodigoEscaneado[1]}`;
-            if (idVolume.includes(keyParts.toLowerCase())) return true;
+          // Match por partes principais (nota-sequencial) - IGNORAR timestamp
+          // Formato: VOL-NOTA-SEQUENCIAL-TIMESTAMP
+          if (partesCodigoEscaneado.length >= 3) {
+            // Extrair nota-sequencial do código escaneado (ignorar timestamp)
+            const notaSeq = `${partesCodigoEscaneado[1]}-${partesCodigoEscaneado[2]}`;
+            
+            // Buscar volumes que contenham essa combinação nota-sequencial
+            const partesVolume = v.identificador_unico.split('-');
+            if (partesVolume.length >= 3) {
+              const notaSeqVolume = `${partesVolume[1]}-${partesVolume[2]}`;
+              if (notaSeq.toLowerCase() === notaSeqVolume.toLowerCase()) {
+                console.log(`  🎯 Match por nota-sequencial: ${notaSeq}`);
+                return true;
+              }
+            }
           }
           
           return false;
