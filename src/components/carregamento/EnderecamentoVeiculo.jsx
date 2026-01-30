@@ -2150,38 +2150,77 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
       }
 
       // 2. Tentar encontrar como VOLUME INDIVIDUAL
+      console.log('📦 Buscando volume individual...');
       let volume = volumesLocal.find(v => 
         v.identificador_unico?.toUpperCase() === codigoLimpo
       );
 
       // Se não encontrou, buscar em TODOS os volumes do estoque
       if (!volume) {
+        console.log('  ⚠️ Não encontrado no cache local, buscando no banco...');
         let volumesEncontrados = await base44.entities.Volume.filter({ 
           identificador_unico: codigoLimpo 
         });
 
         // BUSCA ALTERNATIVA: Match por nota-sequencial (ignorando timestamp)
         if (volumesEncontrados.length === 0) {
+          console.log('  ⚠️ Busca exata falhou, tentando busca alternativa...');
           const todosVolumes = await base44.entities.Volume.list();
-          const partesCodigo = codigoLimpo.split('-');
+          console.log(`  📊 Total de volumes no banco: ${todosVolumes.length}`);
           
-          if (partesCodigo.length >= 3) {
-            const notaSeqBuscado = `${partesCodigo[1]}-${partesCodigo[2]}`;
+          const partesCodigo = codigoLimpo.split('-');
+          console.log('  🔍 Partes do código escaneado:', partesCodigo);
+          
+          const volumeAlternativo = todosVolumes.find(v => {
+            if (!v.identificador_unico) return false;
             
-            const volumeAlternativo = todosVolumes.find(v => {
-              if (!v.identificador_unico) return false;
-              const partesVolume = v.identificador_unico.split('-');
+            const idVolume = v.identificador_unico.toUpperCase();
+            const idCodigo = codigoLimpo;
+            
+            // Match exato (já testado antes)
+            if (idVolume === idCodigo) return true;
+            
+            // Match parcial (um contém o outro)
+            if (idVolume.includes(idCodigo) || idCodigo.includes(idVolume)) return true;
+            
+            // Match por componentes (remover prefixo VOL-)
+            const volumeSemPrefixo = idVolume.replace(/^VOL-/i, '');
+            const codigoSemPrefixo = idCodigo.replace(/^VOL-/i, '');
+            
+            if (volumeSemPrefixo === codigoSemPrefixo) return true;
+            if (volumeSemPrefixo.includes(codigoSemPrefixo) || codigoSemPrefixo.includes(volumeSemPrefixo)) return true;
+            
+            // Match por partes principais (nota-sequencial) - IGNORAR timestamp
+            // Formato esperado: VOL-NOTA-SEQUENCIAL-TIMESTAMP ou similares
+            if (partesCodigo.length >= 3) {
+              const partesVolume = v.identificador_unico.toUpperCase().split('-');
+              
               if (partesVolume.length >= 3) {
+                // Comparar apenas nota e sequencial (índices 1 e 2)
                 const notaSeqVolume = `${partesVolume[1]}-${partesVolume[2]}`;
-                return notaSeqBuscado === notaSeqVolume;
+                const notaSeqBuscado = `${partesCodigo[1]}-${partesCodigo[2]}`;
+                
+                if (notaSeqVolume === notaSeqBuscado) {
+                  console.log(`  🎯 Match por nota-sequencial encontrado!`);
+                  console.log(`    • Escaneado: ${notaSeqBuscado}`);
+                  console.log(`    • Banco: ${notaSeqVolume}`);
+                  return true;
+                }
               }
-              return false;
-            });
-            
-            if (volumeAlternativo) {
-              volumesEncontrados = [volumeAlternativo];
-              console.log(`✅ Volume encontrado por nota-sequencial: ${volumeAlternativo.identificador_unico}`);
             }
+            
+            return false;
+          });
+          
+          if (volumeAlternativo) {
+            volumesEncontrados = [volumeAlternativo];
+            console.log(`✅ Volume encontrado com busca alternativa!`);
+            console.log(`  • Escaneado: ${codigoLimpo}`);
+            console.log(`  • Encontrado: ${volumeAlternativo.identificador_unico}`);
+            toast.info(`Volume localizado: ${volumeAlternativo.identificador_unico}`, { duration: 2000 });
+          } else {
+            console.log('  ❌ Nenhum volume encontrado com qualquer método de busca');
+            console.log('  📋 Exemplos no banco:', todosVolumes.slice(0, 5).map(v => v.identificador_unico));
           }
         }
 
