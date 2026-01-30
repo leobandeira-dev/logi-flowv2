@@ -889,13 +889,145 @@ export default function Recebimento() {
     };
   };
 
-  const handleBuscarPorChave = async (chave = chaveAcesso) => {
-    if (!chave || chave.length !== 44) {
+  const handleBuscarPorChave = async (codigo = chaveAcesso) => {
+    if (!codigo || codigo.trim() === "") {
+      return;
+    }
+
+    const codigoLimpo = codigo.trim();
+
+    // DETECTAR TIPO: Chave NF-e (44 dígitos) ou Código de Volume (VOL-...)
+    const isChaveNFe = /^\d{44}$/.test(codigoLimpo);
+    const isCodigoVolume = codigoLimpo.startsWith('VOL-');
+
+    // SE FOR CÓDIGO DE VOLUME - Buscar volume e sua nota
+    if (isCodigoVolume) {
+      console.log("📦 Detectado código de volume:", codigoLimpo);
+      
+      try {
+        const volumesEncontrados = await base44.entities.Volume.filter({
+          identificador_unico: codigoLimpo
+        }, null, 1);
+
+        if (volumesEncontrados.length === 0) {
+          toast.error(`❌ Volume ${codigoLimpo} não encontrado no banco de dados`);
+          setChaveAcesso("");
+          setTimeout(() => {
+            if (inputChaveRef.current) inputChaveRef.current.focus();
+          }, 50);
+          return;
+        }
+
+        const volume = volumesEncontrados[0];
+
+        // Buscar a nota fiscal do volume
+        if (!volume.nota_fiscal_id) {
+          toast.error(`❌ Volume ${codigoLimpo} não possui nota fiscal associada`);
+          setChaveAcesso("");
+          setTimeout(() => {
+            if (inputChaveRef.current) inputChaveRef.current.focus();
+          }, 50);
+          return;
+        }
+
+        const notaFiscal = await base44.entities.NotaFiscal.get(volume.nota_fiscal_id);
+
+        // Verificar duplicata na lista
+        const jaExisteNaLista = notasFiscais.some(nf => nf.chave_nota_fiscal === notaFiscal.chave_nota_fiscal);
+        if (jaExisteNaLista) {
+          toast.error(`⚠️ NF ${notaFiscal.numero_nota} (do volume bipado) já está na lista!`);
+          setChaveAcesso("");
+          setTimeout(() => {
+            if (inputChaveRef.current) inputChaveRef.current.focus();
+          }, 50);
+          return;
+        }
+
+        // Buscar todos os volumes da nota
+        const volumesDaNota = await base44.entities.Volume.filter({
+          nota_fiscal_id: notaFiscal.id
+        }, null, 500);
+
+        // Converter para formato do formulário
+        const dadosNF = {
+          id: notaFiscal.id,
+          chave_nota_fiscal: notaFiscal.chave_nota_fiscal || "",
+          numero_nota: notaFiscal.numero_nota || "",
+          serie_nota: notaFiscal.serie_nota || "",
+          data_hora_emissao: notaFiscal.data_hora_emissao || "",
+          data_vencimento: notaFiscal.data_vencimento || "",
+          natureza_operacao: notaFiscal.natureza_operacao || "",
+          emitente_cnpj: notaFiscal.emitente_cnpj || "",
+          emitente_razao_social: notaFiscal.emitente_razao_social || "",
+          emitente_telefone: notaFiscal.emitente_telefone || "",
+          emitente_cidade: notaFiscal.emitente_cidade || "",
+          emitente_uf: notaFiscal.emitente_uf || "",
+          emitente_endereco: notaFiscal.emitente_endereco || "",
+          emitente_numero: notaFiscal.emitente_numero || "",
+          emitente_bairro: notaFiscal.emitente_bairro || "",
+          emitente_cep: notaFiscal.emitente_cep || "",
+          destinatario_cnpj: notaFiscal.destinatario_cnpj || "",
+          destinatario_razao_social: notaFiscal.destinatario_razao_social || "",
+          destinatario_telefone: notaFiscal.destinatario_telefone || "",
+          destinatario_cidade: notaFiscal.destinatario_cidade || "",
+          destinatario_uf: notaFiscal.destinatario_uf || "",
+          destinatario_endereco: notaFiscal.destinatario_endereco || "",
+          destinatario_numero: notaFiscal.destinatario_numero || "",
+          destinatario_bairro: notaFiscal.destinatario_bairro || "",
+          destinatario_cep: notaFiscal.destinatario_cep || "",
+          peso_total_nf: notaFiscal.peso_total_nf || 0,
+          peso_original_xml: notaFiscal.peso_original_xml || 0,
+          valor_nota_fiscal: notaFiscal.valor_nota_fiscal || 0,
+          quantidade_total_volumes_nf: notaFiscal.quantidade_total_volumes_nf || 1,
+          volumes_original_xml: notaFiscal.volumes_original_xml || 1,
+          numero_pedido: notaFiscal.numero_pedido || "",
+          informacoes_complementares: notaFiscal.informacoes_complementares || "",
+          xml_content: notaFiscal.xml_content || "",
+          status_nf: "recebida",
+          numero_area: notaFiscal.numero_area || formData.numero_area || "",
+          volumes: volumesDaNota.map(v => ({
+            altura: v.altura || 0,
+            largura: v.largura || 0,
+            comprimento: v.comprimento || 0,
+            m3: v.m3 || 0,
+            peso_volume: v.peso_volume || 0
+          }))
+        };
+
+        setNotasFiscais(prev => [...prev, dadosNF]);
+        toast.success(`✓ NF ${notaFiscal.numero_nota} importada via volume ${codigoLimpo}!`, { duration: 2000 });
+        
+        setChaveAcesso("");
+        setTimeout(() => {
+          if (inputChaveRef.current) {
+            inputChaveRef.current.value = "";
+            inputChaveRef.current.focus();
+          }
+        }, 50);
+
+      } catch (error) {
+        console.error("Erro ao buscar volume:", error);
+        toast.error("Erro ao buscar volume no banco de dados");
+        setChaveAcesso("");
+        setTimeout(() => {
+          if (inputChaveRef.current) inputChaveRef.current.focus();
+        }, 50);
+      }
+      return;
+    }
+
+    // SE FOR CHAVE NF-e (44 dígitos) - Fluxo original
+    if (!isChaveNFe) {
+      toast.error("Código inválido. Bipem uma chave NF-e (44 dígitos) ou código de volume (VOL-...)");
+      setChaveAcesso("");
+      setTimeout(() => {
+        if (inputChaveRef.current) inputChaveRef.current.focus();
+      }, 50);
       return;
     }
 
     // VALIDAÇÃO DE DUPLICATA: Verificar se já existe antes de buscar na API
-    const jaExisteNaLista = notasFiscais.some(nf => nf.chave_nota_fiscal === chave);
+    const jaExisteNaLista = notasFiscais.some(nf => nf.chave_nota_fiscal === codigoLimpo);
     if (jaExisteNaLista) {
       toast.error("⚠️ Esta nota já foi importada!");
       setChaveAcesso("");
@@ -909,7 +1041,7 @@ export default function Recebimento() {
     // Verificar se já existe no banco de dados
     try {
       const notasExistentes = await base44.entities.NotaFiscal.filter({
-        chave_nota_fiscal: chave
+        chave_nota_fiscal: codigoLimpo
       }, null, 1);
 
       if (notasExistentes.length > 0) {
@@ -929,7 +1061,7 @@ export default function Recebimento() {
 
     // OTIMIZAÇÃO: Adicionar à fila e liberar UI imediatamente
     const idFila = Date.now();
-    setFilaImportacao(prev => [...prev, { id: idFila, chave, status: 'processando' }]);
+    setFilaImportacao(prev => [...prev, { id: idFila, chave: codigoLimpo, status: 'processando' }]);
     setChaveAcesso(""); // Limpar imediatamente para próxima bipagem
     
     // Manter foco para próxima bipagem
@@ -941,7 +1073,7 @@ export default function Recebimento() {
 
     try {
       const response = await base44.functions.invoke('buscarNotaFiscalMeuDanfe', {
-        chaveAcesso: chave
+        chaveAcesso: codigoLimpo
       });
 
       if (response.data?.error) {
@@ -2803,26 +2935,42 @@ export default function Recebimento() {
                       <div className="flex gap-2">
                         <Input
                           ref={inputChaveRef}
-                          placeholder="Cole ou escaneie"
+                          placeholder="Bipe volume ou chave NF-e..."
                           defaultValue=""
                           onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '').slice(0, 44);
-                            if (value.length === 44) {
+                            const value = e.target.value.trim();
+                            
+                            // Verificar se é chave NF-e (44 dígitos)
+                            const digitos = value.replace(/\D/g, '');
+                            if (digitos.length === 44) {
+                              handleBuscarPorChave(digitos);
+                              e.target.value = "";
+                              return;
+                            }
+                            
+                            // Verificar se é código de volume (VOL-...)
+                            if (value.startsWith('VOL-') && value.length > 10) {
                               handleBuscarPorChave(value);
                               e.target.value = "";
                             }
                           }}
                           onPaste={(e) => {
                             e.preventDefault();
-                            const pastedText = e.clipboardData.getData('text');
-                            const cleaned = pastedText.replace(/\D/g, '').slice(0, 44);
+                            const pastedText = e.clipboardData.getData('text').trim();
                             
-                            if (inputChaveRef.current) {
-                              inputChaveRef.current.value = cleaned;
-                            }
-                            
+                            // Tentar como chave NF-e
+                            const cleaned = pastedText.replace(/\D/g, '');
                             if (cleaned.length === 44) {
                               handleBuscarPorChave(cleaned);
+                              if (inputChaveRef.current) {
+                                inputChaveRef.current.value = "";
+                              }
+                              return;
+                            }
+                            
+                            // Tentar como código de volume
+                            if (pastedText.startsWith('VOL-')) {
+                              handleBuscarPorChave(pastedText);
                               if (inputChaveRef.current) {
                                 inputChaveRef.current.value = "";
                               }
@@ -2831,16 +2979,21 @@ export default function Recebimento() {
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault();
-                              const value = e.target.value.replace(/\D/g, '').slice(0, 44);
-                              if (value.length === 44) {
+                              const value = e.target.value.trim();
+                              
+                              // Verificar tipo de código
+                              const digitos = value.replace(/\D/g, '');
+                              if (digitos.length === 44) {
+                                handleBuscarPorChave(digitos);
+                              } else if (value.startsWith('VOL-')) {
                                 handleBuscarPorChave(value);
-                                if (inputChaveRef.current) {
-                                  inputChaveRef.current.value = "";
-                                }
+                              }
+                              
+                              if (inputChaveRef.current) {
+                                inputChaveRef.current.value = "";
                               }
                             }
                           }}
-                          maxLength={44}
                           className="text-xs font-mono flex-1 h-9"
                           style={{
                             backgroundColor: theme.cardBg,
@@ -2871,7 +3024,7 @@ export default function Recebimento() {
                         </div>
                       )}
                       <p className="text-xs mt-1" style={{ color: theme.textMuted }}>
-                        💡 Busca automática ao colar 44 dígitos | Continue bipando enquanto importa
+                        💡 Aceita chave NF-e (44 dígitos) ou código de volume (VOL-...)
                       </p>
                     </div>
                   </div>
