@@ -2260,70 +2260,70 @@ export default function EtiquetasMae() {
         {showUnitizacaoModal && etiquetaSelecionada && (
           <Dialog open={showUnitizacaoModal} onOpenChange={setShowUnitizacaoModal}>
             <DialogContent 
-              className="max-w-full w-full h-full max-h-full overflow-y-auto p-0 m-0 sm:max-w-md sm:w-[95vw] sm:max-h-[90vh] sm:p-4 sm:m-auto" 
+              className="max-w-full w-full h-[100dvh] max-h-[100dvh] overflow-y-auto p-0 m-0 sm:max-w-md sm:w-[95vw] sm:h-auto sm:max-h-[90vh] sm:p-4 sm:m-auto sm:rounded-lg" 
               style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
             >
-              <DialogHeader className="pb-2 px-4 pt-4 sm:px-0 sm:pt-0 sticky top-0 z-10" style={{ backgroundColor: theme.cardBg }}>
-                <DialogTitle className="text-base sm:text-lg" style={{ color: theme.text }}>
+              <DialogHeader className="pb-2 px-4 pt-3 sm:px-0 sm:pt-0 sticky top-0 z-10 border-b" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                <DialogTitle className="text-lg sm:text-lg font-bold text-center" style={{ color: theme.text }}>
                   {etiquetaSelecionada.codigo}
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-3 py-2 px-4 sm:px-0">
+              <div className="space-y-3 py-3 px-4 sm:px-0 pb-20">
                 {/* Resumo Compacto */}
-                <div className="grid grid-cols-4 gap-2 p-3 rounded-lg border-2" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', borderColor: '#3b82f6' }}>
+                <div className="grid grid-cols-4 gap-1.5 p-2.5 rounded-lg border-2" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', borderColor: '#3b82f6' }}>
                   <div className="text-center">
-                    <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Volumes</p>
-                    <p className="text-2xl font-bold text-blue-600">{volumesVinculados.length}</p>
+                    <p className="text-[9px] mb-0.5 uppercase font-semibold" style={{ color: theme.textMuted }}>Volumes</p>
+                    <p className="text-xl font-bold text-blue-600">{volumesVinculados.length}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Peso</p>
-                    <p className="text-base font-bold text-green-600">
-                      {volumesVinculados.reduce((sum, v) => sum + (v.peso_volume || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+                    <p className="text-[9px] mb-0.5 uppercase font-semibold" style={{ color: theme.textMuted }}>Peso</p>
+                    <p className="text-sm font-bold text-green-600 leading-tight">
+                      {(volumesVinculados.reduce((sum, v) => sum + (v.peso_volume || 0), 0) / 1000).toFixed(1)}
                     </p>
-                    <p className="text-[10px] text-green-600">kg</p>
+                    <p className="text-[9px] text-green-600">ton</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>M³</p>
-                    <p className="text-base font-bold text-purple-600">
+                    <p className="text-[9px] mb-0.5 uppercase font-semibold" style={{ color: theme.textMuted }}>M³</p>
+                    <p className="text-sm font-bold text-purple-600 leading-tight">
                       {volumesVinculados.reduce((sum, v) => sum + (v.m3 || 0), 0).toFixed(2)}
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-[10px] mb-0.5" style={{ color: theme.textMuted }}>Notas</p>
-                    <p className="text-2xl font-bold text-orange-600">
+                    <p className="text-[9px] mb-0.5 uppercase font-semibold" style={{ color: theme.textMuted }}>Notas</p>
+                    <p className="text-xl font-bold text-orange-600">
                       {[...new Set(volumesVinculados.map(v => v.nota_fiscal_id).filter(Boolean))].length}
                     </p>
                   </div>
                 </div>
 
                 {etiquetaSelecionada.status !== "finalizada" && (
-                  <div className="sticky top-14 sm:relative sm:top-0 z-10 -mx-4 px-4 py-2 sm:mx-0 sm:px-0 sm:py-0 space-y-2" style={{ backgroundColor: theme.bg }}>
+                  <div className="space-y-2">
                     {/* Progresso da Nota Atual */}
                     {notaAtualScanner && progressoNotaScanner && (
-                      <div className="p-3 rounded-lg border-2" style={{ 
+                      <div className="p-2.5 rounded-lg border-2" style={{ 
                         backgroundColor: progressoNotaScanner.faltam === 0 ? (isDark ? '#064e3b' : '#d1fae5') : (isDark ? '#1e293b' : '#f0f9ff'),
                         borderColor: progressoNotaScanner.faltam === 0 ? '#10b981' : '#3b82f6'
                       }}>
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
-                            <FileText className={`w-4 h-4 ${progressoNotaScanner.faltam === 0 ? 'text-green-600' : 'text-blue-600'}`} />
+                            <FileText className={`w-3.5 h-3.5 ${progressoNotaScanner.faltam === 0 ? 'text-green-600' : 'text-blue-600'}`} />
                             <span className="text-sm font-bold" style={{ color: theme.text }}>
                               NF {notaAtualScanner.numero_nota}
                             </span>
                           </div>
-                          <Badge className={progressoNotaScanner.faltam === 0 ? 'bg-green-600 text-white' : 'bg-orange-500 text-white'}>
+                          <Badge className={`${progressoNotaScanner.faltam === 0 ? 'bg-green-600' : 'bg-orange-500'} text-white text-sm px-2.5 py-1 font-bold`}>
                             {progressoNotaScanner.embarcados}/{progressoNotaScanner.total}
                           </Badge>
                         </div>
                         {progressoNotaScanner.faltam > 0 && (
-                          <p className="text-xs font-semibold text-orange-600">
-                            ⏳ Faltam {progressoNotaScanner.faltam} volume(s)
+                          <p className="text-xs font-bold text-orange-600 flex items-center gap-1">
+                            <span className="text-base">⏳</span> Faltam {progressoNotaScanner.faltam} volume(s)
                           </p>
                         )}
                         {progressoNotaScanner.faltam === 0 && (
-                          <p className="text-xs font-bold text-green-600">
-                            ✓ NOTA COMPLETA!
+                          <p className="text-xs font-bold text-green-600 flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> NOTA COMPLETA!
                           </p>
                         )}
                       </div>
@@ -2372,64 +2372,63 @@ export default function EtiquetasMae() {
                       </div>
                     )}
 
-                    <div className="relative">
-                      <Input
-                        ref={(el) => {
-                          if (el && showUnitizacaoModal && etiquetaSelecionada.status !== "finalizada" && !processando && !vinculandoEmLote) {
-                            setTimeout(() => el.focus(), 100);
-                          }
-                        }}
-                        value={codigoScanner}
-                        onChange={(e) => {
-                          setCodigoScanner(e.target.value);
-                          // Auto-processar códigos completos
-                          const valor = e.target.value.trim();
-                          // Chave NF-e (44 dígitos)
-                          const digitos = valor.replace(/\D/g, '');
-                          if (digitos.length === 44 && !processando) {
-                            handleScan(digitos);
-                            return;
-                          }
-                          // Código de volume (VOL-...)
-                          if (valor.startsWith('VOL-') && valor.length > 15 && !processando) {
-                            handleScan(valor);
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && codigoScanner.trim() && !processando) {
-                            e.preventDefault();
-                            handleScan(codigoScanner);
-                          }
-                        }}
-                        onBlur={(e) => {
-                          // Recuperar foco automaticamente após perda
-                          if (!vinculandoEmLote && !processando && etiquetaSelecionada.status !== "finalizada") {
-                            setTimeout(() => e.target.focus(), 100);
-                          }
-                        }}
-                        placeholder="Bipe volume ou chave NF-e..."
-                        className="h-14 text-base pr-12"
-                        style={{ 
-                          backgroundColor: theme.inputBg, 
-                          borderColor: theme.inputBorder, 
-                          color: theme.text
-                        }}
-                        inputMode="none"
-                        autoComplete="off"
-                        autoCorrect="off"
-                        autoCapitalize="off"
-                        spellCheck="false"
-                        disabled={processando || vinculandoEmLote}
-                        autoFocus
-                        />
-                        <Scan className="absolute right-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-600 pointer-events-none" />
-                    </div>
+                    <input
+                      ref={(el) => {
+                        if (el && showUnitizacaoModal && etiquetaSelecionada.status !== "finalizada" && !processando && !vinculandoEmLote) {
+                          setTimeout(() => el.focus(), 100);
+                        }
+                      }}
+                      type="text"
+                      value={codigoScanner}
+                      onChange={(e) => {
+                        setCodigoScanner(e.target.value);
+                        // Auto-processar códigos completos
+                        const valor = e.target.value.trim();
+                        // Chave NF-e (44 dígitos)
+                        const digitos = valor.replace(/\D/g, '');
+                        if (digitos.length === 44 && !processando) {
+                          handleScan(digitos);
+                          return;
+                        }
+                        // Código de volume (VOL-...)
+                        if (valor.startsWith('VOL-') && valor.length > 15 && !processando) {
+                          handleScan(valor);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && codigoScanner.trim() && !processando) {
+                          e.preventDefault();
+                          handleScan(codigoScanner);
+                        }
+                      }}
+                      onBlur={(e) => {
+                        // Recuperar foco automaticamente após perda
+                        if (!vinculandoEmLote && !processando && etiquetaSelecionada.status !== "finalizada") {
+                          setTimeout(() => e.target.focus(), 50);
+                        }
+                      }}
+                      placeholder="Bipe volume ou chave NF-e..."
+                      className="w-full h-12 px-3 pr-10 text-sm font-mono rounded-lg border-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                      style={{ 
+                        backgroundColor: theme.inputBg, 
+                        borderColor: theme.inputBorder, 
+                        color: theme.text
+                      }}
+                      inputMode="none"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
+                      readOnly={false}
+                      disabled={processando || vinculandoEmLote}
+                      autoFocus
+                    />
                     <Button
                       onClick={() => setShowVolumeCameraScanner(true)}
-                      className="bg-green-600 hover:bg-green-700 w-full h-12 text-base font-bold"
+                      className="bg-green-600 hover:bg-green-700 w-full h-14 text-lg font-bold"
                       disabled={processando || vinculandoEmLote}
                     >
-                      <Camera className="w-5 h-5 mr-2" />
+                      <Camera className="w-6 h-6 mr-2" />
                       CÂMERA
                     </Button>
                     </div>
@@ -2437,7 +2436,7 @@ export default function EtiquetasMae() {
 
                 {volumesVinculados.length > 0 && (
                   <Card style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                    <CardHeader className="pb-2 pt-3 px-3">
+                    <CardHeader className="pb-2 pt-2.5 px-2.5">
                       <CardTitle className="text-sm flex items-center gap-2" style={{ color: theme.text }}>
                         <Package className="w-4 h-4 text-purple-600" />
                         Volumes Vinculados ({volumesVinculados.length})
@@ -2606,14 +2605,14 @@ export default function EtiquetasMae() {
                 )}
               </div>
 
-              <DialogFooter className="flex-col gap-2 pt-4 px-4 pb-4 sm:px-0 sm:pb-0 sticky bottom-0" style={{ backgroundColor: theme.cardBg }}>
+              <DialogFooter className="flex-col gap-2 pt-3 px-4 pb-safe sm:px-0 sm:pb-0 fixed bottom-0 left-0 right-0 sm:relative border-t shadow-lg" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
                 {etiquetaSelecionada.status !== "finalizada" && (
                   <Button
                     onClick={handleFinalizar}
                     disabled={volumesVinculados.length === 0}
-                    className="bg-green-600 hover:bg-green-700 w-full h-12 text-base font-bold shadow-lg"
+                    className="bg-green-600 hover:bg-green-700 w-full h-14 text-lg font-bold shadow-lg"
                   >
-                    <CheckCircle2 className="w-5 h-5 mr-2" />
+                    <CheckCircle2 className="w-6 h-6 mr-2" />
                     FINALIZAR ({volumesVinculados.length})
                   </Button>
                 )}
@@ -2623,9 +2622,9 @@ export default function EtiquetasMae() {
                       setShowUnitizacaoModal(false);
                       handleReabrir(etiquetaSelecionada);
                     }}
-                    className="bg-orange-600 hover:bg-orange-700 w-full h-12 text-base font-bold"
+                    className="bg-orange-600 hover:bg-orange-700 w-full h-14 text-lg font-bold"
                   >
-                    <Edit className="w-5 h-5 mr-2" />
+                    <Edit className="w-6 h-6 mr-2" />
                     REABRIR
                   </Button>
                 )}
@@ -2636,9 +2635,11 @@ export default function EtiquetasMae() {
                     setEtiquetaSelecionada(null);
                     setVolumesVinculados([]);
                     setCodigoScanner("");
+                    setNotaAtualScanner(null);
+                    setProgressoNotaScanner(null);
                     loadData();
                   }}
-                  className="w-full h-10"
+                  className="w-full h-12"
                   style={{ borderColor: theme.cardBorder, color: theme.text }}
                 >
                   Fechar
