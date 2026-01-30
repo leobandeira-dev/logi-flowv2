@@ -311,6 +311,161 @@ export default function EtiquetasMae() {
         return 'success';
       }
 
+      // VERIFICAR SE É UMA ETIQUETA MÃE (Vinculação em lote)
+      console.log("🏷️ Verificando se é etiqueta mãe...");
+      const etiquetaMaeEncontrada = etiquetas.find(e => e.codigo === codigoLimpo);
+      
+      if (etiquetaMaeEncontrada && etiquetaMaeEncontrada.id !== etiquetaSelecionada.id) {
+        console.log(`✅ Etiqueta mãe encontrada: ${etiquetaMaeEncontrada.codigo}`);
+        console.log(`  • ID: ${etiquetaMaeEncontrada.id}`);
+        console.log(`  • Volumes: ${etiquetaMaeEncontrada.quantidade_volumes || 0}`);
+        
+        if (!etiquetaMaeEncontrada.volumes_ids || etiquetaMaeEncontrada.volumes_ids.length === 0) {
+          console.warn("⚠️ Etiqueta mãe sem volumes");
+          playErrorBeep();
+          toast.error("❌ Etiqueta mãe sem volumes", { duration: 3000 });
+          setCodigoScanner("");
+          setProcessando(false);
+          setCameraScanFeedback('error');
+          setTimeout(() => setCameraScanFeedback(null), 1500);
+          return 'error';
+        }
+
+        // VINCULAR TODOS OS VOLUMES DA ETIQUETA MÃE
+        toast.info(`🔗 Vinculando ${etiquetaMaeEncontrada.volumes_ids.length} volumes...`, { duration: 3000 });
+        
+        const user = await base44.auth.me();
+        const volumesParaVincular = [];
+        const historicosParaCriar = [];
+        
+        // Buscar volumes da etiqueta mãe escaneada
+        const volumesDaEtiquetaMae = volumes.filter(v => 
+          etiquetaMaeEncontrada.volumes_ids.includes(v.id)
+        );
+        
+        console.log(`  • ${volumesDaEtiquetaMae.length} volumes encontrados na etiqueta mãe`);
+        
+        for (const volume of volumesDaEtiquetaMae) {
+          // Verificar se já está vinculado
+          if (volumesVinculados.some(v => v.id === volume.id)) {
+            console.log(`  ⚠️ ${volume.identificador_unico} já vinculado, pulando`);
+            continue;
+          }
+          
+          volumesParaVincular.push({
+            id: volume.id,
+            data: {
+              etiqueta_mae_id: etiquetaSelecionada.id,
+              data_vinculo_etiqueta_mae: new Date().toISOString()
+            },
+            volume: volume
+          });
+          
+          historicosParaCriar.push({
+            etiqueta_mae_id: etiquetaSelecionada.id,
+            tipo_acao: "adicao_volume",
+            volume_id: volume.id,
+            volume_identificador: volume.identificador_unico,
+            observacao: `Volume ${volume.identificador_unico} via etiqueta mãe ${etiquetaMaeEncontrada.codigo}`,
+            usuario_id: user.id,
+            usuario_nome: user.full_name
+          });
+        }
+        
+        if (volumesParaVincular.length === 0) {
+          console.warn("⚠️ Todos volumes já vinculados");
+          playErrorBeep();
+          toast.warning("⚠️ Todos volumes já estão vinculados", { duration: 3000 });
+          setCodigoScanner("");
+          setProcessando(false);
+          setCameraScanFeedback('duplicate');
+          setTimeout(() => setCameraScanFeedback(null), 1500);
+          return 'duplicate';
+        }
+        
+        // Vincular em lote
+        setVinculandoEmLote(true);
+        setProgressoVinculacao({ atual: 0, total: volumesParaVincular.length });
+        
+        const TAMANHO_LOTE = 20;
+        const totalLotes = Math.ceil(volumesParaVincular.length / TAMANHO_LOTE);
+        
+        for (let i = 0; i < totalLotes; i++) {
+          const inicio = i * TAMANHO_LOTE;
+          const fim = Math.min((i + 1) * TAMANHO_LOTE, volumesParaVincular.length);
+          const lote = volumesParaVincular.slice(inicio, fim);
+          const historicoLote = historicosParaCriar.slice(inicio, fim);
+          
+          await Promise.all([
+            ...lote.map(v => base44.entities.Volume.update(v.id, v.data)),
+            ...historicoLote.map(h => base44.entities.HistoricoEtiquetaMae.create(h))
+          ]);
+          
+          setProgressoVinculacao({ atual: fim, total: volumesParaVincular.length });
+          
+          if (i < totalLotes - 1) {
+            await new Promise(resolve => setTimeout(resolve, 150));
+          }
+        }
+        
+        setVinculandoEmLote(false);
+        
+        // Recarregar dados
+        const [volumesAtualizados, notasAtualizadas] = await Promise.all([
+          base44.entities.Volume.list(),
+          base44.entities.NotaFiscal.list()
+        ]);
+        
+        const volumesVinculadosAtualizados = volumesAtualizados.filter(v => 
+          v.etiqueta_mae_id === etiquetaSelecionada.id
+        );
+        
+        const novosVolumesIds = volumesVinculadosAtualizados.map(v => v.id);
+        const pesoTotal = volumesVinculadosAtualizados.reduce((sum, v) => sum + (v.peso_volume || 0), 0);
+        const m3Total = volumesVinculadosAtualizados.reduce((sum, v) => sum + (v.m3 || 0), 0);
+        const notasIds = [...new Set(volumesVinculadosAtualizados.map(v => v.nota_fiscal_id).filter(Boolean))];
+        
+        await base44.entities.EtiquetaMae.update(etiquetaSelecionada.id, {
+          volumes_ids: novosVolumesIds,
+          quantidade_volumes: novosVolumesIds.length,
+          peso_total: pesoTotal,
+          m3_total: m3Total,
+          notas_fiscais_ids: notasIds,
+          status: "em_unitizacao"
+        });
+        
+        const etiquetaFinal = await base44.entities.EtiquetaMae.get(etiquetaSelecionada.id);
+        
+        setEtiquetaSelecionada(etiquetaFinal);
+        setVolumesVinculados(volumesVinculadosAtualizados);
+        setVolumes(volumesAtualizados);
+        setNotas(notasAtualizadas);
+        volumesVinculadosIdsRef.current = new Set(novosVolumesIds);
+        
+        setEtiquetas(prev => prev.map(e => 
+          e.id === etiquetaSelecionada.id ? etiquetaFinal : e
+        ));
+        
+        playSuccessBeep();
+        toast.success(`✅ ${volumesParaVincular.length} volumes vinculados\n🏷️ Etiqueta ${etiquetaMaeEncontrada.codigo}\n📦 Total: ${volumesVinculadosAtualizados.length}`, {
+          duration: 4000,
+          style: { 
+            whiteSpace: 'pre-line', 
+            fontSize: '14px',
+            fontWeight: '600',
+            padding: '16px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+          }
+        });
+        
+        setCodigoScanner("");
+        setProcessando(false);
+        setCameraScanFeedback('success');
+        setTimeout(() => setCameraScanFeedback(null), 1000);
+        return 'success';
+      }
+
       // BUSCAR VOLUME NO BANCO
       console.log("📦 Buscando volume...");
       const volumesBanco = await base44.entities.Volume.list();
