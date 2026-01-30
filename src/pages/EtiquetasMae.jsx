@@ -2401,6 +2401,12 @@ export default function EtiquetasMae() {
                             handleScan(codigoScanner);
                           }
                         }}
+                        onBlur={(e) => {
+                          // Recuperar foco automaticamente após perda
+                          if (!vinculandoEmLote && !processando && etiquetaSelecionada.status !== "finalizada") {
+                            setTimeout(() => e.target.focus(), 100);
+                          }
+                        }}
                         placeholder="Bipe volume ou chave NF-e..."
                         className="h-14 text-base pr-12"
                         style={{ 
@@ -2408,6 +2414,7 @@ export default function EtiquetasMae() {
                           borderColor: theme.inputBorder, 
                           color: theme.text
                         }}
+                        inputMode="none"
                         autoComplete="off"
                         autoCorrect="off"
                         autoCapitalize="off"
