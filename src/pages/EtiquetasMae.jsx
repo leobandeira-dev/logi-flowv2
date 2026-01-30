@@ -2263,13 +2263,55 @@ export default function EtiquetasMae() {
               className="max-w-full w-full h-[100dvh] max-h-[100dvh] overflow-y-auto p-0 m-0 sm:max-w-md sm:w-[95vw] sm:h-auto sm:max-h-[90vh] sm:p-4 sm:m-auto sm:rounded-lg" 
               style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
             >
-              <DialogHeader className="pb-2 px-4 pt-3 sm:px-0 sm:pt-0 sticky top-0 z-10 border-b" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                <DialogTitle className="text-lg sm:text-lg font-bold text-center" style={{ color: theme.text }}>
-                  {etiquetaSelecionada.codigo}
-                </DialogTitle>
+              <DialogHeader className="pb-2 px-3 pt-3 sm:px-0 sm:pt-0 sticky top-0 z-20 border-b shadow-sm" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <DialogTitle className="text-base font-bold flex-1 text-center" style={{ color: theme.text }}>
+                    {etiquetaSelecionada.codigo}
+                  </DialogTitle>
+                </div>
+                <div className="flex gap-2 pb-2">
+                  {etiquetaSelecionada.status !== "finalizada" && (
+                    <Button
+                      onClick={handleFinalizar}
+                      disabled={volumesVinculados.length === 0}
+                      className="bg-green-600 hover:bg-green-700 flex-1 h-11 text-sm font-bold"
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                      FINALIZAR ({volumesVinculados.length})
+                    </Button>
+                  )}
+                  {etiquetaSelecionada.status === "finalizada" && (
+                    <Button
+                      onClick={() => {
+                        setShowUnitizacaoModal(false);
+                        handleReabrir(etiquetaSelecionada);
+                      }}
+                      className="bg-orange-600 hover:bg-orange-700 flex-1 h-11 text-sm font-bold"
+                    >
+                      <Edit className="w-4 h-4 mr-1.5" />
+                      REABRIR
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowUnitizacaoModal(false);
+                      setEtiquetaSelecionada(null);
+                      setVolumesVinculados([]);
+                      setCodigoScanner("");
+                      setNotaAtualScanner(null);
+                      setProgressoNotaScanner(null);
+                      loadData();
+                    }}
+                    className="h-11 px-4"
+                    style={{ borderColor: theme.cardBorder, color: theme.text }}
+                  >
+                    Fechar
+                  </Button>
+                </div>
               </DialogHeader>
 
-              <div className="space-y-3 py-3 px-4 sm:px-0 pb-32 sm:pb-4">
+              <div className="space-y-3 py-3 px-3 sm:px-0 pb-4 sm:pb-4">
                 {/* Resumo Compacto */}
                 <div className="grid grid-cols-4 gap-1.5 p-2.5 rounded-lg border-2" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', borderColor: '#3b82f6' }}>
                   <div className="text-center">
@@ -2605,46 +2647,7 @@ export default function EtiquetasMae() {
                 )}
               </div>
 
-              <DialogFooter className="flex-col gap-2 pt-3 px-4 pb-4 sm:px-0 sm:pb-0 fixed bottom-0 left-0 right-0 sm:relative border-t shadow-2xl z-20" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-                {etiquetaSelecionada.status !== "finalizada" && (
-                  <Button
-                    onClick={handleFinalizar}
-                    disabled={volumesVinculados.length === 0}
-                    className="bg-green-600 hover:bg-green-700 w-full h-14 text-lg font-bold shadow-lg"
-                  >
-                    <CheckCircle2 className="w-6 h-6 mr-2" />
-                    FINALIZAR ({volumesVinculados.length})
-                  </Button>
-                )}
-                {etiquetaSelecionada.status === "finalizada" && (
-                  <Button
-                    onClick={() => {
-                      setShowUnitizacaoModal(false);
-                      handleReabrir(etiquetaSelecionada);
-                    }}
-                    className="bg-orange-600 hover:bg-orange-700 w-full h-14 text-lg font-bold"
-                  >
-                    <Edit className="w-6 h-6 mr-2" />
-                    REABRIR
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowUnitizacaoModal(false);
-                    setEtiquetaSelecionada(null);
-                    setVolumesVinculados([]);
-                    setCodigoScanner("");
-                    setNotaAtualScanner(null);
-                    setProgressoNotaScanner(null);
-                    loadData();
-                  }}
-                  className="w-full h-12"
-                  style={{ borderColor: theme.cardBorder, color: theme.text }}
-                >
-                  Fechar
-                </Button>
-              </DialogFooter>
+
             </DialogContent>
           </Dialog>
         )}
