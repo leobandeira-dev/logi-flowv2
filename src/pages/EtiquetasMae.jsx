@@ -1276,11 +1276,20 @@ export default function EtiquetasMae() {
         });
         console.log(`  ✓ Nota criada: ${numeroNota}`);
 
-        // CRIAR VOLUMES
+        // CRIAR VOLUMES com formato padrão: VOL-{nota}-{seq}-{timestamp}
         const pesoMedioPorVolume = (pesoBruto > 0 ? pesoBruto : pesoLiquido) / quantidadeVolumes;
         
         for (let i = 1; i <= quantidadeVolumes; i++) {
-          const identificadorVolume = `${numeroNota}-${String(i).padStart(2, '0')}`;
+          // Gerar identificador único no MESMO FORMATO usado no Recebimento
+          const agora = new Date();
+          const dia = String(agora.getDate()).padStart(2, '0');
+          const mes = String(agora.getMonth() + 1).padStart(2, '0');
+          const ano = String(agora.getFullYear()).slice(-2);
+          const hh = String(agora.getHours()).padStart(2, '0');
+          const mm = String(agora.getMinutes()).padStart(2, '0');
+          const ss = String(agora.getSeconds()).padStart(2, '0');
+          const timestamp = `${dia}${mes}${ano}${hh}${mm}${ss}`;
+          const identificadorVolume = `VOL-${numeroNota}-${i}-${timestamp}`;
           
           const novoVolume = await base44.entities.Volume.create({
             nota_fiscal_id: notaFiscal.id,
