@@ -783,6 +783,15 @@ export default function EtiquetasMae() {
       
       playSuccessBeep();
 
+      // Manter foco no campo
+      setTimeout(() => {
+        const input = document.querySelector('input[placeholder*="Bipe volume ou chave NF-e"]');
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      }, 100);
+
       const feedbackMsg = `✅ ${volumesNotaAtualizados.length}/${todosVolumesNota.length} volumes\n` +
         `📋 NF ${nota?.numero_nota || '-'}\n` +
         (faltamNota > 0 ? `⏳ Faltam ${faltamNota}\n` : `✓ NF COMPLETA!\n`) +
@@ -809,6 +818,15 @@ export default function EtiquetasMae() {
       setProcessando(false);
       setCameraScanFeedback('success');
       setTimeout(() => setCameraScanFeedback(null), 1000);
+      
+      // Manter foco no campo
+      setTimeout(() => {
+        const input = document.querySelector('input[placeholder*="Bipe volume ou chave NF-e"]');
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      }, 100);
       
       return 'success';
       
@@ -988,6 +1006,14 @@ export default function EtiquetasMae() {
       
       playSuccessBeep();
       
+      // ATUALIZAR PROGRESSO DA NOTA NO SCANNER (também para scan manual)
+      setNotaAtualScanner(nota);
+      setProgressoNotaScanner({
+        embarcados: volumesNotaVinculados.length,
+        total: todosVolumesNota.length,
+        faltam
+      });
+
       const feedbackMsg = `✅ ${volumesNotaVinculados.length}/${todosVolumesNota.length} volumes\n` +
         `📋 NF ${nota?.numero_nota || '-'}\n` +
         (faltam > 0 ? `⏳ Faltam ${faltam}\n` : `✓ NF COMPLETA!\n`) +
@@ -1393,6 +1419,14 @@ export default function EtiquetasMae() {
       
       playSuccessBeep();
       
+      // ATUALIZAR PROGRESSO DA NOTA NO SCANNER (scan NF-e)
+      setNotaAtualScanner(notaFiscal);
+      setProgressoNotaScanner({
+        embarcados: volumesVinculadosNota.length,
+        total: todosVolumesNota.length,
+        faltam
+      });
+
       const feedbackMsg = notaCompleta
         ? `✅ NF ${notaFiscal.numero_nota} COMPLETA!\n📦 ${todosVolumesNota.length}/${todosVolumesNota.length} volumes\n✓ Total: ${volumesVinculadosAtualizados.length}`
         : `✅ ${volumesParaVincular.length} volumes adicionados\n📋 NF ${notaFiscal.numero_nota}\n⏳ Faltam ${faltam} volume(s)\n📦 Total: ${volumesVinculadosAtualizados.length}`;
@@ -2265,6 +2299,36 @@ export default function EtiquetasMae() {
 
                 {etiquetaSelecionada.status !== "finalizada" && (
                   <div className="sticky top-14 sm:relative sm:top-0 z-10 -mx-4 px-4 py-2 sm:mx-0 sm:px-0 sm:py-0 space-y-2" style={{ backgroundColor: theme.bg }}>
+                    {/* Progresso da Nota Atual */}
+                    {notaAtualScanner && progressoNotaScanner && (
+                      <div className="p-3 rounded-lg border-2" style={{ 
+                        backgroundColor: progressoNotaScanner.faltam === 0 ? (isDark ? '#064e3b' : '#d1fae5') : (isDark ? '#1e293b' : '#f0f9ff'),
+                        borderColor: progressoNotaScanner.faltam === 0 ? '#10b981' : '#3b82f6'
+                      }}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <FileText className={`w-4 h-4 ${progressoNotaScanner.faltam === 0 ? 'text-green-600' : 'text-blue-600'}`} />
+                            <span className="text-sm font-bold" style={{ color: theme.text }}>
+                              NF {notaAtualScanner.numero_nota}
+                            </span>
+                          </div>
+                          <Badge className={progressoNotaScanner.faltam === 0 ? 'bg-green-600 text-white' : 'bg-orange-500 text-white'}>
+                            {progressoNotaScanner.embarcados}/{progressoNotaScanner.total}
+                          </Badge>
+                        </div>
+                        {progressoNotaScanner.faltam > 0 && (
+                          <p className="text-xs font-semibold text-orange-600">
+                            ⏳ Faltam {progressoNotaScanner.faltam} volume(s)
+                          </p>
+                        )}
+                        {progressoNotaScanner.faltam === 0 && (
+                          <p className="text-xs font-bold text-green-600">
+                            ✓ NOTA COMPLETA!
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {/* Barra de Progresso de Vinculação em Lote */}
                     {vinculandoEmLote && (
                       <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -2311,12 +2375,26 @@ export default function EtiquetasMae() {
                     <div className="relative">
                       <Input
                         ref={(el) => {
-                          if (el && showUnitizacaoModal && etiquetaSelecionada.status !== "finalizada") {
-                            el.focus();
+                          if (el && showUnitizacaoModal && etiquetaSelecionada.status !== "finalizada" && !processando && !vinculandoEmLote) {
+                            setTimeout(() => el.focus(), 100);
                           }
                         }}
                         value={codigoScanner}
-                        onChange={(e) => setCodigoScanner(e.target.value)}
+                        onChange={(e) => {
+                          setCodigoScanner(e.target.value);
+                          // Auto-processar códigos completos
+                          const valor = e.target.value.trim();
+                          // Chave NF-e (44 dígitos)
+                          const digitos = valor.replace(/\D/g, '');
+                          if (digitos.length === 44 && !processando) {
+                            handleScan(digitos);
+                            return;
+                          }
+                          // Código de volume (VOL-...)
+                          if (valor.startsWith('VOL-') && valor.length > 15 && !processando) {
+                            handleScan(valor);
+                          }
+                        }}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && codigoScanner.trim() && !processando) {
                             e.preventDefault();
