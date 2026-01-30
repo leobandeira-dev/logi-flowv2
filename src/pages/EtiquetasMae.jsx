@@ -1182,7 +1182,6 @@ export default function EtiquetasMae() {
 
       let notaFiscal;
       let volumesDaNota = [];
-      let volumesCriados = false;
 
       if (notasExistentes.length > 0) {
         // NOTA JÁ EXISTE
@@ -1207,7 +1206,10 @@ export default function EtiquetasMae() {
         if (volumesDaNota.length === 0) {
           console.error("  ❌ NF sem volumes cadastrados no banco");
           playErrorBeep();
-          toast.error(`❌ NF ${notaFiscal.numero_nota} sem volumes cadastrados`);
+          toast.error(`❌ NF ${notaFiscal.numero_nota} sem volumes cadastrados\n\nCadastre os volumes no módulo de Recebimento primeiro`, {
+            duration: 5000,
+            style: { whiteSpace: 'pre-line' }
+          });
           return;
         }
 
@@ -1215,111 +1217,14 @@ export default function EtiquetasMae() {
         toast.success(`✓ NF ${notaFiscal.numero_nota} (${volumesDaNota.length} vol.)`, { duration: 2000 });
 
       } else {
-        // IMPORTAR NOTA NOVA
-        console.log("  📥 Importando nova nota...");
-        toast.info("📥 Importando NF...", { duration: 3000 });
-        
-        const response = await base44.functions.invoke('buscarNotaFiscalMeuDanfe', {
-          chaveAcesso: chave
+        // NOTA NÃO EXISTE - NÃO IMPORTAR, APENAS AVISAR
+        console.error("  ❌ Nota não encontrada no sistema");
+        playErrorBeep();
+        toast.error(`❌ NF-e não cadastrada no sistema\n\nImporte a nota no módulo de Recebimento primeiro`, {
+          duration: 5000,
+          style: { whiteSpace: 'pre-line' }
         });
-
-        if (response.data.error) {
-          console.error("  ❌ Erro API:", response.data.error);
-          playErrorBeep();
-          toast.error("❌ " + response.data.error);
-          return;
-        }
-
-        if (!response.data.xml) {
-          console.error("  ❌ XML não retornado");
-          playErrorBeep();
-          toast.error("❌ XML não retornado");
-          return;
-        }
-
-        // PARSE XML
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(response.data.xml, "text/xml");
-        
-        const getNFeValue = (tag) => {
-          const element = xmlDoc.getElementsByTagName(tag)[0];
-          return element ? element.textContent : null;
-        };
-        
-        const numeroNota = getNFeValue('nNF') || '';
-        const emitElements = xmlDoc.getElementsByTagName('emit')[0];
-        const destElements = xmlDoc.getElementsByTagName('dest')[0];
-        const volElements = xmlDoc.getElementsByTagName('vol')[0];
-        const emitEnder = emitElements?.getElementsByTagName('enderEmit')[0];
-        const destEnder = destElements?.getElementsByTagName('enderDest')[0];
-        
-        const quantidadeVolumes = parseInt(volElements?.getElementsByTagName('qVol')[0]?.textContent || '1');
-        const pesoLiquido = parseFloat(volElements?.getElementsByTagName('pesoL')[0]?.textContent || '0');
-        const pesoBruto = parseFloat(volElements?.getElementsByTagName('pesoB')[0]?.textContent || '0');
-
-        // CRIAR NOTA
-        notaFiscal = await base44.entities.NotaFiscal.create({
-          chave_nota_fiscal: chave,
-          numero_nota: numeroNota,
-          serie_nota: getNFeValue('serie') || '',
-          data_hora_emissao: getNFeValue('dhEmi') || new Date().toISOString(),
-          natureza_operacao: getNFeValue('natOp') || '',
-          emitente_cnpj: emitElements?.getElementsByTagName('CNPJ')[0]?.textContent || '',
-          emitente_razao_social: emitElements?.getElementsByTagName('xNome')[0]?.textContent || '',
-          emitente_telefone: emitElements?.getElementsByTagName('fone')[0]?.textContent || '',
-          emitente_uf: emitEnder?.getElementsByTagName('UF')[0]?.textContent || '',
-          emitente_cidade: emitEnder?.getElementsByTagName('xMun')[0]?.textContent || '',
-          emitente_bairro: emitEnder?.getElementsByTagName('xBairro')[0]?.textContent || '',
-          emitente_endereco: emitEnder?.getElementsByTagName('xLgr')[0]?.textContent || '',
-          emitente_numero: emitEnder?.getElementsByTagName('nro')[0]?.textContent || '',
-          emitente_cep: emitEnder?.getElementsByTagName('CEP')[0]?.textContent || '',
-          destinatario_cnpj: destElements?.getElementsByTagName('CNPJ')[0]?.textContent || '',
-          destinatario_razao_social: destElements?.getElementsByTagName('xNome')[0]?.textContent || '',
-          destinatario_telefone: destElements?.getElementsByTagName('fone')[0]?.textContent || '',
-          destinatario_uf: destEnder?.getElementsByTagName('UF')[0]?.textContent || '',
-          destinatario_cidade: destEnder?.getElementsByTagName('xMun')[0]?.textContent || '',
-          destinatario_bairro: destEnder?.getElementsByTagName('xBairro')[0]?.textContent || '',
-          destinatario_endereco: destEnder?.getElementsByTagName('xLgr')[0]?.textContent || '',
-          destinatario_numero: destEnder?.getElementsByTagName('nro')[0]?.textContent || '',
-          destinatario_cep: destEnder?.getElementsByTagName('CEP')[0]?.textContent || '',
-          valor_nota_fiscal: parseFloat(getNFeValue('vNF') || '0'),
-          xml_content: response.data.xml,
-          status_nf: "recebida",
-          peso_total_nf: pesoBruto > 0 ? pesoBruto : pesoLiquido,
-          quantidade_total_volumes_nf: quantidadeVolumes
-        });
-        console.log(`  ✓ Nota criada: ${numeroNota}`);
-
-        // CRIAR VOLUMES com formato padrão: VOL-{nota}-{seq}-{timestamp}
-        const pesoMedioPorVolume = (pesoBruto > 0 ? pesoBruto : pesoLiquido) / quantidadeVolumes;
-        
-        for (let i = 1; i <= quantidadeVolumes; i++) {
-          // Gerar identificador único no MESMO FORMATO usado no Recebimento
-          const agora = new Date();
-          const dia = String(agora.getDate()).padStart(2, '0');
-          const mes = String(agora.getMonth() + 1).padStart(2, '0');
-          const ano = String(agora.getFullYear()).slice(-2);
-          const hh = String(agora.getHours()).padStart(2, '0');
-          const mm = String(agora.getMinutes()).padStart(2, '0');
-          const ss = String(agora.getSeconds()).padStart(2, '0');
-          const timestamp = `${dia}${mes}${ano}${hh}${mm}${ss}`;
-          const identificadorVolume = `VOL-${numeroNota}-${i}-${timestamp}`;
-          
-          const novoVolume = await base44.entities.Volume.create({
-            nota_fiscal_id: notaFiscal.id,
-            identificador_unico: identificadorVolume,
-            numero_sequencial: i,
-            peso_volume: pesoMedioPorVolume,
-            quantidade: 1,
-            status_volume: "criado"
-          });
-          
-          volumesDaNota.push(novoVolume);
-        }
-
-        volumesCriados = true;
-        console.log(`  ✓ ${quantidadeVolumes} volumes criados`);
-        toast.success(`✓ NF ${numeroNota} importada (${quantidadeVolumes} vol.)`, { duration: 2000 });
+        return;
       }
 
       // PREPARAR VINCULAÇÃO EM LOTE
@@ -1327,7 +1232,6 @@ export default function EtiquetasMae() {
       const user = await base44.auth.me();
       const volumesParaVincular = [];
       const historicosParaCriar = [];
-      const novasOrigensVolumes = {};
 
       for (const volume of volumesDaNota) {
         try {
@@ -1346,8 +1250,6 @@ export default function EtiquetasMae() {
             console.warn(`  ⚠️ ${volume.identificador_unico} já na lista`);
             continue;
           }
-
-          novasOrigensVolumes[volume.id] = volumesCriados ? "Importado" : "Base";
 
           volumesParaVincular.push({
             id: volume.id,
@@ -1374,7 +1276,7 @@ export default function EtiquetasMae() {
 
       if (volumesParaVincular.length === 0) {
         console.warn("⚠️ Nenhum volume novo para vincular");
-        toast.warning("⚠️ Volumes já vinculados");
+        toast.warning("⚠️ Todos volumes desta NF já estão vinculados");
         return;
       }
 
@@ -1444,7 +1346,8 @@ export default function EtiquetasMae() {
 
       console.log(`  ✅ ${volumesVinculadosAtualizados.length} volumes vinculados confirmados no banco`);
 
-      // Recarregar notas apenas se necessário
+      // Recarregar volumes e notas para estado global
+      const volumesConsolidados = await base44.entities.Volume.list(null, 2000);
       const notasConsolidadas = await base44.entities.NotaFiscal.list(null, 500);
 
       const novosVolumesIds = volumesVinculadosAtualizados.map(v => v.id);
@@ -1469,7 +1372,6 @@ export default function EtiquetasMae() {
       setVolumesVinculados(volumesVinculadosAtualizados);
       setVolumes(volumesConsolidados);
       setNotas(notasConsolidadas);
-      setOrigensVolumes(prev => ({ ...prev, ...novasOrigensVolumes }));
       volumesVinculadosIdsRef.current = new Set(novosVolumesIds);
 
       // Atualizar lista local de etiquetas (sem recarregar)
