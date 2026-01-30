@@ -1759,8 +1759,34 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
     const termoUpper = termo.trim().toUpperCase();
 
     try {
-      // 1. Tentar encontrar como volume
-      const volumesEncontrados = await base44.entities.Volume.filter({ identificador_unico: termoUpper });
+      // 1. Tentar encontrar como volume (busca exata primeiro)
+      let volumesEncontrados = await base44.entities.Volume.filter({ identificador_unico: termoUpper });
+      
+      // BUSCA ALTERNATIVA: Se não encontrou com busca exata, tentar match por nota-sequencial
+      if (volumesEncontrados.length === 0) {
+        const todosVolumes = await base44.entities.Volume.list();
+        const partesCodigo = termoUpper.split('-');
+        
+        // Buscar por nota-sequencial (ignorando timestamp)
+        if (partesCodigo.length >= 3) {
+          const notaSeqBuscado = `${partesCodigo[1]}-${partesCodigo[2]}`;
+          
+          const volumeAlternativo = todosVolumes.find(v => {
+            if (!v.identificador_unico) return false;
+            const partesVolume = v.identificador_unico.split('-');
+            if (partesVolume.length >= 3) {
+              const notaSeqVolume = `${partesVolume[1]}-${partesVolume[2]}`;
+              return notaSeqBuscado === notaSeqVolume;
+            }
+            return false;
+          });
+          
+          if (volumeAlternativo) {
+            volumesEncontrados = [volumeAlternativo];
+            console.log(`✅ Volume encontrado com busca alternativa: ${volumeAlternativo.identificador_unico}`);
+          }
+        }
+      }
       
       if (volumesEncontrados.length > 0) {
         const volumeEncontrado = volumesEncontrados[0];
@@ -2130,9 +2156,34 @@ export default function EnderecamentoVeiculo({ ordem, notasFiscais, volumes, onC
 
       // Se não encontrou, buscar em TODOS os volumes do estoque
       if (!volume) {
-        const volumesEncontrados = await base44.entities.Volume.filter({ 
+        let volumesEncontrados = await base44.entities.Volume.filter({ 
           identificador_unico: codigoLimpo 
         });
+
+        // BUSCA ALTERNATIVA: Match por nota-sequencial (ignorando timestamp)
+        if (volumesEncontrados.length === 0) {
+          const todosVolumes = await base44.entities.Volume.list();
+          const partesCodigo = codigoLimpo.split('-');
+          
+          if (partesCodigo.length >= 3) {
+            const notaSeqBuscado = `${partesCodigo[1]}-${partesCodigo[2]}`;
+            
+            const volumeAlternativo = todosVolumes.find(v => {
+              if (!v.identificador_unico) return false;
+              const partesVolume = v.identificador_unico.split('-');
+              if (partesVolume.length >= 3) {
+                const notaSeqVolume = `${partesVolume[1]}-${partesVolume[2]}`;
+                return notaSeqBuscado === notaSeqVolume;
+              }
+              return false;
+            });
+            
+            if (volumeAlternativo) {
+              volumesEncontrados = [volumeAlternativo];
+              console.log(`✅ Volume encontrado por nota-sequencial: ${volumeAlternativo.identificador_unico}`);
+            }
+          }
+        }
 
         if (volumesEncontrados.length > 0) {
           volume = volumesEncontrados[0];
