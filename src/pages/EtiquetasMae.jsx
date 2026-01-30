@@ -1206,9 +1206,15 @@ export default function EtiquetasMae() {
         if (volumesDaNota.length === 0) {
           console.error("  ❌ NF sem volumes cadastrados no banco");
           playErrorBeep();
-          toast.error(`❌ NF ${notaFiscal.numero_nota} sem volumes cadastrados\n\nCadastre os volumes no módulo de Recebimento primeiro`, {
-            duration: 5000,
-            style: { whiteSpace: 'pre-line' }
+          toast.error(`❌ NF-e ${notaFiscal.numero_nota} sem volumes\n\n📦 Cadastre os volumes no módulo de Recebimento antes de criar etiquetas mãe`, {
+            duration: 6000,
+            style: { 
+              whiteSpace: 'pre-line',
+              background: '#ef4444',
+              color: '#fff',
+              fontSize: '14px',
+              fontWeight: '600'
+            }
           });
           return;
         }
