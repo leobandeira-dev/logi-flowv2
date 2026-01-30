@@ -473,72 +473,21 @@ export default function EtiquetasMae() {
       
       const volumesBanco = await base44.entities.Volume.list();
       console.log(`  • ${volumesBanco.length} volumes disponíveis no banco`);
+      console.log(`  • Primeiros 5 volumes do banco:`);
+      volumesBanco.slice(0, 5).forEach((v, idx) => {
+        console.log(`    ${idx + 1}. "${v.identificador_unico}"`);
+      });
       
-      // BUSCA EXATA (case-sensitive primeiro)
+      // BUSCA EXATA pelo identificador_unico (sem variações)
       let volumeEncontrado = volumesBanco.find(v => v.identificador_unico === codigoLimpo);
       
-      // BUSCA POR NÚMERO DE PEDIDO (formato: PEDIDO-SEQ ou apenas PEDIDO)
-      if (!volumeEncontrado) {
-        console.log("  🔍 Tentando buscar por número de pedido...");
-        const notasBanco = await base44.entities.NotaFiscal.list();
-        
-        // Verificar se o código corresponde a um número de pedido
-        const notaPorPedido = notasBanco.find(n => {
-          if (!n.numero_pedido) return false;
-          
-          // Match exato com número de pedido
-          if (n.numero_pedido === codigoLimpo) return true;
-          
-          // Match com partes do código (ex: "2151621-30" contém "2151621")
-          const partesCode = codigoLimpo.split('-');
-          const partesPedido = n.numero_pedido.split('-');
-          
-          // Comparar primeira parte (número principal do pedido)
-          if (partesCode[0] && partesPedido[0] && partesCode[0] === partesPedido[0]) {
-            console.log(`    ✓ Match parcial pedido: ${n.numero_pedido}`);
-            return true;
-          }
-          
-          return false;
-        });
-        
-        if (notaPorPedido) {
-          console.log(`  ✅ Nota encontrada por pedido: NF ${notaPorPedido.numero_nota} (Pedido: ${notaPorPedido.numero_pedido})`);
-          
-          // Buscar volumes dessa nota
-          const volumesDaNota = volumesBanco.filter(v => v.nota_fiscal_id === notaPorPedido.id);
-          console.log(`    • ${volumesDaNota.length} volume(s) encontrado(s)`);
-          
-          if (volumesDaNota.length === 1) {
-            volumeEncontrado = volumesDaNota[0];
-            console.log(`    ✓ Volume único da nota: ${volumeEncontrado.identificador_unico}`);
-          } else if (volumesDaNota.length > 1) {
-            // Se tem múltiplos volumes, tentar extrair sequencial do código
-            const partesCode = codigoLimpo.split('-');
-            let sequencial = 1;
-            
-            // Tentar extrair sequencial da última parte ou penúltima
-            if (partesCode.length >= 2) {
-              const ultimaParte = partesCode[partesCode.length - 1];
-              const penultimaParte = partesCode[partesCode.length - 2];
-              
-              // Tentar parsear última parte como número
-              const numUltima = parseInt(ultimaParte);
-              if (!isNaN(numUltima) && numUltima > 0 && numUltima <= volumesDaNota.length) {
-                sequencial = numUltima;
-              } else {
-                // Tentar penúltima parte
-                const numPenultima = parseInt(penultimaParte);
-                if (!isNaN(numPenultima) && numPenultima > 0 && numPenultima <= volumesDaNota.length) {
-                  sequencial = numPenultima;
-                }
-              }
-            }
-            
-            volumeEncontrado = volumesDaNota.find(v => v.numero_sequencial === sequencial);
-            console.log(`    ✓ Volume sequencial ${sequencial}: ${volumeEncontrado?.identificador_unico || 'NÃO ENCONTRADO'}`);
-          }
-        }
+      if (volumeEncontrado) {
+        console.log(`✅ Volume encontrado (busca exata): ${volumeEncontrado.identificador_unico}`);
+      } else {
+        console.log(`❌ Volume NÃO encontrado`);
+        console.log(`  • Código buscado: "${codigoLimpo}"`);
+        console.log(`  • Formato esperado: VOL-{nota}-{seq}-{timestamp}`);
+        console.log(`  • Exemplo válido: VOL-21906-1-270126101218`);
       }
       
       // BUSCA ALTERNATIVA (se não encontrou exato)
