@@ -468,50 +468,95 @@ export default function EtiquetasMae() {
 
       // BUSCAR VOLUME NO BANCO
       console.log("📦 Buscando volume...");
-      const volumesBanco = await base44.entities.Volume.list();
-      console.log(`  • ${volumesBanco.length} volumes disponíveis`);
+      console.log(`  • Código escaneado: "${codigoLimpo}"`);
+      console.log(`  • Tamanho: ${codigoLimpo.length} caracteres`);
       
-      // BUSCA EXATA
+      const volumesBanco = await base44.entities.Volume.list();
+      console.log(`  • ${volumesBanco.length} volumes disponíveis no banco`);
+      
+      // BUSCA EXATA (case-sensitive primeiro)
       let volumeEncontrado = volumesBanco.find(v => v.identificador_unico === codigoLimpo);
       
       // BUSCA ALTERNATIVA (se não encontrou exato)
       if (!volumeEncontrado) {
-        console.log("⚠️ Busca exata falhou, tentando busca alternativa...");
+        console.log("⚠️ Busca exata falhou, tentando buscas alternativas...");
+        console.log(`  • Exemplos no banco: ${volumesBanco.slice(0, 5).map(v => v.identificador_unico).join(', ')}`);
         
+        const codigoUpper = codigoLimpo.toUpperCase();
+        const codigoLower = codigoLimpo.toLowerCase();
         const partesCodigoEscaneado = codigoLimpo.split('-');
+        
+        console.log(`  • Partes do código: [${partesCodigoEscaneado.join(', ')}]`);
         
         volumeEncontrado = volumesBanco.find(v => {
           if (!v.identificador_unico) return false;
           
-          const idVolume = v.identificador_unico.toLowerCase();
-          const idCodigo = codigoLimpo.toLowerCase();
+          const idVolume = v.identificador_unico;
+          const idVolumeUpper = idVolume.toUpperCase();
+          const idVolumeLower = idVolume.toLowerCase();
           
-          // Match exato (case-insensitive)
-          if (idVolume === idCodigo) return true;
+          // 1. Match exato (case-insensitive)
+          if (idVolumeUpper === codigoUpper) {
+            console.log(`  ✓ Match case-insensitive: ${idVolume}`);
+            return true;
+          }
           
-          // Match parcial (um contém o outro)
-          if (idVolume.includes(idCodigo) || idCodigo.includes(idVolume)) return true;
+          // 2. Match parcial (um contém o outro)
+          if (idVolumeUpper.includes(codigoUpper) || codigoUpper.includes(idVolumeUpper)) {
+            console.log(`  ✓ Match parcial: ${idVolume}`);
+            return true;
+          }
           
-          // Match por componentes (remover prefixo VOL-)
-          const volumeSemPrefixo = idVolume.replace(/^vol-/i, '');
-          const codigoSemPrefixo = idCodigo.replace(/^vol-/i, '');
+          // 3. Remover espaços e tentar novamente
+          const idVolumeSemEspaco = idVolume.replace(/\s/g, '').toUpperCase();
+          const codigoSemEspaco = codigoLimpo.replace(/\s/g, '').toUpperCase();
+          if (idVolumeSemEspaco === codigoSemEspaco) {
+            console.log(`  ✓ Match sem espaços: ${idVolume}`);
+            return true;
+          }
           
-          if (volumeSemPrefixo === codigoSemPrefixo) return true;
-          if (volumeSemPrefixo.includes(codigoSemPrefixo) || codigoSemPrefixo.includes(volumeSemPrefixo)) return true;
+          // 4. Remover prefixo VOL- e comparar
+          const volumeSemPrefixo = idVolumeUpper.replace(/^VOL-/i, '');
+          const codigoSemPrefixo = codigoUpper.replace(/^VOL-/i, '');
           
-          // Match por partes principais (nota-sequencial) - IGNORAR timestamp
-          // Formato: VOL-NOTA-SEQUENCIAL-TIMESTAMP
-          if (partesCodigoEscaneado.length >= 3) {
-            // Extrair nota-sequencial do código escaneado (ignorar timestamp)
-            const notaSeq = `${partesCodigoEscaneado[1]}-${partesCodigoEscaneado[2]}`;
+          if (volumeSemPrefixo === codigoSemPrefixo) {
+            console.log(`  ✓ Match sem prefixo VOL-: ${idVolume}`);
+            return true;
+          }
+          
+          // 5. Match parcial sem prefixo
+          if (volumeSemPrefixo.includes(codigoSemPrefixo) || codigoSemPrefixo.includes(volumeSemPrefixo)) {
+            console.log(`  ✓ Match parcial sem prefixo: ${idVolume}`);
+            return true;
+          }
+          
+          // 6. Match por componentes (nota-sequencial) - IGNORAR timestamp
+          // Formatos possíveis: VOL-NOTA-SEQ-TIMESTAMP, NOTA-SEQ-TIMESTAMP, NOTA-SEQ, etc.
+          if (partesCodigoEscaneado.length >= 2) {
+            const partesVolume = idVolume.split('-');
             
-            // Buscar volumes que contenham essa combinação nota-sequencial
-            const partesVolume = v.identificador_unico.split('-');
-            if (partesVolume.length >= 3) {
-              const notaSeqVolume = `${partesVolume[1]}-${partesVolume[2]}`;
-              if (notaSeq.toLowerCase() === notaSeqVolume.toLowerCase()) {
-                console.log(`  🎯 Match por nota-sequencial: ${notaSeq}`);
-                return true;
+            // Tentar diferentes combinações de partes
+            if (partesVolume.length >= 2) {
+              // Pegar últimas N partes significativas (ignorando timestamp)
+              for (let i = 1; i < Math.min(partesCodigoEscaneado.length, partesVolume.length); i++) {
+                const notaSeqCodigo = partesCodigoEscaneado.slice(0, i + 1).join('-').toUpperCase();
+                const notaSeqVolume = partesVolume.slice(0, i + 1).join('-').toUpperCase();
+                
+                if (notaSeqCodigo === notaSeqVolume) {
+                  console.log(`  ✓ Match por componentes [0-${i}]: ${notaSeqCodigo}`);
+                  return true;
+                }
+              }
+              
+              // Match específico: partes[1]-partes[2] (nota-sequencial)
+              if (partesCodigoEscaneado.length >= 3 && partesVolume.length >= 3) {
+                const notaSeqCodigo = `${partesCodigoEscaneado[1]}-${partesCodigoEscaneado[2]}`.toUpperCase();
+                const notaSeqVolume = `${partesVolume[1]}-${partesVolume[2]}`.toUpperCase();
+                
+                if (notaSeqCodigo === notaSeqVolume) {
+                  console.log(`  ✓ Match nota-sequencial [1-2]: ${notaSeqCodigo}`);
+                  return true;
+                }
               }
             }
           }
@@ -520,11 +565,20 @@ export default function EtiquetasMae() {
         });
         
         if (volumeEncontrado) {
-          console.log(`✅ Volume encontrado com busca alternativa:`);
-          console.log(`  • Escaneado: ${codigoLimpo}`);
-          console.log(`  • Encontrado: ${volumeEncontrado.identificador_unico}`);
-          toast.info(`Volume: ${volumeEncontrado.identificador_unico}`, { duration: 2000 });
+          console.log(`✅ Volume encontrado com busca alternativa!`);
+          console.log(`  • Código escaneado: ${codigoLimpo}`);
+          console.log(`  • Volume no banco: ${volumeEncontrado.identificador_unico}`);
+          toast.info(`📦 ${volumeEncontrado.identificador_unico}`, { duration: 2000 });
+        } else {
+          console.log("❌ Volume NÃO encontrado mesmo após busca alternativa");
+          console.log(`  • Código buscado: "${codigoLimpo}"`);
+          console.log(`  • Primeiros 10 volumes no banco:`);
+          volumesBanco.slice(0, 10).forEach((v, i) => {
+            console.log(`    ${i + 1}. "${v.identificador_unico}"`);
+          });
         }
+      } else {
+        console.log(`✅ Volume encontrado com busca exata: ${volumeEncontrado.identificador_unico}`);
       }
 
       // VOLUME NÃO ENCONTRADO
