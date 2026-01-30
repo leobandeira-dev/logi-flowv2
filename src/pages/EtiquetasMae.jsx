@@ -2269,7 +2269,7 @@ export default function EtiquetasMae() {
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-3 py-3 px-4 sm:px-0 pb-20">
+              <div className="space-y-3 py-3 px-4 sm:px-0 pb-32 sm:pb-4">
                 {/* Resumo Compacto */}
                 <div className="grid grid-cols-4 gap-1.5 p-2.5 rounded-lg border-2" style={{ backgroundColor: isDark ? '#0f172a' : '#f8fafc', borderColor: '#3b82f6' }}>
                   <div className="text-center">
@@ -2605,7 +2605,7 @@ export default function EtiquetasMae() {
                 )}
               </div>
 
-              <DialogFooter className="flex-col gap-2 pt-3 px-4 pb-safe sm:px-0 sm:pb-0 fixed bottom-0 left-0 right-0 sm:relative border-t shadow-lg" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+              <DialogFooter className="flex-col gap-2 pt-3 px-4 pb-4 sm:px-0 sm:pb-0 fixed bottom-0 left-0 right-0 sm:relative border-t shadow-2xl z-20" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
                 {etiquetaSelecionada.status !== "finalizada" && (
                   <Button
                     onClick={handleFinalizar}
